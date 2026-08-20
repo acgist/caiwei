@@ -1,13 +1,15 @@
 *.a
 *.so
-*.dll
-*.exe
-*.lib
 *.out
+
+*.dll
+*.lib
+*.exe
+
 *.log
 
-deps
-build
-model
+/deps/
+/build/
+/model/
 
-.vscode
+/.vscode/
