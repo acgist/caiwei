@@ -1,7 +1,6 @@
-# OpenVINO
+# llama.cpp
 
 * 版本：
-* 官网：
 
 ## 安装教程
 

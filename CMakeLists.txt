@@ -6,15 +6,24 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-option(ENABLE_CAIWEI_TEST        "Build Test"          OFF)
-option(ENABLE_CAIWEI_MNN         "MNN Runtime"         OFF)
-option(ENABLE_CAIWEI_CUDA        "CUDA Runtime"        ON)
-option(ENABLE_CAIWEI_RKNN        "RKNN Runtime"        OFF)
-option(ENABLE_CAIWEI_ASCEND      "Ascend Runtime"      OFF)
-option(ENABLE_CAIWEI_OPENVINO    "OpenVINO Runtime"    OFF)
-option(ENABLE_CAIWEI_TENSORRT    "TensorRT Runtime"    OFF)
-option(ENABLE_CAIWEI_LLAMACPP    "llama.cpp Runtime"   OFF)
-option(ENABLE_CAIWEI_ONNXRUNTIME "ONNXRuntime Runtime" ON)
+option(ENABLE_CAIWEI_TEST                "Build Test"        OFF)
+option(ENABLE_CAIWEI_BACKEND_QNN         "Adreno NPU"        OFF) # MNN                ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) #          llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #     RKNN           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_NNAPI       "Android NPU"       OFF) # MNN                ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_HIP         "AMD GPU"           OFF) #          llama.cpp
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # MNN      llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_OPENCL      "Adreno GPU"        OFF) # MNN      llama.cpp
+option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN      llama.cpp
+option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Inter CPU/GPU/NPU" OFF) #          llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #                    ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_RKNN        "RKNN"              OFF) # 瑞芯微
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         OFF) # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"       ON)  # 跨平台
+option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"           ON)  # ASR前置ANS
+option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"           ON)  # ASR前置VAD
+option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"           ON)  # ASR前置AGC
 
 if(ANDROID)
     set(CMAKE_C_STANDARD 17)
@@ -22,14 +31,16 @@ if(ANDROID)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
+    add_definitions(-DOS_ANDROID=1)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-elseif(CMAKE_HOST_UNIX)
+elseif(CMAKE_HOST_LINUX)
     set(CMAKE_C_STANDARD 17)
     set(CMAKE_C_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
+    add_definitions(-DOS_LINUX=1)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CMAKE_COMMAND} -E time")
@@ -41,10 +52,173 @@ elseif(CMAKE_HOST_WIN32)
         set(CMAKE_CXX_STANDARD 17)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
         set(CMAKE_CXX_EXTENSIONS OFF)
+        add_definitions(-DOS_WINDOWS=1)
         add_compile_options("/utf-8" "/Zc:__cplusplus")
     else()
         message(FATAL_ERROR "需要安装MSVC开发环境")
     endif()
 else()
     message(FATAL_ERROR "不支持的系统：${CMAKE_HOST_SYSTEM_NAME}")
+endif()
+
+if (ENABLE_ASAN)
+	message(STATUS "Build with ASAN")
+	set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+	set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+endif ()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DLOGGER_LEVEL=DEBUG)
+    message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+    message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+else()
+    add_definitions(-DLOGGER_LEVEL=INFO)
+    message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
+    message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+endif()
+
+if(ANDROID)
+# -
+elseif(CMAKE_HOST_LINUX)
+    list(APPEND CAIWEI_CORE_LIBS avutil avcodec avdevice avformat swscale swresample)
+elseif(CMAKE_HOST_WIN32)
+    set(FFMPEG_PATH      "deps/ffmpeg"      CACHE STRING "FFmpeg Path")
+    set(CPP_HTTPLIB_PATH "deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
+    set(
+        CMAKE_PREFIX_PATH
+        ${CMAKE_PREFIX_PATH}
+        ${FFMPEG_PATH}
+        ${CPP_HTTPLIB_PATH}
+    )
+    find_package(FFMPEG  REQUIRED)
+    find_package(httplib REQUIRED)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        file(GLOB FFMPEG_DLLS      "${FFMPEG_PATH}/debug/bin/*.dll")
+        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
+    else()
+        file(GLOB FFMPEG_DLLS      "${FFMPEG_PATH}/bin/*.dll")
+        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
+    endif()
+    list(APPEND CAIWEI_CORE_DLLS ${FFMPEG_DLLS})
+    list(APPEND CAIWEI_CORE_INCS ${FFMPEG_INCLUDE_DIRS})
+    list(APPEND CAIWEI_CORE_LIBS ${FFMPEG_LIBRARIES})
+    list(APPEND CAIWEI_SERV_DLLS ${CPP_HTTPLIB_DLLS})
+    list(APPEND CAIWEI_SERV_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
+else()
+# -
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_QNN)
+    message(STATUS "Enable Adreno NPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_QNN)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_CANN)
+    message(STATUS "Enable Ascend NPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_CANN)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_RKNN)
+    message(STATUS "Enable Rockchip NPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_NNAPI)
+    message(STATUS "Enable Android NPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_NNAPI)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_HIP)
+    message(STATUS "Enable AMD GPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_HIP)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_CUDA)
+    message(STATUS "Enable Nvidia GPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_CUDA)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_OPENCL)
+    message(STATUS "Enable Adreno GPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_OPENCL)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_VULKAN)
+    message(STATUS "Enable Vulkan GPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_VULKAN)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_OPENVINO)
+    message(STATUS "Enable Inter CPU/GPU/NPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_OPENVINO)
+    # CPU GPU NPU
+    add_definitions(-DOPENVINO_BACKEND=CPU)
+endif()
+
+if (ENABLE_CAIWEI_BACKEND_TENSORRT)
+    message(STATUS "Enable Nvidia TensorRT")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_TENSORRT)
+endif()
+
+if (ENABLE_CAIWEI_RUNTIME_MNN)
+    message(STATUS "Running with MNN")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_MNN)
+endif()
+
+if (ENABLE_CAIWEI_RUNTIME_RKNN)
+    message(STATUS "Running with RKNN")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN)
+    list(APPEND CAIWEI_CORE_LIBS rknnrt)
+endif()
+
+if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)
+    message(STATUS "Running with llama.cpp")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_LLAMACPP)
+endif()
+
+if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
+    message(STATUS "Running with ONNXRuntime")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
+    set(ONNXRUNTIME_PATH "deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
+    set(
+        CMAKE_PREFIX_PATH
+        ${CMAKE_PREFIX_PATH}
+        ${ONNXRUNTIME_PATH}
+    )
+    list(APPEND CAIWEI_CORE_INCS ${ONNXRUNTIME_PATH}/include)
+    if (ANDROID)
+    # -
+    elseif(CMAKE_HOST_LINUX)
+        find_package(onnxruntime REQUIRED)
+        set(ONNXRUNTIME_LIBS onnxruntime::onnxruntime)
+    elseif(CMAKE_HOST_WIN32)
+        file(GLOB ONNXRUNTIME_DLLS "${ONNXRUNTIME_PATH}/lib/*.dll")
+        file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/onnxruntime.lib")
+        list(APPEND CAIWEI_CORE_DLLS ${ONNXRUNTIME_DLLS})
+    else()
+    # -
+    endif()
+    list(APPEND CAIWEI_CORE_LIBS ${ONNXRUNTIME_LIBS})
+endif()
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
+
+message(STATUS "CAIWEI_CORE_DLLS: ${CAIWEI_CORE_DLLS}")
+message(STATUS "CAIWEI_CORE_INCS: ${CAIWEI_CORE_INCS}")
+message(STATUS "CAIWEI_CORE_LIBS: ${CAIWEI_CORE_LIBS}")
+message(STATUS "CAIWEI_SERV_DLLS: ${CAIWEI_SERV_DLLS}")
+message(STATUS "CAIWEI_SERV_INCS: ${CAIWEI_SERV_INCS}")
+message(STATUS "CAIWEI_SERV_LIBS: ${CAIWEI_SERV_LIBS}")
+
+add_subdirectory(core)
+add_subdirectory(serv)
+if (ENABLE_CAIWEI_TEST)
+    message(STATUS "Build Test")
+    add_subdirectory(test)
 endif()

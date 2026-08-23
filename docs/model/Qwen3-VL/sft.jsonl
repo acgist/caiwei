@@ -1,0 +1,26 @@
+{
+	"messages": [{
+			"role": "system",
+			"content": "助手！"
+		},
+		{
+			"role": "user",
+			"content": [{
+					"type": "video",
+					"video": "视频.mp4"
+				},
+				{
+					"type": "text",
+					"text": "描述视频"
+				}
+			]
+		},
+		{
+			"role": "assistant",
+			"content": [{
+				"type": "text",
+				"text": "{\"event\": \"验电\"}"
+			}]
+		}
+	]
+}

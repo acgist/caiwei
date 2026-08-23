@@ -11,9 +11,7 @@
 昔我往矣，杨柳依依。今我来思，雨雪霏霏。行道迟迟，载渴载饥。我心伤悲，莫知我哀！
 ```
 
-## 支持模型
-
-### 视觉模型
+## 视觉模型
 
 |功能|类型|YOLOv11|YOLOv26|
 |:--|:--|:--|:--|
@@ -25,26 +23,28 @@
 |姿态估计|pose|√|√|
 |深度估计|depth|×|√|
 
-### 语言模型
+## 语言模型
 
-|功能|模型|
-|:--|:--|
-|ASR|Qwen3-ASR / Whisper|
-|TTS|Qwen3-TTS|
-|LLM|Qwen3 / DeepSeek-R1|
-|VLM|Qwen3-VL|
-|MLLM|Qwen3-Omni|
-|Reranking|Qwen3-Reranker|
-|Embedding|Qwen3-Embedding|
-
-### 其他模型
-
-|功能|模型|
-|:--|:--|
-|人脸检测|SCRFD|
-|特征提取|ArcFace|
-|噪声抑制|RNNoise|
-|活动检测|Silero-VAD|
+|功能|模型|下载|
+|:--|:--|:--|
+|ASR|Qwen3-ASR|https://modelscope.cn/models/Qwen/Qwen3-ASR-0.6B|
+|TTS|Qwen3-TTS-Base|https://modelscope.cn/models/Qwen/Qwen3-TTS-12Hz-1.7B-Base|
+||Qwen3-TTS-VoiceDesign|https://modelscope.cn/models/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign|
+||Qwen3-TTS-CustomVoice|https://modelscope.cn/models/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice|
+|LLM|Qwen3|https://modelscope.cn/models/Qwen/Qwen3-4B|
+||Qwen3-Base|https://modelscope.cn/models/Qwen/Qwen3-4B-Base|
+||Qwen3-SafeRL|https://modelscope.cn/models/Qwen/Qwen3-4B-SafeRL|
+||Qwen3-Instruct-2507|https://modelscope.cn/models/Qwen/Qwen3-4B-Instruct-2507|
+||Qwen3-Thinking-2507|https://modelscope.cn/models/Qwen/Qwen3-4B-Thinking-2507|
+|VLM|Qwen3-VL-Instruct|https://modelscope.cn/models/Qwen/Qwen3-VL-2B-Instruct|
+||Qwen3-VL-Thinking|https://modelscope.cn/models/Qwen/Qwen3-VL-2B-Thinking|
+|MLLM|Qwen3-Omni-Instruct|https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct|
+||Qwen3-Omni-Thinking|https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Thinking|
+||Qwen3-Omni-Captioner|https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Captioner|
+|Reranking|Qwen3-Reranker|https://modelscope.cn/models/Qwen/Qwen3-Reranker-0.6B|
+||Qwen3-VL-Reranker|https://modelscope.cn/models/Qwen/Qwen3-VL-Reranker-2B|
+|Embedding|Qwen3-Embedding|https://modelscope.cn/models/Qwen/Qwen3-Embedding-0.6B|
+||Qwen3-VL-Embedding|https://modelscope.cn/models/Qwen/Qwen3-VL-Embedding-2B|
 
 ## 运行环境
 
@@ -52,18 +52,6 @@
 |:--|:--|
 |MNN|https://github.com/alibaba/MNN|
 |RKNN|https://github.com/airockchip|
-|Ascend|https://github.com/Ascend|
-|OpenVINO|https://github.com/openvinotoolkit/openvino|
-|TensorRT|https://github.com/NVIDIA/TensorRT|
 |llama.cpp|https://github.com/ggml-org/llama.cpp|
 |ONNXRuntime|https://github.com/microsoft/onnxruntime|
 
-> 支持顺序：ONNXRuntime -> RKNN -> OpenVINO -> llama.cpp -> TensorRT -> MNN -> Ascend
-
-## 依赖项目
-
-|依赖项目|官方地址|
-|:--|:--|
-|HTTP||
-|JSON||
-|FFMPEG||

@@ -5,3 +5,5 @@
 // completions session
 // tts session
 // asr session
+// 实时 是否丢弃
+// 是否返回实时视频

@@ -8,8 +8,11 @@
 
 *.log
 
-/deps/
 /build/
-/model/
 
 /.vscode/
+
+/deps/ffmpeg/
+/deps/cpp-httplib/
+
+/model/*.onnx
