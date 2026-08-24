@@ -11,13 +11,13 @@ target_link_libraries(
     caiwei-core
 )
 
-# add_executable(
-#     test_media_demuxer
-#     test_media_demuxer.cpp
-# )
-# add_test(NAME test_media_demuxer COMMAND test_media_demuxer)
-# set_target_properties(test_media_demuxer PROPERTIES FOLDER "test")
-# target_link_libraries(
-#     test_media_demuxer
-#     caiwei-core
-# )
+add_executable(
+    test_media_demuxer
+    test_media_demuxer.cpp
+)
+add_test(NAME test_media_demuxer COMMAND test_media_demuxer)
+set_target_properties(test_media_demuxer PROPERTIES FOLDER "test")
+target_link_libraries(
+    test_media_demuxer
+    caiwei-core
+)

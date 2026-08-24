@@ -31,7 +31,7 @@ static const int video_max_b_frames = 1;
 #endif
 
 caiwei::media::MediaMuxer::MediaMuxer(
-    int fps, int width, int height, caiwei::media::PacketCallback packet_callback
+    int fps, int width, int height, int channels, int bit_rate, int sample_rate, PacketCallback packet_callback
 ) : fps(fps), width(width), height(height), packet_callback(packet_callback) {
 }
 

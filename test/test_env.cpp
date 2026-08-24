@@ -20,5 +20,6 @@ int main() {
     LOG_INFO("ID: %" PRId64, caiwei::env::timestamp());
     LOG_INFO("ID: %s", caiwei::env::id().c_str());
     LOG_INFO("ID: %s", caiwei::env::id().c_str());
+    stop_test();
     return 0;
 }

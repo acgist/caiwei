@@ -24,6 +24,7 @@ option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"       ON)  # 跨平台
 option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"           ON)  # ASR前置ANS
 option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"           ON)  # ASR前置VAD
 option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"           ON)  # ASR前置AGC
+option(ENABLE_CAIWEI_SDL2                "SDL2 Player"       ON)  # SDL2播放器
 
 if(ANDROID)
     set(CMAKE_C_STANDARD 17)
@@ -199,6 +200,33 @@ if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     # -
     endif()
     list(APPEND CAIWEI_CORE_LIBS ${ONNXRUNTIME_LIBS})
+endif()
+
+if (ENABLE_CAIWEI_SDL2)
+    message(STATUS "Enable SDL2 Player")
+    if (ANDROID)
+    # -
+    elseif(CMAKE_HOST_LINUX)
+    # -
+    elseif(CMAKE_HOST_WIN32)
+        set(SDL2_PATH "deps/sdl2" CACHE STRING "SDL2 Path")
+        set(
+            CMAKE_PREFIX_PATH
+            ${CMAKE_PREFIX_PATH}
+            ${SDL2_PATH}
+        )
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            file(GLOB SDL2_DLLS "${SDL2_PATH}/debug/bin/*.dll")
+        else()
+            file(GLOB SDL2_DLLS "${SDL2_PATH}/bin/*.dll")
+        endif()
+        list(APPEND CAIWEI_CORE_DLLS ${SDL2_DLLS})
+    else()
+    # -
+    endif()
+    find_package(SDL2 CONFIG REQUIRED)
+    list(APPEND CAIWEI_CORE_LIBS $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
+    list(APPEND CAIWEI_CORE_LIBS $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)

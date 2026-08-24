@@ -1,5 +1,5 @@
 /**
- * 日志模块
+ * 日志
  */
 #ifndef CAIWEI_LOG_HPP
 #define CAIWEI_LOG_HPP
@@ -14,7 +14,7 @@ enum class Level {
     DEBUG,
     INFO,
     WARN,
-    ERROR
+    ERROR,
 };
 
 extern void log(Level level, const std::source_location& loc, const char* fmt, ...);

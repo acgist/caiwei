@@ -1,8 +1,17 @@
 # 依赖项目
 
+## SDL2
 
-tokenzer
-SDL2
+* 版本：2.32.10
+
+```
+# APT安装
+apt install libsdl2-dev
+
+# VCPKG安装
+vcpkg install sdl2
+vcpkg export  sdl2 --zip
+```
 
 ## FFmpeg
 

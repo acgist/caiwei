@@ -1,5 +1,5 @@
 /**
- * 环境模块
+ * 环境
  * 
  * Win  : $env:name=value
  * Linux: export name=value
