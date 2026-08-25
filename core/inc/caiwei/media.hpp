@@ -16,6 +16,7 @@ struct AVPacket;
 struct AVStream;
 struct SwrContext;
 struct SwsContext;
+struct AVAudioFifo;
 struct AVDictionary;
 struct AVCodecContext;
 struct AVFormatContext;
@@ -77,35 +78,62 @@ enum class MediaType {
     VIDEO,
 };
 
+struct AudioInfo {
+
+    int channel;          // 通道数
+    int sample_rate;      // 采样率
+    int format;           // 格式
+    int bytes_per_sample; // 每个采样字节数
+
+    AudioInfo() = default;
+    AudioInfo(int channel, int sample_rate, int format);
+
+};
+
+struct VideoInfo {
+
+    int fps;    // 帧率
+    int width;  // 宽度
+    int height; // 高度
+    int format; // 格式
+
+    VideoInfo() = default;
+    VideoInfo(         int width, int height, int format);
+    VideoInfo(int fps, int width, int height, int format);
+
+};
+
 using AudioCallback = std::function<bool(const AudioFrame&)>;
 using ImageCallback = std::function<bool(const ImageFrame&)>;
 using VideoCallback = std::function<bool(const VideoFrame&)>;
 using PacketCallback = std::function<bool(MediaType, AVPacket*)>;
-using FormatCallback = std::function<bool(MediaType, uint32_t, const uint8_t*)>;
+using FormatCallback = std::function<bool(uint32_t, const uint8_t*)>;
 
 class MediaMuxer {
 
 private:
-    int fps;         // 视频帧率
-    int width;       // 视频宽度
-    int height;      // 视频高度
-    int channels;    // 音频通道数
-    int bit_rate;    // 音频码率
-    int sample_rate; // 音频采样率
     PacketCallback packet_callback; // 编码数据回调
-    size_t audio_frames = 0; // 音频累计编码帧数
-    size_t video_frames = 0; // 视频累计编码帧数
+    size_t audio_pts = 0; // 音频累计编码采样点数
+    size_t video_pts = 0; // 视频累计编码采样点数
     AVFrame * audio_frame { nullptr }; // 音频帧
     AVFrame * video_frame { nullptr }; // 视频帧
     AVPacket* audio_packet{ nullptr }; // 音频包
     AVPacket* video_packet{ nullptr }; // 视频包
-    const AVCodec  * audio_codec{ nullptr }; // 音频编码器
-    const AVCodec  * video_codec{ nullptr }; // 视频编码器
+    SwrContext* swr_ctx{ nullptr }; // 音频重采样上下文
+    SwsContext* sws_ctx{ nullptr }; // 视频重采样上下文
+    uint8_t    * audio_ch_buffer[8] { nullptr }; // 音频通道缓存
+    AVAudioFifo* audio_fifo         { nullptr }; // 音频缓存
+    const AVCodec * audio_codec{ nullptr }; // 音频编码器
+    const AVCodec * video_codec{ nullptr }; // 视频编码器
 public:
-    AVCodecContext * audio_codec_ctx{ nullptr }; // 音频编码器上下文
-    AVCodecContext * video_codec_ctx{ nullptr }; // 视频编码器上下文
+    AudioInfo in_audio_info;  // 输入音频
+    VideoInfo in_video_info;  // 输入视频
+    AudioInfo out_audio_info; // 输出音频
+    VideoInfo out_video_info; // 输出视频
+    AVCodecContext* audio_codec_ctx{ nullptr }; // 音频编码器上下文
+    AVCodecContext* video_codec_ctx{ nullptr }; // 视频编码器上下文
 public:
-    MediaMuxer(int fps, int width, int height, int channels, int bit_rate, int sample_rate, PacketCallback packet_callback);
+    MediaMuxer(AudioInfo in_audio_info, VideoInfo in_video_info, AudioInfo out_audio_info, VideoInfo out_video_info, PacketCallback packet_callback);
     ~MediaMuxer();
 public:
     bool open();
@@ -126,6 +154,8 @@ class MediaFormat {
 
 private:
     bool need_header = true;
+    AudioInfo audio_info; // 音频
+    VideoInfo video_info; // 视频
     std::vector<uint8_t> buffer;
     AVStream       * audio_stream{ nullptr }; // 音频流
     AVStream       * video_stream{ nullptr }; // 视频流
@@ -138,7 +168,7 @@ public:
 public:
     bool open(const MediaMuxer& muxer);
     bool stop();
-    bool send(AVPacket* packet);
+    bool send(MediaType, AVPacket* packet);
 private:
     void send_header ();
     void send_trailer();
@@ -148,16 +178,16 @@ private:
 class MediaDemuxer {
 
 private:
-    bool        running; // 是否运行
-    std::string type   ; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
-    std::string url    ; // 媒体地址
+    bool running; // 是否运行
+    std::string type; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
+    std::string url ; // 媒体地址
     AudioCallback audio_callback; // 音频回调
     VideoCallback video_callback; // 视频回调
 public:
     MediaDemuxer(const std::string& type, const std::string& url, AudioCallback audio_callback, VideoCallback video_callback);
     ~MediaDemuxer();
 public:
-    bool open();
+    bool open(AudioInfo audio_info, VideoInfo video_info);
     bool stop();
 
 };

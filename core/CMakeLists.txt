@@ -19,8 +19,8 @@ add_library(
     src/media/audio.cpp
     src/media/image.cpp
     src/media/video.cpp
-    # src/media/media_format.cpp
-    # src/media/media_muxer.cpp
+    src/media/media_muxer.cpp
+    src/media/media_format.cpp
     src/media/media_demuxer.cpp
     ${CAIWEI_CORE_SRCS}
 )

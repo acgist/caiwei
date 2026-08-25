@@ -5,6 +5,12 @@
 
 #include <thread>
 
+extern "C" {
+
+#include "libavcodec/avcodec.h"
+
+}
+
 int main() {
     init_test();
     // rtp|sdp|file|http|rtmp|rtsp|device
@@ -44,11 +50,12 @@ int main() {
         return true;
     });
     std::thread player([]() {
-        caiwei::player::open_player(8000, 1, 640, 360);
+        caiwei::player::open_player(1, 16000, 640, 360);
     });
-    media_demuxer.open();
+    media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
     caiwei::player::stop_player();
     player.join();
+    media_demuxer.stop();
     stop_test();
     return 0;
 }

@@ -10,8 +10,8 @@ struct PlayerState {
     bool running       = false;
     bool audio_running = false;
     bool video_running = false;
-    int video_width  = 0;
-    int video_height = 0;
+    int  video_width   = 0;
+    int  video_height  = 0;
     SDL_mutex   *     mutex      = nullptr;
     SDL_Window  *     window     = nullptr;
     SDL_Renderer*     renderer   = nullptr;
@@ -28,11 +28,11 @@ static bool init_video_player();
 static void stop_audio_player();
 static void stop_video_player();
 
-bool caiwei::player::open_player(int sample_rate, int nb_channels, int video_width, int video_height) {
+bool caiwei::player::open_player(int channel, int sample_rate, int video_width, int video_height) {
     player_state.audio_spec = {
         .freq     = sample_rate,
         .format   = AUDIO_S16,
-        .channels = static_cast<uint8_t>(nb_channels),
+        .channels = static_cast<uint8_t>(channel),
         .silence  = 0,
         .samples  = 4800,
         .padding  = 0,
