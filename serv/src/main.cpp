@@ -1,14 +1,16 @@
-#include "caiwei/log.hpp"
+#include "caiwei/rest.hpp"
+#include "caiwei/caiwei.hpp"
 
+#if OS_WIN
 #include <cstdlib>
+#endif
 
 int main(int argc, char* argv[]) {
-    #if OS_WIN
+#if OS_WIN
     system("chcp 65001");
-    #endif
-    LOG_DEBUG("audio frame pts=%lld sample=%d", 10000LL, 48000);
-    LOG_ERROR("open stream 测试 failed code=%d", -100);
-    LOG_ERROR("open stream 测试 failed code=%d", -100);
-    LOG_ERROR("open stream 测试 failed code=%s", "测试");
+#endif
+    caiwei::init();
+    caiwei::rest::open();
+    caiwei::stop();
     return 0;
 }

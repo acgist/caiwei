@@ -1,16 +1,26 @@
 project(caiwei VERSION 1.0.0 LANGUAGES C CXX)
 
+set(
+    CAIWEI_SERV_SRCS
+    src/main.cpp
+    src/rest/rest.cpp
+    src/rest/text.cpp
+    src/rest/audio.cpp
+    src/rest/image.cpp
+    src/rest/video.cpp
+)
+
 if(ANDROID)
 # -
 elseif(CMAKE_HOST_LINUX)
     add_executable(
         ${PROJECT_NAME}
-        src/main.cpp
+        ${CAIWEI_SERV_SRCS}
     )
 elseif(CMAKE_HOST_WIN32)
     add_executable(
         ${PROJECT_NAME}
-        src/main.cpp
+        ${CAIWEI_SERV_SRCS}
         res/win.rc
     )
 else()
@@ -19,6 +29,7 @@ endif()
 target_link_libraries(
     ${PROJECT_NAME}
     caiwei-core
+    ${CAIWEI_SERV_LIBS}
 )
 target_include_directories(
     ${PROJECT_NAME}

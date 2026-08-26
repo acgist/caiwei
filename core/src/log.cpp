@@ -8,16 +8,16 @@ static std::mutex mutex;
 #ifdef CAIWEI_LOG_DEBUG
 static caiwei::log::Level level = caiwei::log::Level::CAIWEI_LOG_DEBUG;
 #else
-static caiwei::log::Level level = caiwei::log::Level::DEBUG;
+static caiwei::log::Level level = caiwei::log::Level::D;
 #endif
 
 inline const char* format_level(caiwei::log::Level level) {
     switch (level) {
-    case caiwei::log::Level::DEBUG: return "DEBUG";
-    case caiwei::log::Level::INFO : return "INFO";
-    case caiwei::log::Level::WARN : return "WARN";
-    case caiwei::log::Level::ERROR: return "ERROR";
-    default                       : return "WARN";
+    case caiwei::log::Level::D: return "D";
+    case caiwei::log::Level::I: return "I";
+    case caiwei::log::Level::W: return "W";
+    case caiwei::log::Level::E: return "E";
+    default                   : return "W";
     }
 }
 
@@ -54,5 +54,5 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
     if (pos != std::string::npos) {
         filename = filename.substr(pos + 1);
     }
-    std::printf("[%-5s] %-16s:%4d | %s\n", format_level(level), filename.c_str(), loc.line(), buffer.data()); 
+    std::printf("[%s] %-16s:%4d | %s\n", format_level(level), filename.c_str(), loc.line(), buffer.data()); 
 }

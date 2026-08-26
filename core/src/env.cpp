@@ -7,13 +7,14 @@ std::atomic_int caiwei::env::id_index = caiwei::env::min_id_index;
 
 // 默认配置
 static std::map<std::string, std::string> default_config = {
-    {"CAIWEI_VERSION",     "1.0.0"}, // 版本号
-    {"CAIWEI_CUDA_ID",     "0"    }, // CUDA ID
-    {"CAIWEI_SERVER_PORT", "8888" }, // 监听端口
-    {"CAIWEI_USERNAME",    "admin"}, // 接口账号
-    {"CAIWEI_PASSWORD",    "admin"}, // 接口密码
-    {"CAIWEI_SECURITY",    "OFF"  }, // 安全验证
-    {"CAIWEI_TIMEOUT",     "30000"}, // 超时时间
+    {"CAIWEI_VERSION",     "1.0.0"   }, // 版本号
+    {"CAIWEI_CUDA_ID",     "0"       }, // CUDA ID
+    {"CAIWEI_SERVER_HOST", "0.0.0.0" }, // 监听主机
+    {"CAIWEI_SERVER_PORT", "8888"    }, // 监听端口
+    {"CAIWEI_USERNAME",    "admin"   }, // 接口账号
+    {"CAIWEI_PASSWORD",    "admin"   }, // 接口密码
+    {"CAIWEI_SECURITY",    "OFF"     }, // 安全验证
+    {"CAIWEI_TIMEOUT",     "30000"   }, // 超时时间
     {"CAIWEI_YOLO_DET_IOU_THRESHOLD",        "0.6"}, // 物体检测IOU阈值
     {"CAIWEI_YOLO_DET_CONFIDENCE_THRESHOLD", "0.4"}, // 物体检测置信度阈值
 };

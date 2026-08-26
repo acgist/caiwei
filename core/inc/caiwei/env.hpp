@@ -28,6 +28,8 @@ extern std::string get_string(const std::string& name);
 
 extern void set(const std::string& name, const std::string& value);
 
+extern std::string all_env();
+
 inline std::string yyyyMMdd_HHmmss() {
     std::string buffer;
     buffer.resize(20); // yyyy-MM-dd HH:mm:ss
