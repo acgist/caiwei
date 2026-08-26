@@ -178,7 +178,7 @@ private:
 class MediaDemuxer {
 
 private:
-    bool running; // 是否运行
+    volatile bool running; // 是否运行
     std::string type; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
     std::string url ; // 媒体地址
     AudioCallback audio_callback; // 音频回调

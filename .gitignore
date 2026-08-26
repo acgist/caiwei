@@ -10,6 +10,9 @@
 
 /build/
 
+/web/dist/
+/web/node_modules/
+
 /.vscode/
 
 /deps/sdl2/

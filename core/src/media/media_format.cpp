@@ -148,6 +148,10 @@ void caiwei::media::MediaFormat::send_trailer() {
     if(!this->format_ctx) {
         return;
     }
+    if (this->need_header) {
+        return;
+    }
+    // TODO 发送过数据才能关闭
     av_interleaved_write_frame(this->format_ctx, nullptr);
     // 写出文件尾部
     if(av_write_trailer(this->format_ctx) < 0) {

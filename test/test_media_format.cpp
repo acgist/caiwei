@@ -17,8 +17,8 @@ int main() {
     // rtp|sdp|file|http|rtmp|rtsp|device
     auto type = "file";
     // 注意端口必须分开
-    // ffmpeg -re -i 264.mp4 -c:a pcm_alaw -ar 8000 -ac 1 -vn -f rtp -payload_type  8 -ssrc 1000 rtp://127.0.0.1:44444 > audio.sdp
-    // ffmpeg -re -i 264.mp4 -c:v libx264                 -an -f rtp -payload_type 96 -ssrc 2000 rtp://127.0.0.1:44446 > video.sdp
+    // ffmpeg -re -i caiwei.mp4 -c:a pcm_alaw -ar 8000 -ac 1 -vn -f rtp -payload_type  8 -ssrc 1000 rtp://127.0.0.1:44444 > audio.sdp
+    // ffmpeg -re -i caiwei.mp4 -c:v libx264                 -an -f rtp -payload_type 96 -ssrc 2000 rtp://127.0.0.1:44446 > video.sdp
 //     auto url = R"(v=0
 // c=IN IP4 0.0.0.0
 // o=- 0 0 IN IP4 0.0.0.0
@@ -33,7 +33,7 @@ int main() {
 // a=rtpmap:96 H264/90000
 // a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
 // a=recvonly)";
-    auto url  = "D://download/264.mp4";
+    auto url  = "D://download/caiwei.mp4";
     // auto url  = "https://static.acgist.com/demo/barrage/video.mp4";
     // auto url  = "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid";
     // auto url  = "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream";

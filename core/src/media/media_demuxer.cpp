@@ -72,6 +72,7 @@ inline bool recv_video_frame(size_t msec, size_t video_frames, SwsContext* sws_c
 }
 
 bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_info) {
+    // TODO 快速开关内存泄漏
     int ret = -1;
     std::string sdp_file; // RTP|SDP协议使用
     size_t audio_frames  = 0;

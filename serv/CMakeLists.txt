@@ -8,6 +8,8 @@ set(
     src/rest/audio.cpp
     src/rest/image.cpp
     src/rest/video.cpp
+    src/session/session.cpp
+    src/session/video_play.cpp
 )
 
 if(ANDROID)
