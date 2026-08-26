@@ -7,16 +7,15 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option(ENABLE_CAIWEI_TEST                "Build Test"        OFF)
-option(ENABLE_CAIWEI_BACKEND_QNN         "Adreno NPU"        OFF) # MNN                ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) #          llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #     RKNN           ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_NNAPI       "Android NPU"       OFF) # MNN                ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_HIP         "AMD GPU"           OFF) #          llama.cpp
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # MNN      llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_OPENCL      "Adreno GPU"        OFF) # MNN      llama.cpp
-option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN      llama.cpp
-option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Inter CPU/GPU/NPU" OFF) #          llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #                    ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_QNN         "Adreno NPU"        OFF) # MNN           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) #     llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #               ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_NNAPI       "Android NPU"       OFF) # MNN           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # MNN llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_OPENCL      "Adreno GPU"        OFF) # MNN llama.cpp
+option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN llama.cpp
+option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) #     llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #               ONNXRuntime
 option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_RKNN        "RKNN"              OFF) # 瑞芯微
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         OFF) # 跨平台
@@ -129,11 +128,6 @@ if (ENABLE_CAIWEI_BACKEND_NNAPI)
     add_definitions(-DENABLE_CAIWEI_BACKEND_NNAPI)
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_HIP)
-    message(STATUS "Enable AMD GPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_HIP)
-endif()
-
 if (ENABLE_CAIWEI_BACKEND_CUDA)
     message(STATUS "Enable Nvidia GPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_CUDA)
@@ -150,7 +144,7 @@ if (ENABLE_CAIWEI_BACKEND_VULKAN)
 endif()
 
 if (ENABLE_CAIWEI_BACKEND_OPENVINO)
-    message(STATUS "Enable Inter CPU/GPU/NPU")
+    message(STATUS "Enable Intel CPU/GPU/NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_OPENVINO)
     # CPU GPU NPU
     add_definitions(-DOPENVINO_BACKEND=CPU)
