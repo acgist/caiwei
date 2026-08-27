@@ -58,9 +58,9 @@
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
 |MNN        |https://github.com/alibaba/MNN          |○|
+|NCNN       |https://github.com/Tencent/ncnn         |○|
 |llama.cpp  |https://github.com/ggml-org/llama.cpp   |○|
 |ONNXRuntime|https://github.com/microsoft/onnxruntime|○|
-|NCNN       |https://github.com/Tencent/ncnn         |×|
 |LiteRT     |https://github.com/google-ai-edge/LiteRT|×|
 |ExecuTorch |https://github.com/pytorch/executorch   |×|
 
@@ -74,4 +74,32 @@
 |TensorRT     |https://github.com/NVIDIA/TensorRT         |×|
 |OpenVINO     |https://github.com/openvinotoolkit/openvino|×|
 
-> √=已支持 ○=计划中 ×=未支持
+## 后端支持
+
+|类型|设备|MNN|NCNN|llama.cpp|ONNXRuntime|
+|:--|:--|:--|:--|:--|:--|
+|NPU|QNN     |√|√|×|√|
+|   |CANN    |×|×|√|√|
+|   |RKNN    |×|×|×|√|
+|   |NNAPI   |√|√|×|√|
+|GPU|CUDA    |√|√|√|√|
+|   |OpenCL  |√|√|√|×|
+|   |Vulkan  |√|√|√|×|
+|SDK|OpenVINO|×|×|√|√|
+|   |TensorRT|×|×|×|√|
+
+## 模型支持
+
+|模型|MNN|NCNN|llama.cpp|ONNXRuntime|RKNN|CANN|
+|:--|:--|:--|:--|:--|:--|:--|
+|YOLOv11        |?|?|×|√|√|√|
+|YOLOv26        |?|?|×|√|√|√|
+|Qwen3-ASR      |?|?|√|×|√|√|
+|Qwen3-TTS      |?|?|√|×|√|√|
+|Qwen3          |?|?|√|×|√|√|
+|Qwen3-VL       |?|?|√|×|√|√|
+|Qwen3-Omni     |?|?|√|×|√|√|
+|Qwen3-Reranker |?|?|√|×|√|√|
+|Qwen3-Embedding|?|?|√|×|√|√|
+
+> √=已支持 ○=计划中 ?=未计划 ×=不支持

@@ -7,7 +7,17 @@ set(
 list(APPEND CAIWEI_CORE_INCS third_party)
 
 if (ENABLE_CAIWEI_SDL2)
-    list(APPEND CAIWEI_CORE_SRCS src/media/player.cpp)
+    list(APPEND CAIWEI_CORE_SRCS src/sdl2/player.cpp)
+endif ()
+
+if (ENABLE_CAIWEI_FFMPEG)
+    list(
+        APPEND CAIWEI_CORE_SRCS
+        src/ffmpeg/media.cpp
+        src/ffmpeg/media_muxer.cpp
+        src/ffmpeg/media_format.cpp
+        src/ffmpeg/media_demuxer.cpp
+    )
 endif ()
 
 add_library(
@@ -19,9 +29,6 @@ add_library(
     src/media/audio.cpp
     src/media/image.cpp
     src/media/video.cpp
-    src/media/media_muxer.cpp
-    src/media/media_format.cpp
-    src/media/media_demuxer.cpp
     ${CAIWEI_CORE_SRCS}
 )
 target_link_libraries(

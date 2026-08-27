@@ -205,6 +205,7 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
         LOG_WARN("媒体接收失败：%s - %s", this->type.c_str(), this->url.c_str());
         goto close_all;
     }
+    audio_info.bytes_per_sample = av_get_bytes_per_sample((AVSampleFormat) audio_info.format);
     this->running = true;
     while(this->running) {
         ret = av_read_frame(fmt_ctx, decoder_packet);

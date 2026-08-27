@@ -16,14 +16,18 @@ option(ENABLE_CAIWEI_BACKEND_OPENCL      "Adreno GPU"        OFF) # MNN llama.cp
 option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN llama.cpp
 option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) #     llama.cpp ONNXRuntime
 option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #               ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_CANN        "CANN"              OFF) # 华为昇腾
 option(ENABLE_CAIWEI_RUNTIME_RKNN        "RKNN"              OFF) # 瑞芯微
-option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         OFF) # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_NCNN        "NCNN"              OFF) # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         ON)  # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"       ON)  # 跨平台
 option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"           ON)  # ASR前置ANS
 option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"           ON)  # ASR前置VAD
 option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"           ON)  # ASR前置AGC
 option(ENABLE_CAIWEI_SDL2                "SDL2 Player"       ON)  # SDL2播放器
+option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"            ON)  # FFmpeg
+option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"       ON)  # cpp-httplib
 
 if(ANDROID)
     set(CMAKE_C_STANDARD 17)
@@ -68,44 +72,13 @@ if (ENABLE_ASAN)
 endif ()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DLOG_LEVEL=DEBUG)
+    add_definitions(-DCAIWEI_LOG_DEBUG=D)
     message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 else()
-    add_definitions(-DLOG_LEVEL=INFO)
+    add_definitions(-DCAIWEI_LOG_DEBUG=I)
     message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-endif()
-
-if(ANDROID)
-# -
-elseif(CMAKE_HOST_LINUX)
-    list(APPEND CAIWEI_CORE_LIBS avutil avcodec avdevice avformat swscale swresample)
-elseif(CMAKE_HOST_WIN32)
-    set(FFMPEG_PATH      "deps/ffmpeg"      CACHE STRING "FFmpeg Path")
-    set(CPP_HTTPLIB_PATH "deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
-    set(
-        CMAKE_PREFIX_PATH
-        ${CMAKE_PREFIX_PATH}
-        ${FFMPEG_PATH}
-        ${CPP_HTTPLIB_PATH}
-    )
-    find_package(FFMPEG  REQUIRED)
-    find_package(httplib REQUIRED)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        file(GLOB FFMPEG_DLLS      "${FFMPEG_PATH}/debug/bin/*.dll")
-        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
-    else()
-        file(GLOB FFMPEG_DLLS      "${FFMPEG_PATH}/bin/*.dll")
-        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
-    endif()
-    list(APPEND CAIWEI_CORE_DLLS ${FFMPEG_DLLS})
-    list(APPEND CAIWEI_CORE_INCS ${FFMPEG_INCLUDE_DIRS})
-    list(APPEND CAIWEI_CORE_LIBS ${FFMPEG_LIBRARIES})
-    list(APPEND CAIWEI_SERV_DLLS ${CPP_HTTPLIB_DLLS})
-    list(APPEND CAIWEI_SERV_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
-else()
-# -
 endif()
 
 if (ENABLE_CAIWEI_BACKEND_QNN)
@@ -158,6 +131,16 @@ endif()
 if (ENABLE_CAIWEI_RUNTIME_MNN)
     message(STATUS "Running with MNN")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_MNN)
+endif()
+
+if (ENABLE_CAIWEI_RUNTIME_NCNN)
+    message(STATUS "Running with NCNN")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_NCNN)
+endif()
+
+if (ENABLE_CAIWEI_RUNTIME_CANN)
+    message(STATUS "Running with CANN")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_CANN)
 endif()
 
 if (ENABLE_CAIWEI_RUNTIME_RKNN)
@@ -221,6 +204,60 @@ if (ENABLE_CAIWEI_SDL2)
     find_package(SDL2 CONFIG REQUIRED)
     list(APPEND CAIWEI_CORE_LIBS $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
     list(APPEND CAIWEI_CORE_LIBS $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
+endif()
+
+if (ENABLE_CAIWEI_FFMPEG)
+    message(STATUS "Enable FFmpeg")
+    if(ANDROID)
+    # -
+    elseif(CMAKE_HOST_LINUX)
+        list(APPEND CAIWEI_CORE_LIBS avutil avcodec avdevice avformat swscale swresample)
+    elseif(CMAKE_HOST_WIN32)
+        set(FFMPEG_PATH "deps/ffmpeg" CACHE STRING "FFmpeg Path")
+        set(
+            CMAKE_PREFIX_PATH
+            ${CMAKE_PREFIX_PATH}
+            ${FFMPEG_PATH}
+        )
+        find_package(FFMPEG REQUIRED)
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/debug/bin/*.dll")
+        else()
+            file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/bin/*.dll")
+        endif()
+        list(APPEND CAIWEI_CORE_DLLS ${FFMPEG_DLLS})
+        list(APPEND CAIWEI_CORE_INCS ${FFMPEG_INCLUDE_DIRS})
+        list(APPEND CAIWEI_CORE_LIBS ${FFMPEG_LIBRARIES})
+    else()
+    # -
+    endif()
+endif()
+
+if (ENABLE_CAIWEI_CPPHTTPLIB)
+    message(STATUS "Enable cpp-httplib")
+    add_definitions(-DENABLE_CAIWEI_REST)
+    if(ANDROID)
+    # -
+    elseif(CMAKE_HOST_LINUX)
+    # -
+    elseif(CMAKE_HOST_WIN32)
+        set(CPP_HTTPLIB_PATH "deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
+        set(
+            CMAKE_PREFIX_PATH
+            ${CMAKE_PREFIX_PATH}
+            ${CPP_HTTPLIB_PATH}
+        )
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
+        else()
+            file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
+        endif()
+        find_package(httplib REQUIRED)
+        list(APPEND CAIWEI_SERV_DLLS ${CPP_HTTPLIB_DLLS})
+        list(APPEND CAIWEI_SERV_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
+    else()
+    # -
+    endif()
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)

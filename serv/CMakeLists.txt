@@ -3,14 +3,20 @@ project(caiwei VERSION 1.0.0 LANGUAGES C CXX)
 set(
     CAIWEI_SERV_SRCS
     src/main.cpp
-    src/rest/rest.cpp
-    src/rest/text.cpp
-    src/rest/audio.cpp
-    src/rest/image.cpp
-    src/rest/video.cpp
     src/session/session.cpp
     src/session/video_play.cpp
 )
+
+if (ENABLE_CAIWEI_CPPHTTPLIB)
+    list(
+        APPEND CAIWEI_SERV_SRCS
+        src/rest/rest.cpp
+        src/rest/text.cpp
+        src/rest/audio.cpp
+        src/rest/image.cpp
+        src/rest/video.cpp
+    )
+endif ()
 
 if(ANDROID)
 # -
@@ -74,11 +80,18 @@ elseif(CMAKE_HOST_WIN32)
         $<$<CONFIG:Debug>:/NODEFAULTLIB:MSVCRT /SUBSYSTEM:CONSOLE>
         $<$<CONFIG:Release>:/NODEFAULTLIB:MSVCRTD /SUBSYSTEM:WINDOWS /entry:mainCRTStartup>
     )
-    add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_CORE_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_SERV_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
-    )
+    if (CAIWEI_CORE_DLLS)
+        add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_CORE_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
+        )
+    endif()
+    if (CAIWEI_SERV_DLLS)
+        add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_SERV_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
+        )
+    endif()
 else()
 # -
 endif()

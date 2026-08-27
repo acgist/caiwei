@@ -3,9 +3,6 @@
 
 #include "SDL2/SDL.h"
 
-static int audio_sample_rate = 8000;
-static int audio_nb_channels = 1;
-
 struct PlayerState {
     bool running       = false;
     bool audio_running = false;

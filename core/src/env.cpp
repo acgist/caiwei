@@ -59,3 +59,9 @@ void caiwei::env::set(const std::string& name, const std::string& value) {
     LOG_WARN("设置环境失败: %s = %s", name.c_str(), value.c_str());
 #endif
 }
+
+void caiwei::env::print_all_env() {
+    for (auto& pair : default_config) {
+        LOG_INFO("%-48s = %s", pair.first.c_str(), caiwei::env::get(pair.first).c_str());
+    }
+}
