@@ -1,6 +1,4 @@
-#include "test.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/media.hpp"
+#include "test_media.hpp"
 
 #include <thread>
 #include <fstream>

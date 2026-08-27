@@ -8,15 +8,22 @@
 
 *.log
 
+*.pt
+*.onnx
+*.rknn
+
 /build/
 
 /web/dist/
 /web/node_modules/
+
+/web/package-lock.json
 
 /.vscode/
 
 /deps/sdl2/
 /deps/ffmpeg/
 /deps/cpp-httplib/
+/deps/onnxruntime/
 
 /model/*.onnx

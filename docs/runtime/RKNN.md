@@ -1,9 +1,10 @@
 # RKNN
 
-RKNN2跑YOLO模型，RKNN3跑Qwen模型。
+* `RKNN2`跑`YOLO`模型
+* `RKNN3`跑`Qwen`模型
 
-* RKNN2：RK3566/RK3568/RK3576/RK3588
-* RKNN3：RK1820/RK1828
+* RKNN2: RK3566/RK3568/RK3576/RK3588
+* RKNN3: RK1820/RK1828
 
 ## 安装教程
 
@@ -14,6 +15,9 @@ pip install rknn-toolkit2
 ```
 
 ### RKNN3
+
+```
+```
 
 ## 相关链接
 

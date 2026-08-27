@@ -13,15 +13,15 @@
 
 ## 视觉模型
 
-|功能|类型|YOLOv11|YOLOv26|支持计划|
-|:--|:--|:--|:--|:--|
-|图像分类|cls  |√|√|○|
-|目标检测|det  |√|√|○|
-|有向检测|obb  |√|√|○|
-|实例分割|seg  |√|√|○|
-|语义分割|sem  |×|√|○|
-|姿态估计|pose |√|√|○|
-|深度估计|depth|×|√|○|
+|功能|类型|支持计划|
+|:--|:--|:--|
+|图像分类|cls  |○|
+|目标检测|det  |○|
+|有向检测|obb  |○|
+|实例分割|seg  |○|
+|语义分割|sem  |○|
+|姿态估计|pose |○|
+|深度估计|depth|○|
 
 ## 语言模型
 
@@ -45,13 +45,13 @@
 |         |Qwen3-Thinking-2507  |https://modelscope.cn/models/Qwen/Qwen3-4B-Thinking-2507         |○|
 |VLM      |Qwen3-VL-Instruct    |https://modelscope.cn/models/Qwen/Qwen3-VL-2B-Instruct           |○|
 |         |Qwen3-VL-Thinking    |https://modelscope.cn/models/Qwen/Qwen3-VL-2B-Thinking           |○|
-|MLLM     |Qwen3-Omni-Instruct  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct    |○|
-|         |Qwen3-Omni-Thinking  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Thinking    |○|
-|         |Qwen3-Omni-Captioner |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Captioner   |○|
+|MLLM     |Qwen3-Omni-Instruct  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct    |?|
+|         |Qwen3-Omni-Thinking  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Thinking    |?|
+|         |Qwen3-Omni-Captioner |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Captioner   |?|
 |Reranking|Qwen3-Reranker       |https://modelscope.cn/models/Qwen/Qwen3-Reranker-0.6B            |○|
-|         |Qwen3-VL-Reranker    |https://modelscope.cn/models/Qwen/Qwen3-VL-Reranker-2B           |○|
+|         |Qwen3-VL-Reranker    |https://modelscope.cn/models/Qwen/Qwen3-VL-Reranker-2B           |?|
 |Embedding|Qwen3-Embedding      |https://modelscope.cn/models/Qwen/Qwen3-Embedding-0.6B           |○|
-|         |Qwen3-VL-Embedding   |https://modelscope.cn/models/Qwen/Qwen3-VL-Embedding-2B          |○|
+|         |Qwen3-VL-Embedding   |https://modelscope.cn/models/Qwen/Qwen3-VL-Embedding-2B          |?|
 
 ## 通用推理SDK
 
@@ -76,30 +76,26 @@
 
 ## 后端支持
 
-|类型|设备|MNN|NCNN|llama.cpp|ONNXRuntime|
-|:--|:--|:--|:--|:--|:--|
-|NPU|QNN     |√|√|×|√|
-|   |CANN    |×|×|√|√|
-|   |RKNN    |×|×|×|√|
-|   |NNAPI   |√|√|×|√|
-|GPU|CUDA    |√|√|√|√|
-|   |OpenCL  |√|√|√|×|
-|   |Vulkan  |√|√|√|×|
-|SDK|OpenVINO|×|×|√|√|
-|   |TensorRT|×|×|×|√|
+|设备|MNN|NCNN|llama.cpp|ONNXRuntime|
+|:--|:--|:--|:--|:--|
+|CANN    |×|×|○|○|
+|RKNN    |×|×|×|○|
+|CUDA    |?|×|○|○|
+|Vulkan  |○|○|?|×|
+|OpenVINO|×|×|○|○|
+|TensorRT|×|×|×|?|
 
 ## 模型支持
 
 |模型|MNN|NCNN|llama.cpp|ONNXRuntime|RKNN|CANN|
 |:--|:--|:--|:--|:--|:--|:--|
-|YOLOv11        |?|?|×|√|√|√|
-|YOLOv26        |?|?|×|√|√|√|
-|Qwen3-ASR      |?|?|√|×|√|√|
-|Qwen3-TTS      |?|?|√|×|√|√|
-|Qwen3          |?|?|√|×|√|√|
-|Qwen3-VL       |?|?|√|×|√|√|
-|Qwen3-Omni     |?|?|√|×|√|√|
-|Qwen3-Reranker |?|?|√|×|√|√|
-|Qwen3-Embedding|?|?|√|×|√|√|
+|YOLO26         |○|○|×|○|○|○|
+|Qwen3-ASR      |○|×|○|×|○|○|
+|Qwen3-TTS      |○|×|○|×|○|○|
+|Qwen3          |○|×|○|×|○|○|
+|Qwen3-VL       |○|×|○|×|○|○|
+|Qwen3-Omni     |○|×|○|×|○|○|
+|Qwen3-Reranker |○|×|○|×|○|○|
+|Qwen3-Embedding|○|×|○|×|○|○|
 
 > √=已支持 ○=计划中 ?=未计划 ×=不支持

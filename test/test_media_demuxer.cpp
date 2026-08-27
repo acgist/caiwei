@@ -1,6 +1,5 @@
-#include "test.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/media.hpp"
+#include "test_media.hpp"
+
 #include "caiwei/player.hpp"
 
 #include <thread>

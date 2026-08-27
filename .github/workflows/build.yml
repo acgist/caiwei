@@ -14,9 +14,16 @@ jobs:
           mkdir deps
           cd    deps
           sudo  apt -y update
-          sudo  apt -y install gcc g++ wget cmake unzip ffmpeg libsdl2-dev libavutil-dev libavcodec-dev libswscale-dev libavdevice-dev libavformat-dev libswresample-dev
-          wget  https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-2.8.0%2Bcpu.zip > /dev/null 2>&1
-          unzip libtorch-shared-with-deps-2.8.0+cpu.zip > /dev/null 2>&1
+          sudo  apt -y install gcc g++ wget cmake unzip libsdl2-dev libcpp-httplib-dev
+          sudo  apt -y install ffmpeg libavutil-dev libavcodec-dev libavdevice-dev libavformat-dev libswscale-dev libswresample-dev
+          wget  https://github.com/microsoft/onnxruntime/releases/download/v1.28.1/onnxruntime-linux-x64-1.28.1.tgz > /dev/null 2>&1
+          tar   -zxvf onnxruntime-linux-x64-1.28.1.tgz > /dev/null 2>&1
+          mv    onnxruntime-linux-x64-1.28.1 onnxruntime
+          cd    onnxruntime
+          ln    -sf lib lib64
+          mv    include onnxruntime
+          mkdir include
+          mv    onnxruntime include
       - name: Deploy chobits
         run: |
           mkdir build

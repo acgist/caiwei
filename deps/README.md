@@ -25,36 +25,34 @@ apt install ffmpeg
 vcpkg install ffmpeg
 vcpkg export  ffmpeg --zip
 
-apt install nasm yasm
-apt install libx264-dev libopenh264-dev
+# 编译安装
+apt install nasm yasm libx264-dev
 
 git clone https://github.com/FFmpeg/nv-codec-headers.git
 cd nv-codec-headers
 git switch sdk/12.1
+make -j4
 sudo make install
 
 wget http://www.ffmpeg.org/releases/ffmpeg-6.1.1.tar.xz
 tar -Jxvf ffmpeg-6.1.1.tar.xz
 cd ffmpeg-6.1.1/
 PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
-./configure            \
-  --enable-static      \
-  --enable-shared      \
-  --enable-gpl         \
-  --enable-libx264     \
-  --enable-libopenh264 \
-  --enable-cuda        \
-  --enable-cuvid       \
-  --enable-nvenc       \
-  --enable-libnpp      \
-  --enable-nonfree     \
-  --enable-cuda-nvcc   \
+./configure          \
+  --enable-gpl       \
+  --enable-static    \
+  --enable-shared    \
+  --enable-cuda      \
+  --enable-cuvid     \
+  --enable-nvenc     \
+  --enable-libnpp    \
+  --enable-libx264   \
+  --enable-nonfree   \
+  --enable-cuda-nvcc \
   --extra-cflags="-I/usr/local/cuda/include" --extra-ldflags="-L/usr/local/cuda/lib64"
-make -j
+make -j4
 sudo make install
 ```
-
-**如果不用`CUDA`编解码器去掉`enable-cuda`之后所有参数**
 
 ## cpp-httplib
 
@@ -73,7 +71,7 @@ git clone -b v0.47.0 --depth=1 https://github.com/yhirose/cpp-httplib.git
 cd cpp-httplib
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j4
 sudo make install
 ```

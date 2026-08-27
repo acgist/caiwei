@@ -1,6 +1,4 @@
-#include "test.hpp"
-#include "caiwei/env.hpp"
-#include "caiwei/log.hpp"
+#include "test_media.hpp"
 
 int main() {
     init_test();
