@@ -1,7 +1,6 @@
 #include "test.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/media.hpp"
-#include "caiwei/player.hpp"
 
 #include <thread>
 #include <fstream>
@@ -64,24 +63,17 @@ int main() {
     media_format.open(media_muxer);
     caiwei::media::MediaDemuxer media_demuxer(type, url, [&media_muxer](const caiwei::media::AudioFrame& frame) {
         std::printf("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.samples);
-        // caiwei::player::play_audio(frame.data.data(), frame.data_length);
         media_muxer.on_audio(frame);
         std::fflush(stdout);
         return true;
     }, [&media_muxer](const caiwei::media::VideoFrame& frame) {
         std::printf("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
-        // caiwei::player::play_video(frame.data.data(), frame.width * 3);
         media_muxer.on_video(frame);
         std::fflush(stdout);
         // std::this_thread::sleep_for(std::chrono::milliseconds(20));
         return true;
     });
-    // std::thread player([]() {
-    //     caiwei::player::open_player(1, 16000, 640, 360);
-    // });
     media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
-    // caiwei::player::stop_player();
-    // player.join();
     media_demuxer.stop();
     media_format.stop();
     media_muxer.stop();
