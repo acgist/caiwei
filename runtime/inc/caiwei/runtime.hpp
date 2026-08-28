@@ -33,7 +33,6 @@ namespace runtime {
 enum class Type {
 
     MNN,
-    NCNN,
     CANN,
     RKNN,
     LLAMACPP,
@@ -55,10 +54,6 @@ std::shared_ptr<Runtime> get_runtime(caiwei::context::Type type);
 
 #ifdef ENABLE_CAIWEI_RUNTIME_MNN
 std::shared_ptr<Runtime> get_mnn_runtime(caiwei::context::Type type);
-#endif
-
-#ifdef ENABLE_CAIWEI_RUNTIME_NCNN
-std::shared_ptr<Runtime> get_ncnn_runtime(caiwei::context::Type type);
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN

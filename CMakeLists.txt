@@ -3,22 +3,21 @@ cmake_minimum_required(VERSION 3.22.0)
 project(caiwei-project VERSION 1.0.0 LANGUAGES C CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ENABLE_CAIWEI_TEST                "Build Test"        OFF) # 是否编译测试
-option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) #          llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #                    ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # MNN      llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN NCNN llama.cpp
-option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) #          llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #                    ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) #     llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #               ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # MNN llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN llama.cpp
+option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) #     llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #               ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_CANN        "CANN"              OFF) # 昇腾
 option(ENABLE_CAIWEI_RUNTIME_RKNN        "RKNN"              OFF) # 瑞芯微
-option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
-option(ENABLE_CAIWEI_RUNTIME_NCNN        "NCNN"              OFF) # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         ON)  # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"       ON)  # 跨平台
 option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"           ON)  # ASR前置ANS
@@ -119,10 +118,6 @@ if (ENABLE_CAIWEI_RUNTIME_MNN)
     add_definitions(-DENABLE_CAIWEI_RUNTIME_MNN)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_NCNN)
-    message(STATUS "Running with NCNN")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_NCNN)
-endif()
 
 if (ENABLE_CAIWEI_RUNTIME_CANN)
     message(STATUS "Running with CANN")

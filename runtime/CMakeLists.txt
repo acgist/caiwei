@@ -27,15 +27,6 @@ if (ENABLE_CAIWEI_RUNTIME_MNN)
     list(APPEND CAIWEI_RUNTIME_INCS third_party/mnn)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_NCNN)
-    list(
-        APPEND CAIWEI_RUNTIME_SRCS
-        src/ncnn/runtime.cpp
-        src/ncnn/yolo26.cpp
-    )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/ncnn)
-endif()
-
 if (ENABLE_CAIWEI_RUNTIME_CANN)
     list(
         APPEND CAIWEI_RUNTIME_SRCS

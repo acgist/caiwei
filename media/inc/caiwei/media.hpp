@@ -1,7 +1,5 @@
 /**
  * 媒体
- * 
- * TODO OpenCV性能比较
  */
 #ifndef CAIWEI_MEDIA_HPP
 #define CAIWEI_MEDIA_HPP
@@ -28,7 +26,6 @@ extern void init();
 extern void stop();
 
 struct Point {
-    // 点百分比
     float x;
     float y;
 };
@@ -38,11 +35,26 @@ struct Area {
 };
 
 struct Rect {
-    // 中心点百分比
     float x;
     float y;
     float w;
     float h;
+};
+
+struct RectCenter {
+    float cx;
+    float cy;
+    float  w;
+    float  h;
+};
+
+struct Box {
+    float x1;
+    float y1;
+    float x2;
+    float y2;
+    int   class_id;
+    float score;
 };
 
 class Frame {
@@ -73,10 +85,6 @@ public:
     uint32_t height;
 public:
     ImageFrame(uint32_t size);
-public:
-    bool crop  (const Rect& rect,      void* target);
-    bool draw  (const Rect& rect,      void* target);
-    bool resize(int width, int height, void* target);
 
 };
 
@@ -209,22 +217,6 @@ public:
     bool stop();
 
 };
-
-// TODO: opencv 性能比较
-void copy_i8 (const uint8_t* src, uint32_t size, void* dst);
-void copy_f16(const uint8_t* src, uint32_t size, void* dst);
-void copy_f32(const uint8_t* src, uint32_t size, void* dst);
-void copy_i8_scale (const uint8_t* src, uint32_t size, float scale, void* dst);
-void copy_f16_scale(const uint8_t* src, uint32_t size, float scale, void* dst);
-void copy_f32_scale(const uint8_t* src, uint32_t size, float scale, void* dst);
-void copy_i8_scale_mean (const uint8_t* src, uint32_t size, float scale, float mean, void* dst);
-void copy_f16_scale_mean(const uint8_t* src, uint32_t size, float scale, float mean, void* dst);
-void copy_f32_scale_mean(const uint8_t* src, uint32_t size, float scale, float mean, void* dst);
-
-// void transpose();
-// void min_max_loc();
-// void nms_boxes(boxes, scores, confidenceThreshold, iouThreshold, nmsResult);
-// void nms_boxes(boxes, scores, classes, confidenceThreshold, iouThreshold, nmsResult);
 
 } // namespace media
 } // namespace caiwei

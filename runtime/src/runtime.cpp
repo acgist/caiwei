@@ -8,12 +8,6 @@ std::shared_ptr<caiwei::runtime::Runtime> caiwei::runtime::get_runtime(caiwei::c
         return runtime;
     }
     #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_NCNN
-    runtime = caiwei::runtime::get_ncnn_runtime(type);
-    if (runtime != nullptr) {
-        return runtime;
-    }
-    #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_CANN
     runtime = caiwei::runtime::get_cann_runtime(type);
     if (runtime != nullptr) {

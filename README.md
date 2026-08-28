@@ -11,6 +11,21 @@
 昔我往矣，杨柳依依。今我来思，雨雪霏霏。行道迟迟，载渴载饥。我心伤悲，莫知我哀！
 ```
 
+
+<p align="center">
+    <a target="_blank" href="https://starchart.cc/acgist/caiwei">
+        <img alt="GitHub stars" src="https://img.shields.io/github/stars/acgist/caiwei?style=flat-square&label=Github%20stars&color=crimson" />
+    </a>
+    <img alt="Gitee stars" src="https://img.shields.io/badge/dynamic/json?style=flat-square&label=Gitee%20stars&color=crimson&url=https://gitee.com/api/v5/repos/acgist/caiwei&query=$.stargazers_count&cacheSeconds=3600" />
+    <br />
+    <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/acgist/caiwei/build.yml?style=flat-square&branch=master" />
+    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/acgist/caiwei?style=flat-square&color=orange" />
+    <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/acgist/caiwei?style=flat-square&color=blue" />
+    <img alt="GitHub" src="https://img.shields.io/github/license/acgist/caiwei?style=flat-square&color=blue" />
+</p>
+
+----
+
 ## 视觉模型
 
 |功能|类型|支持计划|
@@ -58,11 +73,9 @@
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
 |MNN        |https://github.com/alibaba/MNN          |○|
-|NCNN       |https://github.com/Tencent/ncnn         |○|
 |llama.cpp  |https://github.com/ggml-org/llama.cpp   |○|
-|ONNXRuntime|https://github.com/microsoft/onnxruntime|○|
-|LiteRT     |https://github.com/google-ai-edge/LiteRT|×|
 |ExecuTorch |https://github.com/pytorch/executorch   |×|
+|ONNXRuntime|https://github.com/microsoft/onnxruntime|○|
 
 ## 厂商推理SDK
 
@@ -76,26 +89,26 @@
 
 ## 后端支持
 
-|设备|MNN|NCNN|llama.cpp|ONNXRuntime|
-|:--|:--|:--|:--|:--|
-|CANN    |×|×|○|○|
-|RKNN    |×|×|×|○|
-|CUDA    |?|×|○|○|
-|Vulkan  |○|○|?|×|
-|OpenVINO|×|×|○|○|
-|TensorRT|×|×|×|?|
+|设备|MNN|llama.cpp|ONNXRuntime|
+|:--|:--|:--|:--|
+|CANN    |×|○|○|
+|RKNN    |×|×|○|
+|CUDA    |?|○|○|
+|Vulkan  |○|?|×|
+|TensorRT|×|×|?|
+|OpenVINO|×|○|○|
 
 ## 模型支持
 
-|模型|MNN|NCNN|llama.cpp|ONNXRuntime|RKNN|CANN|
-|:--|:--|:--|:--|:--|:--|:--|
-|YOLO26         |○|○|×|○|○|○|
-|Qwen3-ASR      |○|×|○|×|○|○|
-|Qwen3-TTS      |○|×|○|×|○|○|
-|Qwen3          |○|×|○|×|○|○|
-|Qwen3-VL       |○|×|○|×|○|○|
-|Qwen3-Omni     |○|×|○|×|○|○|
-|Qwen3-Reranker |○|×|○|×|○|○|
-|Qwen3-Embedding|○|×|○|×|○|○|
+|模型|MNN|llama.cpp|ONNXRuntime|CANN|RKNN|
+|:--|:--|:--|:--|:--|:--|
+|YOLO26         |○|×|○|○|○|
+|Qwen3-ASR      |○|○|×|○|○|
+|Qwen3-TTS      |○|○|×|○|○|
+|Qwen3          |○|○|×|○|○|
+|Qwen3-VL       |○|○|×|○|○|
+|Qwen3-Omni     |○|○|×|○|○|
+|Qwen3-Reranker |○|○|×|○|○|
+|Qwen3-Embedding|○|○|×|○|○|
 
 > √=已支持 ○=计划中 ?=未计划 ×=不支持

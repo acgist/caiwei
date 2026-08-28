@@ -1,5 +1,9 @@
 /**
  * 视觉模型
+ * 
+ * YOLO letterbox
+ * 缩放居中
+ * 默认填充: 114
  */
 #ifndef CAIWEI_MODEL_YOLO_HPP
 #define CAIWEI_MODEL_YOLO_HPP

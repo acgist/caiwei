@@ -81,9 +81,13 @@ elseif(CMAKE_HOST_WIN32)
     # /MTd LIBCMTD.LIB  多线程静态链接的Debug版本
     # /MT  LIBCPMT.LIB  多线程静态链接的Release版本
     # /MTd LIBCPMTD.LIB 多线程静态链接的Debug版本
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL$<$<CONFIG:Debug>:Debug>")
+    # set_property(TARGET project PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    # set_property(TARGET project PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL$<$<CONFIG:Debug>:Debug>")
     target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:/NODEFAULTLIB:MSVCRT /SUBSYSTEM:CONSOLE>
-        $<$<CONFIG:Release>:/NODEFAULTLIB:MSVCRTD /SUBSYSTEM:WINDOWS /entry:mainCRTStartup>
+        $<$<CONFIG:Debug>:/SUBSYSTEM:CONSOLE>
+        $<$<CONFIG:Release>:/SUBSYSTEM:WINDOWS /entry:mainCRTStartup>
     )
     if (CAIWEI_MEDIA_DLLS)
         add_custom_command(

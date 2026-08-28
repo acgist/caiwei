@@ -23,7 +23,6 @@
 
 /deps/sdl2/
 /deps/ffmpeg/
+/deps/opencv/
 /deps/cpp-httplib/
 /deps/onnxruntime/
-
-/model/*.onnx

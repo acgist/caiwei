@@ -60,6 +60,9 @@ static void print_all_encoder() {
 
 static void delete_old_sdp_file() {
     std::filesystem::path sdp_parent = "./sdp/";
+    if (!std::filesystem::exists(sdp_parent)) {
+        return;
+    }
     for (auto& entry : std::filesystem::directory_iterator(sdp_parent)) {
         if (entry.is_regular_file() && entry.path().extension() == ".sdp") {
             LOG_INFO("删除旧的SDP文件: %s", entry.path().string().c_str());
