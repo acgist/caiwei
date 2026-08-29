@@ -14,8 +14,16 @@ list(APPEND CAIWEI_RUNTIME_INCS inc)
 if (ENABLE_CAIWEI_RUNTIME_MNN)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
+        src/mnn/mnn.cpp
+        src/mnn/context.cpp
         src/mnn/runtime.cpp
-        src/mnn/yolo26.cpp
+        src/mnn/yolo_cls.cpp
+        src/mnn/yolo_det.cpp
+        src/mnn/yolo_obb.cpp
+        src/mnn/yolo_seg.cpp
+        src/mnn/yolo_sem.cpp
+        src/mnn/yolo_pose.cpp
+        src/mnn/yolo_depth.cpp
         src/mnn/qwen3_asr.cpp
         src/mnn/qwen3_tts.cpp
         src/mnn/qwen3_llm.cpp
@@ -30,8 +38,16 @@ endif()
 if (ENABLE_CAIWEI_RUNTIME_CANN)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
+        src/cann/cann.cpp
+        src/cann/context.cpp
         src/cann/runtime.cpp
-        src/cann/yolo26.cpp
+        src/cann/yolo_cls.cpp
+        src/cann/yolo_det.cpp
+        src/cann/yolo_obb.cpp
+        src/cann/yolo_seg.cpp
+        src/cann/yolo_sem.cpp
+        src/cann/yolo_pose.cpp
+        src/cann/yolo_depth.cpp
         src/cann/qwen3_asr.cpp
         src/cann/qwen3_tts.cpp
         src/cann/qwen3_llm.cpp
@@ -46,8 +62,16 @@ endif()
 if (ENABLE_CAIWEI_RUNTIME_RKNN)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
+        src/rknn/rknn.cpp
+        src/rknn/context.cpp
         src/rknn/runtime.cpp
-        src/rknn/yolo26.cpp
+        src/rknn/yolo_cls.cpp
+        src/rknn/yolo_det.cpp
+        src/rknn/yolo_obb.cpp
+        src/rknn/yolo_seg.cpp
+        src/rknn/yolo_sem.cpp
+        src/rknn/yolo_pose.cpp
+        src/rknn/yolo_depth.cpp
         src/rknn/qwen3_asr.cpp
         src/rknn/qwen3_tts.cpp
         src/rknn/qwen3_llm.cpp
@@ -62,7 +86,16 @@ endif()
 if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
+        src/llamacpp/llamacpp.cpp
+        src/llamacpp/context.cpp
         src/llamacpp/runtime.cpp
+        src/llamacpp/yolo_cls.cpp
+        src/llamacpp/yolo_det.cpp
+        src/llamacpp/yolo_obb.cpp
+        src/llamacpp/yolo_seg.cpp
+        src/llamacpp/yolo_sem.cpp
+        src/llamacpp/yolo_pose.cpp
+        src/llamacpp/yolo_depth.cpp
         src/llamacpp/qwen3_asr.cpp
         src/llamacpp/qwen3_tts.cpp
         src/llamacpp/qwen3_llm.cpp
@@ -77,8 +110,23 @@ endif()
 if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
+        src/onnxruntime/onnxruntime.cpp
+        src/onnxruntime/context.cpp
         src/onnxruntime/runtime.cpp
-        src/onnxruntime/yolo26.cpp
+        src/onnxruntime/yolo_cls.cpp
+        src/onnxruntime/yolo_det.cpp
+        src/onnxruntime/yolo_obb.cpp
+        src/onnxruntime/yolo_seg.cpp
+        src/onnxruntime/yolo_sem.cpp
+        src/onnxruntime/yolo_pose.cpp
+        src/onnxruntime/yolo_depth.cpp
+        src/onnxruntime/qwen3_asr.cpp
+        src/onnxruntime/qwen3_tts.cpp
+        src/onnxruntime/qwen3_llm.cpp
+        src/onnxruntime/qwen3_vlm.cpp
+        src/onnxruntime/qwen3_mllm.cpp
+        src/onnxruntime/qwen3_embedding.cpp
+        src/onnxruntime/qwen3_reranking.cpp
     )
     list(APPEND CAIWEI_RUNTIME_INCS third_party/onnxruntime)
 endif()

@@ -9,68 +9,116 @@
 #include <atomic>
 #include <memory>
 
-namespace caiwei  {
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN
+#ifdef __arm__
+typedef uint32_t rknn_context;
+#else
+typedef uint64_t rknn_context;
+#endif
+#endif
 
-namespace context {
+#ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
+namespace Ort {
 
-enum class Type {
-
-    ASR,
-    TTS,
-    LLM,
-    VLM,
-    MLLM,
-    YOLO,
-    EMBEDDING,
-    RERANKING,
+struct Env;
 
 };
+#endif
 
-} // namespace context
-
+namespace caiwei  {
 namespace runtime {
 
 enum class Type {
 
     MNN,
     CANN,
-    RKNN,
+    RKNN2,
+    RKNN3,
     LLAMACPP,
     ONNXRUNTIME,
+    NONE,
 
 };
 
 class Runtime {
 
 private:
+    caiwei::runtime::Type type;
     std::atomic_int32_t ref_count = 0;
+public:
+    Runtime(caiwei::runtime::Type type);
+    virtual ~Runtime();
 public:
     uint32_t ref();
     uint32_t unref();
 
 };
 
-std::shared_ptr<Runtime> get_runtime(caiwei::context::Type type);
-
 #ifdef ENABLE_CAIWEI_RUNTIME_MNN
-std::shared_ptr<Runtime> get_mnn_runtime(caiwei::context::Type type);
+class MNNRuntime : public Runtime {
+
+public:
+    MNNRuntime();   
+    ~MNNRuntime();
+
+};
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN
-std::shared_ptr<Runtime> get_cann_runtime(caiwei::context::Type type);
+class CANNRuntime : public Runtime {
+
+public:
+    CANNRuntime();   
+    ~CANNRuntime();
+
+};
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN
-std::shared_ptr<Runtime> get_rknn_runtime(caiwei::context::Type type);
+class RKNN2Runtime : public Runtime {
+
+public:
+    RKNN2Runtime();   
+    ~RKNN2Runtime();
+
+};
+
+class RKNN3Runtime : public Runtime {
+
+public:
+    RKNN3Runtime();   
+    ~RKNN3Runtime();
+
+};
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
-std::shared_ptr<Runtime> get_llamacpp_runtime(caiwei::context::Type type);
+class LlamaCPPRuntime : public Runtime {
+    
+public:
+    LlamaCPPRuntime();   
+    ~LlamaCPPRuntime();
+
+};
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
-std::shared_ptr<Runtime> get_onnxruntime_runtime(caiwei::context::Type type);
+class ONNXRuntimeRuntime : public Runtime {
+
+public:
+    Ort::Env* env = nullptr;
+public:
+    ONNXRuntimeRuntime();   
+    ~ONNXRuntimeRuntime();
+
+};
 #endif
+
+extern void init();
+extern void stop();
+
+template <typename R>
+extern std::shared_ptr<R> get_runtime(caiwei::runtime::Type type);
 
 } // namespace runtime
 } // namespace caiwei

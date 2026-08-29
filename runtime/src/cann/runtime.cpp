@@ -1,5 +1,15 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 
-std::shared_ptr<caiwei::runtime::Runtime> caiwei::runtime::get_cann_runtime(caiwei::context::Type type) {
-    return nullptr;
+caiwei::runtime::CANNRuntime::CANNRuntime() : Runtime(caiwei::runtime::Type::CANN) {
+    LOG_INFO("CANNRuntime init");
+}
+
+caiwei::runtime::CANNRuntime::~CANNRuntime() {
+    LOG_INFO("CANNRuntime stop");
+}
+
+template<>
+std::shared_ptr<caiwei::runtime::CANNRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
+    return std::make_shared<caiwei::runtime::CANNRuntime>();
 }

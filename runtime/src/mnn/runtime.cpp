@@ -1,5 +1,15 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 
-std::shared_ptr<caiwei::runtime::Runtime> caiwei::runtime::get_mnn_runtime(caiwei::context::Type type) {
-    return nullptr;
+caiwei::runtime::MNNRuntime::MNNRuntime() : Runtime(caiwei::runtime::Type::MNN) {
+    LOG_INFO("MNNRuntime init");
+}
+
+caiwei::runtime::MNNRuntime::~MNNRuntime() {
+    LOG_INFO("MNNRuntime stop");
+}
+
+template<>
+std::shared_ptr<caiwei::runtime::MNNRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
+    return std::make_shared<caiwei::runtime::MNNRuntime>();
 }

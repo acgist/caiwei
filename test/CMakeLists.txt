@@ -1,13 +1,13 @@
 enable_testing()
 
 add_executable(
-    test_env
-    test_env.cpp
+    test_media_env
+    test_media_env.cpp
 )
-add_test(NAME test_env COMMAND test_env)
-set_target_properties(test_env PROPERTIES FOLDER "test-media")
+add_test(NAME test_media_env COMMAND test_media_env)
+set_target_properties(test_media_env PROPERTIES FOLDER "test-media")
 target_link_libraries(
-    test_env
+    test_media_env
     caiwei-media
 )
 
@@ -34,178 +34,178 @@ target_link_libraries(
 )
 
 add_executable(
-    test_model_asr
-    test_model_asr.cpp
+    test_context_asr
+    test_context_asr.cpp
 )
-add_test(NAME test_model_asr COMMAND test_model_asr)
-set_target_properties(test_model_asr PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_asr COMMAND test_context_asr)
+set_target_properties(test_context_asr PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_asr
+    test_context_asr
     caiwei-runtime
 )
 
 add_executable(
-    test_model_tts
-    test_model_tts.cpp
+    test_context_tts
+    test_context_tts.cpp
 )
-add_test(NAME test_model_tts COMMAND test_model_tts)
-set_target_properties(test_model_tts PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_tts COMMAND test_context_tts)
+set_target_properties(test_context_tts PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_tts
+    test_context_tts
     caiwei-runtime
 )
 
 add_executable(
-    test_model_llm
-    test_model_llm.cpp
+    test_context_llm
+    test_context_llm.cpp
 )
-add_test(NAME test_model_llm COMMAND test_model_llm)
-set_target_properties(test_model_llm PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_llm COMMAND test_context_llm)
+set_target_properties(test_context_llm PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_llm
+    test_context_llm
     caiwei-runtime
 )
 
 add_executable(
-    test_model_vlm
-    test_model_vlm.cpp
+    test_context_vlm
+    test_context_vlm.cpp
 )
-add_test(NAME test_model_vlm COMMAND test_model_vlm)
-set_target_properties(test_model_vlm PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_vlm COMMAND test_context_vlm)
+set_target_properties(test_context_vlm PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_vlm
+    test_context_vlm
     caiwei-runtime
 )
 
 add_executable(
-    test_model_mllm
-    test_model_mllm.cpp
+    test_context_mllm
+    test_context_mllm.cpp
 )
-add_test(NAME test_model_mllm COMMAND test_model_mllm)
-set_target_properties(test_model_mllm PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_mllm COMMAND test_context_mllm)
+set_target_properties(test_context_mllm PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_mllm
+    test_context_mllm
     caiwei-runtime
 )
 
 add_executable(
-    test_model_embedding
-    test_model_embedding.cpp
+    test_context_embedding
+    test_context_embedding.cpp
 )
-add_test(NAME test_model_embedding COMMAND test_model_embedding)
-set_target_properties(test_model_embedding PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_embedding COMMAND test_context_embedding)
+set_target_properties(test_context_embedding PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_embedding
+    test_context_embedding
     caiwei-runtime
 )
 
 add_executable(
-    test_model_reranking
-    test_model_reranking.cpp
+    test_context_reranking
+    test_context_reranking.cpp
 )
-add_test(NAME test_model_reranking COMMAND test_model_reranking)
-set_target_properties(test_model_reranking PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_reranking COMMAND test_context_reranking)
+set_target_properties(test_context_reranking PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_reranking
+    test_context_reranking
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_cls
-    test_model_yolo_cls.cpp
+    test_context_yolo_cls
+    test_context_yolo_cls.cpp
 )
-add_test(NAME test_model_yolo_cls COMMAND test_model_yolo_cls)
-set_target_properties(test_model_yolo_cls PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_cls COMMAND test_context_yolo_cls)
+set_target_properties(test_context_yolo_cls PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_cls
+    test_context_yolo_cls
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_det
-    test_model_yolo_det.cpp
+    test_context_yolo_det
+    test_context_yolo_det.cpp
 )
-add_test(NAME test_model_yolo_det COMMAND test_model_yolo_det)
-set_target_properties(test_model_yolo_det PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_det COMMAND test_context_yolo_det)
+set_target_properties(test_context_yolo_det PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_det
+    test_context_yolo_det
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_seg
-    test_model_yolo_seg.cpp
+    test_context_yolo_seg
+    test_context_yolo_seg.cpp
 )
-add_test(NAME test_model_yolo_seg COMMAND test_model_yolo_seg)
-set_target_properties(test_model_yolo_seg PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_seg COMMAND test_context_yolo_seg)
+set_target_properties(test_context_yolo_seg PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_seg
+    test_context_yolo_seg
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_sem
-    test_model_yolo_sem.cpp
+    test_context_yolo_sem
+    test_context_yolo_sem.cpp
 )
-add_test(NAME test_model_yolo_sem COMMAND test_model_yolo_sem)
-set_target_properties(test_model_yolo_sem PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_sem COMMAND test_context_yolo_sem)
+set_target_properties(test_context_yolo_sem PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_sem
+    test_context_yolo_sem
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_obb
-    test_model_yolo_obb.cpp
+    test_context_yolo_obb
+    test_context_yolo_obb.cpp
 )
-add_test(NAME test_model_yolo_obb COMMAND test_model_yolo_obb)
-set_target_properties(test_model_yolo_obb PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_obb COMMAND test_context_yolo_obb)
+set_target_properties(test_context_yolo_obb PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_obb
+    test_context_yolo_obb
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_pose
-    test_model_yolo_pose.cpp
+    test_context_yolo_pose
+    test_context_yolo_pose.cpp
 )
-add_test(NAME test_model_yolo_pose COMMAND test_model_yolo_pose)
-set_target_properties(test_model_yolo_pose PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_pose COMMAND test_context_yolo_pose)
+set_target_properties(test_context_yolo_pose PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_pose
+    test_context_yolo_pose
     caiwei-runtime
 )
 
 add_executable(
-    test_model_yolo_depth
-    test_model_yolo_depth.cpp
+    test_context_yolo_depth
+    test_context_yolo_depth.cpp
 )
-add_test(NAME test_model_yolo_depth COMMAND test_model_yolo_depth)
-set_target_properties(test_model_yolo_depth PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_yolo_depth COMMAND test_context_yolo_depth)
+set_target_properties(test_context_yolo_depth PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_yolo_depth
+    test_context_yolo_depth
     caiwei-runtime
 )
 
 add_executable(
-    test_model_rnnoise
-    test_model_rnnoise.cpp
+    test_context_rnnoise
+    test_context_rnnoise.cpp
 )
-add_test(NAME test_model_rnnoise COMMAND test_model_rnnoise)
-set_target_properties(test_model_rnnoise PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_rnnoise COMMAND test_context_rnnoise)
+set_target_properties(test_context_rnnoise PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_rnnoise
+    test_context_rnnoise
     caiwei-runtime
 )
 
 add_executable(
-    test_model_silero_vad
-    test_model_silero_vad.cpp
+    test_context_silero_vad
+    test_context_silero_vad.cpp
 )
-add_test(NAME test_model_silero_vad COMMAND test_model_silero_vad)
-set_target_properties(test_model_silero_vad PROPERTIES FOLDER "test-runtime")
+add_test(NAME test_context_silero_vad COMMAND test_context_silero_vad)
+set_target_properties(test_context_silero_vad PROPERTIES FOLDER "test-runtime")
 target_link_libraries(
-    test_model_silero_vad
+    test_context_silero_vad
     caiwei-runtime
 )
 

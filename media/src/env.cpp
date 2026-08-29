@@ -16,8 +16,14 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_PASSWORD",    "admin"   }, // 接口密码
     {"CAIWEI_SECURITY",    "OFF"     }, // 安全验证
     {"CAIWEI_TIMEOUT",     "30000"   }, // 超时时间
-    {"CAIWEI_YOLO_DET_IOU_THRESHOLD",        "0.6"}, // 物体检测IOU阈值
-    {"CAIWEI_YOLO_DET_CONFIDENCE_THRESHOLD", "0.4"}, // 物体检测置信度阈值
+    // DET
+    {"CAIWEI_DET_W",                    "640"          }, // 超时时间
+    {"CAIWEI_DET_H",                    "640"          }, // 超时时间
+    {"CAIWEI_DET_PATH",                 "yolo26n.onnx" }, // 超时时间
+    {"CAIWEI_DET_CLASS_SIZE",           "80"           }, // 超时时间
+    {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"          }, // 物体检测IOU阈值
+    {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"          }, // 物体检测置信度阈值
+    
 };
 
 std::string caiwei::env::get(const std::string& name) {

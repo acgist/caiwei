@@ -65,6 +65,7 @@ inline bool recv_video_frame(size_t msec, size_t video_frames, SwsContext* sws_c
     }
     videoFrame.width       = video_info.width;
     videoFrame.height      = height;
+    videoFrame.channels    = 3;
     videoFrame.msec        = msec;
     videoFrame.frames      = video_frames;
     videoFrame.data_length = video_info.width * height * 3;

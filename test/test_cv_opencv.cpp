@@ -7,19 +7,41 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/core/utils/logger.hpp"
 
-#define IMAGE_PATH "D:/download/h.jpg"
+extern "C" {
+
+#include "libswscale/swscale.h"
+
+}
+
+struct Box {
+    float x1; // 左上角x百分比
+    float y1; // 左上角y百分比
+    float x2; // 右下角x百分比
+    float y2; // 右下角y百分比
+    int   class_id; // 类别ID
+    float score;    // 置信度
+};
+
+// #define IMAGE_PATH "D:/download/h.jpg"
 // #define IMAGE_PATH "D:/download/w.jpg"
-// #define IMAGE_PATH "D:/download/caiwei.jpg"
+#define IMAGE_PATH "D:/download/caiwei.jpg"
 
 [[maybe_unused]]
 void test_load() {
-    int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
-    cv::Mat mat(height, width, CV_8UC3, data);
-    cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
-    cv::imshow("image", mat);
-    cv::waitKey(0);
-    stbi_image_free(data);
+    {
+        int width, height, channels;
+        auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+        cv::Mat mat(height, width, CV_8UC3, data);
+        cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        cv::imshow("loc", mat);
+        cv::waitKey(0);
+        stbi_image_free(data);
+    }
+    {
+        auto mat = cv::imread(IMAGE_PATH);;
+        cv::imshow("ocv", mat);
+        cv::waitKey(0);
+    }
 }
 
 [[maybe_unused]]
@@ -180,6 +202,34 @@ void test_ocv_resize() {
 }
 
 [[maybe_unused]]
+void test_ffmpeg_resize() {
+    // 100 = 123 ms
+    int width, height, channels;
+    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    int w = 640;
+    int h = 640;
+    float scale;
+    caiwei::transform::resize(width, height, w, h, scale);
+    SwsContext* sws = sws_getContext(
+        width, height, AV_PIX_FMT_RGB24,
+        w,     h,      AV_PIX_FMT_RGB24,
+        SWS_FAST_BILINEAR,
+        nullptr, nullptr, nullptr
+    );
+    CAIWEI_FOR_EACH(100)
+    int src_stride = width * 3;
+    int dst_stride = w     * 3;
+    std::vector<uint8_t> dst(w * h * channels);
+    auto dst_data = dst.data();
+    int ret = sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
+    // cv::Mat mat(h, w, CV_8UC3, dst.data());
+    // cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+    // cv::imshow("loc", mat);
+    // cv::waitKey(0);
+    CAIWEI_FOR_EACH_END
+}
+
+[[maybe_unused]]
 void test_resize_pad() {
     int width, height, channels;
     int w = 640;
@@ -189,10 +239,10 @@ void test_resize_pad() {
         auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
         caiwei::transform::resize(width, height, w, h, scale);
         int max = std::max(w, h);
-        int pad_t, pad_l;
+        int pad_w, pad_h;
         std::vector<uint8_t> dst(w * h * channels);
         std::vector<uint8_t> pad(max * max * channels);
-        caiwei::transform::resize(data, width, height, dst.data(), pad.data(), w, h, pad_t, pad_l);
+        caiwei::transform::resize(data, width, height, dst.data(), pad.data(), w, h, pad_w, pad_h);
         cv::Mat mat(max, max, CV_8UC3, pad.data());
         cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         cv::imshow("loc", mat);
@@ -221,11 +271,11 @@ void test_loc_resize_pad() {
     float scale;
     caiwei::transform::resize(width, height, w, h, scale);
     int max = std::max(w, h);
-    int pad_t, pad_l;
+    int pad_w, pad_h;
     CAIWEI_FOR_EACH(100)
     std::vector<uint8_t> dst(w * h * channels);
     std::vector<uint8_t> pad(max * max * channels);
-    caiwei::transform::resize(data, width, height, dst.data(), pad.data(), w, h, pad_t, pad_l);
+    caiwei::transform::resize(data, width, height, dst.data(), pad.data(), w, h, pad_w, pad_h);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -244,6 +294,136 @@ void test_ocv_resize_pad() {
     cv::resize(mat, dst, cv::Size(w, h));
     cv::Mat result = cv::Mat::zeros(max, max, CV_8UC3);
     dst.copyTo(result(cv::Rect((max - w) / 2, (max - h) / 2, w, h)));
+    CAIWEI_FOR_EACH_END
+}
+
+[[maybe_unused]]
+void test_nms_boxes() {
+    {
+        // x1y1x2y2
+        std::vector<Box> boxes = {
+            {  2,  2,   8,   8, 0, 0.80F },
+            { 10, 10, 120, 120, 0, 0.80F },
+            { 20, 20, 140, 140, 0, 0.90F },
+            { 20, 20, 140, 140, 1, 0.85F },
+            {  2 / 100.0F,  2 / 100.0F,   8 / 100.0F,   8 / 100.0F, 0, 0.80F },
+            { 10 / 100.0F, 10 / 100.0F, 120 / 100.0F, 120 / 100.0F, 0, 0.80F },
+            { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 0, 0.90F },
+            { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 1, 0.85F },
+        };
+        auto ret = caiwei::transform::nms_boxes(std::move(boxes), 0.5F);
+        for(auto &v : ret) {
+            std::printf("====> %.2f = %d\n", v.x1, v.class_id);
+        }
+    }
+    {
+        // xywh
+        std::vector<int>        ret;
+        std::vector<int>        classes{ 0, 0, 0, 1, 0, 0, 0, 1 };
+        std::vector<float>      scores { 0.8F, 0.8F, 0.9F, 0.85F, 0.8F, 0.8F, 0.9F, 0.85F };
+        std::vector<cv::Rect2d> boxes{
+            cv::Rect2d{  2,  2,   6,   6 },
+            cv::Rect2d{ 10, 10, 110, 110 },
+            cv::Rect2d{ 20, 20, 120, 120 },
+            cv::Rect2d{ 20, 20, 120, 120 },
+            cv::Rect2d{  2 / 100.0,  2 / 100.0,   6 / 100.0,   6 / 100.0 },
+            cv::Rect2d{ 10 / 100.0, 10 / 100.0, 110 / 100.0, 110 / 100.0 },
+            cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
+            cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
+        };
+        // cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
+        cv::dnn::NMSBoxesBatched(boxes, scores, classes, 0, 0.5F, ret);
+        for(auto &i : ret) {
+            const cv::Rect2d& v = boxes[i];
+            std::printf("----> %.2f = %d\n", v.x, classes[i]);
+        }
+    }
+}
+
+[[maybe_unused]]
+void test_loc_nms_boxes() {
+    // 10'000 = 14 ms
+    CAIWEI_FOR_EACH(10'000)
+    std::vector<Box> boxes = {
+        {  2,  2,   8,   8, 0, 0.80F },
+        { 10, 10, 120, 120, 0, 0.80F },
+        { 20, 20, 140, 140, 0, 0.90F },
+        { 20, 20, 140, 140, 1, 0.85F },
+        {  2 / 100.0F,  2 / 100.0F,   8 / 100.0F,   8 / 100.0F, 0, 0.80F },
+        { 10 / 100.0F, 10 / 100.0F, 120 / 100.0F, 120 / 100.0F, 0, 0.80F },
+        { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 0, 0.90F },
+        { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 1, 0.85F },
+    };
+    caiwei::transform::nms_boxes(std::move(boxes), 0.5F);
+    CAIWEI_FOR_EACH_END
+}
+
+[[maybe_unused]]
+void test_ocv_nms_boxes() {
+    // 10'000 = 14 ms
+    CAIWEI_FOR_EACH(10'000)
+    std::vector<int>        ret;
+    std::vector<int>        classes{ 0, 0, 0, 1, 0, 0, 0, 1 };
+    std::vector<float>      scores { 0.8F, 0.8F, 0.9F, 0.85F, 0.8F, 0.8F, 0.9F, 0.85F };
+    std::vector<cv::Rect2d> boxes{
+        cv::Rect2d{  2,  2,   6,   6 },
+        cv::Rect2d{ 10, 10, 110, 110 },
+        cv::Rect2d{ 20, 20, 120, 120 },
+        cv::Rect2d{ 20, 20, 120, 120 },
+        cv::Rect2d{  2 / 100.0,  2 / 100.0,   6 / 100.0,   6 / 100.0 },
+        cv::Rect2d{ 10 / 100.0, 10 / 100.0, 110 / 100.0, 110 / 100.0 },
+        cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
+        cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
+    };
+    // cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
+    cv::dnn::NMSBoxesBatched(boxes, scores, classes, 0, 0.5F, ret);
+    CAIWEI_FOR_EACH_END
+}
+
+[[maybe_unused]]
+void test_min_max_loc() {
+    float scores[128];
+    std::iota(scores, scores + 128, 1.0F);
+    scores[100] = 10000.0F;
+    {
+        int   max_index;
+        float max_score;
+        caiwei::transform::max_loc(scores, 128, max_score, max_index);
+        assert(max_score == 10000.0F);
+        assert(max_index == 100);
+    }
+    {
+        double    max_score;
+        cv::Point max_index;
+        cv::Mat mat(1, 128, CV_32FC1, scores);
+        cv::minMaxLoc(mat, NULL, &max_score, NULL, &max_index);
+        assert(max_score == 10000.0F);
+        assert(max_index.x == 100);
+    }
+}
+
+[[maybe_unused]]
+void test_loc_min_max_loc() {
+    // 10'000 = 0 ms
+    float scores[128];
+    std::iota(scores, scores + 128, 1.0F);
+    int   max_index;
+    float max_score;
+    CAIWEI_FOR_EACH(10'000)
+    caiwei::transform::max_loc(scores, 128, max_score, max_index);
+    CAIWEI_FOR_EACH_END
+}
+
+[[maybe_unused]]
+void test_ocv_min_max_loc() {
+    // 10'000 = 2 ms
+    double    max_score;
+    cv::Point max_class;
+    float scores[128];
+    std::iota(scores, scores + 128, 1.0F);
+    cv::Mat mat(1, 128, CV_32FC1, scores);
+    CAIWEI_FOR_EACH(10'000)
+    cv::minMaxLoc(mat, NULL, &max_score, NULL, &max_class);
     CAIWEI_FOR_EACH_END
 }
 
@@ -267,9 +447,10 @@ void test_transpose() {
 
 [[maybe_unused]]
 void test_loc_transpose() {
+    // 10'000 = 0 ms
     uint8_t src[128];
     uint8_t dts[128];
-    std::iota(src, src + sizeof(src) / sizeof(uint8_t), 1);
+    std::iota(src, src + 128, 1);
     CAIWEI_FOR_EACH(10'000)
     caiwei::transform::transpose(src, dts, 2, 64);
     CAIWEI_FOR_EACH_END
@@ -277,9 +458,10 @@ void test_loc_transpose() {
 
 [[maybe_unused]]
 void test_ocv_transpose() {
+    // 10'000 = 1 ms
     uint8_t src[128];
     uint8_t dts[128];
-    std::iota(src, src + sizeof(src) / sizeof(uint8_t), 1);
+    std::iota(src, src + 128, 1);
     cv::Mat mat = cv::Mat(64, 2, CV_8UC1, dts).clone();
     CAIWEI_FOR_EACH(10'000)
     mat.t();
@@ -287,70 +469,49 @@ void test_ocv_transpose() {
 }
 
 [[maybe_unused]]
+void test_convert_to() {
+    {
+        int width, height, channels;
+        auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+        std::vector<float> dst(width * height * channels);
+        caiwei::transform::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
+        cv::Mat mat = cv::Mat(height, width, CV_32FC3, dst.data()).clone();
+        cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        cv::imshow("loc", mat);
+        cv::waitKey(0);
+        stbi_image_free(data);
+    }
+    {
+        auto mat = cv::imread(IMAGE_PATH);
+        cv::Mat dst;
+        mat.convertTo(dst, CV_32FC3, 1 / 255.0F);
+        cv::imshow("ocv", dst);
+        cv::waitKey(0);
+    }
+}
+
+[[maybe_unused]]
 void test_loc_convert_to() {
-    // 100 = 800 ms
+    // 100 = 970 ms
     int width, height, channels;
     auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
     CAIWEI_FOR_EACH(100)
     std::vector<float> dst(width * height * channels);
     caiwei::transform::i8_to_f32(data, width * height * channels, dst.data());
+    caiwei::transform::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
 
 [[maybe_unused]]
 void test_ocv_convert_to() {
-    // 100 = 793 ms
+    // 100 = 927 ms
     auto mat = cv::imread(IMAGE_PATH);
-    cv::cvtColor(mat, mat, cv::COLOR_BGR2RGB);
     CAIWEI_FOR_EACH(100)
     cv::Mat dst;
     mat.convertTo(dst, CV_32FC3);
+    mat.convertTo(dst, CV_32FC3, 1 / 255.0F);
     CAIWEI_FOR_EACH_END
-}
-
-[[maybe_unused]]
-void test_min_max_loc() {
-    float scores[128];
-    std::iota(scores, scores + sizeof(scores) / sizeof(float), 1.0F);
-    scores[100] = 10000.0F;
-    {
-        int   max_index;
-        float max_score;
-        caiwei::transform::max_loc(scores, sizeof(scores) / sizeof(float), max_score, max_index);
-        LOG_INFO("max_score: %f, max_index: %d", max_score, max_index);
-    }
-    {
-        double    max_score;
-        cv::Point max_index;
-        cv::Mat mat(1, sizeof(scores) / sizeof(float), CV_32FC1, scores);
-        cv::minMaxLoc(mat, NULL, &max_score, NULL, &max_index);
-        LOG_INFO("max_score: %f, max_index: %d", max_score, max_index.x);
-    }
-}
-
-[[maybe_unused]]
-void test_loc_min_max_loc() {
-    float scores[128];
-    std::iota(scores, scores + sizeof(scores) / sizeof(float), 1.0F);
-    int   max_index;
-    float max_score;
-    CAIWEI_FOR_EACH(10'000)
-    caiwei::transform::max_loc(scores, sizeof(scores) / sizeof(float), max_score, max_index);
-    CAIWEI_FOR_EACH_END
-}
-
-[[maybe_unused]]
-void test_ocv_min_max_loc() {
-    double    max_score;
-    cv::Point max_class;
-    float scores[128];
-    std::iota(scores, scores + sizeof(scores) / sizeof(float), 1.0F);
-    cv::Mat mat(1, sizeof(scores) / sizeof(float), CV_32FC1, scores);
-    CAIWEI_FOR_EACH(10'000)
-    cv::minMaxLoc(mat, NULL, &max_score, NULL, &max_class);
-    CAIWEI_FOR_EACH_END
-
 }
 
 [[maybe_unused]]
@@ -361,45 +522,34 @@ void test_blob_from_image() {
         std::vector<float> hwc(width * height * channels);
         std::vector<float> chw(width * height * channels);
         caiwei::transform::i8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
-        cv::Mat hwc_mat = cv::Mat(height, width, CV_32FC3, hwc.data()).clone();
-        cv::cvtColor(hwc_mat, hwc_mat, cv::COLOR_RGB2BGR);
-        cv::imshow("image", hwc_mat);
-        cv::waitKey(0);
         caiwei::transform::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
         caiwei::transform::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
-        hwc_mat = cv::Mat(height, width, CV_32FC3, hwc.data()).clone();
+        cv::Mat hwc_mat(height, width, CV_32FC3, hwc.data());
         cv::cvtColor(hwc_mat, hwc_mat, cv::COLOR_RGB2BGR);
-        cv::imshow("image", hwc_mat);
+        cv::imshow("loc", hwc_mat);
         cv::waitKey(0);
         stbi_image_free(data);
     }
     {
-        auto hwc_mat = cv::imread(IMAGE_PATH);
-        cv::imshow("image", hwc_mat);
-        cv::waitKey(0);
-        cv::cvtColor(hwc_mat, hwc_mat, cv::COLOR_BGR2RGB);
+        auto mat = cv::imread(IMAGE_PATH);
         cv::Mat nchw_mat;
-        cv::dnn::blobFromImage(hwc_mat, nchw_mat, 1.0F / 255.0F);
-        std::vector<float> hwc(hwc_mat.cols * hwc_mat.rows * hwc_mat.channels());
-        float* chw = (float*) nchw_mat.data;
-        caiwei::transform::chw_to_hwc(chw, hwc.data(), hwc_mat.cols, hwc_mat.rows, hwc_mat.channels());
-        hwc_mat = cv::Mat(hwc_mat.size(), CV_32FC3, hwc.data()).clone();
-        cv::cvtColor(hwc_mat, hwc_mat, cv::COLOR_RGB2BGR);
-        cv::imshow("image", hwc_mat);
+        cv::dnn::blobFromImage(mat, nchw_mat, 1.0F / 255.0F);
+        std::vector<float> hwc(mat.cols * mat.rows * mat.channels());
+        caiwei::transform::chw_to_hwc((float*) nchw_mat.data, hwc.data(), mat.cols, mat.rows, mat.channels());
+        cv::Mat hwc_mat(mat.size(), CV_32FC3, hwc.data());
+        cv::imshow("ocv", hwc_mat);
         cv::waitKey(0);
     }
 }
 
 [[maybe_unused]]
 void test_loc_blob_from_image() {
-    // 100 = 1179 ms
+    // 100 = 1169 ms
     int width, height, channels;
     auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
     CAIWEI_FOR_EACH(100)
     std::vector<float> dst(width * height * channels);
-    std::transform(data, data + width * height * channels, dst.data(), [](uint8_t v) {
-        return static_cast<float>(v) / 255.0F;
-    });
+    caiwei::transform::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
     caiwei::transform::hwc_to_chw(dst.data(), dst.data(), height, width, channels);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
@@ -407,128 +557,48 @@ void test_loc_blob_from_image() {
 
 [[maybe_unused]]
 void test_ocv_blob_from_image() {
-    // 100 = 2073 ms
+    // 100 = 2195 ms
     auto mat = cv::imread(IMAGE_PATH);
-    cv::cvtColor(mat, mat, cv::COLOR_BGR2RGB);
     CAIWEI_FOR_EACH(100)
     cv::Mat dst;
     cv::dnn::blobFromImage(mat, dst, 1.0F / 255.0F);
     CAIWEI_FOR_EACH_END
 }
 
-[[maybe_unused]]
-void test_nms_boxes() {
-    {
-        std::vector<caiwei::media::Box> boxes = {
-            {  2,  2,   8,   8, 0, 0.80F },
-            { 10, 10, 120, 120, 0, 0.80F },
-            { 20, 20, 140, 140, 0, 0.90F },
-            { 20, 20, 140, 140, 1, 0.85F },
-            {  2 / 100.0F,  2 / 100.0F,   8 / 100.0F,   8 / 100.0F, 0, 0.80F },
-            { 10 / 100.0F, 10 / 100.0F, 120 / 100.0F, 120 / 100.0F, 0, 0.80F },
-            { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 0, 0.90F },
-            { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 1, 0.85F },
-        };
-        for(auto &v : boxes) {
-            printf("====>x1=%.2f y1=%.2f x2=%.2f y2=%.2f score=%.2f cls=%d\n", v.x1, v.y1, v.x2, v.y2, v.score, v.class_id);
-        }
-        auto ret = caiwei::transform::nms_boxes(boxes, 0.5F);
-        for(auto &v : ret) {
-            printf("<====x1=%.2f y1=%.2f x2=%.2f y2=%.2f score=%.2f cls=%d\n", v.x1, v.y1, v.x2, v.y2, v.score, v.class_id);
-        }
-    }
-    {
-        std::vector<int>        ret;
-        std::vector<int>        classes{ 0, 0, 0, 1, 0, 0, 0, 1 };
-        std::vector<float>      scores { 0.8F, 0.8F, 0.9F, 0.85F, 0.8F, 0.8F, 0.9F, 0.85F };
-        std::vector<cv::Rect2d> boxes{
-            cv::Rect2d{  2,  2,   8,   8 },
-            cv::Rect2d{ 10, 10, 120, 120 },
-            cv::Rect2d{ 20, 20, 140, 140 },
-            cv::Rect2d{ 20, 20, 140, 140 },
-            cv::Rect2d{  2 / 100.0,  2 / 100.0,   8 / 100.0,   8 / 100.0 },
-            cv::Rect2d{ 10 / 100.0, 10 / 100.0, 120 / 100.0, 120 / 100.0 },
-            cv::Rect2d{ 20 / 100.0, 20 / 100.0, 140 / 100.0, 140 / 100.0 },
-            cv::Rect2d{ 20 / 100.0, 20 / 100.0, 140 / 100.0, 140 / 100.0 },
-        };
-        // cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
-        cv::dnn::NMSBoxesBatched(boxes, scores, classes, 0, 0.5F, ret);
-        for(auto &v : ret) {
-            printf("====>v=%d\n", v);
-        }
-    }
-}
-
-[[maybe_unused]]
-void test_loc_nms_boxes() {
-    CAIWEI_FOR_EACH(10000)
-    std::vector<caiwei::media::Box> boxes = {
-        {  2,  2,   8,   8, 0, 0.80F },
-        { 10, 10, 120, 120, 0, 0.80F },
-        { 20, 20, 140, 140, 0, 0.90F },
-        { 20, 20, 140, 140, 1, 0.85F },
-        {  2 / 100.0F,  2 / 100.0F,   8 / 100.0F,   8 / 100.0F, 0, 0.80F },
-        { 10 / 100.0F, 10 / 100.0F, 120 / 100.0F, 120 / 100.0F, 0, 0.80F },
-        { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 0, 0.90F },
-        { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 1, 0.85F },
-    };
-    caiwei::transform::nms_boxes(std::move(boxes), 0.5F);
-    CAIWEI_FOR_EACH_END
-}
-
-[[maybe_unused]]
-void test_ocv_nms_boxes() {
-    CAIWEI_FOR_EACH(10000)
-    std::vector<int>        ret;
-    std::vector<int>        classes{ 0, 0, 0, 1, 0, 0, 0, 1 };
-    std::vector<float>      scores { 0.8F, 0.8F, 0.9F, 0.85F, 0.8F, 0.8F, 0.9F, 0.85F };
-    std::vector<cv::Rect2d> boxes{
-        cv::Rect2d{  2,  2,   8,   8 },
-        cv::Rect2d{ 10, 10, 120, 120 },
-        cv::Rect2d{ 20, 20, 140, 140 },
-        cv::Rect2d{ 20, 20, 140, 140 },
-        cv::Rect2d{  2 / 100.0,  2 / 100.0,   8 / 100.0,   8 / 100.0 },
-        cv::Rect2d{ 10 / 100.0, 10 / 100.0, 120 / 100.0, 120 / 100.0 },
-        cv::Rect2d{ 20 / 100.0, 20 / 100.0, 140 / 100.0, 140 / 100.0 },
-        cv::Rect2d{ 20 / 100.0, 20 / 100.0, 140 / 100.0, 140 / 100.0 },
-    };
-    // cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
-    cv::dnn::NMSBoxesBatched(boxes, scores, classes, 0, 0.5F, ret);
-    CAIWEI_FOR_EACH_END
-}
-
 int main() {
     init_test();
     cv::utils::logging::setLogLevel(::cv::utils::logging::LOG_LEVEL_ERROR);
-    // test_load();
-    // test_loc_load();
-    // test_ocv_load();
-    // test_crop();
-    // test_loc_crop();
-    // test_ocv_crop();
-    // test_draw();
-    // test_loc_draw();
-    // test_ocv_draw();
-    // test_resize();
-    // test_loc_resize();
-    // test_ocv_resize();
-    // test_resize_pad();
+    test_load();
+    test_loc_load();
+    test_ocv_load();
+    test_crop();
+    test_loc_crop();
+    test_ocv_crop();
+    test_draw();
+    test_loc_draw();
+    test_ocv_draw();
+    test_resize();
+    test_loc_resize();
+    test_ocv_resize();
+    test_ffmpeg_resize();
+    test_resize_pad();
     test_loc_resize_pad();
     test_ocv_resize_pad();
-    // test_nms_boxes();
-    // test_loc_nms_boxes();
-    // test_ocv_nms_boxes();
-    // test_min_max_loc();
-    // test_loc_min_max_loc();
-    // test_ocv_min_max_loc();
-    // test_transpose();
-    // test_loc_transpose();
-    // test_ocv_transpose();
-    // test_loc_convert_to();
-    // test_ocv_convert_to();
-    // test_blob_from_image();
-    // test_loc_blob_from_image();
-    // test_ocv_blob_from_image();
+    test_nms_boxes();
+    test_loc_nms_boxes();
+    test_ocv_nms_boxes();
+    test_min_max_loc();
+    test_loc_min_max_loc();
+    test_ocv_min_max_loc();
+    test_transpose();
+    test_loc_transpose();
+    test_ocv_transpose();
+    test_convert_to();
+    test_loc_convert_to();
+    test_ocv_convert_to();
+    test_blob_from_image();
+    test_loc_blob_from_image();
+    test_ocv_blob_from_image();
     stop_test();
     return 0;
 }

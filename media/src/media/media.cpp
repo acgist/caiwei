@@ -1,5 +1,11 @@
 #include "caiwei/media.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE2_IMPLEMENTATION
+
+#include "stb/stb_image.h"
+#include "stb/stb_image_resize2.h"
+
 caiwei::media::Frame::Frame(uint32_t size) {
     this->data.resize(size);
 }

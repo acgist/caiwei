@@ -1,0 +1,6 @@
+#include "caiwei/context.hpp"
+
+template <>
+std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_context(caiwei::context::Type type, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
+    return nullptr;
+}

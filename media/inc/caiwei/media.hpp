@@ -5,8 +5,9 @@
 #define CAIWEI_MEDIA_HPP
 
 #include <string>
-#include <vector>
 #include <functional>
+
+#include "caiwei/media_data.hpp"
 
 struct AVCodec;
 struct AVFrame;
@@ -24,85 +25,6 @@ namespace media  {
 
 extern void init();
 extern void stop();
-
-struct Point {
-    float x;
-    float y;
-};
-
-struct Area {
-
-};
-
-struct Rect {
-    float x;
-    float y;
-    float w;
-    float h;
-};
-
-struct RectCenter {
-    float cx;
-    float cy;
-    float  w;
-    float  h;
-};
-
-struct Box {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
-    int   class_id;
-    float score;
-};
-
-class Frame {
-
-public:
-    uint32_t             data_length;
-    std::vector<uint8_t> data;
-public:
-    Frame(uint32_t size);
-
-};
-
-class AudioFrame : public Frame {
-
-public:
-    uint64_t msec;
-    uint64_t frames;
-    uint32_t samples;
-public:
-    AudioFrame(uint32_t size);
-
-};
-
-class ImageFrame : public Frame {
-
-public:
-    uint32_t width;
-    uint32_t height;
-public:
-    ImageFrame(uint32_t size);
-
-};
-
-class VideoFrame : public ImageFrame {
-
-public:
-    uint64_t msec;
-    uint64_t frames;
-public:
-    VideoFrame(uint32_t size);
-
-};
-
-enum class MediaType {
-    AUDIO,
-    IMAGE,
-    VIDEO,
-};
 
 struct AudioInfo {
 
