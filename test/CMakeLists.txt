@@ -242,8 +242,16 @@ if (OpenCV_FOUND)
         caiwei-media
         ${OpenCV_LIBS}
     )
-    add_custom_command(
-        TARGET test_cv_opencv POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENCV_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
-    )
+    if (ANDROID)
+    # -
+    elseif (CMAKE_HOST_UNIX)
+    # -
+    elseif (CMAKE_HOST_WIN32)
+        add_custom_command(
+            TARGET test_cv_opencv POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENCV_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
+        )
+    endif ()
 endif ()
+
+file(COPY ./ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.jpg" PATTERN "*.mp4")

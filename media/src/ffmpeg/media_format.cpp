@@ -129,15 +129,11 @@ void caiwei::media::MediaFormat::send_header() {
     // frag_keyframe+empty_moov+delay_moov+default_base_moof
     // Win   h264_mf可以使用delay_moov | empty_moov
     // Linux libx264只能使用delay_moov否则空头可能解析失败
-    #ifdef CAIWEI_VIDEO_MOVFLAGS
-    av_dict_set(&options, "movflags", ALIANG_VIDEO_MOVFLAGS, 0);
-    #else
     // 文件
     // av_dict_set(&options, "movflags", "faststart", 0);
     // 网络
     // TODO 测试 linux 不要 empty_moov
     av_dict_set(&options, "movflags", "frag_keyframe+empty_moov+delay_moov+default_base_moof", 0);
-    #endif
     if(avformat_write_header(this->format_ctx, &options) < 0) {
         LOG_WARN("视频写出头部失败");
     }

@@ -6,7 +6,7 @@ caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, const 
     LOG_INFO("创建ONNXRuntime: %s", path.c_str());
     Ort::SessionOptions options;
     // options.DisableCpuMemArena();
-    #ifdef ALIANG_ENABLE_CUDA
+    #ifdef ENABLE_CAIWEI_BACKEND_CUDA
     // options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
     // options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
     // options.SetIntraOpNumThreads(1);
@@ -77,7 +77,7 @@ caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
 Ort::Value caiwei::context::ONNXRuntimeContext::run(float* blob, std::vector<int64_t>& out_dims, int batch) {
     std::lock_guard<std::mutex> lock(this->mutex);
     this->input_node_dims[0] = batch;
-    #ifdef ALIANG_ENABLE_CUDA
+    #ifdef ENABLE_CAIWEI_BACKEND_CUDA
     Ort::IoBinding io_binding(*this->session);
     auto memory_info = Ort::MemoryInfo("CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault);
     const Ort::Value inputTensor = Ort::Value::CreateTensor<float>(

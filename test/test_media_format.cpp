@@ -30,12 +30,12 @@ int main() {
 // a=rtpmap:96 H264/90000
 // a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
 // a=recvonly)";
-    auto url  = "D://download/caiwei.mp4";
+    auto url  = "./caiwei.mp4";
     // auto url  = "https://static.acgist.com/demo/barrage/video.mp4";
     // auto url  = "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid";
     // auto url  = "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
-    std::ofstream output("D://download/output.mp4", std::ios_base::binary);
+    std::ofstream output("./output.mp4", std::ios_base::binary);
     caiwei::media::MediaFormat media_format([&output](uint32_t length, const uint8_t* data) {
         output.write((const char*) data, length);
         std::printf("write %d bytes\n", length);

@@ -7,10 +7,11 @@
 
 [[maybe_unused]]
 void det_image() {
+    // CUDA    100 =  1777 ms
     // Debug   100 = 19169 ms
     // Release 100 = 10160 ms
     int width, height, channels;
-    auto data = stbi_load("D:/download/caiwei.jpg", &width, &height, &channels, STBI_default);
+    auto data = stbi_load("./caiwei.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
     frame.width = width;

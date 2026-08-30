@@ -64,7 +64,7 @@ a=rtcp:44447
 a=rtpmap:96 H264/90000
 a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
 a=recvonly`,
-        file  : "D:/download/caiwei.mp4",
+        file  : "./caiwei.mp4",
         http  : "http://localhost:9999/caiwei.mp4",
         rtmp  : "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid",
         rtsp  : "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream",

@@ -4,6 +4,7 @@
 #ifndef CAIWEI_TRANSFORM_HPP
 #define CAIWEI_TRANSFORM_HPP
 
+#include <cmath>
 #include <vector>
 #include <cstdint>
 #include <algorithm>
@@ -49,13 +50,15 @@ inline void draw(uint8_t* dst, const int src_w, const int src_h, const int x, co
     }
 }
 
-inline void resize(const int src_w, const int src_h, int& dst_w, int& dst_h, float& scale) {
-    scale = std::min(static_cast<float>(dst_w) / src_w, static_cast<float>(dst_h) / src_h);
-    dst_w = static_cast<int>(std::round(src_w * scale)) / 2 * 2;
-    dst_h = static_cast<int>(std::round(src_h * scale)) / 2 * 2;
+inline void resize(const int src_w, const int src_h, const int w, const int h, int& dst_w, int& dst_h, int& pad_w, int& pad_h, float& scale) {
+    scale = std::min(static_cast<float>(w) / src_w, static_cast<float>(h) / src_h);
+    dst_w = static_cast<int>(std::lround(src_w * scale)) / 2 * 2;
+    dst_h = static_cast<int>(std::lround(src_h * scale)) / 2 * 2;
+    pad_w = (w - dst_w) / 2;
+    pad_h = (h - dst_h) / 2;
 }
 
-inline void resize(const uint8_t* src, const int src_w, const int src_h, uint8_t* dst, const int dst_w, const int dst_h, const int channels = 3) {
+inline void resize(const uint8_t* src, uint8_t* dst, const int src_w, const int src_h, const int dst_w, const int dst_h, const int channels = 3) {
     if (src_h == dst_h && src_w == dst_w) {
         std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, dst);
     } else {
@@ -63,19 +66,15 @@ inline void resize(const uint8_t* src, const int src_w, const int src_h, uint8_t
     }
 }
 
-inline void resize(const uint8_t* src, const int src_w, const int src_h, uint8_t* dst, uint8_t* pad, const int dst_w, const int dst_h, int& pad_w, int& pad_h, const int channels = 3) {
-    const int max = std::max(dst_w, dst_h);
-    pad_w = (max - dst_w) / 2;
-    pad_h = (max - dst_h) / 2;
-    if (src_h == dst_h && src_w == dst_w) {
-        std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, dst);
+inline void padding(const uint8_t* src, uint8_t* pad, const int src_w, const int src_h, const int pad_w, const int pad_h, const int w, const int h, const int channels = 3) {
+    if (pad_w == 0 && pad_h == 0) {
+        std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, pad);
     } else {
-        stbir_resize_uint8_linear(src, src_w, src_h, 0, dst, dst_w, dst_h, 0, STBIR_RGB);
-    }
-    for (int y = 0; y < dst_h; ++y) {
-        const size_t dst_offset = (static_cast<size_t>(pad_h + y) * max + pad_w) * static_cast<size_t>(channels);
-        const size_t src_offset = static_cast<size_t>(y) * static_cast<size_t>(dst_w) * static_cast<size_t>(channels);
-        std::copy_n(dst + src_offset, static_cast<size_t>(dst_w) * channels, pad + dst_offset);
+        for (int y = 0; y < src_h; ++y) {
+            const size_t dst_offset = (static_cast<size_t>(pad_h + y) * w + pad_w) * static_cast<size_t>(channels);
+            const size_t src_offset = static_cast<size_t>(y) * static_cast<size_t>(src_w) * static_cast<size_t>(channels);
+            std::copy_n(src + src_offset, static_cast<size_t>(src_w) * channels, pad + dst_offset);
+        }
     }
 }
 

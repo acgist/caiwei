@@ -29,20 +29,18 @@ caiwei::context::DetONNXRuntimeContext::~DetONNXRuntimeContext() {
 }
 
 std::vector<caiwei::context::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
-    int w = this->w;
-    int h = this->h;
     float scale;
-    caiwei::transform::resize(image.width, image.height, w, h, scale);
-    int max = std::max(w, h);
-    int pad_w, pad_h;
+    int dst_w, dst_h, pad_w, pad_h;
     // TODO 全局变量 判断是否变化
-    std::vector<uint8_t> dst(w * h * image.channels);
-    std::vector<uint8_t> pad(max * max * image.channels);
-    caiwei::transform::resize(image.data.data(), image.width, image.height, dst.data(), pad.data(), w, h, pad_w, pad_h);
-    std::vector<float> blob(max * max * image.channels);
-    std::vector<float> chw(max * max * image.channels);
-    caiwei::transform::i8_to_f32(pad.data(), max * max * image.channels, blob.data(), 255.0F);
-    caiwei::transform::hwc_to_chw(blob.data(), chw.data(), max, max, image.channels);
+    caiwei::transform::resize(image.width, image.height, this->w, this->h, dst_w, dst_h, pad_w, pad_h, scale);
+    std::vector<uint8_t> dst(dst_w   * dst_h   * image.channels);
+    std::vector<uint8_t> pad(this->w * this->h * image.channels);
+    std::vector<float>   hwc(this->w * this->h * image.channels);
+    std::vector<float>   chw(this->w * this->h * image.channels);
+    caiwei::transform::resize(image.data.data(), dst.data(), image.width, image.height, dst_w, dst_h);
+    caiwei::transform::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, this->w, this->h);
+    caiwei::transform::i8_to_f32(pad.data(), this->w * this->h * image.channels, hwc.data(), 255.0F);
+    caiwei::transform::hwc_to_chw(hwc.data(), chw.data(), this->h, this->w, image.channels);
     std::vector<int64_t> dims;
     auto output{ this->run(chw.data(), dims) };
     const int64_t& signalResultNum = dims[1];
@@ -60,10 +58,10 @@ std::vector<caiwei::context::Box> caiwei::context::DetONNXRuntimeContext::run(co
         float* scores_pos = data + 4;
         caiwei::transform::max_loc(scores_pos, this->class_size, max_score, max_class);
         if(max_score > this->confidence_threshold) {
-            float ocx = (data[0] - pad_w) / max;
-            float ocy = (data[1] - pad_h) / max;
-            float ow  = (data[2]        ) / max;
-            float oh  = (data[3]        ) / max;
+            float ocx = (data[0] - pad_w) / this->w;
+            float ocy = (data[1] - pad_h) / this->h;
+            float ow  = (data[2]        ) / this->w;
+            float oh  = (data[3]        ) / this->h;
             ret.push_back(
                 caiwei::context::Box(
                     ocx - ow / 2.0F,
