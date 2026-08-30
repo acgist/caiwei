@@ -58,16 +58,16 @@ std::vector<caiwei::context::Box> caiwei::context::DetONNXRuntimeContext::run(co
         float* scores_pos = data + 4;
         caiwei::transform::max_loc(scores_pos, this->class_size, max_score, max_class);
         if(max_score > this->confidence_threshold) {
-            float ocx = (data[0] - pad_w) / this->w;
-            float ocy = (data[1] - pad_h) / this->h;
-            float ow  = (data[2]        ) / this->w;
-            float oh  = (data[3]        ) / this->h;
+            float ocx = (data[0] - pad_w) / (float) dst_w;
+            float ocy = (data[1] - pad_h) / (float) dst_h;
+            float ow  = (data[2]        ) / (float) dst_w;
+            float oh  = (data[3]        ) / (float) dst_h;
             ret.push_back(
                 caiwei::context::Box(
-                    ocx - ow / 2.0F,
-                    ocy - oh / 2.0F,
-                    ocx + ow / 2.0F,
-                    ocy + oh / 2.0F,
+                    std::max(0.0F, ocx - ow / 2.0F),
+                    std::max(0.0F, ocy - oh / 2.0F),
+                    std::min(1.0F, ocx + ow / 2.0F),
+                    std::min(1.0F, ocy + oh / 2.0F),
                     max_class,
                     max_score
                 )

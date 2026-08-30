@@ -61,13 +61,13 @@ int main() {
     media_format.open(media_muxer);
     caiwei::media::MediaDemuxer media_demuxer(type, url, [&media_muxer](const caiwei::media::AudioFrame& frame) {
         std::printf("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.samples);
-        media_muxer.on_audio(frame);
         std::fflush(stdout);
+        media_muxer.on_audio(frame);
         return true;
     }, [&media_muxer](const caiwei::media::VideoFrame& frame) {
         std::printf("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
-        media_muxer.on_video(frame);
         std::fflush(stdout);
+        media_muxer.on_video(frame);
         // std::this_thread::sleep_for(std::chrono::milliseconds(20));
         return true;
     });

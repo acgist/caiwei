@@ -1,6 +1,11 @@
 #include "test.hpp"
 
+#include "caiwei/media.hpp"
 #include "caiwei/caiwei.hpp"
+#include "caiwei/player.hpp"
+#include "caiwei/context.hpp"
+#include "caiwei/runtime.hpp"
+#include "caiwei/transform.hpp"
 
 inline void init_test() {
     #if OS_WIN

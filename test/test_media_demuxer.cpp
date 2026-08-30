@@ -38,15 +38,13 @@ int main() {
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
     caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
         std::printf("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.samples);
-        caiwei::player::play_audio(frame.data.data(), frame.data_length);
         std::fflush(stdout);
-        return true;
+        return caiwei::player::play_audio(frame.data.data(), frame.data_length);
     }, [](const caiwei::media::VideoFrame& frame) {
         std::printf("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
-        caiwei::player::play_video(frame.data.data(), frame.width * 3);
         std::fflush(stdout);
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        return true;
+        return caiwei::player::play_video(frame.data.data(), frame.width * 3);
     });
     std::thread player([]() {
         caiwei::player::open_player(1, 16000, 640, 360);

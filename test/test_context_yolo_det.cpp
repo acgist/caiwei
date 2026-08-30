@@ -1,9 +1,10 @@
 #include "test_runtime.hpp"
 
-#include "caiwei/media.hpp"
-#include "caiwei/context.hpp"
+extern "C" {
 
-#include "caiwei/transform.hpp"
+#include "libavcodec/avcodec.h"
+
+}
 
 [[maybe_unused]]
 void det_image() {
@@ -20,14 +21,52 @@ void det_image() {
     auto ptr = caiwei::context::get_context<caiwei::context::DetContext>(caiwei::context::Type::YOLO);
     CAIWEI_FOR_EACH(100)
     auto result = ptr->ptr()->run(frame);
-    // caiwei::media::draw();
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
 
+[[maybe_unused]]
+void det_video() {
+    // rtp|sdp|file|http|rtmp|rtsp|device
+    auto type = "file";
+    auto url  = "./caiwei.mp4";
+    // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
+    auto ptr = caiwei::context::get_context<caiwei::context::DetContext>(caiwei::context::Type::YOLO);
+    int frame_count = 0;
+    std::vector<caiwei::context::Box> ret;
+    caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
+        return caiwei::player::play_audio(frame.data.data(), frame.data_length);
+    }, [&ptr, &ret, &frame_count](const caiwei::media::VideoFrame& frame) {
+        auto data = frame.data;
+        if (frame_count++ % 4 == 0) {
+            ret = std::move(ptr->ptr()->run(frame));
+        }
+        for (const auto& box : ret) {
+            caiwei::transform::draw(
+                data.data(),
+                frame.width,
+                frame.height,
+                box.x1 * frame.width,
+                box.y1 * frame.height,
+                (box.x2 - box.x1) * frame.width,
+                (box.y2 - box.y1) * frame.height
+            );
+        }
+        return caiwei::player::play_video(data.data(), frame.width * 3);
+    });
+    std::thread player([]() {
+        caiwei::player::open_player(1, 16000, 640, 360);
+    });
+    media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
+    caiwei::player::stop_player();
+    player.join();
+    media_demuxer.stop();
+}
+
 int main() {
     init_test();
-    det_image();
+    // det_image();
+    det_video();
     stop_test();
     return 0;
 }
