@@ -11,9 +11,6 @@
 namespace caiwei {
 namespace json   {
 
-template<typename V>
-inline nlohmann::json toJson(const std::vector<V>& vector);
-
 inline std::string buildResponse(nlohmann::json body = {}) {
     nlohmann::json response;
     nlohmann::json header;
@@ -31,19 +28,6 @@ inline std::string buildResponse(const std::string& code, const std::string& mes
     header["message"]  = message;
     response["header"] = header;
     return response.dump();
-}
-
-template<typename V>
-inline nlohmann::json toJson(const std::vector<V>& vector) {
-    if(vector.empty()) {
-        return nlohmann::json::array();
-    }
-    nlohmann::json ret;
-    for(const V& value : vector) {
-        // TODO json
-        ret.push_back(caiwei::json::toJson(value));
-    }
-    return ret;
 }
 
 } // json

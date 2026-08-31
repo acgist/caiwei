@@ -11,7 +11,7 @@ std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_context(caiwei
     float confidence_threshold = caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD");
     std::string path = caiwei::env::get_string("CAIWEI_DET_PATH");
     if (!std::filesystem::exists(path)) {
-        LOG_WARN("ONNXRtuntime模型无效: %s", path.c_str());
+        CW_LOG_W("ONNXRtuntime模型无效: %s", path.c_str());
         return nullptr;
     }
     return std::make_shared<DetONNXRuntimeContext>(path, w, h, class_size, iou_threshold, confidence_threshold, runtime);
@@ -28,7 +28,7 @@ caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(std::string path, 
 caiwei::context::DetONNXRuntimeContext::~DetONNXRuntimeContext() {
 }
 
-std::vector<caiwei::context::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::yolo::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     // TODO 全局变量 判断是否变化
@@ -51,7 +51,7 @@ std::vector<caiwei::context::Box> caiwei::context::DetONNXRuntimeContext::run(co
     out_dst.resize(signalResultNum * strideNum);
     caiwei::transform::transpose(output_data, out_dst.data(), signalResultNum, strideNum);
     float* data = out_dst.data();
-    std::vector<caiwei::context::Box> ret;
+    std::vector<caiwei::yolo::Box> ret;
     for (int index = 0; index < strideNum; ++index) {
         int   max_class; // 最大类别
         float max_score; // 最大分数
@@ -63,7 +63,7 @@ std::vector<caiwei::context::Box> caiwei::context::DetONNXRuntimeContext::run(co
             float ow  = (data[2]        ) / (float) dst_w;
             float oh  = (data[3]        ) / (float) dst_h;
             ret.push_back(
-                caiwei::context::Box(
+                caiwei::yolo::Box(
                     std::max(0.0F, ocx - ow / 2.0F),
                     std::max(0.0F, ocy - oh / 2.0F),
                     std::min(1.0F, ocx + ow / 2.0F),

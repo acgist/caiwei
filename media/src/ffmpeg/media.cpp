@@ -32,9 +32,9 @@ static void print_all_decoder() {
     while ((codec = av_codec_iterate(&iter))) {
         if (av_codec_is_decoder(codec)) {
             if (codec->type == AVMEDIA_TYPE_AUDIO) {
-                LOG_DEBUG("audio decoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("audio decoder: %-16s = %s", codec->name, codec->long_name);
             } else if (codec->type == AVMEDIA_TYPE_VIDEO) {
-                LOG_DEBUG("video decoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("video decoder: %-16s = %s", codec->name, codec->long_name);
             } else {
                 // -
             }
@@ -48,9 +48,9 @@ static void print_all_encoder() {
     while ((codec = av_codec_iterate(&iter))) {
         if (av_codec_is_encoder(codec)) {
             if (codec->type == AVMEDIA_TYPE_AUDIO) {
-                LOG_DEBUG("audio encoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("audio encoder: %-16s = %s", codec->name, codec->long_name);
             } else if (codec->type == AVMEDIA_TYPE_VIDEO) {
-                LOG_DEBUG("video encoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("video encoder: %-16s = %s", codec->name, codec->long_name);
             } else {
                 // -
             }
@@ -65,7 +65,7 @@ static void delete_old_sdp_file() {
     }
     for (auto& entry : std::filesystem::directory_iterator(sdp_parent)) {
         if (entry.is_regular_file() && entry.path().extension() == ".sdp") {
-            LOG_INFO("删除旧的SDP文件: %s", entry.path().string().c_str());
+            CW_LOG_I("删除旧的SDP文件: %s", entry.path().string().c_str());
             std::filesystem::remove(entry.path());
         }
     }

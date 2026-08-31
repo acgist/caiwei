@@ -26,13 +26,13 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName",      "采薇"
+            VALUE "CompanyName",      "acgist"
             VALUE "FileDescription",  "采薇"
             VALUE "FileVersion",      "1.0.0.0"
             VALUE "InternalName",     "采薇"
             VALUE "LegalCopyright",   "Copyright © 2026 acgist.com. All Rights Reserved."
             VALUE "LegalTrademarks",  "caiwei"
-            VALUE "OriginalFilename", "caiwei.exe"
+            VALUE "OriginalFilename", "caiwei-server.exe"
             VALUE "ProductName",      "采薇"
             VALUE "ProductVersion",   "1.0.0"
         END

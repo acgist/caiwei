@@ -18,9 +18,9 @@ void det_image() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::context::get_context<caiwei::context::DetContext>(caiwei::context::Type::YOLO);
+    auto ptr = caiwei::context::get_det_context();
     CAIWEI_FOR_EACH(100)
-    auto result = ptr->ptr()->run(frame);
+    auto result = ptr->run(frame);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -31,15 +31,15 @@ void det_video() {
     auto type = "file";
     auto url  = "./caiwei.mp4";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
-    auto ptr = caiwei::context::get_context<caiwei::context::DetContext>(caiwei::context::Type::YOLO);
+    auto ptr = caiwei::context::get_det_context();
     int frame_count = 0;
-    std::vector<caiwei::context::Box> ret;
+    std::vector<caiwei::yolo::Box> ret;
     caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
         return caiwei::player::play_audio(frame.data.data(), frame.data_length);
     }, [&ptr, &ret, &frame_count](const caiwei::media::VideoFrame& frame) {
         auto data = frame.data;
         if (frame_count++ % 4 == 0) {
-            ret = std::move(ptr->ptr()->run(frame));
+            ret = std::move(ptr->run(frame));
         }
         for (const auto& box : ret) {
             caiwei::transform::draw(

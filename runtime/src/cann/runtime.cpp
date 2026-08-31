@@ -2,11 +2,11 @@
 #include "caiwei/runtime.hpp"
 
 caiwei::runtime::CANNRuntime::CANNRuntime() : Runtime(caiwei::runtime::Type::CANN) {
-    LOG_INFO("CANNRuntime init");
+    CW_LOG_I("CANNRuntime init");
 }
 
 caiwei::runtime::CANNRuntime::~CANNRuntime() {
-    LOG_INFO("CANNRuntime stop");
+    CW_LOG_I("CANNRuntime stop");
 }
 
 template<>

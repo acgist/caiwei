@@ -5,9 +5,7 @@ set(
     src/env.cpp
     src/log.cpp
     src/media/media.cpp
-    src/media/audio.cpp
-    src/media/image.cpp
-    src/media/video.cpp
+    src/media/media_data.cpp
     third_party/base64/base64.cpp
 )
 list(

@@ -129,8 +129,9 @@ swift infer               \
 
 ## 性能评估
 
-|设备|MNN|RKNN|llama.cpp|ONNXRuntime|
+|设备|CANN|RKNN|llama.cpp|ONNXRuntime|
 |:--|:--|:--|:--|:--|
+|CANN(Atlas350)|||||
 |RKNN(RK1828)|||||
 |CUDA(RTX4090)|||||
 |OpenVINO(i5-1135G7)|||||

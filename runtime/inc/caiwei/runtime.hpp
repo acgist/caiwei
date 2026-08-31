@@ -29,19 +29,15 @@ namespace caiwei  {
 namespace runtime {
 
 enum class Type {
-
-    MNN,
     CANN,
     RKNN2,
     RKNN3,
     LLAMACPP,
     ONNXRUNTIME,
     NONE,
-
 };
 
 class Runtime {
-
 private:
     caiwei::runtime::Type type;
     std::atomic_int32_t ref_count = 0;
@@ -51,66 +47,45 @@ public:
 public:
     uint32_t ref();
     uint32_t unref();
-
 };
-
-#ifdef ENABLE_CAIWEI_RUNTIME_MNN
-class MNNRuntime : public Runtime {
-
-public:
-    MNNRuntime();   
-    ~MNNRuntime();
-
-};
-#endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN
 class CANNRuntime : public Runtime {
-
 public:
-    CANNRuntime();   
+    CANNRuntime();
     ~CANNRuntime();
-
 };
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN
 class RKNN2Runtime : public Runtime {
-
 public:
-    RKNN2Runtime();   
+    RKNN2Runtime();
     ~RKNN2Runtime();
-
 };
 
 class RKNN3Runtime : public Runtime {
-
 public:
-    RKNN3Runtime();   
+    RKNN3Runtime();
     ~RKNN3Runtime();
-
 };
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 class LlamaCPPRuntime : public Runtime {
-    
 public:
-    LlamaCPPRuntime();   
+    LlamaCPPRuntime();
     ~LlamaCPPRuntime();
-
 };
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 class ONNXRuntimeRuntime : public Runtime {
-
 public:
     Ort::Env* env = nullptr;
 public:
-    ONNXRuntimeRuntime();   
+    ONNXRuntimeRuntime();
     ~ONNXRuntimeRuntime();
-
 };
 #endif
 

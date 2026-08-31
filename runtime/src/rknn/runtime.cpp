@@ -2,19 +2,19 @@
 #include "caiwei/runtime.hpp"
 
 caiwei::runtime::RKNN2Runtime::RKNN2Runtime() : Runtime(caiwei::runtime::Type::RKNN2) {
-    LOG_INFO("RKNN2Runtime init");
+    CW_LOG_I("RKNN2Runtime init");
 }
 
 caiwei::runtime::RKNN2Runtime::~RKNN2Runtime() {
-    LOG_INFO("RKNN2Runtime stop");
+    CW_LOG_I("RKNN2Runtime stop");
 }
 
 caiwei::runtime::RKNN3Runtime::RKNN3Runtime() : Runtime(caiwei::runtime::Type::RKNN3) {
-    LOG_INFO("RKNN3Runtime init");
+    CW_LOG_I("RKNN3Runtime init");
 }
 
 caiwei::runtime::RKNN3Runtime::~RKNN3Runtime() {
-    LOG_INFO("RKNN3Runtime stop");
+    CW_LOG_I("RKNN3Runtime stop");
 }
 
 template<>

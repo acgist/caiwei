@@ -2,11 +2,11 @@
 #include "caiwei/runtime.hpp"
 
 caiwei::runtime::LlamaCPPRuntime::LlamaCPPRuntime() : Runtime(caiwei::runtime::Type::LLAMACPP) {
-    LOG_INFO("LLlamaCPPRuntime init");
+    CW_LOG_I("LLlamaCPPRuntime init");
 }
 
 caiwei::runtime::LlamaCPPRuntime::~LlamaCPPRuntime() {
-    LOG_INFO("LLlamaCPPRuntime stop");
+    CW_LOG_I("LLlamaCPPRuntime stop");
 }
 
 template<>

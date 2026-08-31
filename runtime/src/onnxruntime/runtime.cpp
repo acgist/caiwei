@@ -1,13 +1,13 @@
 #include "onnxruntime.hpp"
 
 caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime() : Runtime(caiwei::runtime::Type::ONNXRUNTIME) {
-    LOG_INFO("ONNXRuntimeRuntime init");
+    CW_LOG_I("ONNXRuntimeRuntime init");
     this->env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
 }
 
 caiwei::runtime::ONNXRuntimeRuntime::~ONNXRuntimeRuntime() {
     if (this->env != nullptr) {
-        LOG_INFO("ONNXRuntimeRuntime stop");
+        CW_LOG_I("ONNXRuntimeRuntime stop");
         delete this->env;
         this->env = nullptr;
     }

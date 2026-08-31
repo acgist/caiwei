@@ -6,12 +6,8 @@
 #include "stb/stb_image.h"
 #include "stb/stb_image_resize2.h"
 
-caiwei::media::Frame::Frame(uint32_t size) {
-    this->data.resize(size);
-}
-
-caiwei::media::AudioInfo::AudioInfo(int channel, int sample_rate, int format) {
-    this->channel     = channel;
+caiwei::media::AudioInfo::AudioInfo(int channels, int sample_rate, int format) {
+    this->channels    = channels;
     this->sample_rate = sample_rate;
     this->format      = format;
 }

@@ -7,33 +7,18 @@ set(
     src/context.cpp
     src/runtime.cpp
     src/session.cpp
+    src/text_json.cpp
+    src/yolo_json.cpp
+    src/session/audio_asr.cpp
+    src/session/audio_tts.cpp
+    src/session/image_yolo.cpp
     src/session/video_play.cpp
+    src/session/video_yolo.cpp
+    src/session/embeddings.cpp
+    src/session/rerankings.cpp
+    src/session/completions.cpp
 )
 list(APPEND CAIWEI_RUNTIME_INCS inc)
-
-if (ENABLE_CAIWEI_RUNTIME_MNN)
-    list(
-        APPEND CAIWEI_RUNTIME_SRCS
-        src/mnn/mnn.cpp
-        src/mnn/context.cpp
-        src/mnn/runtime.cpp
-        src/mnn/yolo_cls.cpp
-        src/mnn/yolo_det.cpp
-        src/mnn/yolo_obb.cpp
-        src/mnn/yolo_seg.cpp
-        src/mnn/yolo_sem.cpp
-        src/mnn/yolo_pose.cpp
-        src/mnn/yolo_depth.cpp
-        src/mnn/qwen3_asr.cpp
-        src/mnn/qwen3_tts.cpp
-        src/mnn/qwen3_llm.cpp
-        src/mnn/qwen3_vlm.cpp
-        src/mnn/qwen3_mllm.cpp
-        src/mnn/qwen3_embedding.cpp
-        src/mnn/qwen3_reranking.cpp
-    )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/mnn)
-endif()
 
 if (ENABLE_CAIWEI_RUNTIME_CANN)
     list(
@@ -55,6 +40,8 @@ if (ENABLE_CAIWEI_RUNTIME_CANN)
         src/cann/qwen3_mllm.cpp
         src/cann/qwen3_embedding.cpp
         src/cann/qwen3_reranking.cpp
+        src/cann/qwen3_vl_embedding.cpp
+        src/cann/qwen3_vl_reranking.cpp
     )
     list(APPEND CAIWEI_RUNTIME_INCS third_party/cann)
 endif()
@@ -79,6 +66,8 @@ if (ENABLE_CAIWEI_RUNTIME_RKNN)
         src/rknn/qwen3_mllm.cpp
         src/rknn/qwen3_embedding.cpp
         src/rknn/qwen3_reranking.cpp
+        src/rknn/qwen3_vl_embedding.cpp
+        src/rknn/qwen3_vl_reranking.cpp
     )
     list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn)
 endif()
@@ -103,6 +92,8 @@ if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)
         src/llamacpp/qwen3_mllm.cpp
         src/llamacpp/qwen3_embedding.cpp
         src/llamacpp/qwen3_reranking.cpp
+        src/llamacpp/qwen3_vl_embedding.cpp
+        src/llamacpp/qwen3_vl_reranking.cpp
     )
     list(APPEND CAIWEI_RUNTIME_INCS third_party/llamacpp)
 endif()
@@ -127,6 +118,8 @@ if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
         src/onnxruntime/qwen3_mllm.cpp
         src/onnxruntime/qwen3_embedding.cpp
         src/onnxruntime/qwen3_reranking.cpp
+        src/onnxruntime/qwen3_vl_embedding.cpp
+        src/onnxruntime/qwen3_vl_reranking.cpp
     )
     list(APPEND CAIWEI_RUNTIME_INCS third_party/onnxruntime)
 endif()

@@ -1,0 +1,6 @@
+#include "llamacpp.hpp"
+
+template <>
+std::shared_ptr<caiwei::context::VLRerankingContext> caiwei::context::get_context(caiwei::context::Type type, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
+    return nullptr;
+}

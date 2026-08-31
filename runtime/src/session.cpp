@@ -4,5 +4,9 @@
 caiwei::session::Session::Session() {
     this->id = caiwei::env::id();
 }
+
+caiwei::session::Session::~Session() {
+}
+
 caiwei::session::StatefulSession::StatefulSession(Callback callback) : callback(callback) {
 }

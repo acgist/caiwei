@@ -3,8 +3,9 @@
 *.out
 
 *.dll
-*.lib
 *.exe
+*.lib
+*.obj
 
 *.log
 

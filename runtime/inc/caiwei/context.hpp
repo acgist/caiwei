@@ -6,38 +6,44 @@
 #ifndef CAIWEI_CONTEXT_HPP
 #define CAIWEI_CONTEXT_HPP
 
-#include "caiwei/yolo.hpp"
 #include "caiwei/runtime.hpp"
+#include "caiwei/text_data.hpp"
+#include "caiwei/yolo_data.hpp"
+#include "caiwei/media_data.hpp"
 
 #include <map>
 #include <mutex>
 #include <vector>
 
-namespace caiwei {
-
-namespace media {
-
-class ImageFrame;
-
-}
-
+namespace caiwei  {
 namespace context {
 
 enum class Type {
-
     ASR,
     TTS,
     LLM,
     VLM,
     MLLM,
-    YOLO,
     EMBEDDING,
     RERANKING,
+    VL_EMBEDDING,
+    VL_RERANKING,
+    YOLO_CLS,
+    YOLO_DET,
+    YOLO_OBB,
+    YOLO_SEG,
+    YOLO_SEM,
+    YOLO_POSE,
+    YOLO_DEPTH,
+};
 
+struct Model {
+    Type type;
+    std::string path;
+    std::string name;
 };
 
 class Context {
-
 private:
     std::atomic_int32_t ref_count = 0;
 protected:
@@ -48,15 +54,15 @@ public:
 public:
     uint32_t ref();
     uint32_t unref();
-
 };
 
-template <typename C>
+template <typename C, typename I, typename O>
 class ContextWrapper {
 private:
     std::shared_ptr<C> context{ nullptr };
 public:
     std::shared_ptr<C> ptr();
+    O run(const I& input);
 public:
     ContextWrapper(std::shared_ptr<C> context);
     ~ContextWrapper();
@@ -71,7 +77,6 @@ class ClsContext : public Context {};
  * 目标检测模型
  */
 class DetContext : public Context {
-
 protected:
     int w;
     int h;
@@ -82,8 +87,7 @@ public:
     DetContext(int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
     ~DetContext();
 public:
-    virtual std::vector<caiwei::context::Box> run(const caiwei::media::ImageFrame& image) = 0;
-
+    virtual std::vector<caiwei::yolo::Box> run(const caiwei::media::ImageFrame& image) = 0;
 };
 
 /**
@@ -160,6 +164,8 @@ class TTSContext : public Context {};
 
 /**
  * 大语言模型
+ * TODO 使用c++23协程generator+co_yield
+ * TODO tools测试
  */
 class LLMContext : public Context {};
 
@@ -179,24 +185,14 @@ class MLLMContext : public Context {};
 class EmbeddingContext : public Context {};
 
 /**
+ * 视觉嵌入模型
+ */
+class VLEmbeddingContext : public EmbeddingContext {};
+
+/**
  * 文本嵌入模型
  */
 class TextEmbeddingContext : public EmbeddingContext {};
-
-/**
- * 音频嵌入模型
- */
-class AudioEmbeddingContext : public EmbeddingContext {};
-
-/**
- * 图片嵌入模型
- */
-class ImageEmbeddingContext : public EmbeddingContext {};
-
-/**
- * 视频嵌入模型
- */
-class VideoEmbeddingContext : public EmbeddingContext {};
 
 /**
  * 重排序模型
@@ -204,24 +200,14 @@ class VideoEmbeddingContext : public EmbeddingContext {};
 class RerankingContext : public Context {};
 
 /**
+ * 视觉重排序模型
+ */
+class VLRerankingContext : public RerankingContext {};
+
+/**
  * 文本重排序模型
  */
 class TextRerankingContext : public RerankingContext {};
-
-/**
- * 音频重排序模型
- */
-class AudioRerankingContext : public RerankingContext {};
-
-/**
- * 图片重排序模型
- */
-class ImageRerankingContext : public RerankingContext {};
-
-/**
- * 视频重排序模型
- */
-class VideoRerankingContext : public RerankingContext {};
 
 extern void init();
 extern void stop();
@@ -231,19 +217,24 @@ extern std::mutex runtime_mutex;
 extern std::map<caiwei::context::Type, std::shared_ptr<caiwei::context::Context>> context_map;
 extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> runtime_map;
 
-template <typename C>
-caiwei::context::ContextWrapper<C>::ContextWrapper(std::shared_ptr<C> context) : context(std::move(context)) {
+template <typename C, typename I, typename O>
+caiwei::context::ContextWrapper<C, I, O>::ContextWrapper(std::shared_ptr<C> context) : context(std::move(context)) {
     this->context->ref();
 }
 
-template <typename C>
-caiwei::context::ContextWrapper<C>::~ContextWrapper() {
+template <typename C, typename I, typename O>
+caiwei::context::ContextWrapper<C, I, O>::~ContextWrapper() {
     this->context->unref();
 }
 
-template <typename C>
-std::shared_ptr<C> caiwei::context::ContextWrapper<C>::ptr() {
+template <typename C, typename I, typename O>
+std::shared_ptr<C> caiwei::context::ContextWrapper<C, I, O>::ptr() {
     return this->context;
+}
+
+template <typename C, typename I, typename O>
+O caiwei::context::ContextWrapper<C, I, O>::run(const I& input) {
+    return this->context->run(input);
 }
 
 template <typename R>
@@ -264,26 +255,14 @@ inline std::shared_ptr<R> get_context_runtime(caiwei::runtime::Type type) {
 template <typename C, typename R>
 extern std::shared_ptr<C> get_context(caiwei::context::Type type, std::shared_ptr<R> runtime);
 
-template <typename C>
-std::unique_ptr<ContextWrapper<C>> get_context(caiwei::context::Type type, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+template <typename C, typename I, typename O>
+std::unique_ptr<ContextWrapper<C, I, O>> get_context(caiwei::context::Type type, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
     std::lock_guard<std::mutex> lock(context_mutex);
     auto iter = context_map.find(type);
     if (iter != context_map.end()) {
-        return std::make_unique<ContextWrapper<C>>(std::dynamic_pointer_cast<C>(iter->second));
+        return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(iter->second));
     }
     std::shared_ptr<C> context = nullptr;
-    #ifdef ENABLE_CAIWEI_RUNTIME_MNN
-    if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::MNN) {
-        auto runtime = get_context_runtime<caiwei::runtime::MNNRuntime>(caiwei::runtime::Type::MNN);
-        if (runtime) {
-            context = caiwei::context::get_context<C, caiwei::runtime::MNNRuntime>(type, runtime);
-            if (context != nullptr) {
-                context_map[type] = context;
-                return std::make_unique<ContextWrapper<C>>(context);
-            }
-        }
-    }
-    #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_CANN
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::CANN) {
         auto runtime = get_context_runtime<caiwei::runtime::CANNRuntime>(caiwei::runtime::Type::CANN);
@@ -291,20 +270,32 @@ std::unique_ptr<ContextWrapper<C>> get_context(caiwei::context::Type type, caiwe
             context = caiwei::context::get_context<C, caiwei::runtime::CANNRuntime>(type, runtime);
             if (context != nullptr) {
                 context_map[type] = context;
-                return std::make_unique<ContextWrapper<C>>(context);
+                return std::make_unique<ContextWrapper<C, I, O>>(context);
             }
         }
     }
     #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN
-    if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN2 || runtime_type == caiwei::runtime::Type::RKNN3) {
-        if (type == caiwei::context::Type::YOLO) {
+    if (
+        runtime_type == caiwei::runtime::Type::NONE  ||
+        runtime_type == caiwei::runtime::Type::RKNN2 ||
+        runtime_type == caiwei::runtime::Type::RKNN3
+    ) {
+        if (
+            type == caiwei::context::Type::YOLO_CLS  ||
+            type == caiwei::context::Type::YOLO_DET  ||
+            type == caiwei::context::Type::YOLO_OBB  ||
+            type == caiwei::context::Type::YOLO_SEG  ||
+            type == caiwei::context::Type::YOLO_SEM  ||
+            type == caiwei::context::Type::YOLO_POSE ||
+            type == caiwei::context::Type::YOLO_DEPTH
+        ) {
             auto runtime = get_context_runtime<caiwei::runtime::RKNN2Runtime>(caiwei::runtime::Type::RKNN2);
             if (runtime) {
                 context = caiwei::context::get_context<C, caiwei::runtime::RKNN2Runtime>(type, runtime);
                 if (context != nullptr) {
                     context_map[type] = context;
-                    return std::make_unique<ContextWrapper<C>>(context);
+                    return std::make_unique<ContextWrapper<C, I, O>>(context);
                 }
             }
         } else {
@@ -313,7 +304,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(caiwei::context::Type type, caiwe
                 context = caiwei::context::get_context<C, caiwei::runtime::RKNN3Runtime>(type, runtime);
                 if (context != nullptr) {
                     context_map[type] = context;
-                    return std::make_unique<ContextWrapper<C>>(context);
+                    return std::make_unique<ContextWrapper<C, I, O>>(context);
                 }
             }
         }
@@ -326,7 +317,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(caiwei::context::Type type, caiwe
             context = caiwei::context::get_context<C, caiwei::runtime::LlamaCPPRuntime>(type, runtime);
             if (context != nullptr) {
                 context_map[type] = context;
-                return std::make_unique<ContextWrapper<C>>(context);
+                return std::make_unique<ContextWrapper<C, I, O>>(context);
             }
         }
     }
@@ -338,12 +329,16 @@ std::unique_ptr<ContextWrapper<C>> get_context(caiwei::context::Type type, caiwe
             context = caiwei::context::get_context<C, caiwei::runtime::ONNXRuntimeRuntime>(type, runtime);
             if (context != nullptr) {
                 context_map[type] = context;
-                return std::make_unique<ContextWrapper<C>>(context);
+                return std::make_unique<ContextWrapper<C, I, O>>(context);
             }
         }
     }
     #endif
     return nullptr;
+}
+
+inline auto get_det_context(caiwei::context::Type type = caiwei::context::Type::YOLO_DET, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::DetContext, caiwei::media::ImageFrame, std::vector<caiwei::yolo::Box>>(type, runtime_type);
 }
 
 } // namespace context

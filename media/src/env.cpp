@@ -4,7 +4,7 @@
 #include <map>
 #include <cstring>
 
-std::atomic_int caiwei::env::id_index = caiwei::env::min_id_index;
+std::atomic_uint32_t caiwei::env::id_index = 0;
 
 // 默认配置
 static std::map<std::string, std::string> default_config = {
@@ -19,6 +19,8 @@ static std::map<std::string, std::string> default_config = {
     // DET
     {"CAIWEI_DET_W",                    "640"          }, // 超时时间
     {"CAIWEI_DET_H",                    "640"          }, // 超时时间
+    {"CAIWEI_DET_TYPE",                 "YOLO_DET"     }, // 超时时间
+    {"CAIWEI_DET_NAME",                 "yolo26n"      }, // 超时时间
     {"CAIWEI_DET_PATH",                 "yolo26n.onnx" }, // 超时时间
     {"CAIWEI_DET_CLASS_SIZE",           "80"           }, // 超时时间
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"          }, // 物体检测IOU阈值
@@ -31,7 +33,7 @@ std::string caiwei::env::get(const std::string& name) {
     if (!value || std::strlen(value) == 0) {
         auto iterator = default_config.find(name);
         if (iterator == default_config.end()) {
-            LOG_WARN("不支持的环境配置: %s", name.c_str());
+            CW_LOG_W("不支持的环境配置: %s", name.c_str());
             value = "";
         } else {
             value = iterator->second.c_str();
@@ -57,18 +59,18 @@ std::string caiwei::env::get_string(const std::string& name) {
 }
 
 void caiwei::env::set(const std::string& name, const std::string& value) {
-    LOG_INFO("设置环境配置: %s = %s", name.c_str(), value.c_str());
+    CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
 #if OS_WIN
     _putenv_s(name.c_str(), value.c_str());
 #elif OS_LINUX
     setenv(name.c_str(), value.c_str(), true);
 #else
-    LOG_WARN("设置环境失败: %s = %s", name.c_str(), value.c_str());
+    CW_LOG_W("设置环境失败: %s = %s", name.c_str(), value.c_str());
 #endif
 }
 
 void caiwei::env::print_all_env() {
     for (auto& pair : default_config) {
-        LOG_INFO("%-48s = %s", pair.first.c_str(), caiwei::env::get(pair.first).c_str());
+        CW_LOG_I("%-48s = %s", pair.first.c_str(), caiwei::env::get(pair.first).c_str());
     }
 }

@@ -7,7 +7,6 @@
 #include "caiwei/env.hpp"
 #include "caiwei/media.hpp"
 #include "caiwei/context.hpp"
-
 #include "caiwei/transform.hpp"
 
 #include "onnxruntime_cxx_api.h"
@@ -47,7 +46,7 @@ public:
     ~DetONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
-    std::vector<caiwei::context::Box> run(const caiwei::media::ImageFrame& image) override;
+    std::vector<caiwei::yolo::Box> run(const caiwei::media::ImageFrame& image) override;
 
 };
 

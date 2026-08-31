@@ -27,19 +27,16 @@ extern void init();
 extern void stop();
 
 struct AudioInfo {
-
-    int channel;          // 通道数
+    int channels;         // 通道数
     int sample_rate;      // 采样率
     int format;           // 格式
     int bytes_per_sample; // 每个采样字节数
 
     AudioInfo() = default;
-    AudioInfo(int channel, int sample_rate, int format);
-
+    AudioInfo(int channels, int sample_rate, int format);
 };
 
 struct VideoInfo {
-
     int fps;    // 帧率
     int width;  // 宽度
     int height; // 高度
@@ -48,7 +45,6 @@ struct VideoInfo {
     VideoInfo() = default;
     VideoInfo(         int width, int height, int format);
     VideoInfo(int fps, int width, int height, int format);
-
 };
 
 using AudioCallback = std::function<bool(const AudioFrame&)>;
@@ -58,7 +54,6 @@ using PacketCallback = std::function<bool(MediaType, AVPacket*)>;
 using FormatCallback = std::function<bool(uint32_t, const uint8_t*)>;
 
 class MediaMuxer {
-
 private:
     PacketCallback packet_callback; // 编码数据回调
     size_t audio_pts = 0; // 音频累计编码采样点数
@@ -69,10 +64,10 @@ private:
     AVPacket* video_packet{ nullptr }; // 视频包
     SwrContext* swr_ctx{ nullptr }; // 音频重采样上下文
     SwsContext* sws_ctx{ nullptr }; // 视频重采样上下文
-    uint8_t    * audio_ch_buffer[8] { nullptr }; // 音频通道缓存
-    AVAudioFifo* audio_fifo         { nullptr }; // 音频缓存
     const AVCodec * audio_codec{ nullptr }; // 音频编码器
     const AVCodec * video_codec{ nullptr }; // 视频编码器
+    uint8_t    * audio_ch_buffer[8] { nullptr }; // 音频通道缓存
+    AVAudioFifo* audio_fifo         { nullptr }; // 音频编码缓存
 public:
     AudioInfo in_audio_info;  // 输入音频
     VideoInfo in_video_info;  // 输入视频
@@ -95,11 +90,9 @@ private:
     bool open_video();
     bool stop_audio();
     bool stop_video();
-
 };
 
 class MediaFormat {
-
 private:
     bool need_header = true;
     AudioInfo audio_info; // 音频
@@ -120,11 +113,9 @@ public:
 private:
     void send_header ();
     void send_trailer();
-
 };
 
 class MediaDemuxer {
-
 private:
     volatile bool running; // 是否运行
     std::string type; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
@@ -137,9 +128,9 @@ public:
 public:
     bool open(AudioInfo audio_info, VideoInfo video_info);
     bool stop();
-
 };
 
 } // namespace media
 } // namespace caiwei
+
 #endif // CAIWEI_MEDIA_HPP

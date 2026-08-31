@@ -29,9 +29,9 @@ void caiwei::runtime::stop() {
 }
 
 void print_onnx_runtime_info() {
-    LOG_INFO("ONNXRuntime Version: %s", Ort::GetVersionString().c_str());
-    LOG_INFO("ONNXRuntime Build Info: %s", Ort::GetBuildInfoString().c_str());
+    CW_LOG_I("ONNXRuntime Version: %s", Ort::GetVersionString().c_str());
+    CW_LOG_I("ONNXRuntime Build Info: %s", Ort::GetBuildInfoString().c_str());
     for(const auto& provider : Ort::GetAvailableProviders()) {
-        LOG_INFO("ONNXRuntime Provider: %s", provider.c_str());
+        CW_LOG_I("ONNXRuntime Provider: %s", provider.c_str());
     }
 }

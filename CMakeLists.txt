@@ -9,13 +9,12 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ENABLE_CAIWEI_TEST                "Build Test"        OFF) # 是否编译测试
-option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) #     llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #               ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # MNN llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # MNN llama.cpp
-option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) #     llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #               ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_MNN         "MNN"               OFF) # 跨平台
+option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # llama.cpp
+option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #           ONNXRuntime
 option(ENABLE_CAIWEI_RUNTIME_CANN        "CANN"              OFF) # 昇腾
 option(ENABLE_CAIWEI_RUNTIME_RKNN        "RKNN"              OFF) # 瑞芯微
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         ON)  # 跨平台
@@ -53,7 +52,7 @@ elseif(CMAKE_HOST_WIN32)
     if(MSVC)
         set(CMAKE_C_STANDARD 17)
         set(CMAKE_C_STANDARD_REQUIRED ON)
-        set(CMAKE_CXX_STANDARD 20)
+        set(CMAKE_CXX_STANDARD 23)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
         set(CMAKE_CXX_EXTENSIONS OFF)
         add_definitions(-DOS_WIN=1)
@@ -72,11 +71,11 @@ if (ENABLE_ASAN)
 endif ()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DCAIWEI_LOG_DEBUG=D)
+    add_definitions(-DCAIWEI_LOG_LEVEL=D)
     message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 else()
-    add_definitions(-DCAIWEI_LOG_DEBUG=I)
+    add_definitions(-DCAIWEI_LOG_LEVEL=I)
     message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
@@ -113,12 +112,6 @@ if (ENABLE_CAIWEI_BACKEND_TENSORRT)
     add_definitions(-DENABLE_CAIWEI_BACKEND_TENSORRT)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_MNN)
-    message(STATUS "Running with MNN")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_MNN)
-endif()
-
-
 if (ENABLE_CAIWEI_RUNTIME_CANN)
     message(STATUS "Running with CANN")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_CANN)
@@ -127,7 +120,7 @@ endif()
 if (ENABLE_CAIWEI_RUNTIME_RKNN)
     message(STATUS "Running with RKNN")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN)
-    list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
+    # list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
 endif()
 
 if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)

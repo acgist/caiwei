@@ -25,7 +25,7 @@ std::future<bool> caiwei::session::VideoPlaySession::get() {
             auto output = base64_encode(data, length);
             bool ret = this->callback("data", output.data(), output.length());
             if(!ret) {
-                LOG_INFO("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
+                CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
                 if (demuxer) {
                     demuxer->stop();
                 }
@@ -54,7 +54,7 @@ std::future<bool> caiwei::session::VideoPlaySession::get() {
         return true;
     });
     demuxer = &media_demuxer;
-    LOG_INFO("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
+    CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
     bool ret = media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
     media_demuxer.stop();
     media_format.stop();

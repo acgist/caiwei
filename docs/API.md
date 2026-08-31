@@ -6,11 +6,7 @@
 
 ## /v1/audio/asr
 
-兼容: /v1/audio/transcriptions
-
 ## /v1/audio/tts
-
-兼容: /v1/audio/speech
 
 ## /v1/image/yolo
 

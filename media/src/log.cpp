@@ -5,8 +5,8 @@
 #include <cstdarg>
 
 static std::mutex mutex;
-#ifdef CAIWEI_LOG_DEBUG
-static caiwei::log::Level level = caiwei::log::Level::CAIWEI_LOG_DEBUG;
+#ifdef CAIWEI_LOG_LEVEL
+static caiwei::log::Level level = caiwei::log::Level::CAIWEI_LOG_LEVEL;
 #else
 static caiwei::log::Level level = caiwei::log::Level::D;
 #endif

@@ -27,10 +27,10 @@ void caiwei::rest::open() {
     auto host = caiwei::env::get("CAIWEI_SERVER_HOST");
     auto port = caiwei::env::get_int("CAIWEI_SERVER_PORT");
     if (port <= 0) {
-        LOG_WARN("端口配置错误: %d", port);
+        CW_LOG_W("端口配置错误: %d", port);
         return;
     }
-    LOG_INFO("启动REST服务: %s - %d", host.c_str(), port);
+    CW_LOG_I("启动REST服务: %s - %d", host.c_str(), port);
     caiwei::rest::server->new_task_queue = [] {
         return new httplib::ThreadPool(4, 4);
     };
@@ -39,16 +39,16 @@ void caiwei::rest::open() {
     caiwei::rest::server->set_write_timeout(60);
     caiwei::rest::server->set_keep_alive_timeout(60);
     caiwei::rest::server->set_logger([](const httplib::Request& request, const httplib::Response&) {
-        LOG_INFO("请求日志: %s - %s - %s", request.method.c_str(), request.path.c_str(), request.remote_addr.c_str());
+        CW_LOG_I("请求日志: %s - %s - %s", request.method.c_str(), request.path.c_str(), request.remote_addr.c_str());
     });
     caiwei::rest::server->listen(host, port);
     delete caiwei::rest::server;
     caiwei::rest::server = nullptr;
-    LOG_INFO("结束REST服务: %s - %d", host.c_str(), port);
+    CW_LOG_I("结束REST服务: %s - %d", host.c_str(), port);
 }
 
 void caiwei::rest::stop() {
-    LOG_INFO("关闭REST服务");
+    CW_LOG_I("关闭REST服务");
     caiwei::rest::server->stop();
 }
 
@@ -83,7 +83,7 @@ static void restHandler() {
         return httplib::Server::HandlerResponse::Unhandled;
     });
     caiwei::rest::server->set_error_handler([](const httplib::Request& request, httplib::Response& response) {
-        LOG_ERROR("系统错误: %s - %s - %d - %s", request.path.c_str(), request.body.c_str(), response.status, response.body.c_str());
+        CW_LOG_W("系统错误: %s - %s - %d - %s", request.path.c_str(), request.body.c_str(), response.status, response.body.c_str());
         if(response.status == httplib::StatusCode::OK_200) {
             response.status = httplib::StatusCode::InternalServerError_500;
         }
@@ -92,7 +92,7 @@ static void restHandler() {
         }
     });
     caiwei::rest::server->set_exception_handler([](const httplib::Request& request, httplib::Response& response, std::exception_ptr e) {
-        LOG_ERROR("系统异常: %s - %s - %d - %s", request.path.c_str(), request.body.c_str(), response.status, response.body.c_str());
+        CW_LOG_W("系统异常: %s - %s - %d - %s", request.path.c_str(), request.body.c_str(), response.status, response.body.c_str());
         std::string message;
         try {
             std::rethrow_exception(std::move(e));
@@ -135,8 +135,8 @@ static void restGetIndex() {
   </p>
   <p><a href="https://gitee.com/acgist/caiwei">https://gitee.com/acgist/caiwei</a></p>
   <p><a href="https://github.com/acgist/caiwei">https://github.com/acgist/caiwei</a></p>
-  <p>运行环境: MNN/RKNN/llama.cpp/ONNXRuntime</p>
-  <p>支持模型: YOLO/Qwen3/Qwen3-ASR/Qwen3-TTS/Qwen3-VL/Qwen3-Reranker/Qwen3-Embedding</p>
+  <p>运行环境: CANN/RKNN/llama.cpp/ONNXRuntime</p>
+  <p>支持模型: YOLO/Qwen3/Qwen3-ASR/Qwen3-TTS/Qwen3-VL/Qwen3-Omni/Qwen3-Reranker/Qwen3-VL-Reranker/Qwen3-Embedding/Qwen3-VL-Embedding</p>
 </body>
 
 </html>)", caiwei::rest::content::type::HTML);
