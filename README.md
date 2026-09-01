@@ -100,13 +100,21 @@
 
 |模型|CANN|RKNN|llama.cpp|ONNXRuntime|
 |:--|:--|:--|:--|:--|
-|YOLO26         |○|○|×|○|
-|Qwen3-ASR      |○|○|○|×|
-|Qwen3-TTS      |○|○|○|×|
-|Qwen3          |○|○|○|×|
-|Qwen3-VL       |○|○|○|×|
-|Qwen3-Omni     |○|○|○|×|
-|Qwen3-Reranker |○|○|○|×|
-|Qwen3-Embedding|○|○|○|×|
+|YOLO-CLS          |○|○|×|○|
+|YOLO-DET          |○|○|×|○|
+|YOLO-OBB          |○|○|×|○|
+|YOLO-SEG          |○|○|×|○|
+|YOLO-SEM          |○|○|×|○|
+|YOLO-POSE         |○|○|×|○|
+|YOLO-DEPTH        |○|○|×|○|
+|Qwen3-ASR         |○|○|○|×|
+|Qwen3-TTS         |○|○|○|×|
+|Qwen3             |○|○|○|×|
+|Qwen3-VL          |○|○|○|×|
+|Qwen3-Omni        |○|○|○|×|
+|Qwen3-Reranker    |○|○|○|×|
+|Qwen3-Embedding   |○|○|○|×|
+|Qwen3-VL-Reranker |○|○|○|×|
+|Qwen3-VL-Embedding|○|○|○|×|
 
 > √=已支持 ○=计划中 ?=未计划 ×=不支持
