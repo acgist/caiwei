@@ -38,7 +38,7 @@ int main() {
     std::ofstream output("./output.mp4", std::ios_base::binary);
     caiwei::media::MediaFormat media_format([&output](uint32_t length, const uint8_t* data) {
         output.write((const char*) data, length);
-        std::printf("write %d bytes\n", length);
+        CW_LOG_D("write %d bytes", length);
         return true;
     });
     caiwei::media::MediaMuxer media_muxer(
@@ -48,9 +48,9 @@ int main() {
         caiwei::media::VideoInfo(25, 640, 360, AV_PIX_FMT_YUV420P),
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
         if (type == caiwei::media::MediaType::AUDIO) {
-            std::printf("audio packet: %" PRId64 " %" PRId64 " %" PRId64 " %" PRId32 "\n", packet->pts, packet->dts, packet->duration, packet->size);
+            CW_LOG_D("audio packet: %" PRId64 " %" PRId64 " %" PRId64 " %" PRId32, packet->pts, packet->dts, packet->duration, packet->size);
         } else if (type == caiwei::media::MediaType::VIDEO) {
-            std::printf("video packet: %" PRId64 " %" PRId64 " %" PRId64 " %" PRId32 "\n", packet->pts, packet->dts, packet->duration, packet->size);
+            CW_LOG_D("video packet: %" PRId64 " %" PRId64 " %" PRId64 " %" PRId32, packet->pts, packet->dts, packet->duration, packet->size);
         } else {
             // -
         }
@@ -60,12 +60,12 @@ int main() {
     media_muxer.open();
     media_format.open(media_muxer);
     caiwei::media::MediaDemuxer media_demuxer(type, url, [&media_muxer](const caiwei::media::AudioFrame& frame) {
-        std::printf("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.samples);
+        CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data_length, frame.samples);
         std::fflush(stdout);
         media_muxer.on_audio(frame);
         return true;
     }, [&media_muxer](const caiwei::media::VideoFrame& frame) {
-        std::printf("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32 "\n", frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
+        CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
         std::fflush(stdout);
         media_muxer.on_video(frame);
         // std::this_thread::sleep_for(std::chrono::milliseconds(20));

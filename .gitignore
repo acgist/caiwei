@@ -25,5 +25,6 @@
 /deps/sdl2/
 /deps/ffmpeg/
 /deps/opencv/
+/deps/llama.cpp/
 /deps/cpp-httplib/
 /deps/onnxruntime/

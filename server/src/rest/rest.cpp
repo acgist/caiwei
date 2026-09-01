@@ -2,6 +2,7 @@
 #include "caiwei/env.hpp"
 #include "caiwei/json.hpp"
 #include "caiwei/rest.hpp"
+#include "caiwei/context.hpp"
 
 #include "httplib.h"
 
@@ -151,7 +152,15 @@ static void restGetHealth() {
 
 static void restGetModels() {
     caiwei::rest::server->Get("/v1/models", [](const httplib::Request&, httplib::Response& response) {
-        response.set_content(caiwei::json::buildResponse("..."), caiwei::rest::content::type::JSON);
+        const auto& list = caiwei::context::context_info_list;
+        nlohmann::json ret;
+        for (const auto& value : list) {
+            ret.push_back({
+                {"name", value.name},
+                {"path", value.path}
+            });
+        }
+        response.set_content(caiwei::json::buildResponse(ret), caiwei::rest::content::type::JSON);
     });
 }
 

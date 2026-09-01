@@ -36,11 +36,19 @@ protected:
 
 };
 
+class ClsONNXRuntimeContext : public caiwei::context::ClsContext, public ONNXRuntimeContext {
+
+public:
+    ClsONNXRuntimeContext(std::string path, int w, int h, int top_k, int class_size, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
+    ~ClsONNXRuntimeContext();
+public:
+    using ONNXRuntimeContext::run;
+    std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) override;
+
+};
+
 class DetONNXRuntimeContext : public caiwei::context::DetContext, public ONNXRuntimeContext {
 
-private:
-    std::vector<float> dst;
-    std::vector<float> pad;
 public:
     DetONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
     ~DetONNXRuntimeContext();

@@ -1,5 +1,7 @@
 # RKNN
 
+* 版本: 
+
 * `RKNN2`跑`YOLO`模型
 * `RKNN3`跑`Qwen`模型
 

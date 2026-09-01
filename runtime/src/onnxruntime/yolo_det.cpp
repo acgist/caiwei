@@ -17,7 +17,9 @@ std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_context(caiwei
     return std::make_shared<DetONNXRuntimeContext>(path, w, h, class_size, iou_threshold, confidence_threshold, runtime);
 }
 
-caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) : DetContext(w, h, class_size, iou_threshold, confidence_threshold, runtime), ONNXRuntimeContext(path, runtime->env) {
+caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime)
+ : DetContext(w, h, class_size, iou_threshold, confidence_threshold, runtime),
+   ONNXRuntimeContext(path, runtime->env) {
     this->input_node_dims.push_back(1);
     this->input_node_dims.push_back(3);
     this->input_node_dims.push_back(this->h);

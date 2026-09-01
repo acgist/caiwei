@@ -24,10 +24,10 @@ enum class Type {
     LLM,
     VLM,
     MLLM,
-    EMBEDDING,
-    RERANKING,
     VL_EMBEDDING,
     VL_RERANKING,
+    TEXT_EMBEDDING,
+    TEXT_RERANKING,
     YOLO_CLS,
     YOLO_DET,
     YOLO_OBB,
@@ -35,13 +35,18 @@ enum class Type {
     YOLO_SEM,
     YOLO_POSE,
     YOLO_DEPTH,
+    NONE,
 };
 
-struct Model {
+struct ContextInfo {
     Type type;
-    std::string path;
     std::string name;
+    std::string path;
 };
+
+extern std::vector<ContextInfo> context_info_list;
+
+extern Type get_context_type(const std::string& name);
 
 class Context {
 private:
@@ -71,7 +76,19 @@ public:
 /**
  * 图像分类模型
  */
-class ClsContext : public Context {};
+class ClsContext : public Context {
+protected:
+    int w;
+    int h;
+    int top_k;
+    int class_size;
+    float confidence_threshold;
+public:
+    ClsContext(int w, int h, int top_k, int class_size, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
+    ~ClsContext();
+public:
+    virtual std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) = 0;
+};
 
 /**
  * 目标检测模型
@@ -337,8 +354,68 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(caiwei::context::Type type,
     return nullptr;
 }
 
+inline auto get_asr_context(caiwei::context::Type type = caiwei::context::Type::ASR, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::ASRContext, caiwei::text::ASRRequest, std::vector<caiwei::text::ASRResponse>>(type, runtime_type);
+}
+
+inline auto get_tts_context(caiwei::context::Type type = caiwei::context::Type::TTS, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::TTSContext, caiwei::text::TTSRequest, std::vector<caiwei::text::TTSResponse>>(type, runtime_type);
+}
+
+inline auto get_llm_context(caiwei::context::Type type = caiwei::context::Type::LLM, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::vector<std::string>>(type, runtime_type);
+}
+
+inline auto get_vlm_context(caiwei::context::Type type = caiwei::context::Type::VLM, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::vector<std::string>>(type, runtime_type);
+}
+
+inline auto get_mllm_context(caiwei::context::Type type = caiwei::context::Type::MLLM, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::MLLMContext, caiwei::text::CompletionsRequest, std::vector<std::string>>(type, runtime_type);
+}
+
+inline auto get_vl_reranking_context(caiwei::context::Type type = caiwei::context::Type::VL_RERANKING, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::VLRerankingContext, caiwei::text::RerankingRequest, std::vector<caiwei::text::RerankingResponse>>(type, runtime_type);
+}
+
+inline auto get_text_reranking_context(caiwei::context::Type type = caiwei::context::Type::TEXT_RERANKING, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::TextRerankingContext, caiwei::text::RerankingRequest, std::vector<caiwei::text::RerankingResponse>>(type, runtime_type);
+}
+
+inline auto get_vl_embedding_context(caiwei::context::Type type = caiwei::context::Type::VL_EMBEDDING, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::TextEmbeddingContext, caiwei::text::EmbeddingRequest, std::vector<caiwei::text::EmbeddingResponse>>(type, runtime_type);
+}
+
+inline auto get_text_embedding_context(caiwei::context::Type type = caiwei::context::Type::TEXT_EMBEDDING, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::TextEmbeddingContext, caiwei::text::EmbeddingRequest, std::vector<caiwei::text::EmbeddingResponse>>(type, runtime_type);
+}
+
+inline auto get_cls_context(caiwei::context::Type type = caiwei::context::Type::YOLO_CLS, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>(type, runtime_type);
+}
+
 inline auto get_det_context(caiwei::context::Type type = caiwei::context::Type::YOLO_DET, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
     return get_context<caiwei::context::DetContext, caiwei::media::ImageFrame, std::vector<caiwei::yolo::Box>>(type, runtime_type);
+}
+
+inline auto get_obb_context(caiwei::context::Type type = caiwei::context::Type::YOLO_OBB, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::OBBContext, caiwei::media::ImageFrame, std::vector<int>>(type, runtime_type);
+}
+
+inline auto get_seg_context(caiwei::context::Type type = caiwei::context::Type::YOLO_SEG, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<int>>(type, runtime_type);
+}
+
+inline auto get_sem_context(caiwei::context::Type type = caiwei::context::Type::YOLO_SEM, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::SemContext, caiwei::media::ImageFrame, std::vector<int>>(type, runtime_type);
+}
+
+inline auto get_pose_context(caiwei::context::Type type = caiwei::context::Type::YOLO_POSE, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::PoseContext, caiwei::media::ImageFrame, std::vector<int>>(type, runtime_type);
+}
+
+inline auto get_depth_context(caiwei::context::Type type = caiwei::context::Type::YOLO_DEPTH, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    return get_context<caiwei::context::DepthContext, caiwei::media::ImageFrame, std::vector<int>>(type, runtime_type);
 }
 
 } // namespace context

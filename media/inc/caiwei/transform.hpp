@@ -141,6 +141,31 @@ inline void min_max_loc(const T* score, const int size, T& min_score, int& min_i
 }
 
 template <typename T>
+inline std::vector<std::pair<uint32_t, T>> top_k(const T* score, const uint32_t size, const uint32_t top_k, const T confidence_threshold) {
+    if (size == 0 || top_k == 0 || top_k > size) {
+        return {};
+    }
+    std::vector<std::pair<uint32_t, T>> ret;
+    ret.reserve(size);
+    for (uint32_t i = 0; i < size; ++i) {
+        if (score[i] >= confidence_threshold) {
+            ret.emplace_back(i, score[i]);
+        }
+    }
+    if (ret.size() <= top_k) {
+        std::sort(ret.begin(), ret.end(), [](const std::pair<uint32_t, T>& a, const std::pair<uint32_t, T>& z) {
+            return a.second > z.second;
+        });
+        return ret;
+    }
+    std::partial_sort(ret.begin(), ret.begin() + top_k, ret.end(), [](const std::pair<uint32_t, T>& a, const std::pair<uint32_t, T>& z) {
+        return a.second > z.second;
+    });
+    ret.resize(top_k);
+    return ret;
+}
+
+template <typename T>
 inline void transpose(const T* src, T* dst, const int C, const int N) {
     for (int n = 0; n < N; ++n) {
         for (int c = 0; c < C; ++c) {
