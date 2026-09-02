@@ -19,15 +19,15 @@ const int max_id_index = 10000;
 
 extern std::atomic_uint32_t id_index;
 
-extern std::string get       (const std::string& name);
-extern int         get_int   (const std::string& name);
-extern bool        get_bool  (const std::string& name);
-extern float       get_float (const std::string& name);
-extern std::string get_string(const std::string& name);
+std::string get       (const std::string& name);
+int         get_int   (const std::string& name);
+bool        get_bool  (const std::string& name);
+float       get_float (const std::string& name);
+std::string get_string(const std::string& name);
 
-extern void set(const std::string& name, const std::string& value);
+void set(const std::string& name, const std::string& value);
 
-extern void print_all_env();
+void print_all_env();
 
 inline size_t timestamp() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

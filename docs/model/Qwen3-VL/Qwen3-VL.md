@@ -37,8 +37,6 @@ swift sft                             \
 
 ## 模型导出
 
-### LoRA
-
 ```
 CUDA_VISIBLE_DEVICES=0 \
 swift export           \
@@ -54,43 +52,6 @@ swift export                                       \
     --bnb_4bit_use_double_quant true               \
     --output_dir Qwen3-VL-4B-Instruct-lora-BNB-NF4 \
     --adapters Qwen3-VL-4B-Instruct-lora/v0-20260715-094947/checkpoint-3/
-```
-
-### RKNN
-
-```
-python export_llm.py                               \
---model_path      /data/rkllm/Qwen3-VL-4B-Instruct \
---export_llm_path /data/rkllm/onnx/Qwen3-VL-4B-Instruct.onnx
-
-python export_rknn.py                                        \
---platform  rk1828                                           \
---onnx_path /data/rkllm/onnx/Qwen3-VL-4B-Instruct.onnx       \
---config    /data/rkllm/onnx/Qwen3-VL-4B-Instruct.config.pkl \
---rknn_path /data/rkllm/rknn/Qwen3-VL-4B-Instruct.rknn
-
-python export_vision.py                               \
---model_path         /data/rkllm/Qwen3-VL-4B-Instruct \
---export_vision_path /data/rkllm/onnx/Qwen3-VL-4B-Instruct.onnx
-
-python export_rknn.py                                  \
---platform  rk1828                                     \
---onnx_path /data/rkllm/onnx/Qwen3-VL-4B-Instruct.onnx \
---rknn_path /data/rkllm/rknn/Qwen3-VL-4B-Instruct.rknn \
---no_prune_mode
-
-rkllm3-server                                             \
-  -a            "Qwen3-VL-4B-Instruct"                    \
-  --port        8000                                      \
-  --host        0.0.0.0                                   \
-  --model       ./llm/Qwen3-VL-4B-Instruct.rknn           \
-  --vocab       ./llm/Qwen3-VL-4B-Instruct.tokenizer.gguf \
-  --embed       ./llm/Qwen3-VL-4B-Instruct.embed.bin      \
-  --model2      ./vlm/Qwen3-VL-4B-Instruct.rknn           \
-  --img-start   "<|vision_start|>"                        \
-  --img-end     "<|vision_end|>"                          \
-  --img-content "<|image_pad|>"                           \
-  --log_level   0
 ```
 
 ## 模型推理
@@ -131,9 +92,13 @@ swift infer               \
 
 |设备|CANN|RKNN|llama.cpp|ONNXRuntime|
 |:--|:--|:--|:--|:--|
-|CANN(Atlas350)|||||
-|RKNN(RK1828)|||||
-|CUDA(RTX4090)|||||
+|CANN(Ascend 310P)  |||||
+|CANN(Ascend 910C)  |||||
+|RKNN(RK1828)       |||||
+|RKNN(RK3588)       |||||
+|CUDA(Tesla L40S)   |||||
+|CUDA(Tesla V100)   |||||
+|CUDA(RTX 5060 Ti)  |||||
 |OpenVINO(i5-1135G7)|||||
 
 ## 文档资料

@@ -1,21 +1,6 @@
-#include "onnxruntime.hpp"
+#include "caiwei/runtime/onnxruntime.hpp"
 
-#include <filesystem>
-
-template <>
-std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_context(caiwei::context::Type type, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_DET_W");
-    int h = caiwei::env::get_int("CAIWEI_DET_H");
-    int class_size = caiwei::env::get_int("CAIWEI_DET_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_DET_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD");
-    std::string path = caiwei::env::get_string("CAIWEI_DET_PATH");
-    if (!std::filesystem::exists(path)) {
-        CW_LOG_W("ONNXRtuntime模型无效: %s", path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<DetONNXRuntimeContext>(path, w, h, class_size, iou_threshold, confidence_threshold, runtime);
-}
+#include "caiwei/transform.hpp"
 
 caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime)
  : DetContext(w, h, class_size, iou_threshold, confidence_threshold, runtime),

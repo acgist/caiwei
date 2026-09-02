@@ -19,19 +19,22 @@ static std::map<std::string, std::string> default_config = {
     // CLS
     {"CAIWEI_CLS_W",                    "224"              }, // 宽度
     {"CAIWEI_CLS_H",                    "224"              }, // 高度
-    {"CAIWEI_CLS_NAME",                 "yolo26n-cls"      }, // 名称
-    {"CAIWEI_CLS_PATH",                 "yolo26n-cls.onnx" }, // 路径
     {"CAIWEI_CLS_TOP_K",                "5"                }, // TOP-K
     {"CAIWEI_CLS_CLASS_SIZE",           "1000"             }, // 类型
     {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
     // DET
     {"CAIWEI_DET_W",                    "640"              }, // 宽度
     {"CAIWEI_DET_H",                    "640"              }, // 高度
-    {"CAIWEI_DET_NAME",                 "yolo26n-det"      }, // 名称
-    {"CAIWEI_DET_PATH",                 "yolo26n-det.onnx" }, // 路径
     {"CAIWEI_DET_CLASS_SIZE",           "80"               }, // 类型
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
     {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
+    // LLM
+    // 模型配置: 类型,厂商,名称,路径
+    {"CAIWEI_CONTEXT_INFO", R"(
+CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
+DET,YOLO,yolo26n-det,yolo26n-det.onnx
+LLM,QWEN,qwen3-llm,Qwen3-0.6B/Qwen3-0.6B-Q8_0.gguf
+    )"},
 };
 
 std::string caiwei::env::get(const std::string& name) {

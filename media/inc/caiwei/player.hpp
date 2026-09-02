@@ -7,11 +7,11 @@
 namespace caiwei {
 namespace player {
 
-extern bool open_player(int sample_rate, int nb_channels, int video_width, int video_height);
-extern void stop_player();
+bool open_player(int sample_rate, int nb_channels, int video_width, int video_height);
+void stop_player();
 
-extern bool play_audio(const void* data, int len);
-extern bool play_video(const void* data, int len);
+bool play_audio(const void* data, int len);
+bool play_video(const void* data, int len);
 
 } // player
 } // caiwei

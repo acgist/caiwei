@@ -1,3 +1,7 @@
+#include "caiwei/text_data.hpp"
+
+#include "nlohmann/json.hpp"
+
 // TODO 需要手写
 
 // void to_json(json& j, const CompletionsRequestToolChoiceVariant& v) {

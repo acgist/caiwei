@@ -23,8 +23,8 @@ struct AVFormatContext;
 namespace caiwei {
 namespace media  {
 
-extern void init();
-extern void stop();
+void init();
+void stop();
 
 struct AudioInfo {
     int channels;         // 通道数

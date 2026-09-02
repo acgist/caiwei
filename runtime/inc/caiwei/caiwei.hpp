@@ -6,8 +6,8 @@
 
 namespace caiwei {
 
-extern void init();
-extern void stop();
+void init();
+void stop();
 
 } // namespace caiwei
 

@@ -14,14 +14,14 @@ list(
     third_party
 )
 
-if (ENABLE_CAIWEI_SDL2)
+if(ENABLE_CAIWEI_SDL2)
     list(
         APPEND CAIWEI_MEDIA_SRCS
         src/sdl2/player.cpp
     )
-endif ()
+endif()
 
-if (ENABLE_CAIWEI_FFMPEG)
+if(ENABLE_CAIWEI_FFMPEG)
     list(
         APPEND CAIWEI_MEDIA_SRCS
         src/ffmpeg/media.cpp
@@ -29,7 +29,7 @@ if (ENABLE_CAIWEI_FFMPEG)
         src/ffmpeg/media_format.cpp
         src/ffmpeg/media_demuxer.cpp
     )
-endif ()
+endif()
 
 message(STATUS "CAIWEI_MEDIA_DLLS: ${CAIWEI_MEDIA_DLLS}")
 message(STATUS "CAIWEI_MEDIA_INCS: ${CAIWEI_MEDIA_INCS}")
@@ -37,6 +37,7 @@ message(STATUS "CAIWEI_MEDIA_LIBS: ${CAIWEI_MEDIA_LIBS}")
 
 add_library(
     ${PROJECT_NAME}
+    STATIC
     ${CAIWEI_MEDIA_SRCS}
 )
 target_link_libraries(
@@ -50,9 +51,9 @@ target_include_directories(
     ${CAIWEI_MEDIA_INCS}
 )
 
-if (ANDROID)
+if(ANDROID)
 # -
-elseif (CMAKE_HOST_UNIX)
+elseif(CMAKE_HOST_UNIX)
     install(
         TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets
         ARCHIVE DESTINATION lib

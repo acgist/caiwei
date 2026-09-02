@@ -17,9 +17,9 @@ enum class Level {
     E,
 };
 
-extern void log(Level level, const std::source_location& loc, const char* fmt, ...);
+void log(Level level, const std::source_location& loc, const char* fmt, ...);
 
-extern void set_log_level(Level level);
+void set_log_level(Level level);
 
 } // namespace log
 } // namespace caiwei

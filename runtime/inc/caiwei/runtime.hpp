@@ -89,11 +89,11 @@ public:
 };
 #endif
 
-extern void init();
-extern void stop();
+void init();
+void stop();
 
 template <typename R>
-extern std::shared_ptr<R> get_runtime(caiwei::runtime::Type type);
+std::shared_ptr<R> get_runtime(caiwei::runtime::Type type);
 
 } // namespace runtime
 } // namespace caiwei

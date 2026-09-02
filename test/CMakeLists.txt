@@ -230,7 +230,7 @@ endif()
 
 find_package(OpenCV)
 
-if (OpenCV_FOUND)
+if(OpenCV_FOUND)
     add_executable(
         test_cv_opencv
         test_cv_opencv.cpp
@@ -242,16 +242,16 @@ if (OpenCV_FOUND)
         caiwei-media
         ${OpenCV_LIBS}
     )
-    if (ANDROID)
+    if(ANDROID)
     # -
-    elseif (CMAKE_HOST_UNIX)
+    elseif(CMAKE_HOST_UNIX)
     # -
-    elseif (CMAKE_HOST_WIN32)
+    elseif(CMAKE_HOST_WIN32)
         add_custom_command(
             TARGET test_cv_opencv POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENCV_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
         )
-    endif ()
-endif ()
+    endif()
+endif()
 
 file(COPY ./ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.jpg" PATTERN "*.mp4")

@@ -9,6 +9,7 @@ set(
     src/session.cpp
     src/text_json.cpp
     src/yolo_json.cpp
+    src/context_manager.cpp
     src/session/audio_asr.cpp
     src/session/audio_tts.cpp
     src/session/image_yolo.cpp
@@ -20,10 +21,9 @@ set(
 )
 list(APPEND CAIWEI_RUNTIME_INCS inc)
 
-if (ENABLE_CAIWEI_RUNTIME_CANN)
+if(ENABLE_CAIWEI_RUNTIME_CANN)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
-        src/cann/cann.cpp
         src/cann/context.cpp
         src/cann/runtime.cpp
         src/cann/yolo_cls.cpp
@@ -46,10 +46,9 @@ if (ENABLE_CAIWEI_RUNTIME_CANN)
     list(APPEND CAIWEI_RUNTIME_INCS third_party/cann)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_RKNN)
+if(ENABLE_CAIWEI_RUNTIME_RKNN)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
-        src/rknn/rknn.cpp
         src/rknn/context.cpp
         src/rknn/runtime.cpp
         src/rknn/yolo_cls.cpp
@@ -72,10 +71,9 @@ if (ENABLE_CAIWEI_RUNTIME_RKNN)
     list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)
+if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
-        src/llamacpp/llamacpp.cpp
         src/llamacpp/context.cpp
         src/llamacpp/runtime.cpp
         src/llamacpp/yolo_cls.cpp
@@ -95,13 +93,11 @@ if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)
         src/llamacpp/qwen3_vl_embedding.cpp
         src/llamacpp/qwen3_vl_reranking.cpp
     )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/llamacpp)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
+if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
-        src/onnxruntime/onnxruntime.cpp
         src/onnxruntime/context.cpp
         src/onnxruntime/runtime.cpp
         src/onnxruntime/yolo_cls.cpp
@@ -121,7 +117,6 @@ if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
         src/onnxruntime/qwen3_vl_embedding.cpp
         src/onnxruntime/qwen3_vl_reranking.cpp
     )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/onnxruntime)
 endif()
 
 message(STATUS "CAIWEI_RUNTIME_DLLS: ${CAIWEI_RUNTIME_DLLS}")
@@ -130,6 +125,7 @@ message(STATUS "CAIWEI_RUNTIME_LIBS: ${CAIWEI_RUNTIME_LIBS}")
 
 add_library(
     ${PROJECT_NAME}
+    STATIC
     ${CAIWEI_RUNTIME_SRCS}
 )
 target_link_libraries(
@@ -144,9 +140,9 @@ target_include_directories(
     ${CAIWEI_RUNTIME_INCS}
 )
 
-if (ANDROID)
+if(ANDROID)
 # -
-elseif (CMAKE_HOST_UNIX)
+elseif(CMAKE_HOST_UNIX)
     install(
         TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets
         ARCHIVE DESTINATION lib

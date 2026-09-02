@@ -29,9 +29,13 @@ python run_custom_voice.py
 
 |设备|CANN|RKNN|llama.cpp|ONNXRuntime|
 |:--|:--|:--|:--|:--|
-|CANN(Atlas350)|||||
-|RKNN(RK1828)|||||
-|CUDA(RTX4090)|||||
+|CANN(Ascend 310P)  |||||
+|CANN(Ascend 910C)  |||||
+|RKNN(RK1828)       |||||
+|RKNN(RK3588)       |||||
+|CUDA(Tesla L40S)   |||||
+|CUDA(Tesla V100)   |||||
+|CUDA(RTX 5060 Ti)  |||||
 |OpenVINO(i5-1135G7)|||||
 
 ## 文档资料

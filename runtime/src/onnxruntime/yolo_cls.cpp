@@ -1,21 +1,6 @@
-#include "onnxruntime.hpp"
+#include "caiwei/runtime/onnxruntime.hpp"
 
-#include <filesystem>
-
-template <>
-std::shared_ptr<caiwei::context::ClsContext> caiwei::context::get_context(caiwei::context::Type type, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_CLS_W");
-    int h = caiwei::env::get_int("CAIWEI_CLS_H");
-    int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
-    int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
-    std::string path = caiwei::env::get_string("CAIWEI_CLS_PATH");
-    if (!std::filesystem::exists(path)) {
-        CW_LOG_W("ONNXRtuntime模型无效: %s", path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<ClsONNXRuntimeContext>(path, w, h, top_k, class_size, confidence_threshold, runtime);
-}
+#include "caiwei/transform.hpp"
 
 caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(std::string path, int w, int h, int top_k, int class_size, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime)
  : ClsContext(w, h, top_k, class_size, confidence_threshold, runtime),

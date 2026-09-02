@@ -6,7 +6,7 @@ set(
 )
 list(APPEND CAIWEI_SERVER_INCS inc)
 
-if (ENABLE_CAIWEI_CPPHTTPLIB)
+if(ENABLE_CAIWEI_CPPHTTPLIB)
     list(
         APPEND CAIWEI_SERVER_SRCS
         src/rest/rest.cpp
@@ -15,7 +15,7 @@ if (ENABLE_CAIWEI_CPPHTTPLIB)
         src/rest/image.cpp
         src/rest/video.cpp
     )
-endif ()
+endif()
 
 if(ANDROID)
 # -
@@ -55,9 +55,9 @@ file(COPY ${CMAKE_SOURCE_DIR}/LICENSE   DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_
 file(COPY res/                          DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin  FILES_MATCHING PATTERN "*.ico")
 file(COPY res/                          DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/logs FILES_MATCHING PATTERN "*.log")
 
-if (ANDROID)
+if(ANDROID)
 # -
-elseif (CMAKE_HOST_UNIX)
+elseif(CMAKE_HOST_UNIX)
     install(FILES     ${CMAKE_SOURCE_DIR}/README.md DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(FILES     ${CMAKE_SOURCE_DIR}/LICENSE   DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(DIRECTORY res/                          DESTINATION ${CMAKE_INSTALL_PREFIX}/bin  FILES_MATCHING PATTERN "*.ico")
@@ -89,19 +89,19 @@ elseif(CMAKE_HOST_WIN32)
         $<$<CONFIG:Debug>:/SUBSYSTEM:CONSOLE>
         $<$<CONFIG:Release>:/SUBSYSTEM:WINDOWS /entry:mainCRTStartup>
     )
-    if (CAIWEI_MEDIA_DLLS)
+    if(CAIWEI_MEDIA_DLLS)
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_MEDIA_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
         )
     endif()
-    if (CAIWEI_RUNTIME_DLLS)
+    if(CAIWEI_RUNTIME_DLLS)
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_RUNTIME_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
         )
     endif()
-    if (CAIWEI_SERVER_DLLS)
+    if(CAIWEI_SERVER_DLLS)
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_SERVER_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/

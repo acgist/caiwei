@@ -35,13 +35,13 @@ namespace type    {
 
 extern httplib::Server* server;
 
-extern void open();
-extern void stop();
-extern void rest_api();
-extern void rest_text_api();
-extern void rest_audio_api();
-extern void rest_image_api();
-extern void rest_video_api();
+void open();
+void stop();
+void rest_api();
+void rest_text_api();
+void rest_audio_api();
+void rest_image_api();
+void rest_video_api();
 
 } // rest
 } // caiwei
