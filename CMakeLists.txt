@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 3.22.0)
 project(caiwei-project VERSION 1.0.0 LANGUAGES C CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+if(NOT BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS ON)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -64,11 +68,13 @@ else()
     message(FATAL_ERROR "不支持的系统：${CMAKE_HOST_SYSTEM_NAME}")
 endif()
 
-if (ENABLE_ASAN)
-	message(STATUS "Build with ASAN")
-	set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-	set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-endif ()
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DCAIWEI_LOG_LEVEL=D)
@@ -80,64 +86,84 @@ else()
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_CANN)
+if(ENABLE_ASAN)
+	message(STATUS "Enable ASAN")
+	set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+	set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+endif()
+
+if(ENABLE_CAIWEI_BACKEND_CANN)
     message(STATUS "Enable Ascend NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_CANN)
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_RKNN)
+if(ENABLE_CAIWEI_BACKEND_RKNN)
     message(STATUS "Enable Rockchip NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN)
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_CUDA)
+if(ENABLE_CAIWEI_BACKEND_CUDA)
     message(STATUS "Enable Nvidia GPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_CUDA)
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_VULKAN)
+if(ENABLE_CAIWEI_BACKEND_VULKAN)
     message(STATUS "Enable Vulkan GPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_VULKAN)
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_OPENVINO)
+if(ENABLE_CAIWEI_BACKEND_OPENVINO)
     message(STATUS "Enable Intel CPU/GPU/NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_OPENVINO)
     # CPU GPU NPU
     add_definitions(-DOPENVINO_BACKEND=CPU)
 endif()
 
-if (ENABLE_CAIWEI_BACKEND_TENSORRT)
+if(ENABLE_CAIWEI_BACKEND_TENSORRT)
     message(STATUS "Enable Nvidia TensorRT")
     add_definitions(-DENABLE_CAIWEI_BACKEND_TENSORRT)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_CANN)
+if(ENABLE_CAIWEI_RUNTIME_CANN)
     message(STATUS "Running with CANN")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_CANN)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_RKNN)
+if(ENABLE_CAIWEI_RUNTIME_RKNN)
     message(STATUS "Running with RKNN")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN)
     # list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_LLAMACPP)
+if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
     message(STATUS "Running with llama.cpp")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_LLAMACPP)
+    if(ENABLE_CAIWEI_BACKEND_CUDA)
+        set(GGML_CUDA ON)
+    endif()
+    add_subdirectory(deps/llama.cpp)
+    set_target_properties(llama       PROPERTIES FOLDER "llama.cpp")
+    set_target_properties(ggml        PROPERTIES FOLDER "llama.cpp")
+    set_target_properties(ggml-cpu    PROPERTIES FOLDER "llama.cpp")
+    set_target_properties(ggml-base   PROPERTIES FOLDER "llama.cpp")
+    set_target_properties(vendor-hash PROPERTIES FOLDER "llama.cpp")
+    list(APPEND CAIWEI_RUNTIME_LIBS llama ggml ggml-cpu ggml-base vendor-hash)
+    if(ENABLE_CAIWEI_BACKEND_CUDA)
+        set_target_properties(ggml-cuda PROPERTIES FOLDER "llama.cpp")
+        list(APPEND CAIWEI_RUNTIME_LIBS ggml-cuda)
+    endif()
 endif()
 
-if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
+if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     message(STATUS "Running with ONNXRuntime")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
-    set(ONNXRUNTIME_PATH "deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
+    set(ONNXRUNTIME_PATH "${CMAKE_SOURCE_DIR}/deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
     set(
         CMAKE_PREFIX_PATH
         ${CMAKE_PREFIX_PATH}
         ${ONNXRUNTIME_PATH}
     )
-    if (ANDROID)
+    if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
         find_package(onnxruntime REQUIRED)
@@ -146,21 +172,21 @@ if (ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
         file(GLOB ONNXRUNTIME_DLLS "${ONNXRUNTIME_PATH}/lib/*.dll")
         file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/*.lib")
         list(APPEND CAIWEI_RUNTIME_DLLS ${ONNXRUNTIME_DLLS})
-        list(APPEND CAIWEI_RUNTIME_INCS "${CMAKE_SOURCE_DIR}/${ONNXRUNTIME_PATH}/include")
+        list(APPEND CAIWEI_RUNTIME_INCS "${ONNXRUNTIME_PATH}/include")
     else()
     # -
     endif()
     list(APPEND CAIWEI_RUNTIME_LIBS ${ONNXRUNTIME_LIBS})
 endif()
 
-if (ENABLE_CAIWEI_SDL2)
+if(ENABLE_CAIWEI_SDL2)
     message(STATUS "Enable SDL2 Player")
-    if (ANDROID)
+    if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
     # -
     elseif(CMAKE_HOST_WIN32)
-        set(SDL2_PATH "deps/sdl2" CACHE STRING "SDL2 Path")
+        set(SDL2_PATH "${CMAKE_SOURCE_DIR}/deps/sdl2" CACHE STRING "SDL2 Path")
         set(
             CMAKE_PREFIX_PATH
             ${CMAKE_PREFIX_PATH}
@@ -180,14 +206,14 @@ if (ENABLE_CAIWEI_SDL2)
     list(APPEND CAIWEI_MEDIA_LIBS $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
 endif()
 
-if (ENABLE_CAIWEI_FFMPEG)
+if(ENABLE_CAIWEI_FFMPEG)
     message(STATUS "Enable FFmpeg")
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
         list(APPEND CAIWEI_MEDIA_LIBS avutil avcodec avdevice avformat swscale swresample)
     elseif(CMAKE_HOST_WIN32)
-        set(FFMPEG_PATH "deps/ffmpeg" CACHE STRING "FFmpeg Path")
+        set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
         set(
             CMAKE_PREFIX_PATH
             ${CMAKE_PREFIX_PATH}
@@ -207,7 +233,7 @@ if (ENABLE_CAIWEI_FFMPEG)
     endif()
 endif()
 
-if (ENABLE_CAIWEI_CPPHTTPLIB)
+if(ENABLE_CAIWEI_CPPHTTPLIB)
     message(STATUS "Enable cpp-httplib")
     add_definitions(-DENABLE_CAIWEI_REST)
     if(ANDROID)
@@ -215,7 +241,7 @@ if (ENABLE_CAIWEI_CPPHTTPLIB)
     elseif(CMAKE_HOST_UNIX)
     # -
     elseif(CMAKE_HOST_WIN32)
-        set(CPP_HTTPLIB_PATH "deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
+        set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
         set(
             CMAKE_PREFIX_PATH
             ${CMAKE_PREFIX_PATH}
@@ -234,18 +260,10 @@ if (ENABLE_CAIWEI_CPPHTTPLIB)
     endif()
 endif()
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
-
 add_subdirectory(media)
 add_subdirectory(runtime)
 add_subdirectory(server)
-if (ENABLE_CAIWEI_TEST)
+if(ENABLE_CAIWEI_TEST)
     message(STATUS "Build Test")
     add_subdirectory(test)
 endif()
