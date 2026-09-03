@@ -37,8 +37,8 @@ std::string caiwei::text::ChatTemplate::apply(const caiwei::text::CompletionsReq
                 copy["content"] = std::get<std::string>(message.content.value());
             } else if (std::holds_alternative<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value())) {
                 const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+                nlohmann::json parts;
                 for (const auto& item : items) {
-                    nlohmann::json parts;
                     if (item.type.has_value()) {
                         nlohmann::json part;
                         part["type"] = item.type.value_or("");
@@ -47,8 +47,8 @@ std::string caiwei::text::ChatTemplate::apply(const caiwei::text::CompletionsReq
                         }
                         parts.push_back(part);
                     }
-                    copy["content"] = parts;
                 }
+                copy["content"] = parts;
             }
         }
         if (message.tool_calls.has_value()) {

@@ -28,9 +28,61 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_DET_CLASS_SIZE",           "80"               }, // 类型
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
     {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
+    // OBB
+    // SEG
+    // SEM
+    // POSE
+    // DEPTH
+    // ASR
+    // TTS
     // LLM
     {"CAIWEI_LLM_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
-    // eos bos audio image video start end content thinking start end tools start end
+    {"CAIWEI_LLM_TOKEN_BOS",            "<|im_start|>"     },
+    {"CAIWEI_LLM_TOKEN_EOS",            "<|im_end|>"       },
+    {"CAIWEI_LLM_TOKEN_BTHINK",         "<think>"          },
+    {"CAIWEI_LLM_TOKEN_ETHINK",         "</think>"         },
+    {"CAIWEI_LLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
+    {"CAIWEI_LLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
+    // VLM
+    {"CAIWEI_VLM_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
+    {"CAIWEI_VLM_TOKEN_BOS",            "<|im_start|>"     },
+    {"CAIWEI_VLM_TOKEN_EOS",            "<|im_end|>"       },
+    {"CAIWEI_VLM_TOKEN_PAD",            "<|endoftext|>"    },
+    {"CAIWEI_VLM_TOKEN_BAUDIO",         "<|audio_start|>"  },
+    {"CAIWEI_VLM_TOKEN_CAUDIO",         "<|audio_pad|>"    },
+    {"CAIWEI_VLM_TOKEN_EAUDIO",         "<|audio_end|>"    },
+    {"CAIWEI_VLM_TOKEN_BIMAGE",         "<|vision_start|>" },
+    {"CAIWEI_VLM_TOKEN_CIMAGE",         "<|image_pad|>"    },
+    {"CAIWEI_VLM_TOKEN_EIMAGE",         "<|vision_end|>"   },
+    {"CAIWEI_VLM_TOKEN_BVIDEO",         "<|vision_start|>" },
+    {"CAIWEI_VLM_TOKEN_CVIDEO",         "<|video_pad|>"    },
+    {"CAIWEI_VLM_TOKEN_EVIDEO",         "<|vision_end|>"   },
+    {"CAIWEI_VLM_TOKEN_BTHINK",         "<think>"          },
+    {"CAIWEI_VLM_TOKEN_ETHINK",         "</think>"         },
+    {"CAIWEI_VLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
+    {"CAIWEI_VLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
+    // MLLM
+    {"CAIWEI_MLLM_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
+    {"CAIWEI_MLLM_TOKEN_BOS",            "<|im_start|>"     },
+    {"CAIWEI_MLLM_TOKEN_EOS",            "<|im_end|>"       },
+    {"CAIWEI_MLLM_TOKEN_PAD",            "<|endoftext|>"    },
+    {"CAIWEI_MLLM_TOKEN_BAUDIO",         "<|audio_start|>"  },
+    {"CAIWEI_MLLM_TOKEN_CAUDIO",         "<|audio_pad|>"    },
+    {"CAIWEI_MLLM_TOKEN_EAUDIO",         "<|audio_end|>"    },
+    {"CAIWEI_MLLM_TOKEN_BIMAGE",         "<|vision_start|>" },
+    {"CAIWEI_MLLM_TOKEN_CIMAGE",         "<|image_pad|>"    },
+    {"CAIWEI_MLLM_TOKEN_EIMAGE",         "<|vision_end|>"   },
+    {"CAIWEI_MLLM_TOKEN_BVIDEO",         "<|vision_start|>" },
+    {"CAIWEI_MLLM_TOKEN_CVIDEO",         "<|video_pad|>"    },
+    {"CAIWEI_MLLM_TOKEN_EVIDEO",         "<|vision_end|>"   },
+    {"CAIWEI_MLLM_TOKEN_BTHINK",         "<think>"          },
+    {"CAIWEI_MLLM_TOKEN_ETHINK",         "</think>"         },
+    {"CAIWEI_MLLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
+    {"CAIWEI_MLLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
+    // EMBEDDING
+    // RERANKING
+    // VL_EMBEDDING
+    // VL_RERANKING
     // 模型配置: 类型,厂商,名称,路径
     {"CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
