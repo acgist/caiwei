@@ -3,8 +3,8 @@
  * 
  * session -> context -> runtime
  */
-#ifndef CAIWEI_RUNTIME_HPP
-#define CAIWEI_RUNTIME_HPP
+#ifndef CAIWEI_RUNTIME_RUNTIME_HPP
+#define CAIWEI_RUNTIME_RUNTIME_HPP
 
 #include <atomic>
 #include <memory>
@@ -98,4 +98,4 @@ std::shared_ptr<R> get_runtime(caiwei::runtime::Type type);
 } // namespace runtime
 } // namespace caiwei
 
-#endif // CAIWEI_RUNTIME_HPP
+#endif // CAIWEI_RUNTIME_RUNTIME_HPP

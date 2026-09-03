@@ -3,11 +3,11 @@
  * 
  * session -> context -> runtime
  */
-#ifndef CAIWEI_CONTEXT_HPP
-#define CAIWEI_CONTEXT_HPP
+#ifndef CAIWEI_RUNTIME_CONTEXT_HPP
+#define CAIWEI_RUNTIME_CONTEXT_HPP
 
 #include "caiwei/text_data.hpp"
-#include "caiwei/yolo_data.hpp"
+#include "caiwei/image_data.hpp"
 #include "caiwei/media_data.hpp"
 
 #include <map>
@@ -103,7 +103,7 @@ public:
     DetContext(int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~DetContext();
 public:
-    virtual std::vector<caiwei::yolo::Box> run(const caiwei::media::ImageFrame& image) = 0;
+    virtual std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) = 0;
 };
 
 /**
@@ -257,4 +257,4 @@ void stop();
 } // namespace context
 } // namespace caiwei
 
-#endif // CAIWEI_CONTEXT_HPP
+#endif // CAIWEI_RUNTIME_CONTEXT_HPP

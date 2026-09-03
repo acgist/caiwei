@@ -3,8 +3,8 @@
  * 
  * session -> context -> runtime
  */
-#ifndef CAIWEI_SESSION_HPP
-#define CAIWEI_SESSION_HPP
+#ifndef CAIWEI_RUNTIME_SESSION_HPP
+#define CAIWEI_RUNTIME_SESSION_HPP
 
 #include <future>
 #include <string>
@@ -81,4 +81,4 @@ class ChatCompletionsSession : public StatefulSession {
 } // session
 } // caiwei
 
-#endif // CAIWEI_SESSION_HPP
+#endif // CAIWEI_RUNTIME_SESSION_HPP

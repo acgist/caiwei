@@ -1,4 +1,4 @@
-#ifndef CAIWEI_CONTEXT_MANAGER_HPP
+#ifndef CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
 
 #include "caiwei/context.hpp"
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN
@@ -164,4 +164,4 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
 }
 }
 
-#endif //CAIWEI_CONTEXT_MANAGER_HPP
+#endif //CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP

@@ -4,6 +4,7 @@
 
 #include "caiwei/log.hpp"
 #include "caiwei/env.hpp"
+#include "caiwei/text.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
 
@@ -14,13 +15,21 @@ namespace context {
 
 class LlamaCPPContext {
 protected:
+    int32_t max_token_length;
     std::string path;
+    std::string buffer;
     std::mutex  mutex;
     llama_model* model = nullptr;
     const llama_vocab* vocab = nullptr;
     const char* model_chat_template = nullptr;
+    caiwei::text::ChatTemplate chat_template;
+protected:
+    llama_context* get_context(const caiwei::text::CompletionsRequest& request);
+    llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
+    void release_chat(llama_context** context, llama_sampler** sampler);
+    void generate(llama_context* context, llama_sampler* sampler, uint32_t max_generate_tokens, const std::string& prompt, const std::vector<std::string>& stop);
 public:
-    LlamaCPPContext(std::string path);
+    LlamaCPPContext(std::string path, int32_t max_token_length);
     ~LlamaCPPContext();
 };
 
@@ -36,7 +45,7 @@ class TTSLlamaCPPContext : public TTSContext, public LlamaCPPContext {};
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
 public:
-    LLMLlamaCPPContext(std::string path, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+    LLMLlamaCPPContext(std::string path, int32_t max_token_length, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
     ~LLMLlamaCPPContext();
 public:
     std::vector<std::string> run(const caiwei::text::CompletionsRequest& request) override;

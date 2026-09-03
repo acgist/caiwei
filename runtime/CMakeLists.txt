@@ -2,13 +2,10 @@ project(caiwei-runtime VERSION 1.0.0 LANGUAGES C CXX)
 
 set(
     CAIWEI_RUNTIME_SRCS
-    src/yolo.cpp
     src/caiwei.cpp
     src/context.cpp
     src/runtime.cpp
     src/session.cpp
-    src/text_json.cpp
-    src/yolo_json.cpp
     src/context_manager.cpp
     src/session/audio_asr.cpp
     src/session/audio_tts.cpp
@@ -19,7 +16,10 @@ set(
     src/session/rerankings.cpp
     src/session/completions.cpp
 )
-list(APPEND CAIWEI_RUNTIME_INCS inc)
+list(
+    APPEND CAIWEI_RUNTIME_INCS
+    inc
+)
 
 if(ENABLE_CAIWEI_RUNTIME_CANN)
     list(

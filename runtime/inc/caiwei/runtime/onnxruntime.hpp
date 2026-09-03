@@ -55,7 +55,7 @@ public:
     ~DetONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
-    std::vector<caiwei::yolo::Box> run(const caiwei::media::ImageFrame& image) override;
+    std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class OBBONNXRuntimeContext : public OBBContext, public ONNXRuntimeContext {};

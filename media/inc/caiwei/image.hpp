@@ -1,14 +1,14 @@
 /**
- * YOLO视觉
+ * 图像
  */
-#ifndef CAIWEI_CONTEXT_YOLO_HPP
-#define CAIWEI_CONTEXT_YOLO_HPP
+#ifndef CAIWEI_MEDIA_IMAGE_HPP
+#define CAIWEI_MEDIA_IMAGE_HPP
 
-#include "caiwei/yolo_data.hpp"
+#include "caiwei/image_data.hpp"
 #include "caiwei/media_data.hpp"
 
 namespace caiwei {
-namespace yolo   {
+namespace image  {
 
 Box        rect_to_box        (const Rect& rect, int class_id, float score);
 RectCenter rect_to_rect_center(const Rect& rect);
@@ -21,7 +21,7 @@ Rect rect_center_to_rect(const RectCenter& rect);
  */
 void letterbox(const caiwei::media::ImageFrame& frame);
 
-} // namespace context
+} // namespace image
 } // namespace caiwei
 
-#endif // CAIWEI_CONTEXT_YOLO_HPP
+#endif // CAIWEI_MEDIA_IMAGE_HPP

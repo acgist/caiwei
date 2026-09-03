@@ -12,6 +12,17 @@ target_link_libraries(
 )
 
 add_executable(
+    test_media_text
+    test_media_text.cpp
+)
+add_test(NAME test_media_text COMMAND test_media_text)
+set_target_properties(test_media_text PROPERTIES FOLDER "test-media")
+target_link_libraries(
+    test_media_text
+    caiwei-media
+)
+
+add_executable(
     test_media_format
     test_media_format.cpp
 )

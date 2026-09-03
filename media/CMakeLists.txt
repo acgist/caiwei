@@ -4,6 +4,10 @@ set(
     CAIWEI_MEDIA_SRCS
     src/env.cpp
     src/log.cpp
+    src/media/text.cpp
+    src/media/text_data.cpp
+    src/media/image.cpp
+    src/media/image_data.cpp
     src/media/media.cpp
     src/media/media_data.cpp
     third_party/base64/base64.cpp

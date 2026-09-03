@@ -32,7 +32,6 @@ static void init_onnxruntime();
 #endif
 
 void caiwei::runtime::init() {
-    ggml_backend_load_all();
     #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
     init_llamacpp();
     #endif

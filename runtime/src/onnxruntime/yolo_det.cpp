@@ -15,7 +15,7 @@ caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(std::string path, 
 caiwei::context::DetONNXRuntimeContext::~DetONNXRuntimeContext() {
 }
 
-std::vector<caiwei::yolo::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     // TODO 全局变量 判断是否变化
@@ -38,7 +38,7 @@ std::vector<caiwei::yolo::Box> caiwei::context::DetONNXRuntimeContext::run(const
     out_dst.resize(signalResultNum * strideNum);
     caiwei::transform::transpose(output_data, out_dst.data(), signalResultNum, strideNum);
     float* data = out_dst.data();
-    std::vector<caiwei::yolo::Box> ret;
+    std::vector<caiwei::image::Box> ret;
     for (int index = 0; index < strideNum; ++index) {
         int   max_class; // 最大类别
         float max_score; // 最大分数
@@ -50,7 +50,7 @@ std::vector<caiwei::yolo::Box> caiwei::context::DetONNXRuntimeContext::run(const
             float ow  = (data[2]        ) / (float) dst_w;
             float oh  = (data[3]        ) / (float) dst_h;
             ret.push_back(
-                caiwei::yolo::Box(
+                caiwei::image::Box(
                     std::max(0.0F, ocx - ow / 2.0F),
                     std::max(0.0F, ocy - oh / 2.0F),
                     std::min(1.0F, ocx + ow / 2.0F),

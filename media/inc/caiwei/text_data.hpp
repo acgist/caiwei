@@ -1,15 +1,15 @@
 /**
  * 文本结构
  */
-#ifndef CAIWEI_TEXT_DATA_HPP
-#define CAIWEI_TEXT_DATA_HPP
+#ifndef CAIWEI_MEDIA_TEXT_DATA_HPP
+#define CAIWEI_MEDIA_TEXT_DATA_HPP
 
 #include <map>
 #include <string>
 #include <variant>
 #include <optional>
 
-#include "json/json_fwd.hpp"
+#include "nlohmann/json.hpp"
 
 namespace caiwei {
 namespace text   {
@@ -100,6 +100,17 @@ struct CompletionsRequestStreamOptions {
 
 using CompletionsRequestStop = std::variant<std::string, std::vector<std::string>>;
 
+struct CompletionsRequestToolFunction {
+    std::optional<std::string> name;
+    std::optional<std::string> description;
+    std::optional<nlohmann::json> parameters;
+};
+
+struct CompletionsRequestTool {
+    std::optional<std::string> type;
+    std::optional<CompletionsRequestToolFunction> function;
+};
+
 struct CompletionsRequest {
     bool stream = false;
     std::string model;
@@ -113,9 +124,12 @@ struct CompletionsRequest {
     std::optional<float> frequency_penalty;
     std::optional<uint32_t> max_tokens;
     std::optional<uint32_t> max_completion_tokens;
-    std::optional<CompletionsRequestStop>          stop;
-    std::optional<std::vector<nlohmann::json>>     tools;
-    std::optional<CompletionsRequestStreamOptions> stream_options;
+    std::optional<CompletionsRequestStop>              stop;
+    std::optional<std::vector<CompletionsRequestTool>> tools;
+    std::optional<CompletionsRequestStreamOptions>     stream_options;
+
+    uint32_t max_generate_tokens() const;
+    std::vector<std::string> stop_tokens() const;
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {
@@ -268,4 +282,4 @@ struct RerankingResponse {
 } // namespace text
 } // namespace caiwei
 
-#endif // CAIWEI_TEXT_DATA_HPP
+#endif // CAIWEI_MEDIA_TEXT_DATA_HPP

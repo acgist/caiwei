@@ -1,8 +1,8 @@
 /**
  * 采薇
  */
-#ifndef CAIWEI_CAIWEI_HPP
-#define CAIWEI_CAIWEI_HPP
+#ifndef CAIWEI_RUNTIME_CAIWEI_HPP
+#define CAIWEI_RUNTIME_CAIWEI_HPP
 
 namespace caiwei {
 
@@ -11,4 +11,4 @@ void stop();
 
 } // namespace caiwei
 
-#endif // CAIWEI_CAIWEI_HPP
+#endif // CAIWEI_RUNTIME_CAIWEI_HPP

@@ -1,12 +1,12 @@
 /**
  * JSON
  */
-#ifndef CAIWEI_JSON_HPP
-#define CAIWEI_JSON_HPP
+#ifndef CAIWEI_SERVER_JSON_HPP
+#define CAIWEI_SERVER_JSON_HPP
 
 #include <vector>
 
-#include "json/json.hpp"
+#include "nlohmann/json.hpp"
 
 namespace caiwei {
 namespace json   {
@@ -33,4 +33,4 @@ inline std::string buildResponse(const std::string& code, const std::string& mes
 } // json
 } // caiwei
 
-#endif // CAIWEI_JSON_HPP
+#endif // CAIWEI_SERVER_JSON_HPP

@@ -29,6 +29,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
     {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
     // LLM
+    {"CAIWEI_LLM_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
+    // eos bos audio image video start end content thinking start end tools start end
     // 模型配置: 类型,厂商,名称,路径
     {"CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx

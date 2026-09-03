@@ -10,8 +10,8 @@
  * 3xxx: 推理错误（RUNTIME）
  * 9999: 未知错误
  */
-#ifndef CAIWEI_REST_HPP
-#define CAIWEI_REST_HPP
+#ifndef CAIWEI_SERVER_REST_HPP
+#define CAIWEI_SERVER_REST_HPP
 
 namespace httplib {
 
@@ -46,4 +46,4 @@ void rest_video_api();
 } // rest
 } // caiwei
 
-#endif // CAIWEI_REST_HPP
+#endif // CAIWEI_SERVER_REST_HPP

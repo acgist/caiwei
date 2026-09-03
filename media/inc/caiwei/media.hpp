@@ -1,8 +1,8 @@
 /**
  * 媒体
  */
-#ifndef CAIWEI_MEDIA_HPP
-#define CAIWEI_MEDIA_HPP
+#ifndef CAIWEI_MEDIA_MEDIA_HPP
+#define CAIWEI_MEDIA_MEDIA_HPP
 
 #include <string>
 #include <functional>
@@ -133,4 +133,4 @@ public:
 } // namespace media
 } // namespace caiwei
 
-#endif // CAIWEI_MEDIA_HPP
+#endif // CAIWEI_MEDIA_MEDIA_HPP

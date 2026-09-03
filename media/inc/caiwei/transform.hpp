@@ -1,8 +1,8 @@
 /**
  * 数据转换
  */
-#ifndef CAIWEI_TRANSFORM_HPP
-#define CAIWEI_TRANSFORM_HPP
+#ifndef CAIWEI_MEDIA_TRANSFORM_HPP
+#define CAIWEI_MEDIA_TRANSFORM_HPP
 
 #include <cmath>
 #include <vector>
@@ -220,4 +220,4 @@ void chw_to_hwc(const T* chw, T* hwc, const int H, const int W, const int C) {
 
 } // namespace transform
 } // namespace caiwei
-#endif // CAIWEI_TRANSFORM_HPP
+#endif // CAIWEI_MEDIA_TRANSFORM_HPP

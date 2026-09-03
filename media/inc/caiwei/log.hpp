@@ -1,8 +1,8 @@
 /**
  * 日志
  */
-#ifndef CAIWEI_LOG_HPP
-#define CAIWEI_LOG_HPP
+#ifndef CAIWEI_MEDIA_LOG_HPP
+#define CAIWEI_MEDIA_LOG_HPP
 
 #include <cinttypes>
 #include <source_location>
@@ -29,4 +29,4 @@ void set_log_level(Level level);
 #define CW_LOG_W(fmt, ...) caiwei::log::log(caiwei::log::Level::W, std::source_location::current(), fmt, ##__VA_ARGS__)
 #define CW_LOG_E(fmt, ...) caiwei::log::log(caiwei::log::Level::E, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#endif // CAIWEI_LOG_HPP
+#endif // CAIWEI_MEDIA_LOG_HPP

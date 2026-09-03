@@ -1,15 +1,11 @@
 /**
- * YOLO视觉结构
- * 
- * YOLO letterbox
- * 缩放居中
- * 默认填充: 114
+ * 图片结构
  */
-#ifndef CAIWEI_CONTEXT_YOLO_DATA_HPP
-#define CAIWEI_CONTEXT_YOLO_DATA_HPP
+#ifndef CAIWEI_MEDIA_IMAGE_DATA_HPP
+#define CAIWEI_MEDIA_IMAGE_DATA_HPP
 
 namespace caiwei {
-namespace yolo   {
+namespace image  {
 
 struct Point {
     float x; // x百分比
@@ -43,7 +39,7 @@ struct Area {
 
 };
 
-} // namespace context
+} // namespace image
 } // namespace caiwei
 
-#endif // CAIWEI_CONTEXT_YOLO_DATA_HPP
+#endif // CAIWEI_IMAGE_DATA_HPP
