@@ -46,10 +46,19 @@ void caiwei::runtime::stop() {
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 static void init_llamacpp() {
     llama_log_set([](enum ggml_log_level level, const char* text, void* /* user_data */) {
-        if (level == GGML_LOG_LEVEL_WARN) {
-            CW_LOG_W("%s", text);
+        size_t n = std::strlen(text);
+        if (n == 0) {
+            return;
+        }
+        n--;
+        if (level == GGML_LOG_LEVEL_DEBUG) {
+            CW_LOG_D("%.*s", n, text);
+        } else if (level == GGML_LOG_LEVEL_INFO) {
+            CW_LOG_I("%.*s", n, text);
+        } else if (level == GGML_LOG_LEVEL_WARN) {
+            CW_LOG_W("%.*s", n, text);
         } else if (level == GGML_LOG_LEVEL_ERROR) {
-            CW_LOG_E("%s", text);
+            CW_LOG_E("%.*s", n, text);
         } else {
             // -
         }

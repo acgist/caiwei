@@ -24,7 +24,11 @@ void set_log_level(Level level);
 } // namespace log
 } // namespace caiwei
 
+#if CAIWEI_DEBUG
 #define CW_LOG_D(fmt, ...) caiwei::log::log(caiwei::log::Level::D, std::source_location::current(), fmt, ##__VA_ARGS__)
+#else
+#define CW_LOG_D(fmt, ...) do { } while (0)
+#endif
 #define CW_LOG_I(fmt, ...) caiwei::log::log(caiwei::log::Level::I, std::source_location::current(), fmt, ##__VA_ARGS__)
 #define CW_LOG_W(fmt, ...) caiwei::log::log(caiwei::log::Level::W, std::source_location::current(), fmt, ##__VA_ARGS__)
 #define CW_LOG_E(fmt, ...) caiwei::log::log(caiwei::log::Level::E, std::source_location::current(), fmt, ##__VA_ARGS__)

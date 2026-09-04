@@ -169,8 +169,8 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
         } else {
             std::string token(buffer.begin(), buffer.begin() + buffer_length);
             #if CAIWEI_DEBUG
-            // std::printf("%s", token.c_str());
-            // std::fflush(stdout);
+            std::printf("%s", token.c_str());
+            std::fflush(stdout);
             #endif
             if (toolcall) {
                 result_toolcall.put_token(std::move(token));
