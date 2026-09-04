@@ -9,7 +9,7 @@
 #include <atomic>
 #include <memory>
 
-#ifdef ENABLE_CAIWEI_RUNTIME_RKNN
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 #ifdef __arm__
 typedef uint32_t rknn_context;
 #else
@@ -57,13 +57,15 @@ public:
 };
 #endif
 
-#ifdef ENABLE_CAIWEI_RUNTIME_RKNN
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 class RKNN2Runtime : public Runtime {
 public:
     RKNN2Runtime();
     ~RKNN2Runtime();
 };
+#endif
 
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 class RKNN3Runtime : public Runtime {
 public:
     RKNN3Runtime();

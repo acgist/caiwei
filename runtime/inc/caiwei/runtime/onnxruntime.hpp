@@ -1,4 +1,5 @@
 #ifndef CAIWEI_RUNTIME_ONNXRUNTIME_HPP
+#define CAIWEI_RUNTIME_ONNXRUNTIME_HPP
 
 #include <mutex>
 #include <vector>

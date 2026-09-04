@@ -33,8 +33,10 @@ target_link_libraries(
     caiwei-media
 )
 
+if(SDL2_FOUND)
 add_executable(
     test_media_demuxer
+    player.cpp
     test_media_demuxer.cpp
 )
 add_test(NAME test_media_demuxer COMMAND test_media_demuxer)
@@ -43,6 +45,7 @@ target_link_libraries(
     test_media_demuxer
     caiwei-media
 )
+endif()
 
 add_executable(
     test_context_asr
@@ -121,6 +124,7 @@ target_link_libraries(
     caiwei-runtime
 )
 
+if(SDL2_FOUND)
 add_executable(
     test_context_yolo_cls
     player.cpp
@@ -132,7 +136,9 @@ target_link_libraries(
     test_context_yolo_cls
     caiwei-runtime
 )
+endif()
 
+if(SDL2_FOUND)
 add_executable(
     test_context_yolo_det
     player.cpp
@@ -144,6 +150,7 @@ target_link_libraries(
     test_context_yolo_det
     caiwei-runtime
 )
+endif()
 
 add_executable(
     test_context_yolo_seg
@@ -223,16 +230,16 @@ target_link_libraries(
 )
 
 if(OpenCV_FOUND)
-    add_executable(
-        test_cv_opencv
-        test_cv_opencv.cpp
-    )
-    add_test(NAME test_cv_opencv COMMAND test_cv_opencv)
-    set_target_properties(test_cv_opencv PROPERTIES FOLDER "test-media")
-    target_link_libraries(
-        test_cv_opencv
-        caiwei-media
-    )
+add_executable(
+    test_cv_opencv
+    test_cv_opencv.cpp
+)
+add_test(NAME test_cv_opencv COMMAND test_cv_opencv)
+set_target_properties(test_cv_opencv PROPERTIES FOLDER "test-media")
+target_link_libraries(
+    test_cv_opencv
+    caiwei-media
+)
 endif()
 
 file(COPY ./ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.jpg" PATTERN "*.mp4")

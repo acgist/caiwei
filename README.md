@@ -91,8 +91,6 @@
 |CANN    |○|○|
 |RKNN    |×|○|
 |CUDA    |○|○|
-|Vulkan  |?|×|
-|TensorRT|×|?|
 |OpenVINO|○|○|
 
 ## 模型支持

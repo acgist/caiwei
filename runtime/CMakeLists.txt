@@ -46,29 +46,54 @@ if(ENABLE_CAIWEI_RUNTIME_CANN)
     list(APPEND CAIWEI_RUNTIME_INCS third_party/cann)
 endif()
 
-if(ENABLE_CAIWEI_RUNTIME_RKNN)
+if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
-        src/rknn/context.cpp
-        src/rknn/runtime.cpp
-        src/rknn/yolo_cls.cpp
-        src/rknn/yolo_det.cpp
-        src/rknn/yolo_obb.cpp
-        src/rknn/yolo_seg.cpp
-        src/rknn/yolo_sem.cpp
-        src/rknn/yolo_pose.cpp
-        src/rknn/yolo_depth.cpp
-        src/rknn/qwen3_asr.cpp
-        src/rknn/qwen3_tts.cpp
-        src/rknn/qwen3_llm.cpp
-        src/rknn/qwen3_vlm.cpp
-        src/rknn/qwen3_mllm.cpp
-        src/rknn/qwen3_embedding.cpp
-        src/rknn/qwen3_reranking.cpp
-        src/rknn/qwen3_vl_embedding.cpp
-        src/rknn/qwen3_vl_reranking.cpp
+        src/rknn2/context.cpp
+        src/rknn2/runtime.cpp
+        src/rknn2/yolo_cls.cpp
+        src/rknn2/yolo_det.cpp
+        src/rknn2/yolo_obb.cpp
+        src/rknn2/yolo_seg.cpp
+        src/rknn2/yolo_sem.cpp
+        src/rknn2/yolo_pose.cpp
+        src/rknn2/yolo_depth.cpp
+        src/rknn2/qwen3_asr.cpp
+        src/rknn2/qwen3_tts.cpp
+        src/rknn2/qwen3_llm.cpp
+        src/rknn2/qwen3_vlm.cpp
+        src/rknn2/qwen3_mllm.cpp
+        src/rknn2/qwen3_embedding.cpp
+        src/rknn2/qwen3_reranking.cpp
+        src/rknn2/qwen3_vl_embedding.cpp
+        src/rknn2/qwen3_vl_reranking.cpp
     )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn)
+    list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn2)
+endif()
+
+if(ENABLE_CAIWEI_RUNTIME_RKNN3)
+    list(
+        APPEND CAIWEI_RUNTIME_SRCS
+        src/rknn3/context.cpp
+        src/rknn3/runtime.cpp
+        src/rknn3/yolo_cls.cpp
+        src/rknn3/yolo_det.cpp
+        src/rknn3/yolo_obb.cpp
+        src/rknn3/yolo_seg.cpp
+        src/rknn3/yolo_sem.cpp
+        src/rknn3/yolo_pose.cpp
+        src/rknn3/yolo_depth.cpp
+        src/rknn3/qwen3_asr.cpp
+        src/rknn3/qwen3_tts.cpp
+        src/rknn3/qwen3_llm.cpp
+        src/rknn3/qwen3_vlm.cpp
+        src/rknn3/qwen3_mllm.cpp
+        src/rknn3/qwen3_embedding.cpp
+        src/rknn3/qwen3_reranking.cpp
+        src/rknn3/qwen3_vl_embedding.cpp
+        src/rknn3/qwen3_vl_reranking.cpp
+    )
+    list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn3)
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)

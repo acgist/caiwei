@@ -1,4 +1,5 @@
 #ifndef CAIWEI_RUNTIME_CANN_HPP
+#define CAIWEI_RUNTIME_CANN_HPP
 
 #include "caiwei/log.hpp"
 #include "caiwei/env.hpp"

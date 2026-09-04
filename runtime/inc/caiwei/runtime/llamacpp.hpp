@@ -1,4 +1,5 @@
 #ifndef CAIWEI_RUNTIME_LLAMACPP_HPP
+#define CAIWEI_RUNTIME_LLAMACPP_HPP
 
 #include <filesystem>
 

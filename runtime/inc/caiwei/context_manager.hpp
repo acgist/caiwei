@@ -1,11 +1,15 @@
 #ifndef CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
+#define CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
 
 #include "caiwei/context.hpp"
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN
 #include "caiwei/runtime/cann.hpp"
 #endif
-#ifdef ENABLE_CAIWEI_RUNTIME_RKNN
-#include "caiwei/runtime/rknn.hpp"
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+#include "caiwei/runtime/rknn2.hpp"
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+#include "caiwei/runtime/rknn3.hpp"
 #endif
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 #include "caiwei/runtime/llamacpp.hpp"
@@ -122,7 +126,7 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
         }
     }
     #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN2) {
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>(caiwei::runtime::Type::RKNN2);
         auto context = get_context_impl<caiwei::runtime::RKNN2Runtime>(info, runtime);
@@ -131,6 +135,8 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
             return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context));
         }
     }
+    #endif
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN3) {
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN3Runtime>(caiwei::runtime::Type::RKNN3);
         auto context = get_context_impl<caiwei::runtime::RKNN3Runtime>(info, runtime);

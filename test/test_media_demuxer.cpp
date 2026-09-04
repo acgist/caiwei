@@ -1,7 +1,5 @@
 #include "test_media.hpp"
 
-#include "caiwei/player.hpp"
-
 #include <thread>
 
 extern "C" {

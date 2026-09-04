@@ -22,26 +22,25 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_CAIWEI_TEST                "Build Test"        OFF) # 是否编译测试
-option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"        OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"      OFF) #           ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"        OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_VULKAN      "Vulkan GPU"        OFF) # llama.cpp
-option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel CPU/GPU/NPU" OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_TENSORRT    "Nvidia TensorRT"   OFF) #           ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_CANN        "CANN"              OFF) # 昇腾
-option(ENABLE_CAIWEI_RUNTIME_RKNN        "RKNN"              OFF) # 瑞芯微
-option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"         ON)  # 跨平台
-option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"       ON)  # 跨平台
-option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"           ON)  # ASR前置ANS
-option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"           ON)  # ASR前置VAD
-option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"           ON)  # ASR前置AGC
-option(ENABLE_CAIWEI_YOLO_I8             "YOLO INT8"         ON)  # YOLO INT8量化
-option(ENABLE_CAIWEI_YOLO_E2E            "YOLO end2end"      ON)  # YOLO end2end模式
-option(ENABLE_CAIWEI_SDL2                "SDL2 Player"       OFF) # SDL2播放器(测试使用)
-option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"            ON)  # FFmpeg
-option(ENABLE_CAIWEI_OPENCV              "OpenCV"            OFF) # OpenCV(测试使用)
-option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"       ON)  # cpp-httplib
+option(ENABLE_CAIWEI_TEST                "Build Test"    OFF) # 是否编译测试
+option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"    OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"  OFF) #           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"    OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel GPU/NPU" OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_CANN        "CANN"          OFF) # 昇腾
+option(ENABLE_CAIWEI_RUNTIME_RKNN2       "RKNN2"         OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
+option(ENABLE_CAIWEI_RUNTIME_RKNN3       "RKNN3"         OFF) # 瑞芯微: RK1820/RK1828
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"     ON)  # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"   ON)  # 跨平台
+option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"       ON)  # ASR前置ANS
+option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"       ON)  # ASR前置VAD
+option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"       ON)  # ASR前置AGC
+option(ENABLE_CAIWEI_YOLO_I8             "YOLO INT8"     ON)  # YOLO INT8量化
+option(ENABLE_CAIWEI_YOLO_E2E            "YOLO end2end"  ON)  # YOLO end2end模式
+option(ENABLE_CAIWEI_SDL2                "SDL2 Player"   OFF) # SDL2播放器(测试使用)
+option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"        ON)  # FFmpeg
+option(ENABLE_CAIWEI_OPENCV              "OpenCV"        OFF) # OpenCV(测试使用)
+option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"   ON)  # cpp-httplib
 
 if(ANDROID)
     set(CMAKE_C_STANDARD 17)
@@ -141,32 +140,54 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     find_package(CUDAToolkit REQUIRED)
 endif()
 
-if(ENABLE_CAIWEI_BACKEND_VULKAN)
-    message(STATUS "Enable Vulkan GPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_VULKAN)
-endif()
-
 if(ENABLE_CAIWEI_BACKEND_OPENVINO)
-    message(STATUS "Enable Intel CPU/GPU/NPU")
+    message(STATUS "Enable Intel GPU/NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_OPENVINO)
     # CPU GPU NPU
     add_definitions(-DOPENVINO_BACKEND=CPU)
 endif()
 
-if(ENABLE_CAIWEI_BACKEND_TENSORRT)
-    message(STATUS "Enable Nvidia TensorRT")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_TENSORRT)
-endif()
-
 if(ENABLE_CAIWEI_RUNTIME_CANN)
     message(STATUS "Running with CANN")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_CANN)
+    if(ANDROID)
+    # -
+    elseif(CMAKE_HOST_UNIX)
+        list(APPEND CAIWEI_RUNTIME_LIBS ascendcl acl_op_compiler)
+    elseif(CMAKE_HOST_WIN32)
+    # -
+    else()
+    # -
+    endif()
 endif()
 
-if(ENABLE_CAIWEI_RUNTIME_RKNN)
+if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     message(STATUS "Running with RKNN")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN)
-    # list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2)
+    if(ANDROID)
+    # -
+    elseif(CMAKE_HOST_UNIX)
+        list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
+    elseif(CMAKE_HOST_WIN32)
+    # -
+    else()
+    # -
+    endif()
+endif()
+
+if(ENABLE_CAIWEI_RUNTIME_RKNN3)
+    message(STATUS "Running with RKNN")
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3)
+    if(ANDROID)
+    # -
+    elseif(CMAKE_HOST_UNIX)
+        # message(STATUS "LIBRKNNAPI = ${LIBRKNNAPI}")
+        # message(STATUS "LIBRKNNAPI_INCLUDES = ${LIBRKNNAPI_INCLUDES}")
+    elseif(CMAKE_HOST_WIN32)
+    # -
+    else()
+    # -
+    endif()
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
