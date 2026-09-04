@@ -4,9 +4,11 @@ set(
     CAIWEI_MEDIA_SRCS
     src/env.cpp
     src/log.cpp
-    src/media/text.cpp
     src/media/text_data.cpp
-    src/media/image.cpp
+    src/media/text_tool.cpp
+    src/media/audio_tool.cpp
+    src/media/audio_data.cpp
+    src/media/image_tool.cpp
     src/media/image_data.cpp
     src/media/media.cpp
     src/media/media_data.cpp

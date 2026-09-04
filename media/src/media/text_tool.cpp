@@ -1,4 +1,4 @@
-#include "caiwei/text.hpp"
+#include "caiwei/text_tool.hpp"
 
 #include "nlohmann/json.hpp"
 #include "minja/chat-template.hpp"
@@ -13,16 +13,12 @@ void caiwei::text::ChatTemplate::set_template(const std::string& template_text, 
     chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
 }
 
-std::string caiwei::text::ChatTemplate::apply(const caiwei::text::CompletionsRequest& request) {
+std::string caiwei::text::ChatTemplate::apply(const SpecialToken& special_token, const caiwei::text::CompletionsRequest& request) {
     nlohmann::json messages;
     nlohmann::json tools;
     nlohmann::json extra_context;
-    // TODO 模型是否支持
-    // TODO 使用配置变量
-    if (request.enable_thinking.value_or(false)) {
-        extra_context["enable_thinking"] = true;
-    } else {
-        extra_context["enable_thinking"] = false;
+    if (!special_token.enable_thinking.empty()) {
+        extra_context[special_token.enable_thinking] = request.enable_thinking.value_or(true);
     }
     for (const auto& message : request.messages) {
         nlohmann::json copy;

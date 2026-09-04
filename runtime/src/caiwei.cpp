@@ -2,6 +2,7 @@
 #include "caiwei/caiwei.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
+#include "caiwei/context_manager.hpp"
 
 void caiwei::init() {
     caiwei::media::init();
@@ -11,6 +12,7 @@ void caiwei::init() {
 
 void caiwei::stop() {
     caiwei::media::stop();
+    caiwei::context::free();
     caiwei::context::stop();
     caiwei::runtime::stop();
 }

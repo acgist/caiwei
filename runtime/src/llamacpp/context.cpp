@@ -2,10 +2,8 @@
 
 #include <algorithm>
 
-static std::string token_to_string(const llama_vocab* vocab, llama_token token);
-
-caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_token_length)
-  : path(std::move(path)) {
+caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token)
+  : path(std::move(path)), special_token(std::move(special_token)) {
     CW_LOG_I("创建LlamaCPPContext: %s", this->path.c_str());
     llama_model_params params = llama_model_default_params();
     this->model = llama_model_load_from_file(this->path.c_str(), params);
@@ -14,13 +12,11 @@ caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_
         return;
     }
     this->vocab = llama_model_get_vocab(this->model);
-    this->model_chat_template = llama_model_chat_template(this->model, nullptr);
     this->max_token_length = std::min(max_token_length, llama_model_n_ctx_train(this->model));
-    this->buffer.resize(32 * 1024);
-    llama_token bos = llama_vocab_bos(this->vocab);
-    llama_token eos = llama_vocab_eos(this->vocab);
-    // TODO 默认配置
-    this->chat_template.set_template(this->model_chat_template, token_to_string(this->vocab, bos), token_to_string(this->vocab, eos));
+    this->special_token.bos = token_to_string(this->vocab, llama_vocab_bos(this->vocab), this->special_token.bos);
+    this->special_token.eos = token_to_string(this->vocab, llama_vocab_eos(this->vocab), this->special_token.eos);
+    this->special_token.pad = token_to_string(this->vocab, llama_vocab_pad(this->vocab), this->special_token.pad);
+    this->chat_template.set_template(llama_model_chat_template(this->model, nullptr), this->special_token.bos, this->special_token.eos);
 }
 
 caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
@@ -79,44 +75,42 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
-void caiwei::context::LlamaCPPContext::release_chat(llama_context** context, llama_sampler** sampler) {
-    if (*sampler != nullptr) {
-        llama_sampler_free(*sampler);
-        *sampler = nullptr;
-    }
-    if (*context != nullptr) {
-        llama_free(*context);
-        *context = nullptr;
-    }
-}
-
 void caiwei::context::LlamaCPPContext::generate(
     llama_context* context,
     llama_sampler* sampler,
-    uint32_t max_generate_tokens,
-    const std::string& prompt,
-    const std::vector<std::string>& stop
+    uint32_t max_tokens,
+    const std::string& prompt
 ) {
     const uint32_t n_ctx = llama_n_ctx(context);
     const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
     if (n_prompt_tokens > n_ctx) {
         CW_LOG_W("提示词超长 %d > %u", n_prompt_tokens, n_ctx);
+        // STOP length
         return;
     }
     std::vector<llama_token> prompt_tokens(n_prompt_tokens);
     if (llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), true, true) < 0) {
         CW_LOG_W("提示词分词失败: %s", prompt.c_str());
+        // STOP stop
         return;
     }
     llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
     if (llama_model_has_encoder(this->model)) {
         CW_LOG_W("不支持的编码模型: %s", this->path.c_str());
+        // STOP stop
         return;
     }
-    uint32_t buffer_pos = 0;
     uint32_t generated_tokens = 0;
     llama_token token_id;
-    while (max_generate_tokens == 0 || generated_tokens < max_generate_tokens) {
+    std::string buffer;
+    buffer.resize(1024);
+    llama_token b_think = string_to_token(this->vocab, this->special_token.b_think);
+    llama_token e_think = string_to_token(this->vocab, this->special_token.e_think);
+    llama_token b_tool_call = string_to_token(this->vocab, this->special_token.b_tool_call);
+    llama_token e_tool_call = string_to_token(this->vocab, this->special_token.e_tool_call);
+    bool thinking = false;
+    bool toolcall = false;
+    while (max_tokens == 0 || generated_tokens < max_tokens) {
         llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context), 0);
         if (n_ctx_used < 0) {
             n_ctx_used = 0;
@@ -125,44 +119,50 @@ void caiwei::context::LlamaCPPContext::generate(
         }
         if (n_ctx_used + batch.n_tokens > n_ctx) {
             CW_LOG_W("上下文长度超过最大长度: %d", n_ctx);
+            // STOP length
             break;
         }
         int ret = llama_decode(context, batch);
         if (ret != 0) {
             CW_LOG_W("解码失败: ret = %d", ret);
+            // STOP stop
             break;
         }
         token_id = llama_sampler_sample(sampler, context, -1);
         if (token_id == LLAMA_TOKEN_NULL) {
             CW_LOG_W("采样返回NULL");
+            // STOP stop
             break;
         }
         if (llama_vocab_is_eog(this->vocab, token_id)) {
+            // STOP stop
             break;
         }
-        // TODO 区分thinking
         ++generated_tokens;
         decode:
-        int32_t buffer_length = llama_token_to_piece(this->vocab, token_id, this->buffer.data() + buffer_pos, this->buffer.size() - buffer_pos, 0, true);
+        int32_t buffer_length = llama_token_to_piece(this->vocab, token_id, buffer.data(), buffer.size(), 0, true);
         if (buffer_length < 0) {
             CW_LOG_W("解码失败: %d", token_id);
+            // STOP stop
             break;
         }
-        if (buffer_length + buffer_pos > this->buffer.size()) {
-            this->buffer.resize(this->buffer.size() + 1024);
+        if (buffer_length > buffer.size()) {
+            buffer.resize(buffer.size() + 1024);
             goto decode;
         }
-        const std::string_view view(this->buffer.data(), buffer_pos + buffer_length);
-        if (std::any_of(stop.begin(), stop.end(), [this, &view](const auto& v) {
-            return view.ends_with(v);
-        })) {
-            // TODO finish reason
-            break;
+        if (token_id == b_think) {
+            thinking = true;
+        } else if (token_id == e_think) {
+            thinking = false;
+        } else if (token_id == b_tool_call) {
+            toolcall = true;
+        } else if (token_id == e_tool_call) {
+            toolcall = false;
+        } else {
+            const std::string piece(buffer.begin(), buffer.begin() + buffer_length);
+            printf("%s", piece.c_str());
+            fflush(stdout);
         }
-        std::string piece(this->buffer.begin() + buffer_pos, this->buffer.begin() + buffer_pos + buffer_length);
-        buffer_pos += buffer_length;
-        printf("%s", piece.c_str());
-        fflush(stdout);
         batch = llama_batch_get_one(&token_id, 1);
     }
 }
@@ -208,15 +208,59 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::context::get_llm_context(co
         CW_LOG_W("LlamaCPP模型无效: %s", info->path.c_str());
         return nullptr;
     }
+    caiwei::text::SpecialToken special_token;
+    special_token.bos = caiwei::env::get("CAIWEI_LLM_TOKEN_BOS");
+    special_token.eos = caiwei::env::get("CAIWEI_LLM_TOKEN_EOS");
+    special_token.pad = caiwei::env::get("CAIWEI_LLM_TOKEN_PAD");
+    special_token.b_think = caiwei::env::get("CAIWEI_LLM_TOKEN_BTHINK");
+    special_token.e_think = caiwei::env::get("CAIWEI_LLM_TOKEN_ETHINK");
+    special_token.b_tool_call = caiwei::env::get("CAIWEI_LLM_TOKEN_BTOOLCALL");
+    special_token.e_tool_call = caiwei::env::get("CAIWEI_LLM_TOKEN_ETOOLCALL");
+    special_token.enable_thinking = caiwei::env::get("CAIWEI_LLM_ENABLE_THINKING");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<LLMLlamaCPPContext>(info->path, max_token_length, runtime);
+    return std::make_shared<LLMLlamaCPPContext>(info->path, max_token_length, special_token, runtime);
 }
 
 std::shared_ptr<caiwei::context::VLMContext> caiwei::context::get_vlm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
+    caiwei::text::SpecialToken special_token;
+    special_token.bos = caiwei::env::get("CAIWEI_VLM_TOKEN_BOS");
+    special_token.eos = caiwei::env::get("CAIWEI_VLM_TOKEN_EOS");
+    special_token.pad = caiwei::env::get("CAIWEI_VLM_TOKEN_PAD");
+    special_token.b_image = caiwei::env::get("CAIWEI_VLM_TOKEN_BIMAGE");
+    special_token.c_image = caiwei::env::get("CAIWEI_VLM_TOKEN_CIMAGE");
+    special_token.e_image = caiwei::env::get("CAIWEI_VLM_TOKEN_EIMAGE");
+    special_token.b_video = caiwei::env::get("CAIWEI_VLM_TOKEN_BVIDEO");
+    special_token.c_video = caiwei::env::get("CAIWEI_VLM_TOKEN_CVIDEO");
+    special_token.e_video = caiwei::env::get("CAIWEI_VLM_TOKEN_EVIDEO");
+    special_token.b_think = caiwei::env::get("CAIWEI_VLM_TOKEN_BTHINK");
+    special_token.e_think = caiwei::env::get("CAIWEI_VLM_TOKEN_ETHINK");
+    special_token.b_tool_call = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
+    special_token.e_tool_call = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
+    special_token.enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
+    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::MLLMContext> caiwei::context::get_mllm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
+    caiwei::text::SpecialToken special_token;
+    special_token.bos = caiwei::env::get("CAIWEI_MLLM_TOKEN_BOS");
+    special_token.eos = caiwei::env::get("CAIWEI_MLLM_TOKEN_EOS");
+    special_token.pad = caiwei::env::get("CAIWEI_MLLM_TOKEN_PAD");
+    special_token.b_audio = caiwei::env::get("CAIWEI_MLLM_TOKEN_BAUDIO");
+    special_token.c_audio = caiwei::env::get("CAIWEI_MLLM_TOKEN_CAUDIO");
+    special_token.e_audio = caiwei::env::get("CAIWEI_MLLM_TOKEN_EAUDIO");
+    special_token.b_image = caiwei::env::get("CAIWEI_MLLM_TOKEN_BIMAGE");
+    special_token.c_image = caiwei::env::get("CAIWEI_MLLM_TOKEN_CIMAGE");
+    special_token.e_image = caiwei::env::get("CAIWEI_MLLM_TOKEN_EIMAGE");
+    special_token.b_video = caiwei::env::get("CAIWEI_MLLM_TOKEN_BVIDEO");
+    special_token.c_video = caiwei::env::get("CAIWEI_MLLM_TOKEN_CVIDEO");
+    special_token.e_video = caiwei::env::get("CAIWEI_MLLM_TOKEN_EVIDEO");
+    special_token.b_think = caiwei::env::get("CAIWEI_MLLM_TOKEN_BTHINK");
+    special_token.e_think = caiwei::env::get("CAIWEI_MLLM_TOKEN_ETHINK");
+    special_token.b_tool_call = caiwei::env::get("CAIWEI_MLLM_TOKEN_BTOOLCALL");
+    special_token.e_tool_call = caiwei::env::get("CAIWEI_MLLM_TOKEN_ETOOLCALL");
+    special_token.enable_thinking = caiwei::env::get("CAIWEI_MLLM_ENABLE_THINKING");
+    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_MLLM_MAX_TOKEN_LENGTH");
     return nullptr;
 }
 
@@ -236,17 +280,28 @@ std::shared_ptr<caiwei::context::VLRerankingContext> caiwei::context::get_vl_rer
     return nullptr;
 }
 
-static std::string token_to_string(const llama_vocab* vocab, llama_token token) {
+std::string caiwei::context::token_to_string(const llama_vocab* vocab, llama_token token, std::string default_token) {
     if (token == LLAMA_TOKEN_NULL) {
-        return "";
+        return std::move(default_token);
     }
+    static const int ret_length = 64;
     std::string ret;
-    ret.resize(32);
+    ret.resize(ret_length);
     const int length = llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true);
     if (length < 0) {
-        return "";
+        return std::move(default_token);
+    } else if (length >= ret_length) {
+        return std::move(default_token);
     } else {
         ret.resize(length);
         return ret;
     }
+}
+
+llama_token caiwei::context::string_to_token(const llama_vocab* vocab, const std::string& token) {
+    std::vector<llama_token> prompt_tokens(1);
+    if (llama_tokenize(vocab, token.c_str(), token.size(), prompt_tokens.data(), 1, true, true) < 0) {
+        return LLAMA_TOKEN_NULL;
+    }
+    return prompt_tokens[0];
 }

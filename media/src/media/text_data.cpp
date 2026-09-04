@@ -1,28 +1,5 @@
 #include "caiwei/text_data.hpp"
 
-uint32_t caiwei::text::CompletionsRequest::max_generate_tokens() const {
-    if (this->max_tokens.has_value()) {
-        return this->max_tokens.value_or(0);
-    }
-    if (this->max_completion_tokens.has_value()) {
-        return this->max_completion_tokens.value_or(0);
-    }
-    return 0;
-}
-
-std::vector<std::string> caiwei::text::CompletionsRequest::stop_tokens() const {
-    if (this->stop.has_value()) {
-        if (std::holds_alternative<std::string>(this->stop.value())) {
-            return { std::get<std::string>(this->stop.value()) };
-        }
-        if (std::holds_alternative<std::vector<std::string>>(stop.value())) {
-            return std::get<std::vector<std::string>>(stop.value());
-        }
-    }
-    return {};
-}
-
-
 #include "nlohmann/json.hpp"
 
 // TODO 需要手写

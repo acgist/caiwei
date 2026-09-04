@@ -1,8 +1,8 @@
 /**
- * 数据转换
+ * 图片工具
  */
-#ifndef CAIWEI_MEDIA_TRANSFORM_HPP
-#define CAIWEI_MEDIA_TRANSFORM_HPP
+#ifndef CAIWEI_MEDIA_IMAGE_TOOL_HPP
+#define CAIWEI_MEDIA_IMAGE_TOOL_HPP
 
 #include <cmath>
 #include <vector>
@@ -12,8 +12,22 @@
 #include "stb/stb_image.h"
 #include "stb/stb_image_resize2.h"
 
-namespace caiwei    {
-namespace transform {
+#include "caiwei/image_data.hpp"
+#include "caiwei/media_data.hpp"
+
+namespace caiwei {
+namespace image  {
+
+Box        rect_to_box        (const Rect& rect, int class_id, float score);
+RectCenter rect_to_rect_center(const Rect& rect);
+Box  rect_center_to_box (const RectCenter& rect, int class_id, float score);
+Rect rect_center_to_rect(const RectCenter& rect);
+
+/**
+ * 缩放居中
+ * 默认填充: 114
+ */
+void letterbox(const caiwei::media::ImageFrame& frame);
 
 template<typename T>
 inline void crop(const T* src, const int src_w, const int src_h, T* dst, const int x, const int y, const int w, const int h, const int channels = 3) {
@@ -218,6 +232,7 @@ void chw_to_hwc(const T* chw, T* hwc, const int H, const int W, const int C) {
     }
 }
 
-} // namespace transform
+} // namespace image
 } // namespace caiwei
-#endif // CAIWEI_MEDIA_TRANSFORM_HPP
+
+#endif // CAIWEI_MEDIA_IMAGE_TOOL_HPP

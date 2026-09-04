@@ -42,7 +42,7 @@ void det_video() {
             ret = std::move(ptr->run(frame));
         }
         for (const auto& box : ret) {
-            caiwei::transform::draw(
+            caiwei::image::draw(
                 data.data(),
                 frame.width,
                 frame.height,

@@ -94,12 +94,6 @@ struct CompletionsRequestMessage {
     std::optional<std::vector<CompletionsRequestMessageToolCall>> tool_calls;
 };
 
-struct CompletionsRequestStreamOptions {
-    std::optional<bool> include_usage;
-};
-
-using CompletionsRequestStop = std::variant<std::string, std::vector<std::string>>;
-
 struct CompletionsRequestToolFunction {
     std::optional<std::string> name;
     std::optional<std::string> description;
@@ -116,20 +110,13 @@ struct CompletionsRequest {
     std::string model;
     std::vector<CompletionsRequestMessage> messages;
     std::optional<bool>  enable_thinking;
-    std::optional<int>   n;
     std::optional<int>   seed;
     std::optional<float> top_p;
     std::optional<float> temperature;
     std::optional<float> presence_penalty;
     std::optional<float> frequency_penalty;
     std::optional<uint32_t> max_tokens;
-    std::optional<uint32_t> max_completion_tokens;
-    std::optional<CompletionsRequestStop>              stop;
     std::optional<std::vector<CompletionsRequestTool>> tools;
-    std::optional<CompletionsRequestStreamOptions>     stream_options;
-
-    uint32_t max_generate_tokens() const;
-    std::vector<std::string> stop_tokens() const;
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {
@@ -277,6 +264,26 @@ struct RerankingResponse {
     std::string model;
     std::vector<RerankingResponseData>    data;
     std::optional<RerankingResponseUsage> usage;
+};
+
+struct SpecialToken {
+    std::string bos;
+    std::string eos;
+    std::string pad;
+    std::string b_audio;
+    std::string c_audio;
+    std::string e_audio;
+    std::string b_image;
+    std::string c_image;
+    std::string e_image;
+    std::string b_video;
+    std::string c_video;
+    std::string e_video;
+    std::string b_think;
+    std::string e_think;
+    std::string b_tool_call;
+    std::string e_tool_call;
+    std::string enable_thinking;
 };
 
 } // namespace text

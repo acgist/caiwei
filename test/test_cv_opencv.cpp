@@ -1,6 +1,6 @@
 #include "test_media.hpp"
 
-#include "caiwei/transform.hpp"
+#include "caiwei/image_tool.hpp"
 
 #include <numeric>
 
@@ -73,7 +73,7 @@ void test_crop() {
         cv::Mat mat(height, width, CV_8UC3, data);
         cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         std::vector<uint8_t> dst(256 * 256 * channels);
-        caiwei::transform::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
+        caiwei::image::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
         mat = cv::Mat(256, 256, CV_8UC3, dst.data()).clone();
         cv::imshow("loc", mat);
         cv::waitKey(0);
@@ -93,7 +93,7 @@ void test_loc_crop() {
     auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
     std::vector<uint8_t> dst(256 * 256 * channels);
     CAIWEI_FOR_EACH(10'000)
-    caiwei::transform::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
+    caiwei::image::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -111,7 +111,7 @@ void test_draw() {
     {
         int width, height, channels;
         auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
-        caiwei::transform::draw(data, width, height, 256, 256, 256, 256);
+        caiwei::image::draw(data, width, height, 256, 256, 256, 256);
         cv::Mat mat(height, width, CV_8UC3, data);
         cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         cv::imshow("loc", mat);
@@ -131,7 +131,7 @@ void test_loc_draw() {
     int width, height, channels;
     auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
     CAIWEI_FOR_EACH(10'000)
-    caiwei::transform::draw(data, width, height, 256, 256, 256, 256);
+    caiwei::image::draw(data, width, height, 256, 256, 256, 256);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -156,9 +156,9 @@ void test_resize() {
     {
         int width, height, channels;
         auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
-        caiwei::transform::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+        caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
         std::vector<uint8_t> dst(dst_w * dst_h * channels);
-        caiwei::transform::resize(data, dst.data(), width, height, dst_w, dst_h);
+        caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
         cv::Mat mat(dst_h, dst_w, CV_8UC3, dst.data());
         cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         cv::imshow("loc", mat);
@@ -184,10 +184,10 @@ void test_loc_resize() {
     const int h = resize_h;
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::transform::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     CAIWEI_FOR_EACH(1000)
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
-    caiwei::transform::resize(data, dst.data(), width, height, dst_w, dst_h);
+    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -199,7 +199,7 @@ void test_ocv_resize() {
     const int h = resize_h;
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::transform::resize(mat.cols, mat.rows, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    caiwei::image::resize(mat.cols, mat.rows, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     CAIWEI_FOR_EACH(1000)
     cv::Mat dst;
     cv::resize(mat, dst, cv::Size(dst_w, dst_h));
@@ -216,7 +216,7 @@ void test_ffmpeg_resize() {
     const int h = resize_h;
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::transform::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     SwsContext* sws = sws_getContext(
         width, height, AV_PIX_FMT_RGB24,
         dst_w, dst_h,  AV_PIX_FMT_RGB24,
@@ -247,11 +247,11 @@ void test_resize_pad() {
     int dst_w, dst_h, pad_w, pad_h;
     {
         auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
-        caiwei::transform::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+        caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
         std::vector<uint8_t> dst(dst_w * dst_h * channels);
         std::vector<uint8_t> pad(w     * h     * channels);
-        caiwei::transform::resize (data,       dst.data(), width, height, dst_w, dst_h);
-        caiwei::transform::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h);
+        caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h);
+        caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h);
         cv::Mat mat(h, w, CV_8UC3, pad.data());
         cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         cv::imshow("loc", mat);
@@ -279,12 +279,12 @@ void test_loc_resize_pad() {
     const int h = resize_h;
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::transform::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     CAIWEI_FOR_EACH(1000)
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(w     * h     * channels);
-    caiwei::transform::resize (data,       dst.data(), width, height, dst_w, dst_h);
-    caiwei::transform::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h);
+    caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h);
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -296,7 +296,7 @@ void test_ocv_resize_pad() {
     const int h = resize_h;
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::transform::resize(mat.cols, mat.rows, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    caiwei::image::resize(mat.cols, mat.rows, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     CAIWEI_FOR_EACH(1000)
     cv::Mat dst;
     cv::resize(mat, dst, cv::Size(dst_w, dst_h));
@@ -319,7 +319,7 @@ void test_nms_boxes() {
             { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 0, 0.90F },
             { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 1, 0.85F },
         };
-        auto ret = caiwei::transform::nms_boxes(boxes, 0.5F);
+        auto ret = caiwei::image::nms_boxes(boxes, 0.5F);
         assert(ret.size() == 6);
         assert(ret[0].x1 == boxes[2].x1);
         assert(ret[1].x1 == boxes[6].x1);
@@ -368,7 +368,7 @@ void test_loc_nms_boxes() {
         { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 0, 0.90F },
         { 20 / 100.0F, 20 / 100.0F, 140 / 100.0F, 140 / 100.0F, 1, 0.85F },
     };
-    caiwei::transform::nms_boxes(std::move(boxes), 0.5F);
+    caiwei::image::nms_boxes(std::move(boxes), 0.5F);
     CAIWEI_FOR_EACH_END
 }
 
@@ -401,7 +401,7 @@ void test_min_max_loc() {
     {
         int   max_index;
         float max_score;
-        caiwei::transform::max_loc(scores, 128, max_score, max_index);
+        caiwei::image::max_loc(scores, 128, max_score, max_index);
         assert(max_score == 10000.0F);
         assert(max_index == 100);
     }
@@ -422,7 +422,7 @@ void test_loc_min_max_loc() {
     int   max_index;
     float max_score;
     CAIWEI_FOR_EACH(10'000)
-    caiwei::transform::max_loc(scores, 128, max_score, max_index);
+    caiwei::image::max_loc(scores, 128, max_score, max_index);
     CAIWEI_FOR_EACH_END
 }
 
@@ -443,8 +443,8 @@ void test_transpose() {
     uint8_t src[128];
     uint8_t dts[128];
     std::iota(src, src + 128, 1);
-    caiwei::transform::transpose(src, dts, 2, 64);
-    caiwei::transform::transpose(dts, src, 64, 2);
+    caiwei::image::transpose(src, dts, 2, 64);
+    caiwei::image::transpose(dts, src, 64, 2);
     cv::Mat mat = cv::Mat(64, 2, CV_8UC1, dts).clone();
     bool ret = std::equal(dts, dts + 128, mat.data);
     assert(ret);
@@ -462,8 +462,8 @@ void test_loc_transpose() {
     uint8_t dts[84 * 8400];
     std::iota(src, src + 84 * 8400, 1);
     CAIWEI_FOR_EACH(10'000)
-    caiwei::transform::transpose(src, dts, 84, 8400);
-    caiwei::transform::transpose(src, dts, 8400, 84);
+    caiwei::image::transpose(src, dts, 84, 8400);
+    caiwei::image::transpose(src, dts, 8400, 84);
     CAIWEI_FOR_EACH_END
 }
 
@@ -484,7 +484,7 @@ void test_convert_to() {
         int width, height, channels;
         auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
         std::vector<float> dst(width * height * channels);
-        caiwei::transform::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
+        caiwei::image::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
         cv::Mat mat = cv::Mat(height, width, CV_32FC3, dst.data()).clone();
         cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         cv::imshow("loc", mat);
@@ -508,8 +508,8 @@ void test_loc_convert_to() {
     auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
     CAIWEI_FOR_EACH(1000)
     std::vector<float> dst(width * height * channels);
-    caiwei::transform::i8_to_f32(data, width * height * channels, dst.data());
-    caiwei::transform::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
+    caiwei::image::i8_to_f32(data, width * height * channels, dst.data());
+    caiwei::image::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -533,9 +533,9 @@ void test_blob_from_image() {
         auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
         std::vector<float> hwc(width * height * channels);
         std::vector<float> chw(width * height * channels);
-        caiwei::transform::i8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
-        caiwei::transform::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
-        caiwei::transform::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
+        caiwei::image::i8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
+        caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
+        caiwei::image::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
         cv::Mat hwc_mat(height, width, CV_32FC3, hwc.data());
         cv::cvtColor(hwc_mat, hwc_mat, cv::COLOR_RGB2BGR);
         cv::imshow("loc", hwc_mat);
@@ -547,7 +547,7 @@ void test_blob_from_image() {
         cv::Mat nchw_mat;
         cv::dnn::blobFromImage(mat, nchw_mat, 1.0F / 255.0F);
         std::vector<float> hwc(mat.cols * mat.rows * mat.channels());
-        caiwei::transform::chw_to_hwc((float*) nchw_mat.data, hwc.data(), mat.cols, mat.rows, mat.channels());
+        caiwei::image::chw_to_hwc((float*) nchw_mat.data, hwc.data(), mat.cols, mat.rows, mat.channels());
         cv::Mat hwc_mat(mat.size(), CV_32FC3, hwc.data());
         cv::imshow("ocv", hwc_mat);
         cv::waitKey(0);
@@ -562,8 +562,8 @@ void test_loc_blob_from_image() {
     auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
     CAIWEI_FOR_EACH(1000)
     std::vector<float> dst(width * height * channels);
-    caiwei::transform::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
-    caiwei::transform::hwc_to_chw(dst.data(), dst.data(), height, width, channels);
+    caiwei::image::i8_to_f32(data, width * height * channels, dst.data(), 255.0F);
+    caiwei::image::hwc_to_chw(dst.data(), dst.data(), height, width, channels);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }

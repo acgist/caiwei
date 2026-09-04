@@ -17,6 +17,8 @@
 namespace caiwei  {
 namespace context {
 
+extern void free();
+
 template <typename C, typename I, typename O>
 class ContextWrapper {
 private:
