@@ -1,8 +1,8 @@
 #include "test.hpp"
+#include "player.hpp"
 
 #include "caiwei/media.hpp"
 #include "caiwei/caiwei.hpp"
-#include "caiwei/player.hpp"
 #include "caiwei/image_tool.hpp"
 #include "caiwei/context_manager.hpp"
 

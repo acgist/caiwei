@@ -123,6 +123,7 @@ target_link_libraries(
 
 add_executable(
     test_context_yolo_cls
+    player.cpp
     test_context_yolo_cls.cpp
 )
 add_test(NAME test_context_yolo_cls COMMAND test_context_yolo_cls)
@@ -134,6 +135,7 @@ target_link_libraries(
 
 add_executable(
     test_context_yolo_det
+    player.cpp
     test_context_yolo_det.cpp
 )
 add_test(NAME test_context_yolo_det COMMAND test_context_yolo_det)

@@ -20,13 +20,6 @@ list(
     third_party
 )
 
-if(ENABLE_CAIWEI_SDL2)
-    list(
-        APPEND CAIWEI_MEDIA_SRCS
-        src/sdl2/player.cpp
-    )
-endif()
-
 if(ENABLE_CAIWEI_FFMPEG)
     list(
         APPEND CAIWEI_MEDIA_SRCS

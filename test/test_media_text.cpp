@@ -48,12 +48,13 @@ int main() {
             },
         }
     };
+    const caiwei::text::SpecialToken special_token;
     {
         CAIWEI_FOR_EACH(100)
-        chat_template.apply(request);
+        chat_template.apply(special_token, request);
         CAIWEI_FOR_EACH_END
     }
-    std::string prompt = chat_template.apply(request);
+    std::string prompt = chat_template.apply(special_token, request);
     CW_LOG_D("prompt: %s", prompt.c_str());
     stop_test();
     return 0;

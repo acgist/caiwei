@@ -201,7 +201,7 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
-        file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/*.so")
+        file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/libonnxruntime.so")
         list(APPEND CAIWEI_RUNTIME_INCS "${ONNXRUNTIME_PATH}/include")
     elseif(CMAKE_HOST_WIN32)
         file(GLOB ONNXRUNTIME_DLLS "${ONNXRUNTIME_PATH}/lib/*.dll")

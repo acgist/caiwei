@@ -1,4 +1,5 @@
 #include "test.hpp"
+#include "player.hpp"
 
 #include "caiwei/media.hpp"
 
