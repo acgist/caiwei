@@ -220,27 +220,6 @@ target_link_libraries(
     caiwei-runtime
 )
 
-if(ANDROID)
-# -
-elseif(CMAKE_HOST_UNIX)
-# -
-elseif(CMAKE_HOST_WIN32)
-    set(
-        CMAKE_PREFIX_PATH
-        ${CMAKE_PREFIX_PATH}
-        "${CMAKE_SOURCE_DIR}/deps/opencv"
-    )
-    if(CMAKE_BUILD_TYPE MATCHES "Debug")
-        file(GLOB OPENCV_DLLS "${CMAKE_SOURCE_DIR}/deps/opencv/debug/bin/*.dll")
-    else()
-        file(GLOB OPENCV_DLLS "${CMAKE_SOURCE_DIR}/deps/opencv/bin/*.dll")
-    endif()
-else()
-# -
-endif()
-
-find_package(OpenCV)
-
 if(OpenCV_FOUND)
     add_executable(
         test_cv_opencv
@@ -251,18 +230,7 @@ if(OpenCV_FOUND)
     target_link_libraries(
         test_cv_opencv
         caiwei-media
-        ${OpenCV_LIBS}
     )
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
-    # -
-    elseif(CMAKE_HOST_WIN32)
-        add_custom_command(
-            TARGET test_cv_opencv POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENCV_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
-        )
-    endif()
 endif()
 
 file(COPY ./ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.jpg" PATTERN "*.mp4")

@@ -4,6 +4,8 @@
 #ifndef CAIWEI_MEDIA_IMAGE_DATA_HPP
 #define CAIWEI_MEDIA_IMAGE_DATA_HPP
 
+#include <cstdint>
+
 namespace caiwei {
 namespace image  {
 

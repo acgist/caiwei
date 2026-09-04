@@ -6,6 +6,7 @@
 
 #include <map>
 #include <string>
+#include <cstdint>
 #include <variant>
 #include <optional>
 
@@ -13,6 +14,11 @@
 
 namespace caiwei {
 namespace text   {
+
+const std::string FINISH_REASON_STOP       = "stop";
+const std::string FINISH_REASON_LENGTH     = "length";
+const std::string FINISH_REASON_MAX_TOKENS = "max_tokens";
+const std::string FINISH_REASON_TOOL_CALLS = "tool_calls";
 
 enum class Role {
     USER,
@@ -117,6 +123,9 @@ struct CompletionsRequest {
     std::optional<float> frequency_penalty;
     std::optional<uint32_t> max_tokens;
     std::optional<std::vector<CompletionsRequestTool>> tools;
+    std::string id;
+    uint32_t    index;
+    uint32_t    created;
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {
@@ -127,6 +136,7 @@ struct CompletionsResponseChoiceMessageToolCallFunction {
 struct CompletionsResponseChoiceMessageToolCall {
     std::optional<std::string> id;
     std::optional<std::string> type;
+    std::optional<uint32_t> index;
     std::optional<CompletionsResponseChoiceMessageToolCallFunction> function;
 };
 
@@ -167,6 +177,7 @@ struct CompletionsChunkChoiceMessageToolCallFunction {
 struct CompletionsChunkChoiceMessageToolCall {
     std::optional<std::string> id;
     std::optional<std::string> type;
+    std::optional<uint32_t> index;
     std::optional<CompletionsChunkChoiceMessageToolCallFunction> function;
 };
 
@@ -279,11 +290,41 @@ struct SpecialToken {
     std::string b_video;
     std::string c_video;
     std::string e_video;
-    std::string b_think;
-    std::string e_think;
-    std::string b_tool_call;
-    std::string e_tool_call;
+    std::string b_thinking;
+    std::string e_thinking;
+    std::string b_toolcall;
+    std::string e_toolcall;
     std::string enable_thinking;
+};
+
+struct ResultToolcall {
+    bool name_return = false;
+    bool arguments_return = false;
+    std::string toolcall_id;
+    uint32_t    toolcall_index;
+    std::string token;
+    std::string content;
+    std::string arguments;
+    ResultToolcall();
+    void finish();
+    void increment();
+    void put_token(std::string token);
+    std::string get_name();
+    std::string get_arguments();
+};
+
+struct Result {
+    bool thinking = false;
+    bool toolcall = false;
+    ResultToolcall* result_toolcall = nullptr;
+    std::string token;
+    std::string finish_reason;
+    uint32_t prompt_tokens;
+    uint32_t completion_tokens;
+    uint32_t total_tokens;
+    Result(bool thinking, bool toolcall, std::string token);
+    Result(bool thinking, bool toolcall, ResultToolcall* result_toolcall);
+    Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 
 } // namespace text

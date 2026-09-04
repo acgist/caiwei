@@ -135,7 +135,7 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
     } else if(this->type == "device") {
         // ffmpeg -list_devices true -f dshow -i dummy
         // url: audio=deviceName:video=deviceName
-        #if OS_WIN
+        #if CAIWEI_OS_WIN
         av_dict_set(&opts, "framerate",         "30",       0);
         av_dict_set(&opts, "video_size",        "640*480",  0);
         av_dict_set(&opts, "pixel_format",      "yuyv422",  0);

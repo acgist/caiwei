@@ -40,8 +40,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_LLM_TOKEN_BOS",            "<|im_start|>"     },
     {"CAIWEI_LLM_TOKEN_EOS",            "<|im_end|>"       },
     {"CAIWEI_LLM_TOKEN_PAD",            "<|endoftext|>"    },
-    {"CAIWEI_LLM_TOKEN_BTHINK",         "<think>"          },
-    {"CAIWEI_LLM_TOKEN_ETHINK",         "</think>"         },
+    {"CAIWEI_LLM_TOKEN_BTHINKING",      "<think>"          },
+    {"CAIWEI_LLM_TOKEN_ETHINKING",      "</think>"         },
     {"CAIWEI_LLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
     {"CAIWEI_LLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
     {"CAIWEI_LLM_ENABLE_THINKING",      "enable_thinking"  },
@@ -56,8 +56,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VLM_TOKEN_BVIDEO",         "<|vision_start|>" },
     {"CAIWEI_VLM_TOKEN_CVIDEO",         "<|video_pad|>"    },
     {"CAIWEI_VLM_TOKEN_EVIDEO",         "<|vision_end|>"   },
-    {"CAIWEI_VLM_TOKEN_BTHINK",         "<think>"          },
-    {"CAIWEI_VLM_TOKEN_ETHINK",         "</think>"         },
+    {"CAIWEI_VLM_TOKEN_BTHINKING",      "<think>"          },
+    {"CAIWEI_VLM_TOKEN_ETHINKING",      "</think>"         },
     {"CAIWEI_VLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
     {"CAIWEI_VLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
     {"CAIWEI_VLM_ENABLE_THINKING",      "enable_thinking"  },
@@ -75,8 +75,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_MLLM_TOKEN_BVIDEO",         "<|vision_start|>" },
     {"CAIWEI_MLLM_TOKEN_CVIDEO",         "<|video_pad|>"    },
     {"CAIWEI_MLLM_TOKEN_EVIDEO",         "<|vision_end|>"   },
-    {"CAIWEI_MLLM_TOKEN_BTHINK",         "<think>"          },
-    {"CAIWEI_MLLM_TOKEN_ETHINK",         "</think>"         },
+    {"CAIWEI_MLLM_TOKEN_BTHINKING",      "<think>"          },
+    {"CAIWEI_MLLM_TOKEN_ETHINKING",      "</think>"         },
     {"CAIWEI_MLLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
     {"CAIWEI_MLLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
     {"CAIWEI_MLLM_ENABLE_THINKING",      "enable_thinking"  },
@@ -124,9 +124,9 @@ std::string caiwei::env::get_string(const std::string& name) {
 
 void caiwei::env::set(const std::string& name, const std::string& value) {
     CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
-#if OS_WIN
+#if CAIWEI_OS_WIN
     _putenv_s(name.c_str(), value.c_str());
-#elif OS_LINUX
+#elif CAIWEI_OS_UNIX
     setenv(name.c_str(), value.c_str(), true);
 #else
     CW_LOG_W("设置环境失败: %s = %s", name.c_str(), value.c_str());

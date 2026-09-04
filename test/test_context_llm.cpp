@@ -2,8 +2,11 @@
 
 #include "nlohmann/json.hpp"
 
+#include <generator>
+
 void test_llm() {
     caiwei::text::CompletionsRequest request;
+    request.stream = true;
     request.enable_thinking = false;
     request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
     request.messages.push_back({.role = "user", .content = "北京"});
@@ -17,10 +20,11 @@ void test_llm() {
             },
         }
     };
-    auto ptr = caiwei::context::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::vector<std::string>>("qwen3-llm");
-    auto result = ptr->run(request);
-    for (const auto& value : result) {
-        CW_LOG_D("value: %s", value.c_str());
+    // {"name": "get_weather", "arguments": {"city": "北京"}}
+    auto ptr = caiwei::context::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<std::string>>("qwen3-llm");
+    for (const std::string& value : ptr->run(request)) {
+        std::printf("%s", value.c_str());
+        std::fflush(stdout);
     }
 }
 

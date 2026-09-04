@@ -82,3 +82,46 @@ std::string caiwei::text::ChatTemplate::apply(const SpecialToken& special_token,
         .extra_context         = extra_context
     });
 }
+
+std::string caiwei::text::chunk_choice(const CompletionsRequest& request, const Result& result) {
+    CompletionsChunk chunk;
+    chunk.id      = request.id;
+    chunk.model   = request.model;
+    chunk.created = request.created;
+    CompletionsChunkChoice choice;
+    choice.index         = request.index;
+    choice.finish_reason = result.finish_reason;
+    choice.delta.role    = "assistant";
+    if (result.thinking) {
+        choice.delta.reasoning_content = result.token;
+    } else if (result.toolcall) {
+        CompletionsChunkChoiceMessageToolCall tool_call;
+        CompletionsChunkChoiceMessageToolCallFunction function;
+        function.name      = result.result_toolcall->get_name();
+        function.arguments = result.result_toolcall->get_arguments();
+        tool_call.id    = result.result_toolcall->toolcall_id;
+        tool_call.type  = "function";
+        tool_call.index = result.result_toolcall->toolcall_index;
+        tool_call.function = function;
+        if (function.name.value_or("").empty() && function.arguments.value_or("").empty()) {
+            return "";
+        } else {
+            return function.name.value_or("") + function.arguments.value_or("");
+        }
+    } else {
+        choice.delta.content = result.token;
+    }
+    chunk.choices.push_back(choice);
+    if (!result.finish_reason.empty()) {
+        chunk.usage = CompletionsChunkUsage {
+            .prompt_tokens     = result.prompt_tokens,
+            .completion_tokens = result.completion_tokens,
+            .total_tokens      = result.total_tokens,
+        };
+    }
+    return result.token;
+}
+
+std::string caiwei::text::response_choice(const CompletionsRequest& request, const std::string& finish_reason, std::string content, std::string thinking, std::string toolcall) {
+    return "";
+}

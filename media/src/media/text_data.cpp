@@ -1,6 +1,86 @@
+#include "caiwei/env.hpp"
 #include "caiwei/text_data.hpp"
 
 #include "nlohmann/json.hpp"
+
+caiwei::text::Result::Result(bool thinking, bool toolcall, std::string token)
+  : thinking(thinking)
+  , toolcall(toolcall)
+  , token(token) {
+}
+
+caiwei::text::Result::Result(bool thinking, bool toolcall, ResultToolcall* result_toolcall)
+  : thinking(thinking)
+  , toolcall(toolcall)
+  , token(token)
+  , result_toolcall(result_toolcall) {
+}
+
+caiwei::text::Result::Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens)
+  : thinking(thinking)
+  , toolcall(toolcall)
+  , finish_reason(finish_reason)
+  , prompt_tokens(prompt_tokens)
+  , completion_tokens(completion_tokens) {
+    this->total_tokens = this->prompt_tokens + this->completion_tokens;
+}
+
+caiwei::text::ResultToolcall::ResultToolcall() : toolcall_id(caiwei::env::id()), toolcall_index(0) {
+    this->content.reserve(1024);
+}
+
+void caiwei::text::ResultToolcall::finish() {
+    this->arguments += this->token;
+    auto pos = this->arguments.rfind("}");
+    if (pos != std::string::npos) {
+        this->arguments = this->arguments.substr(0, pos);
+    } else {
+        // 异常情况
+    }
+    this->token.clear();
+}
+
+void caiwei::text::ResultToolcall::increment() {
+    this->toolcall_id    =  caiwei::env::id();
+    this->toolcall_index += 1;
+}
+
+void caiwei::text::ResultToolcall::put_token(std::string token) {
+    this->token = token;
+    if (this->name_return && this->arguments_return) {
+        return;
+    }
+    this->content += token;
+}
+
+std::string caiwei::text::ResultToolcall::get_name() {
+    if (this->name_return) {
+        return "";
+    }
+    auto a = this->content.find(R"("name": ")");
+    auto z = this->content.find(R"(", "arguments": )");
+    if (a != std::string::npos && z != std::string::npos) {
+        this->name_return = true;
+        return this->content.substr(a + 9, z - a - 9);
+    }
+    return "";
+}
+
+std::string caiwei::text::ResultToolcall::get_arguments() {
+    if (!this->name_return) {
+        return "";
+    }
+    if (this->arguments_return) {
+        this->token.swap(this->arguments);
+        return std::move(this->token);
+    }
+    auto pos = this->content.find(R"("arguments": )");
+    if (pos != std::string::npos) {
+        this->arguments_return = true;
+        return this->content.substr(pos + 13);
+    }
+    return "";
+}
 
 // TODO 需要手写
 

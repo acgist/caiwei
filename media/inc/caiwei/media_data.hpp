@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <cstdint>
 
 namespace caiwei {
 namespace media  {

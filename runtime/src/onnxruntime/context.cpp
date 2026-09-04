@@ -24,7 +24,7 @@ caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, const 
     options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
     CW_LOG_I("ONNXRuntimeContext使用CPU推理");
     #endif
-    #if OS_WIN
+    #if CAIWEI_OS_WIN
     std::wstring wPath(this->path.begin(), this->path.end());
     this->session = new Ort::Session(*env, wPath.c_str(), options);
     #else

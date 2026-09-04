@@ -10,6 +10,8 @@
 
 #include "llama-cpp.h"
 
+#include <generator>
+
 namespace caiwei  {
 namespace context {
 
@@ -27,7 +29,7 @@ protected:
 protected:
     llama_context* get_context(const caiwei::text::CompletionsRequest& request);
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
-    void generate(llama_context* context, llama_sampler* sampler, uint32_t max_tokens, const std::string& prompt);
+    std::generator<caiwei::text::Result> generate(llama_context* context, llama_sampler* sampler, uint32_t max_tokens, const std::string& prompt);
 public:
     LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
     ~LlamaCPPContext();
@@ -48,7 +50,7 @@ public:
     LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
     ~LLMLlamaCPPContext();
 public:
-    std::vector<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {};

@@ -1,6 +1,7 @@
 #include "caiwei/log.hpp"
 
 #include <mutex>
+#include <string>
 #include <vector>
 #include <cstdarg>
 
@@ -46,7 +47,7 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
         buffer[BUFFER_SIZE - 1] = '\0';
     }
     std::string filename = loc.file_name();
-#if OS_WIN
+#if CAIWEI_OS_WIN
     auto pos = filename.find_last_of('\\');
 #else
     auto pos = filename.find_last_of('/');

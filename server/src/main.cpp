@@ -4,13 +4,13 @@
 #endif
 #include "caiwei/caiwei.hpp"
 
-#if OS_WIN
+#if CAIWEI_OS_WIN
 #include <cstdlib>
 #endif
 #include <cstring>
 
 int main(int argc, char* argv[]) {
-#if OS_WIN
+#if CAIWEI_OS_WIN
     system("chcp 65001");
 #endif
     if (argc >= 2 && std::strcmp(argv[1], "-h") == 0) {

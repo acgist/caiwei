@@ -1,6 +1,7 @@
 # ONNXRuntime
 
-* 版本: 1.28.1
+* 版本: 1.28.1(CUDA-13)
+* 版本: 1.26.0(CUDA-12)
 
 ## 安装教程
 
@@ -8,11 +9,6 @@
 wget https://github.com/microsoft/onnxruntime/releases/download/v1.28.1/onnxruntime-linux-x64-1.28.1.tgz
 tar -zxvf onnxruntime-linux-x64-1.28.1.tgz
 mv onnxruntime-linux-x64-1.28.1 onnxruntime
-cd onnxruntime
-ln -sf lib lib64
-mv include onnxruntime
-mkdir include
-mv onnxruntime include
 ```
 
 ## 相关链接

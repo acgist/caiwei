@@ -12,8 +12,10 @@
 
 #include <map>
 #include <mutex>
+#include <atomic>
 #include <chrono>
 #include <vector>
+#include <generator>
 
 namespace caiwei  {
 namespace runtime {
@@ -186,15 +188,13 @@ public:
 
 /**
  * 语言大模型
- * TODO 使用c++23协程generator+co_yield
- * TODO tools测试
  */
 class LLMContext : public Context {
 public:
     LLMContext(std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~LLMContext();
 public:
-    virtual std::vector<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**

@@ -3,7 +3,7 @@
 #include "caiwei/media.hpp"
 
 inline void init_test() {
-    #if OS_WIN
+    #if CAIWEI_OS_WIN
     system("chcp 65001");
     #endif
     CW_LOG_I("测试开始");
