@@ -59,13 +59,13 @@
 |         |Qwen3-Thinking-2507  |https://modelscope.cn/models/Qwen/Qwen3-4B-Thinking-2507         |○|
 |VLM      |Qwen3-VL-Instruct    |https://modelscope.cn/models/Qwen/Qwen3-VL-2B-Instruct           |○|
 |         |Qwen3-VL-Thinking    |https://modelscope.cn/models/Qwen/Qwen3-VL-2B-Thinking           |○|
-|MLLM     |Qwen3-Omni-Instruct  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct    |○|
-|         |Qwen3-Omni-Thinking  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Thinking    |○|
-|         |Qwen3-Omni-Captioner |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Captioner   |○|
+|MLLM     |Qwen3-Omni-Instruct  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct    |?|
+|         |Qwen3-Omni-Thinking  |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Thinking    |?|
+|         |Qwen3-Omni-Captioner |https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Captioner   |?|
 |Reranking|Qwen3-Reranker       |https://modelscope.cn/models/Qwen/Qwen3-Reranker-0.6B            |○|
-|         |Qwen3-VL-Reranker    |https://modelscope.cn/models/Qwen/Qwen3-VL-Reranker-2B           |○|
+|         |Qwen3-VL-Reranker    |https://modelscope.cn/models/Qwen/Qwen3-VL-Reranker-2B           |?|
 |Embedding|Qwen3-Embedding      |https://modelscope.cn/models/Qwen/Qwen3-Embedding-0.6B           |○|
-|         |Qwen3-VL-Embedding   |https://modelscope.cn/models/Qwen/Qwen3-VL-Embedding-2B          |○|
+|         |Qwen3-VL-Embedding   |https://modelscope.cn/models/Qwen/Qwen3-VL-Embedding-2B          |?|
 
 ## 通用推理SDK
 
@@ -78,11 +78,10 @@
 
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
-|CANN         |https://www.hiascend.com/cann              |○|
-|RKNN         |https://github.com/airockchip/rknn-toolkit2|○|
-|             |https://github.com/airockchip/rknn3-toolkit|○|
-|TensorRT     |https://github.com/NVIDIA/TensorRT         |×|
-|OpenVINO     |https://github.com/openvinotoolkit/openvino|×|
+|CANN    |https://www.hiascend.com/cann              |○|
+|RKNN    |https://github.com/airockchip/rknn-toolkit2|○|
+|        |https://github.com/airockchip/rknn3-toolkit|○|
+|OpenVINO|https://github.com/openvinotoolkit/openvino|×|
 
 ## 后端支持
 
@@ -97,8 +96,8 @@
 
 |模型|CANN|RKNN|llama.cpp|ONNXRuntime|
 |:--|:--|:--|:--|:--|
-|YOLO-CLS          |○|○|×|○|
-|YOLO-DET          |○|○|×|○|
+|YOLO-CLS          |○|○|×|√|
+|YOLO-DET          |○|○|×|√|
 |YOLO-OBB          |○|○|×|○|
 |YOLO-SEG          |○|○|×|○|
 |YOLO-SEM          |○|○|×|○|
@@ -106,12 +105,12 @@
 |YOLO-DEPTH        |○|○|×|○|
 |Qwen3-ASR         |○|○|○|×|
 |Qwen3-TTS         |○|○|○|×|
-|Qwen3             |○|○|○|×|
+|Qwen3             |○|○|√|×|
 |Qwen3-VL          |○|○|○|×|
-|Qwen3-Omni        |○|○|○|×|
+|Qwen3-Omni        |?|?|?|×|
 |Qwen3-Reranker    |○|○|○|×|
 |Qwen3-Embedding   |○|○|○|×|
-|Qwen3-VL-Reranker |○|○|○|×|
-|Qwen3-VL-Embedding|○|○|○|×|
+|Qwen3-VL-Reranker |?|?|?|×|
+|Qwen3-VL-Embedding|?|?|?|×|
 
 > √=已支持 ○=计划中 ?=未计划 ×=不支持

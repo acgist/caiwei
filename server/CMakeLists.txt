@@ -4,7 +4,10 @@ set(
     CAIWEI_SERVER_SRCS
     src/main.cpp
 )
-list(APPEND CAIWEI_SERVER_INCS inc)
+list(
+    APPEND CAIWEI_SERVER_INCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+)
 
 if(ENABLE_CAIWEI_CPPHTTPLIB)
     list(

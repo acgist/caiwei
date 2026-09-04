@@ -18,7 +18,7 @@ set(
 )
 list(
     APPEND CAIWEI_RUNTIME_INCS
-    inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
 )
 
 if(ENABLE_CAIWEI_RUNTIME_CANN)
@@ -43,7 +43,10 @@ if(ENABLE_CAIWEI_RUNTIME_CANN)
         src/cann/qwen3_vl_embedding.cpp
         src/cann/qwen3_vl_reranking.cpp
     )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/cann)
+    list(
+        APPEND CAIWEI_RUNTIME_INCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/cann
+    )
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
@@ -68,7 +71,10 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN2)
         src/rknn2/qwen3_vl_embedding.cpp
         src/rknn2/qwen3_vl_reranking.cpp
     )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn2)
+    list(
+        APPEND CAIWEI_RUNTIME_INCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/rknn2
+    )
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN3)
@@ -93,7 +99,10 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
         src/rknn3/qwen3_vl_embedding.cpp
         src/rknn3/qwen3_vl_reranking.cpp
     )
-    list(APPEND CAIWEI_RUNTIME_INCS third_party/rknn3)
+    list(
+        APPEND CAIWEI_RUNTIME_INCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/rknn3
+    )
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
