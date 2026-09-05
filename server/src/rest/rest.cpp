@@ -5,6 +5,7 @@
 #include "caiwei/context.hpp"
 
 #include "httplib.h"
+#include "base64/base64.h"
 
 #include <fstream>
 #include <filesystem>
@@ -69,7 +70,7 @@ static void restHandler() {
             static std::string password = caiwei::env::get("CAIWEI_PASSWORD");
             if(
                 authorization.length()  <= 6 ||
-                authorization.substr(6) != httplib::detail::base64_encode(username + ":" + password)
+                authorization.substr(6) != base64_encode(username + ":" + password)
             ) {
                 response.status = httplib::StatusCode::Unauthorized_401;
                 response.set_content(caiwei::json::buildResponse("1401", "没有授权"), caiwei::rest::content::type::JSON);

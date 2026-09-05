@@ -25,16 +25,16 @@ python run.py
 
 ## 性能评估
 
-|设备|CANN|RKNN|llama.cpp|ONNXRuntime|
-|:--|:--|:--|:--|:--|
-|CANN(Ascend 310P)  |||||
-|CANN(Ascend 910C)  |||||
-|RKNN(RK1828)       |||||
-|RKNN(RK3588)       |||||
-|CUDA(Tesla L40S)   |||||
-|CUDA(Tesla V100)   |||||
-|CUDA(RTX 5060 Ti)  |||||
-|OpenVINO(i5-1135G7)|||||
+|设备|CANN|RKNN|llama.cpp|ONNXRuntime|Python|
+|:--|:--|:--|:--|:--|:--|
+|CANN(Ascend 310P)  ||||||
+|CANN(Ascend 910C)  ||||||
+|RKNN(RK1828)       ||||||
+|RKNN(RK3588)       ||||||
+|CUDA(Tesla L40S)   ||||||
+|CUDA(Tesla V100)   ||||||
+|CUDA(RTX 5060 Ti)  ||||||
+|OpenVINO(i5-1135G7)||||||
 
 ## 文档资料
 
