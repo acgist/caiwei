@@ -34,7 +34,7 @@ void caiwei::rest::open() {
     }
     CW_LOG_I("启动REST服务: %s - %d", host.c_str(), port);
     caiwei::rest::server->new_task_queue = [] {
-        return new httplib::ThreadPool(4, 4);
+        return new httplib::ThreadPool(4);
     };
     // TODO 测试
     caiwei::rest::server->set_read_timeout(60);
