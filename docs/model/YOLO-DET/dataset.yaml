@@ -1,0 +1,8 @@
+train: /data/ultralytics/det/dataset/train
+val  : /data/ultralytics/det/dataset/val
+
+nc: 3
+names:
+  0: class-1
+  1: class-2
+  2: class-3

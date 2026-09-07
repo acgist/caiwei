@@ -1,0 +1,43 @@
+name: build
+on:
+  push:
+    branches: [ master ]
+jobs:
+  chobits:
+    name: Build chobits
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install deps
+        run: |
+          sudo apt -y update
+          sudo apt -y install wget cmake unzip gcc-14 g++-14
+          sudo apt -y install libsdl2-dev
+          sudo apt -y install libopencv-dev
+          sudo apt -y install ffmpeg libavutil-dev libavcodec-dev libavdevice-dev libavformat-dev libswscale-dev libswresample-dev
+      - name: Install llama.cpp
+        working-directory: ./deps
+        run: |
+          git clone https://github.com/ggml-org/llama.cpp --depth=1
+      - name: Install onnxruntime
+        working-directory: ./deps
+        run: |
+          wget https://github.com/microsoft/onnxruntime/releases/download/v1.28.1/onnxruntime-linux-x64-1.28.1.tgz > /dev/null 2>&1
+          tar -zxvf onnxruntime-linux-x64-1.28.1.tgz > /dev/null 2>&1
+          mv onnxruntime-linux-x64-1.28.1 onnxruntime
+      - name: Install cpp-httplib
+        working-directory: ./deps
+        run: |
+          git clone -b v0.47.0 --depth=1 https://github.com/yhirose/cpp-httplib.git
+          cmake -S ./cpp-httplib -B ./cpp-httplib/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build ./cpp-httplib/build
+          sudo cmake --install ./cpp-httplib/build
+      - name: Deploy chobits
+        run: |
+          mkdir build
+          cd    build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_CAIWEI_TEST=ON -DENABLE_CAIWEI_SDL2=ON -DENABLE_CAIWEI_OPENCV=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-14 -DCMAKE_CXX_COMPILER=/usr/bin/g++-14
+          make
+          sudo make install
+          

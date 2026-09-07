@@ -1,0 +1,23 @@
+{
+  "name": "caiwei-web",
+  "type": "module",
+  "author": "acgist",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "caiwei-web",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "~3.5.0",
+    "element-plus": "~2.14.0",
+    "@element-plus/icons-vue": "~2.3.0"
+  },
+  "devDependencies": {
+    "vite": "~8.2.0",
+    "@vitejs/plugin-vue": "~6.0.0"
+  }
+}

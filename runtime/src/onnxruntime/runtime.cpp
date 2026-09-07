@@ -1,0 +1,19 @@
+#include "caiwei/runtime/onnxruntime.hpp"
+
+template<>
+std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
+    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>();
+}
+
+caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime() : Runtime(caiwei::runtime::Type::ONNXRUNTIME) {
+    CW_LOG_I("ONNXRuntimeRuntime init");
+    this->env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
+}
+
+caiwei::runtime::ONNXRuntimeRuntime::~ONNXRuntimeRuntime() {
+    if (this->env != nullptr) {
+        CW_LOG_I("ONNXRuntimeRuntime stop");
+        delete this->env;
+        this->env = nullptr;
+    }
+}
