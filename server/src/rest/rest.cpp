@@ -22,8 +22,6 @@ void caiwei::rest::open() {
     restHandler();
     rest_api();
     rest_text_api();
-    rest_audio_api();
-    rest_image_api();
     rest_video_api();
     auto host = caiwei::env::get("CAIWEI_SERVER_HOST");
     auto port = caiwei::env::get_int("CAIWEI_SERVER_PORT");

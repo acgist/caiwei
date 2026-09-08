@@ -16,19 +16,7 @@ caiwei::context::PoseONNXRuntimeContext::~PoseONNXRuntimeContext() {
 }
 
 std::vector<caiwei::image::Pose> caiwei::context::PoseONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
-    float scale;
-    int dst_w, dst_h, pad_w, pad_h;
-    // TODO 全局变量 判断是否变化
-    caiwei::image::resize(image.width, image.height, this->w, this->h, dst_w, dst_h, pad_w, pad_h, scale);
-    std::vector<uint8_t> dst(dst_w   * dst_h   * image.channels);
-    std::vector<uint8_t> pad(this->w * this->h * image.channels);
-    std::vector<float>   hwc(this->w * this->h * image.channels);
-    std::vector<float>   chw(this->w * this->h * image.channels);
-    caiwei::image::resize(image.data.data(), dst.data(), image.width, image.height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, this->w, this->h);
-    caiwei::image::i8_to_f32(pad.data(), this->w * this->h * image.channels, hwc.data(), 255.0F);
-    caiwei::image::hwc_to_chw(hwc.data(), chw.data(), this->h, this->w, image.channels);
-    auto output{ this->run(chw.data()) };
+    auto output{ this->run(this->h, this->w, image) };
     float* output_data = output.front().GetTensorMutableData<float>();
     const auto& output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     const int64_t result_length = output_dims[1];
@@ -41,45 +29,45 @@ std::vector<caiwei::image::Pose> caiwei::context::PoseONNXRuntimeContext::run(co
     std::vector<caiwei::image::Box>       ret_box;
     std::vector<caiwei::image::PosePoint> ret_point;
     for (int index = 0; index < stride_length; ++index) {
-        int   max_class; // 最大类别
-        float max_score; // 最大分数
+        int   max_class;
+        float max_score;
         float* scores = data   + 4;
         float* points = scores + this->class_size;
         caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
         if(max_score > this->confidence_threshold) {
-            float ocx = (data[0] - pad_w) / (float) dst_w;
-            float ocy = (data[1] - pad_h) / (float) dst_h;
-            float ow  = (data[2]        ) / (float) dst_w;
-            float oh  = (data[3]        ) / (float) dst_h;
+            float box_x = (data[0] - this->pad_w) / (float) this->dst_w;
+            float box_y = (data[1] - this->pad_h) / (float) this->dst_h;
+            float box_w = (data[2]              ) / (float) this->dst_w;
+            float box_h = (data[3]              ) / (float) this->dst_h;
             ret_box.push_back(
                 caiwei::image::Box(
-                    std::clamp(ocx - ow / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocy - oh / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocx + ow / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocy + oh / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_x - box_w / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_y - box_h / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_x + box_w / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_y + box_h / 2.0F, 0.0F, 1.0F),
                     max_class,
                     max_score
                 )
             );
             ret_point.push_back(
                 caiwei::image::PosePoint({
-                    caiwei::image::Point{ std::clamp((points[ 0] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[ 1] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[ 2] },
-                    caiwei::image::Point{ std::clamp((points[ 3] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[ 4] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[ 5] },
-                    caiwei::image::Point{ std::clamp((points[ 6] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[ 7] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[ 8] },
-                    caiwei::image::Point{ std::clamp((points[ 9] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[10] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[11] },
-                    caiwei::image::Point{ std::clamp((points[12] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[13] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[14] },
-                    caiwei::image::Point{ std::clamp((points[15] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[16] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[17] },
-                    caiwei::image::Point{ std::clamp((points[18] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[19] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[20] },
-                    caiwei::image::Point{ std::clamp((points[21] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[22] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[23] },
-                    caiwei::image::Point{ std::clamp((points[24] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[25] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[26] },
-                    caiwei::image::Point{ std::clamp((points[27] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[28] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[29] },
-                    caiwei::image::Point{ std::clamp((points[30] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[31] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[32] },
-                    caiwei::image::Point{ std::clamp((points[33] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[34] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[35] },
-                    caiwei::image::Point{ std::clamp((points[36] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[37] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[38] },
-                    caiwei::image::Point{ std::clamp((points[39] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[40] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[41] },
-                    caiwei::image::Point{ std::clamp((points[42] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[43] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[44] },
-                    caiwei::image::Point{ std::clamp((points[45] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[46] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[47] },
-                    caiwei::image::Point{ std::clamp((points[48] - pad_w) / (float) dst_w, 0.0F, 1.0F), std::clamp((points[49] - pad_h) / (float) dst_h, 0.0F, 1.0F), points[50] },
+                    caiwei::image::Point{ std::clamp((points[ 0] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[ 1] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[ 2] },
+                    caiwei::image::Point{ std::clamp((points[ 3] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[ 4] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[ 5] },
+                    caiwei::image::Point{ std::clamp((points[ 6] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[ 7] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[ 8] },
+                    caiwei::image::Point{ std::clamp((points[ 9] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[10] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[11] },
+                    caiwei::image::Point{ std::clamp((points[12] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[13] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[14] },
+                    caiwei::image::Point{ std::clamp((points[15] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[16] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[17] },
+                    caiwei::image::Point{ std::clamp((points[18] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[19] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[20] },
+                    caiwei::image::Point{ std::clamp((points[21] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[22] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[23] },
+                    caiwei::image::Point{ std::clamp((points[24] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[25] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[26] },
+                    caiwei::image::Point{ std::clamp((points[27] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[28] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[29] },
+                    caiwei::image::Point{ std::clamp((points[30] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[31] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[32] },
+                    caiwei::image::Point{ std::clamp((points[33] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[34] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[35] },
+                    caiwei::image::Point{ std::clamp((points[36] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[37] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[38] },
+                    caiwei::image::Point{ std::clamp((points[39] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[40] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[41] },
+                    caiwei::image::Point{ std::clamp((points[42] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[43] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[44] },
+                    caiwei::image::Point{ std::clamp((points[45] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[46] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[47] },
+                    caiwei::image::Point{ std::clamp((points[48] - this->pad_w) / (float) this->dst_w, 0.0F, 1.0F), std::clamp((points[49] - this->pad_h) / (float) this->dst_h, 0.0F, 1.0F), points[50] },
                 })
             );
         }

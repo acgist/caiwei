@@ -3,9 +3,7 @@
 #include <thread>
 
 extern "C" {
-
 #include "libavcodec/avcodec.h"
-
 }
 
 int main() {

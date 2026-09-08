@@ -3,7 +3,6 @@
 #include "caiwei/media.hpp"
 
 extern "C" {
-
 #include "libavutil/opt.h"
 #include "libavutil/audio_fifo.h"
 #include "libavcodec/avcodec.h"
@@ -11,7 +10,6 @@ extern "C" {
 #include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
 #include "libswresample/swresample.h"
-
 }
 
 static SwrContext* init_audio_swr(caiwei::media::AudioInfo& in, caiwei::media::AudioInfo& out);

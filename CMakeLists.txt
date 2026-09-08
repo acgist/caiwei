@@ -36,7 +36,6 @@ option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"             ON)  # ASR前置A
 option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"             ON)  # ASR前置VAD
 option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"             ON)  # ASR前置AGC
 option(ENABLE_CAIWEI_YOLO_E2E            "YOLO end2end"        ON)  # YOLO end2end
-option(ENABLE_CAIWEI_YOLO_RKNN_I8        "YOLO RKNN INT8"      ON)  # YOLO RKNN INT8
 option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"              ON)  # FFmpeg
 option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"         ON)  # cpp-httplib
 
@@ -194,13 +193,15 @@ if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
     if(ENABLE_CAIWEI_BACKEND_CUDA)
         set(GGML_CUDA ON)
     endif()
+    set(LLAMA_BUILD_MTMD ON)
     add_subdirectory(${LLAMACPP_PATH})
     set_target_properties(ggml        PROPERTIES FOLDER "llama.cpp")
     set_target_properties(ggml-cpu    PROPERTIES FOLDER "llama.cpp")
     set_target_properties(ggml-base   PROPERTIES FOLDER "llama.cpp")
-    set_target_properties(vendor-hash PROPERTIES FOLDER "llama.cpp")
+    set_target_properties(mtmd        PROPERTIES FOLDER "llama.cpp")
     set_target_properties(llama       PROPERTIES FOLDER "llama.cpp")
-    list(APPEND CAIWEI_RUNTIME_LIBS ggml ggml-cpu ggml-base vendor-hash llama)
+    set_target_properties(vendor-hash PROPERTIES FOLDER "llama.cpp")
+    list(APPEND CAIWEI_RUNTIME_LIBS ggml ggml-cpu ggml-base mtmd llama vendor-hash)
     if(ENABLE_CAIWEI_BACKEND_CUDA)
         set_target_properties(ggml-cuda PROPERTIES FOLDER "llama.cpp")
         list(APPEND CAIWEI_RUNTIME_LIBS ggml-cuda)

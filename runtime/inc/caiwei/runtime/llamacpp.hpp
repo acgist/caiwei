@@ -1,17 +1,17 @@
 #ifndef CAIWEI_RUNTIME_LLAMACPP_HPP
 #define CAIWEI_RUNTIME_LLAMACPP_HPP
 
-#include <filesystem>
-
 #include "caiwei/log.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
 #include "caiwei/text_tool.hpp"
 
+#include "mtmd.h"
 #include "llama-cpp.h"
 
 #include <generator>
+#include <filesystem>
 
 namespace caiwei  {
 namespace context {
@@ -36,11 +36,14 @@ public:
     ~LlamaCPPContext();
 };
 
-class ClsLlamaCPPContext : public ClsContext, public LlamaCPPContext {};
-class DetLlamaCPPContext : public DetContext, public LlamaCPPContext {};
-class SegLlamaCPPContext : public SegContext, public LlamaCPPContext {};
+class ClsLlamaCPPContext  : public ClsContext,  public LlamaCPPContext {};
+class DetLlamaCPPContext  : public DetContext,  public LlamaCPPContext {};
+class SegLlamaCPPContext  : public SegContext,  public LlamaCPPContext {};
 class PoseRLlamaCPPontext : public PoseContext, public LlamaCPPContext {};
-class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {};
+
+class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
+
+};
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
 public:
@@ -51,16 +54,17 @@ public:
 };
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {};
+
 class EmbeddingRKNN3CLlamaCPPt : public EmbeddingContext, public LlamaCPPContext {};
 class RerankingRKNN3CLlamaCPPt : public RerankingContext, public LlamaCPPContext {};
 
-std::shared_ptr<caiwei::context::ClsContext> get_cls_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
-std::shared_ptr<caiwei::context::DetContext> get_det_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
-std::shared_ptr<caiwei::context::SegContext> get_seg_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+std::shared_ptr<caiwei::context::ClsContext>  get_cls_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+std::shared_ptr<caiwei::context::DetContext>  get_det_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+std::shared_ptr<caiwei::context::SegContext>  get_seg_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
 std::shared_ptr<caiwei::context::PoseContext> get_pose_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
-std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
-std::shared_ptr<caiwei::context::LLMContext> get_llm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
-std::shared_ptr<caiwei::context::VLMContext> get_vlm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+std::shared_ptr<caiwei::context::ASRContext>  get_asr_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+std::shared_ptr<caiwei::context::LLMContext>  get_llm_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
+std::shared_ptr<caiwei::context::VLMContext>  get_vlm_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
 std::shared_ptr<caiwei::context::EmbeddingContext> get_embedding_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
 std::shared_ptr<caiwei::context::RerankingContext> get_reranking_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime);
 

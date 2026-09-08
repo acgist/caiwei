@@ -1,10 +1,10 @@
 #include "test.hpp"
 
 extern "C" {
-
 #include "libavcodec/avcodec.h"
-
 }
+
+#include <thread>
 
 [[maybe_unused]]
 void det_image() {
@@ -39,7 +39,7 @@ void det_video() {
     }, [&ptr, &ret, &frame_count](const caiwei::media::VideoFrame& frame) {
         auto data = frame.data;
         if (frame_count++ % 8 == 0) {
-            ret = std::move(ptr->run(frame));
+            ret = ptr->run(frame);
         }
         for (const auto& seg : ret) {
             const auto& box  = seg.box;

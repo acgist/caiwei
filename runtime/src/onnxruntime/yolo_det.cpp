@@ -16,19 +16,7 @@ caiwei::context::DetONNXRuntimeContext::~DetONNXRuntimeContext() {
 }
 
 std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
-    float scale;
-    int dst_w, dst_h, pad_w, pad_h;
-    // TODO 全局变量 判断是否变化
-    caiwei::image::resize(image.width, image.height, this->w, this->h, dst_w, dst_h, pad_w, pad_h, scale);
-    std::vector<uint8_t> dst(dst_w   * dst_h   * image.channels);
-    std::vector<uint8_t> pad(this->w * this->h * image.channels);
-    std::vector<float>   hwc(this->w * this->h * image.channels);
-    std::vector<float>   chw(this->w * this->h * image.channels);
-    caiwei::image::resize(image.data.data(), dst.data(), image.width, image.height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, this->w, this->h);
-    caiwei::image::i8_to_f32(pad.data(), this->w * this->h * image.channels, hwc.data(), 255.0F);
-    caiwei::image::hwc_to_chw(hwc.data(), chw.data(), this->h, this->w, image.channels);
-    auto output{ this->run(chw.data()) };
+    auto output{ this->run(this->h, this->w, image) };
     float* output_data = output.front().GetTensorMutableData<float>();
     const auto& output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     const int64_t result_length = output_dims[1];
@@ -40,21 +28,21 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     float* data = out_dst.data();
     std::vector<caiwei::image::Box> ret;
     for (int index = 0; index < stride_length; ++index) {
-        int   max_class; // 最大类别
-        float max_score; // 最大分数
+        int   max_class;
+        float max_score;
         float* scores = data + 4;
         caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
         if(max_score > this->confidence_threshold) {
-            float ocx = (data[0] - pad_w) / (float) dst_w;
-            float ocy = (data[1] - pad_h) / (float) dst_h;
-            float ow  = (data[2]        ) / (float) dst_w;
-            float oh  = (data[3]        ) / (float) dst_h;
+            float box_x = (data[0] - this->pad_w) / (float) this->dst_w;
+            float box_y = (data[1] - this->pad_h) / (float) this->dst_h;
+            float box_w = (data[2]              ) / (float) this->dst_w;
+            float box_h = (data[3]              ) / (float) this->dst_h;
             ret.push_back(
                 caiwei::image::Box(
-                    std::clamp(ocx - ow / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocy - oh / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocx + ow / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocy + oh / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_x - box_w / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_y - box_h / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_x + box_w / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_y + box_h / 2.0F, 0.0F, 1.0F),
                     max_class,
                     max_score
                 )

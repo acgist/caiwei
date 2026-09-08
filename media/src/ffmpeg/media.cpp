@@ -4,10 +4,8 @@
 #include <filesystem>
 
 extern "C" {
-
 #include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
-    
 }
 
 static void print_all_decoder();

@@ -1,10 +1,11 @@
 #include "test.hpp"
 
 extern "C" {
-
 #include "libavcodec/avcodec.h"
-
 }
+
+#include <thread>
+#include <filesystem>
 
 [[maybe_unused]]
 void cls_image() {
@@ -32,7 +33,7 @@ void cls_video() {
     caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
         return caiwei::player::play_audio(frame.data.data(), frame.data_length);
     }, [&ptr](const caiwei::media::VideoFrame& frame) {
-        auto ret = std::move(ptr->run(frame));
+        auto ret = ptr->run(frame);
         for (const auto& index : ret) {
             CW_LOG_D("%d = %.2f", index.first, index.second);
         }
@@ -47,10 +48,35 @@ void cls_video() {
     media_demuxer.stop();
 }
 
+[[maybe_unused]]
+void cls_folder() {
+    for (auto& entry : std::filesystem::directory_iterator("./cls/")) {
+        if (!entry.is_regular_file() || (entry.path().extension().string() != ".jpg" && entry.path().extension().string() != ".png")) {
+            continue;
+        }
+        int width, height, channels;
+        auto data = stbi_load(entry.path().string().c_str(), &width, &height, &channels, STBI_default);
+        caiwei::media::ImageFrame frame(width * height * channels);
+        std::copy_n(data, width * height * channels, frame.data.data());
+        frame.width = width;
+        frame.height = height;
+        frame.channels = channels;
+        auto ptr = caiwei::context::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+        CW_LOG_I("%s", entry.path().string().c_str());
+        for (const auto& index : ptr->run(frame)) {
+            CW_LOG_I("%d = %.2f", index.first, index.second);
+        }
+    }
+}
+
 int main() {
+    #if ENABLE_CAIWEI_RUNTIME_RKNN2
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn");
+    #endif
     init_test();
-    // cls_image();
-    cls_video();
+    cls_image();
+    // cls_video();
+    // cls_folder();
     stop_test();
     return 0;
 }

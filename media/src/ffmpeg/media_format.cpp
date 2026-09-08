@@ -3,14 +3,12 @@
 #include "caiwei/media.hpp"
 
 extern "C" {
-
 #include "libavutil/opt.h"
 #include "libavcodec/avcodec.h"
 #include "libswscale/swscale.h"
 #include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
 #include "libswresample/swresample.h"
-
 }
 
 #if FF_API_AVIO_WRITE_NONCONST

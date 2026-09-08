@@ -84,7 +84,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     const uint32_t n_ctx = llama_n_ctx(context);
     const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
     if (n_prompt_tokens > n_ctx) {
-        CW_LOG_W("提示词超长 %d > %u", n_prompt_tokens, n_ctx);
+        CW_LOG_W("提示词超长: %d > %u", n_prompt_tokens, n_ctx);
         co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), 0 };
         co_return;
     }

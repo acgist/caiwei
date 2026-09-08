@@ -85,13 +85,13 @@ inline std::shared_ptr<Context> get_context_impl(const ContextInfo* info, std::s
         return nullptr;
     }
     switch (info->type) {
-    case caiwei::context::Type::CLS:          return caiwei::context::get_cls_context(info, runtime);
-    case caiwei::context::Type::DET:          return caiwei::context::get_det_context(info, runtime);
-    case caiwei::context::Type::SEG:          return caiwei::context::get_seg_context(info, runtime);
+    case caiwei::context::Type::CLS:          return caiwei::context::get_cls_context(info,  runtime);
+    case caiwei::context::Type::DET:          return caiwei::context::get_det_context(info,  runtime);
+    case caiwei::context::Type::SEG:          return caiwei::context::get_seg_context(info,  runtime);
     case caiwei::context::Type::POSE:         return caiwei::context::get_pose_context(info, runtime);
-    case caiwei::context::Type::ASR:          return caiwei::context::get_asr_context(info, runtime);
-    case caiwei::context::Type::LLM:          return caiwei::context::get_llm_context(info, runtime);
-    case caiwei::context::Type::VLM:          return caiwei::context::get_vlm_context(info, runtime);
+    case caiwei::context::Type::ASR:          return caiwei::context::get_asr_context(info,  runtime);
+    case caiwei::context::Type::LLM:          return caiwei::context::get_llm_context(info,  runtime);
+    case caiwei::context::Type::VLM:          return caiwei::context::get_vlm_context(info,  runtime);
     case caiwei::context::Type::EMBEDDING:    return caiwei::context::get_embedding_context(info, runtime);
     case caiwei::context::Type::RERANKING:    return caiwei::context::get_reranking_context(info, runtime);
     default: return nullptr;

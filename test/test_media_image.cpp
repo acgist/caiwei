@@ -8,9 +8,7 @@
 #include "opencv2/core/utils/logger.hpp"
 
 extern "C" {
-
 #include "libswscale/swscale.h"
-
 }
 
 struct Box {
@@ -443,8 +441,11 @@ void test_nms_boxes() {
             cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
             cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
         };
-        // cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
+        #if CV_MAJOR_VERSION <= 4 && CV_MINOR_VERSION < 8
+        cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
+        #else
         cv::dnn::NMSBoxesBatched(boxes, scores, classes, 0, 0.5F, ret);
+        #endif
         assert(ret.size() == 6);
         assert(ret[0] == 2);
         assert(ret[1] == 6);
@@ -488,8 +489,11 @@ void test_ocv_nms_boxes() {
         cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
         cv::Rect2d{ 20 / 100.0, 20 / 100.0, 120 / 100.0, 120 / 100.0 },
     };
-    // cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
+    #if CV_MAJOR_VERSION <= 4 && CV_MINOR_VERSION < 8
+    cv::dnn::NMSBoxes(boxes, scores, 0, 0.5F, ret);
+    #else
     cv::dnn::NMSBoxesBatched(boxes, scores, classes, 0, 0.5F, ret);
+    #endif
     CAIWEI_FOR_EACH_END
 }
 

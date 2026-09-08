@@ -7,14 +7,12 @@
 #include <filesystem>
 
 extern "C" {
-
 #include "libavutil/opt.h"
 #include "libavcodec/avcodec.h"
 #include "libswscale/swscale.h"
 #include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
 #include "libswresample/swresample.h"
-
 }
 
 static bool save_file(const char* data, int size, const std::filesystem::path path);

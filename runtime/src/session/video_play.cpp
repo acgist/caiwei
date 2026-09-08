@@ -5,9 +5,7 @@
 #include "base64/base64.h"
 
 extern "C" {
-
 #include "libavcodec/avcodec.h"
-
 }
 
 caiwei::session::VideoPlaySession::VideoPlaySession(std::string type, std::string url, Callback callback)

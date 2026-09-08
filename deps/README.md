@@ -48,14 +48,15 @@ PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
   --enable-gpl       \
   --enable-static    \
   --enable-shared    \
+  --enable-libx264   \
+  --enable-nonfree   \
   --enable-cuda      \
   --enable-cuvid     \
   --enable-nvenc     \
   --enable-libnpp    \
-  --enable-libx264   \
-  --enable-nonfree   \
   --enable-cuda-nvcc \
-  --extra-cflags="-I/usr/local/cuda/include" --extra-ldflags="-L/usr/local/cuda/lib64"
+  --extra-cflags="-I/usr/local/cuda/include" \
+  --extra-ldflags="-L/usr/local/cuda/lib64"
 make -j4
 sudo make install
 ```

@@ -16,19 +16,7 @@ caiwei::context::SegONNXRuntimeContext::~SegONNXRuntimeContext() {
 }
 
 std::vector<caiwei::image::Seg> caiwei::context::SegONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
-    float scale;
-    int dst_w, dst_h, pad_w, pad_h;
-    // TODO 全局变量 判断是否变化
-    caiwei::image::resize(image.width, image.height, this->w, this->h, dst_w, dst_h, pad_w, pad_h, scale);
-    std::vector<uint8_t> dst(dst_w   * dst_h   * image.channels);
-    std::vector<uint8_t> pad(this->w * this->h * image.channels);
-    std::vector<float>   hwc(this->w * this->h * image.channels);
-    std::vector<float>   chw(this->w * this->h * image.channels);
-    caiwei::image::resize(image.data.data(), dst.data(), image.width, image.height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, this->w, this->h);
-    caiwei::image::i8_to_f32(pad.data(), this->w * this->h * image.channels, hwc.data(), 255.0F);
-    caiwei::image::hwc_to_chw(hwc.data(), chw.data(), this->h, this->w, image.channels);
-    auto output{ this->run(chw.data()) };
+    auto output{ this->run(this->h, this->w, image) };
     float* output_data = output.front().GetTensorMutableData<float>();
     const auto& output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     float* proto_data = output.back().GetTensorMutableData<float>();
@@ -45,8 +33,8 @@ std::vector<caiwei::image::Seg> caiwei::context::SegONNXRuntimeContext::run(cons
     const int proto_c = proto_dims[1];
     const int proto_h = proto_dims[2];
     const int proto_w = proto_dims[3];
-    const int proto_pad_h = pad_h / (this->h / proto_h);
-    const int proto_pad_w = pad_w / (this->w / proto_w);
+    const int proto_pad_h = this->pad_h / (this->h / proto_h);
+    const int proto_pad_w = this->pad_w / (this->w / proto_w);
     const int mask_h = proto_h - 2 * proto_pad_h;
     const int mask_w = proto_w - 2 * proto_pad_w;
     for (int index = 0; index < stride_length; ++index) {
@@ -56,31 +44,31 @@ std::vector<caiwei::image::Seg> caiwei::context::SegONNXRuntimeContext::run(cons
         float* coeffs = scores + this->class_size;
         caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
         if(max_score > this->confidence_threshold) {
-            float ocx = (data[0] - pad_w) / (float) dst_w;
-            float ocy = (data[1] - pad_h) / (float) dst_h;
-            float ow  = (data[2]        ) / (float) dst_w;
-            float oh  = (data[3]        ) / (float) dst_h;
+            float box_x = (data[0] - this->pad_w) / (float) this->dst_w;
+            float box_y = (data[1] - this->pad_h) / (float) this->dst_h;
+            float box_w = (data[2]              ) / (float) this->dst_w;
+            float box_h = (data[3]              ) / (float) this->dst_h;
             ret_box.push_back(
                 caiwei::image::Box(
-                    std::clamp(ocx - ow / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocy - oh / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocx + ow / 2.0F, 0.0F, 1.0F),
-                    std::clamp(ocy + oh / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_x - box_w / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_y - box_h / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_x + box_w / 2.0F, 0.0F, 1.0F),
+                    std::clamp(box_y + box_h / 2.0F, 0.0F, 1.0F),
                     max_class,
                     max_score
                 )
             );
-            const int box_x = std::clamp(int((data[0] - data[2] / 2.0F) / (this->w / proto_w)), proto_pad_w, proto_w - proto_pad_w);
-            const int box_y = std::clamp(int((data[1] - data[3] / 2.0F) / (this->h / proto_h)), proto_pad_h, proto_h - proto_pad_h);
-            const int box_w = std::clamp(int((data[2]) / (this->w / proto_w)), 0, mask_w);
-            const int box_h = std::clamp(int((data[3]) / (this->h / proto_h)), 0, mask_h);
+            const int box_xpx = std::clamp(int((data[0] - data[2] / 2.0F) / (this->w / proto_w)), proto_pad_w, proto_w - proto_pad_w);
+            const int box_ypx = std::clamp(int((data[1] - data[3] / 2.0F) / (this->h / proto_h)), proto_pad_h, proto_h - proto_pad_h);
+            const int box_wpx = std::clamp(int((data[2]                 ) / (this->w / proto_w)), 0, mask_w);
+            const int box_hpx = std::clamp(int((data[3]                 ) / (this->h / proto_h)), 0, mask_h);
             std::vector<float> mask;
-            mask.resize(box_w * box_h);
-            caiwei::image::coeff_to_mask(coeffs, box_x, box_y, box_w, box_h, proto_data, proto_c, proto_h, proto_w, proto_pad_h, proto_pad_w, mask.data());
+            mask.resize(box_wpx * box_hpx);
+            caiwei::image::coeff_to_mask(coeffs, box_xpx, box_ypx, box_wpx, box_hpx, proto_data, proto_c, proto_h, proto_w, proto_pad_h, proto_pad_w, mask.data());
             ret_mask.push_back(
                 caiwei::image::Mask(
-                    box_h,
-                    box_w,
+                    box_hpx,
+                    box_wpx,
                     std::move(mask)
                 )
             );
