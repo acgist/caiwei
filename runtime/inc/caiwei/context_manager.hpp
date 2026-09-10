@@ -2,6 +2,7 @@
 #define CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
 
 #include "caiwei/context.hpp"
+#include "caiwei/runtime.hpp"
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN
 #include "caiwei/runtime/cann.hpp"
 #endif
@@ -27,22 +28,24 @@ template <typename C, typename I, typename O>
 class ContextWrapper {
 private:
     std::shared_ptr<C> context{ nullptr };
+    std::shared_ptr<caiwei::runtime::Runtime> runtime{ nullptr };
 public:
     std::shared_ptr<C> ptr();
     O run(const I& input);
 public:
-    ContextWrapper(std::shared_ptr<C> context);
+    ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~ContextWrapper();
 };
 
 template <typename C, typename I, typename O>
-caiwei::context::ContextWrapper<C, I, O>::ContextWrapper(std::shared_ptr<C> context) : context(std::move(context)) {
+caiwei::context::ContextWrapper<C, I, O>::ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime) : context(std::move(context)), runtime(std::move(runtime)) {
     this->context->ref();
 }
 
 template <typename C, typename I, typename O>
 caiwei::context::ContextWrapper<C, I, O>::~ContextWrapper() {
     this->context->unref();
+    this->runtime->put_context(this->context);
 }
 
 template <typename C, typename I, typename O>
@@ -56,9 +59,7 @@ O caiwei::context::ContextWrapper<C, I, O>::run(const I& input) {
     return this->context->run(input);
 }
 
-extern std::mutex context_mutex;
 extern std::mutex runtime_mutex;
-extern std::map<std::string,           std::shared_ptr<caiwei::context::Context>> context_map;
 extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> runtime_map;
 
 template <typename R>
@@ -84,18 +85,7 @@ inline std::shared_ptr<Context> get_context_impl(const ContextInfo* info, std::s
     if (runtime == nullptr) {
         return nullptr;
     }
-    switch (info->type) {
-    case caiwei::context::Type::CLS:          return caiwei::context::get_cls_context(info,  runtime);
-    case caiwei::context::Type::DET:          return caiwei::context::get_det_context(info,  runtime);
-    case caiwei::context::Type::SEG:          return caiwei::context::get_seg_context(info,  runtime);
-    case caiwei::context::Type::POSE:         return caiwei::context::get_pose_context(info, runtime);
-    case caiwei::context::Type::ASR:          return caiwei::context::get_asr_context(info,  runtime);
-    case caiwei::context::Type::LLM:          return caiwei::context::get_llm_context(info,  runtime);
-    case caiwei::context::Type::VLM:          return caiwei::context::get_vlm_context(info,  runtime);
-    case caiwei::context::Type::EMBEDDING:    return caiwei::context::get_embedding_context(info, runtime);
-    case caiwei::context::Type::RERANKING:    return caiwei::context::get_reranking_context(info, runtime);
-    default: return nullptr;
-    }
+    return runtime->get_context(info);
 };
 
 template <typename C, typename I, typename O>
@@ -104,18 +94,12 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
     if (info == nullptr) {
         return nullptr;
     }
-    std::lock_guard<std::mutex> lock(context_mutex);
-    auto iter = context_map.find(name);
-    if (iter != context_map.end()) {
-        return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(iter->second));
-    }
     #ifdef ENABLE_CAIWEI_RUNTIME_CANN
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::CANN) {
         auto runtime = get_runtime_impl<caiwei::runtime::CANNRuntime>(caiwei::runtime::Type::CANN);
         auto context = get_context_impl<caiwei::runtime::CANNRuntime>(info, runtime);
         if (context != nullptr) {
-            context_map[name] = context;
-            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context));
+            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -124,8 +108,7 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>(caiwei::runtime::Type::RKNN2);
         auto context = get_context_impl<caiwei::runtime::RKNN2Runtime>(info, runtime);
         if (context != nullptr) {
-            context_map[name] = context;
-            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context));
+            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -134,8 +117,7 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN3Runtime>(caiwei::runtime::Type::RKNN3);
         auto context = get_context_impl<caiwei::runtime::RKNN3Runtime>(info, runtime);
         if (context != nullptr) {
-            context_map[name] = context;
-            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context));
+            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -144,8 +126,7 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
         auto runtime = get_runtime_impl<caiwei::runtime::LlamaCPPRuntime>(caiwei::runtime::Type::LLAMACPP);
         auto context = get_context_impl<caiwei::runtime::LlamaCPPRuntime>(info, runtime);
         if (context != nullptr) {
-            context_map[name] = context;
-            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context));
+            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -154,8 +135,7 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
         auto runtime = get_runtime_impl<caiwei::runtime::ONNXRuntimeRuntime>(caiwei::runtime::Type::ONNXRUNTIME);
         auto context = get_context_impl<caiwei::runtime::ONNXRuntimeRuntime>(info, runtime);
         if (context != nullptr) {
-            context_map[name] = context;
-            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context));
+            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context), runtime);
         }
     }
     #endif

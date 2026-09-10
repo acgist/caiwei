@@ -4,12 +4,16 @@
 #include "caiwei/log.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/context.hpp"
-#include "caiwei/runtime.hpp"
+
+#include "rknn3/rknn3_api.h"
 
 namespace caiwei  {
 namespace context {
 
-class RKNN3Context {};
+class RKNN3Context {
+protected:
+public:
+};
 
 class ClsRKNN3Context  : public ClsContext,  public RKNN3Context {};
 class DetRKNN3Context  : public DetContext,  public RKNN3Context {};
@@ -20,16 +24,6 @@ class LLMRKNN3Context  : public LLMContext,  public RKNN3Context {};
 class VLMRKNN3Context  : public VLMContext,  public RKNN3Context {};
 class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {};
 class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {};
-
-std::shared_ptr<caiwei::context::ClsContext>  get_cls_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::DetContext>  get_det_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::SegContext>  get_seg_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::PoseContext> get_pose_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::ASRContext>  get_asr_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::LLMContext>  get_llm_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::VLMContext>  get_vlm_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::EmbeddingContext> get_embedding_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
-std::shared_ptr<caiwei::context::RerankingContext> get_reranking_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN3Runtime> runtime);
 
 }
 }

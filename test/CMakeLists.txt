@@ -1,7 +1,6 @@
 enable_testing()
 
-option(ENABLE_CAIWEI_SDL2   "SDL2 Player" ON) # SDL2
-option(ENABLE_CAIWEI_OPENCV "OpenCV"      ON) # OpenCV
+option(ENABLE_CAIWEI_SDL2 "SDL2 Player" ON) # SDL2
 
 if(ENABLE_CAIWEI_SDL2)
     message(STATUS "Enable SDL2 Player")
@@ -28,33 +27,6 @@ if(ENABLE_CAIWEI_SDL2)
     find_package(SDL2 REQUIRED)
     list(APPEND CAIWEI_TEST_LIBS $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
     list(APPEND CAIWEI_TEST_LIBS $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
-endif()
-
-if(ENABLE_CAIWEI_OPENCV)
-    message(STATUS "Enable OpenCV")
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
-    # -
-    elseif(CMAKE_HOST_WIN32)
-        set(OPENCV_PATH "${CMAKE_SOURCE_DIR}/deps/opencv" CACHE STRING "OpenCV Path")
-        set(
-            CMAKE_PREFIX_PATH
-            ${CMAKE_PREFIX_PATH}
-            ${OPENCV_PATH}
-        )
-        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            file(GLOB OPENCV_DLLS "${OPENCV_PATH}/debug/bin/*.dll")
-        else()
-            file(GLOB OPENCV_DLLS "${OPENCV_PATH}/bin/*.dll")
-        endif()
-        list(APPEND CAIWEI_TEST_DLLS ${OPENCV_DLLS})
-    else()
-    # -
-    endif()
-    find_package(OpenCV REQUIRED)
-    list(APPEND CAIWEI_TEST_INCS ${OpenCV_INCLUDE_DIRS})
-    list(APPEND CAIWEI_TEST_LIBS ${OpenCV_LIBS})
 endif()
 
 set(
@@ -249,6 +221,17 @@ add_test(NAME test_media_image COMMAND test_media_image)
 set_target_properties(test_media_image PROPERTIES FOLDER "test")
 target_link_libraries(
     test_media_image
+    caiwei-test
+)
+
+add_executable(
+    test_context_runtime
+    test_context_runtime.cpp
+)
+add_test(NAME test_context_runtime COMMAND test_context_runtime)
+set_target_properties(test_context_runtime PROPERTIES FOLDER "test")
+target_link_libraries(
+    test_context_runtime
     caiwei-test
 )
 

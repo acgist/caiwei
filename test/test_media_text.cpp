@@ -3,7 +3,7 @@
 #include "caiwei/text_tool.hpp"
 
 int main() {
-    init_test();
+    caiwei::test::init_test();
     caiwei::text::ChatTemplate chat_template;
     {
         // CAIWEI_FOR_EACH(100)
@@ -56,6 +56,6 @@ int main() {
     }
     std::string prompt = chat_template.apply(special_token, request);
     CW_LOG_D("prompt: %s", prompt.c_str());
-    stop_test();
+    caiwei::test::stop_test();
     return 0;
 }

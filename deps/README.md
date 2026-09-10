@@ -61,36 +61,6 @@ make -j4
 sudo make install
 ```
 
-## OpenCV
-
-**编译测试时才需要安装**
-
-* 版本: 4.8.0
-* 资料: https://opencv.org/releases/
-
-```
-# APT安装
-sudo apt install libopencv-dev
-
-# VCPKG安装
-vcpkg install opencv:x64-windows
-vcpkg export  opencv:x64-windows --zip
-
-# 源码编译
-wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.10.0.zip
-wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/4.10.0.zip
-unzip opencv.zip
-unzip opencv_contrib.zip
-cd opencv-4.10.0
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -WITH_FFMPEG=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DOPENCV_GENERATE_PKGCONFIG=ON -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-4.10.0/modules/
-make -j4
-sudo make install
-```
-
-> 可以直接官网下载避免编译时间过长
-
 ## cpp-httplib
 
 * 版本：0.47.0

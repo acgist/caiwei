@@ -1,14 +1,19 @@
 #include "caiwei/runtime/onnxruntime.hpp"
 
+#include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
 
 #if CAIWEI_DEBUG
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO;
 #else
-OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_WARN;
+OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING;
 #endif
 
-caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, const Ort::Env* env) : path(std::move(path)) {
+caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env) : path(std::move(path)), input_data_length(c * h * w) {
+    this->input_node_dims.push_back(1);
+    this->input_node_dims.push_back(c);
+    this->input_node_dims.push_back(h);
+    this->input_node_dims.push_back(w);
     CW_LOG_I("创建ONNXRuntimeContext: %s", this->path.c_str());
     Ort::SessionOptions options;
     // options.DisableCpuMemArena();
@@ -96,13 +101,13 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, c
         this->image_height = image.height;
         caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale);
         this->dst.resize(this->dst_w * this->dst_h * image.channels);
-        this->pad.resize(          w *           h * image.channels);
+        this->pad.resize(          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
         this->hwc.resize(          w *           h * image.channels);
         this->chw.resize(          w *           h * image.channels);
     }
     caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h);
     caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
-    caiwei::image::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
+    caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
     caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
     return this->run(this->chw.data());
 }
@@ -153,76 +158,4 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, in
         ret.push_back(std::move(out));
     }
     return ret;
-}
-
-std::shared_ptr<caiwei::context::ClsContext> caiwei::context::get_cls_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_CLS_W");
-    int h = caiwei::env::get_int("CAIWEI_CLS_H");
-    int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
-    int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("ClsContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<ClsONNXRuntimeContext>(info->path, w, h, top_k, class_size, confidence_threshold, runtime);
-}
-
-std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_det_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_DET_W");
-    int h = caiwei::env::get_int("CAIWEI_DET_H");
-    int class_size = caiwei::env::get_int("CAIWEI_DET_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_DET_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("DetContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<DetONNXRuntimeContext>(info->path, w, h, class_size, iou_threshold, confidence_threshold, runtime);
-}
-
-std::shared_ptr<caiwei::context::SegContext> caiwei::context::get_seg_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_SEG_W");
-    int h = caiwei::env::get_int("CAIWEI_SEG_H");
-    int class_size = caiwei::env::get_int("CAIWEI_SEG_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_SEG_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_SEG_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("SegContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<SegONNXRuntimeContext>(info->path, w, h, class_size, iou_threshold, confidence_threshold, runtime);
-}
-
-std::shared_ptr<caiwei::context::PoseContext> caiwei::context::get_pose_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_POSE_W");
-    int h = caiwei::env::get_int("CAIWEI_POSE_H");
-    int class_size = caiwei::env::get_int("CAIWEI_POSE_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_POSE_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_POSE_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("PoseContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<PoseONNXRuntimeContext>(info->path, w, h, class_size, iou_threshold, confidence_threshold, runtime);
-}
-
-std::shared_ptr<caiwei::context::ASRContext> caiwei::context::get_asr_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::LLMContext> caiwei::context::get_llm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::VLMContext> caiwei::context::get_vlm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::context::get_embedding_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::RerankingContext> caiwei::context::get_reranking_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime) {
-    return nullptr;
 }

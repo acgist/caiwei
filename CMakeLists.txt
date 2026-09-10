@@ -101,6 +101,10 @@ if(ENABLE_ASAN)
 	set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
+if (ENABLE_CAIWEI_TEST)
+add_definitions(-DENABLE_CAIWEI_TEST)
+endif()
+
 if(ENABLE_CAIWEI_BACKEND_CANN)
     message(STATUS "Enable Ascend NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_CANN)
@@ -164,7 +168,7 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
-        list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
+        list(APPEND CAIWEI_RUNTIME_LIBS rga rknnrt)
     elseif(CMAKE_HOST_WIN32)
     # -
     else()
@@ -178,7 +182,7 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
-    # -
+        list(APPEND CAIWEI_RUNTIME_LIBS rknn3_api)
     elseif(CMAKE_HOST_WIN32)
     # -
     else()
@@ -238,6 +242,14 @@ if(ENABLE_CAIWEI_FFMPEG)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
+        # list(APPEND CAIWEI_MEDIA_LIBS
+        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
+        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
+        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
+        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
+        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
+        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
+        # )
         list(APPEND CAIWEI_MEDIA_LIBS avutil avcodec avdevice avformat swscale swresample)
     elseif(CMAKE_HOST_WIN32)
         set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")

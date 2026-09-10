@@ -1,59 +1,14 @@
 #include "caiwei/runtime/rknn2.hpp"
 
+#include "rga/im2d.hpp"
+
+#include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
 
 #include <fstream>
 #include <filesystem>
 
-#if defined(__aarch64__)
-#include <arm_neon.h>
-
-inline void f32_to_fp16(uint16_t* dst, const float* src, int count) {
-    int i = 0;
-    for (; i <= count - 4; i += 4) {
-        float32x4_t f32v = vld1q_f32(src + i);
-        float16x4_t f16v = vcvt_f16_f32(f32v);
-        vst1_f16((__fp16*)(dst + i), f16v);
-    }
-    for (; i < count; ++i) {
-        __fp16 h = static_cast<__fp16>(src[i]);
-        std::memcpy(dst + i, &h, sizeof(uint16_t));
-    }
-}
-
-inline void fp16_to_f32(float* dst, const uint16_t* src, int count) {
-    int i = 0;
-    for (; i <= count - 4; i += 4) {
-        float16x4_t f16v = vld1_f16((const __fp16*)(src + i));
-        float32x4_t f32v = vcvt_f32_f16(f16v);
-        vst1q_f32(dst + i, f32v);
-    }
-    for (; i < count; ++i) {
-        __fp16 h;
-        std::memcpy(&h, src + i, sizeof(uint16_t));
-        dst[i] = static_cast<float>(h);
-    }
-}
-#else
-inline void f32_to_fp16(uint16_t* dst, const float* src, int count) {
-    // 忽略
-}
-inline void fp16_to_f32(float* dst, const uint16_t* src, int count) {
-    // 忽略
-}
-#endif
-
-inline static float qnt_to_f32(int8_t qnt, int32_t zp, float scale) {
-    return ((float) qnt - (float) zp) * scale;
-}
-
-inline static int8_t qnt_to_f32(float f32, int32_t zp, float scale) {
-    float  dst = (f32 / scale) + zp;
-    int8_t res = (int8_t) ((int32_t) std::clamp(dst, -128.0F, 127.0F));
-    return res;
-}
-
-caiwei::context::RKNN2Context::RKNN2Context(std::string path) : path(std::move(path)) {
+caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)), input_data_length(c * h * w) {
     auto size = std::filesystem::file_size(this->path);
     std::fstream stream(this->path);
     if (!stream.is_open()) {
@@ -129,7 +84,7 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path) : path(std::move(p
             return;
         }
         CW_LOG_I(
-            "RKNN2输出参数: %d - %s - %d - %d - %d -%d - %.6f - %s - %s - %s",
+            "RKNN2输出参数: %d - %s - %d - %d - %d - %d - %.6f - %s - %s - %s",
             output_attr.index,
             output_attr.name,
             output_attr.size,
@@ -168,46 +123,54 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
         this->image_height = image.height;
         caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale);
         this->dst.resize   (this->dst_w * this->dst_h * image.channels);
-        this->pad.resize   (          w *           h * image.channels);
+        this->pad.resize   (          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
         this->hwc.resize   (          w *           h * image.channels);
         this->chw.resize   (          w *           h * image.channels);
         this->chw_i8.resize(          w *           h * image.channels);
     }
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+    rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) image.data.data(), image.width, image.height, RK_FORMAT_RGB_888);
+    rga_buffer_t dst_img = wrapbuffer_virtualaddr(this->pad.data(), w, h, RK_FORMAT_RGB_888);
+    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr, 0, 0, 0);
+    im_rect src_rect = { 0, 0, image.width, image.height };
+    im_rect dst_rect = { this->pad_w, this->pad_h, this->dst_w, this->dst_h };
+    im_rect pat_rect = { 0, 0, 0, 0 };
+    improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
+    #else
     caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h);
     caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
-    const auto& input_attr  = this->input_attrs[0];
-    const auto& output_attr = this->output_attrs[0];
+    #endif
+    const auto& input_attr = this->input_attrs[0];
     std::vector<rknn_output> output;
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {
-        if (input_attr.type == RKNN_TENSOR_INT8 || input_attr.type == RKNN_TENSOR_UINT8) {
+        if (input_attr.type == RKNN_TENSOR_INT8) {
             caiwei::image::hwc_to_chw(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
             return this->run(this->chw_i8.data());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
-            caiwei::image::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data());
+            caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
             caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
             return this->run(this->chw.data());
         } else {
-            CW_LOG_E("不支持的输入类型: %d", get_type_string(input_attr.type));
+            CW_LOG_E("不支持的输入类型: %s", get_type_string(input_attr.type));
             return {};
         }
     } else if (input_attr.fmt == RKNN_TENSOR_NHWC) {
-        if (input_attr.type == RKNN_TENSOR_INT8 || input_attr.type == RKNN_TENSOR_UINT8) {
+        if (input_attr.type == RKNN_TENSOR_INT8) {
             return this->run(this->pad.data());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
-            caiwei::image::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data());
+            caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
             return this->run(this->hwc.data());
         } else {
-            CW_LOG_E("不支持的输入类型: %d", get_type_string(input_attr.type));
+            CW_LOG_E("不支持的输入类型: %s", get_type_string(input_attr.type));
             return {};
         }
     } else {
-        CW_LOG_E("不支持的输入格式: %d", get_format_string(input_attr.fmt));
+        CW_LOG_E("不支持的输入格式: %s", get_format_string(input_attr.fmt));
         return {};
     }
 }
 
 std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int batch) {
-    std::lock_guard<std::mutex> lock(this->mutex);
     std::vector<rknn_input>  inputs (this->input_size);
     std::vector<rknn_output> outputs(this->output_size);
     for (int i = 0; i < this->input_size; ++i) {
@@ -216,7 +179,8 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int b
         inputs[i].type  = this->input_attrs[i].type;
         inputs[i].size  = this->input_attrs[i].size;
         inputs[i].index = i;
-        inputs[i].pass_through = 0;
+        // TODO
+        inputs[i].pass_through = 1;
     }
     for (int i = 0; i < this->output_size; ++i) {
         outputs[i].index = i;
@@ -227,7 +191,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int b
     if (ret < 0) {
         CW_LOG_W("RKNN2设置输入失败: %d", ret);
     }
-    ret = rknn_run(this->context, NULL);
+    ret = rknn_run(this->context, nullptr);
     if (ret < 0) {
         CW_LOG_W("RKNN2执行运算失败: %d", ret);
     }
@@ -241,7 +205,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int b
 std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, int batch) {
     std::lock_guard<std::mutex> lock(this->mutex);
     std::vector<uint16_t> data(this->input_data_length);
-    f32_to_fp16(data.data(), blob, this->input_data_length);
+    caiwei::type::f32_to_fp16(data.data(), blob, this->input_data_length);
     std::vector<rknn_input>  inputs (this->input_size);
     std::vector<rknn_output> outputs(this->output_size);
     for (int i = 0; i < this->input_size; ++i) {
@@ -250,7 +214,8 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, int bat
         inputs[i].type  = this->input_attrs[i].type;
         inputs[i].size  = this->input_attrs[i].size;
         inputs[i].index = i;
-        inputs[i].pass_through = 0;
+        // TODO
+        inputs[i].pass_through = 1;
     }
     for (int i = 0; i < this->output_size; ++i) {
         outputs[i].index = i;
@@ -270,49 +235,4 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, int bat
         CW_LOG_W("RKNN2读取输出失败: %d", ret);
     }
     return outputs;
-}
-
-std::shared_ptr<caiwei::context::ClsContext> caiwei::context::get_cls_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    int w = caiwei::env::get_int("CAIWEI_CLS_W");
-    int h = caiwei::env::get_int("CAIWEI_CLS_H");
-    int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
-    int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("ClsContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<ClsRKNN2Context>(info->path, w, h, top_k, class_size, confidence_threshold, runtime);
-}
-
-std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_det_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::SegContext> caiwei::context::get_seg_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::PoseContext> caiwei::context::get_pose_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::ASRContext> caiwei::context::get_asr_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::LLMContext> caiwei::context::get_llm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::VLMContext> caiwei::context::get_vlm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::context::get_embedding_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::RerankingContext> caiwei::context::get_reranking_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::RKNN2Runtime> runtime) {
-    return nullptr;
 }

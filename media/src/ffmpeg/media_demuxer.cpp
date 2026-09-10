@@ -238,6 +238,9 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
                             if (this->audio_callback) {
                                 if (this->audio_callback(audioFrame)) {
                                     last_send_time = std::chrono::system_clock::now();
+                                } else {
+                                    CW_LOG_I("音频回调结束: %s - %s", this->type.c_str(), this->url.c_str());
+                                    this->running = false;
                                 }
                             }
                         }
@@ -273,6 +276,9 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
                             if (this->video_callback) {
                                 if (this->video_callback(videoFrame)) {
                                     last_send_time = std::chrono::system_clock::now();
+                                } else {
+                                    CW_LOG_I("视频回调结束: %s - %s", this->type.c_str(), this->url.c_str());
+                                    this->running = false;
                                 }
                             }
                         }

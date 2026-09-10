@@ -8,20 +8,115 @@
 #include "onnxruntime_cxx_api.h"
 #endif
 
-caiwei::runtime::Runtime::Runtime(caiwei::runtime::Type type) : type(type) {
+caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, caiwei::runtime::Type type) : min_pool(min_pool), max_pool(max_pool), type(type) {
 }
 
 caiwei::runtime::Runtime::~Runtime() {
 }
 
-uint32_t caiwei::runtime::Runtime::ref() {
-    auto old = this->ref_count.fetch_add(1);
-    return old + 1;
+std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(const caiwei::context::ContextInfo* info) {
+    if (info == nullptr) {
+        return nullptr;
+    }
+    std::unique_lock<std::mutex> lock(mutex);
+    auto iter = context_map.find(info->name);
+    if (iter == context_map.end()) {
+        iter = context_map.emplace(info->name, std::vector<std::shared_ptr<caiwei::context::Context>>()).first;
+    }
+    for (auto& context : iter->second) {
+        if (context->share) {
+            return context;
+        }
+        if (context->usage) {
+            continue;
+        }
+        context->usage = true;
+        return context;
+    }
+    std::shared_ptr<caiwei::context::Context> ptr{ nullptr };
+    if (iter->second.size() < this->max_pool) {
+        switch (info->type) {
+        case caiwei::context::Type::CLS : ptr = this->get_cls_context (info); break;
+        case caiwei::context::Type::DET : ptr = this->get_det_context (info); break;
+        case caiwei::context::Type::SEG : ptr = this->get_seg_context (info); break;
+        case caiwei::context::Type::POSE: ptr = this->get_pose_context(info); break;
+        case caiwei::context::Type::ASR : ptr = this->get_asr_context (info); break;
+        case caiwei::context::Type::LLM : ptr = this->get_llm_context (info); break;
+        case caiwei::context::Type::VLM : ptr = this->get_vlm_context (info); break;
+        case caiwei::context::Type::EMBEDDING: ptr = this->get_embedding_context(info); break;
+        case caiwei::context::Type::RERANKING: ptr = this->get_reranking_context(info); break;
+        default: break;
+        }
+        if (ptr == nullptr) {
+            return nullptr;
+        }
+        iter->second.push_back(ptr);
+        CW_LOG_I("新建context: %s = %d", info->name.c_str(), iter->second.size());
+        return ptr;
+    } else {
+        while (!this->cv.wait_for(lock, std::chrono::milliseconds(1000), [&iter]() {
+            return std::any_of(iter->second.begin(), iter->second.end(), [](auto& context) {
+                return !context->usage;
+            });
+        })) {
+        }
+        for (auto& context : iter->second) {
+            if (context->share) {
+                return context;
+            }
+            if (context->usage) {
+                continue;
+            }
+            context->usage = true;
+            return context;
+        }
+        return nullptr;
+    }
 }
 
-uint32_t caiwei::runtime::Runtime::unref() {
-    auto old = this->ref_count.fetch_sub(1);
-    return old - 1;
+void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Context> context) {
+    if (context == nullptr) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(mutex);
+    context->usage = false;
+    this->cv.notify_all();
+}
+
+std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::Runtime::get_cls_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::Runtime::get_det_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::Runtime::get_seg_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::Runtime::get_pose_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::Runtime::get_asr_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::Runtime::get_llm_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::Runtime::get_vlm_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::Runtime::get_embedding_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
+}
+
+std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::Runtime::get_reranking_context(const caiwei::context::ContextInfo* info) {
+    return nullptr;
 }
 
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP

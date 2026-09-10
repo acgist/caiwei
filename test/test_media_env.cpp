@@ -1,7 +1,7 @@
 #include "test.hpp"
 
 int main() {
-    init_test();
+    caiwei::test::init_test();
     std::string unknown = caiwei::env::get("CAIWEI_UNKNOWN");
     std::string version = caiwei::env::get("CAIWEI_VERSION");
     CW_LOG_I("CAIWEI_VERSION: %s", version.c_str());
@@ -23,6 +23,6 @@ int main() {
     CW_LOG_I("ID: %s", caiwei::env::id().c_str());
     CW_LOG_I("ID: %s", caiwei::env::id().c_str());
     CW_LOG_I("ID: %s", caiwei::env::id().c_str());
-    stop_test();
+    caiwei::test::stop_test();
     return 0;
 }

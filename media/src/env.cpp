@@ -17,27 +17,42 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_PASSWORD",    "admin"   }, // 接口密码
     {"CAIWEI_SECURITY",    "OFF"     }, // 安全验证
     {"CAIWEI_TIMEOUT",     "30000"   }, // 超时时间
+    {"CAIWEI_CANN_MIN_POOL",        "4" },
+    {"CAIWEI_CANN_MAX_POOL",        "8" },
+    {"CAIWEI_RKNN2_MIN_POOL",       "4" },
+    {"CAIWEI_RKNN2_MAX_POOL",       "8" },
+    {"CAIWEI_RKNN3_MIN_POOL",       "4" },
+    {"CAIWEI_RKNN3_MAX_POOL",       "8" },
+    {"CAIWEI_LLAMACPP_MIN_POOL",    "4" },
+    {"CAIWEI_LLAMACPP_MAX_POOL",    "8" },
+    {"CAIWEI_ONNXRUNTIME_MIN_POOL", "4" },
+    {"CAIWEI_ONNXRUNTIME_MAX_POOL", "8" },
     // CLS
-    {"CAIWEI_CLS_W",                    "224"              }, // 宽度
+    {"CAIWEI_CLS_C",                    "3"                }, // 通道
     {"CAIWEI_CLS_H",                    "224"              }, // 高度
+    {"CAIWEI_CLS_W",                    "224"              }, // 宽度
     {"CAIWEI_CLS_TOP_K",                "5"                }, // TOP-K
     {"CAIWEI_CLS_CLASS_SIZE",           "1000"             }, // 类型
     {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
     // DET
-    {"CAIWEI_DET_W",                    "640"              }, // 宽度
+    {"CAIWEI_DET_C",                    "3"                }, // 通道
     {"CAIWEI_DET_H",                    "640"              }, // 高度
+    {"CAIWEI_DET_W",                    "640"              }, // 宽度
     {"CAIWEI_DET_CLASS_SIZE",           "80"               }, // 类型
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
     {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
     // SEG
-    {"CAIWEI_SEG_W",                    "640"              }, // 宽度
+    {"CAIWEI_SEG_C",                    "3"                }, // 通道
     {"CAIWEI_SEG_H",                    "640"              }, // 高度
+    {"CAIWEI_SEG_W",                    "640"              }, // 宽度
     {"CAIWEI_SEG_CLASS_SIZE",           "80"               }, // 类型
     {"CAIWEI_SEG_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
     {"CAIWEI_SEG_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
     // POSE
-    {"CAIWEI_POSE_W",                    "640"              }, // 宽度
+    {"CAIWEI_POSE_C",                    "3"                }, // 通道
     {"CAIWEI_POSE_H",                    "640"              }, // 高度
+    {"CAIWEI_POSE_H",                    "640"              }, // 高度
+    {"CAIWEI_POSE_W",                    "640"              }, // 宽度
     {"CAIWEI_POSE_CLASS_SIZE",           "1"                }, // 类型
     {"CAIWEI_POSE_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
     {"CAIWEI_POSE_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值

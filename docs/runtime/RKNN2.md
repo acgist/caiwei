@@ -12,15 +12,32 @@
 pip install rknn-toolkit2
 ```
 
-> `YOLO26`可以直接使用原版`ultralytics`导出模型，否则需要使用瑞芯微定制的`ultralytics_yolo11`。
+* 目前`ultralytics`官方只有`DET`支持量化导出
+* 其他版本可以参考瑞芯微定制的`ultralytics`版本
 
 ### YOLO-CLS
 
+```
+python export_rknn.py
+```
+
 ### YOLO-DET
+
+```
+python export_rknn.py
+```
 
 ### YOLO-SEG
 
+```
+python export_rknn.py
+```
+
 ### YOLO-POSE
+
+```
+python export_rknn.py
+```
 
 ## 相关链接
 

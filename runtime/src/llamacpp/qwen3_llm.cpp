@@ -1,7 +1,7 @@
 #include "caiwei/runtime/llamacpp.hpp"
 
-caiwei::context::LLMLlamaCPPContext::LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime)
-  : LLMContext(std::move(runtime)),
+caiwei::context::LLMLlamaCPPContext::LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
+  : LLMContext(runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {
 }
     

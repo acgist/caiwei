@@ -7,7 +7,7 @@ extern "C" {
 }
 
 int main() {
-    init_test();
+    caiwei::test::init_test();
     // rtp|sdp|file|http|rtmp|rtsp|device
     auto type = "file";
     // 注意端口必须分开
@@ -32,23 +32,20 @@ int main() {
     // auto url  = "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid";
     // auto url  = "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
+    caiwei::player::open_player(1, 16000, 640, 360);
     caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
-        CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data_length, frame.samples);
+        // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data_length, frame.samples);
         std::fflush(stdout);
         return caiwei::player::play_audio(frame.data.data(), frame.data_length);
     }, [](const caiwei::media::VideoFrame& frame) {
-        CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
+        // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
         std::fflush(stdout);
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         return caiwei::player::play_video(frame.data.data(), frame.width * 3);
     });
-    std::thread player([]() {
-        caiwei::player::open_player(1, 16000, 640, 360);
-    });
     media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
-    caiwei::player::stop_player();
-    player.join();
     media_demuxer.stop();
-    stop_test();
+    caiwei::player::stop_player();
+    caiwei::test::stop_test();
     return 0;
 }

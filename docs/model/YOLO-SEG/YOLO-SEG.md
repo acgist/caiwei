@@ -6,7 +6,7 @@
 ## 模型导出
 
 ```
-python export.py
+python export_onnx.py
 ```
 
 ## 模型推理

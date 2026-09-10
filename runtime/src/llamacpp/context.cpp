@@ -111,6 +111,16 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     bool thinking = false;
     bool toolcall = false;
     caiwei::text::ResultToolcall result_toolcall;
+    // mtmd_bitmap_init()
+    // mtmd_bitmap_init_from_audio()
+    // mtmd_input_text()
+    // mtmd_input_chunks* d;
+    // mtmd_image_tokens d;
+    // mtmd_batch_init
+    // mtmd_tokenize()
+    // mtmd_bitmap_set_mergeable()
+    // mtmd_get_output_embd
+    // batch.embd
     while (max_tokens == 0 || generated_tokens < max_tokens) {
         llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context), 0);
         if (n_ctx_used < 0) {
@@ -181,72 +191,6 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
         }
         batch = llama_batch_get_one(&token_id, 1);
     }
-}
-
-std::shared_ptr<caiwei::context::ClsContext> caiwei::context::get_cls_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::DetContext> caiwei::context::get_det_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::SegContext> caiwei::context::get_seg_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::PoseContext> caiwei::context::get_pose_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::ASRContext> caiwei::context::get_asr_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::LLMContext> caiwei::context::get_llm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("LlamaCPP模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    caiwei::text::SpecialToken special_token;
-    special_token.bos = caiwei::env::get("CAIWEI_LLM_TOKEN_BOS");
-    special_token.eos = caiwei::env::get("CAIWEI_LLM_TOKEN_EOS");
-    special_token.pad = caiwei::env::get("CAIWEI_LLM_TOKEN_PAD");
-    special_token.b_thinking = caiwei::env::get("CAIWEI_LLM_TOKEN_BTHINKING");
-    special_token.e_thinking = caiwei::env::get("CAIWEI_LLM_TOKEN_ETHINKING");
-    special_token.b_toolcall = caiwei::env::get("CAIWEI_LLM_TOKEN_BTOOLCALL");
-    special_token.e_toolcall = caiwei::env::get("CAIWEI_LLM_TOKEN_ETOOLCALL");
-    special_token.enable_thinking = caiwei::env::get("CAIWEI_LLM_ENABLE_THINKING");
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<LLMLlamaCPPContext>(info->path, max_token_length, special_token, runtime);
-}
-
-std::shared_ptr<caiwei::context::VLMContext> caiwei::context::get_vlm_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    caiwei::text::SpecialToken special_token;
-    special_token.bos = caiwei::env::get("CAIWEI_VLM_TOKEN_BOS");
-    special_token.eos = caiwei::env::get("CAIWEI_VLM_TOKEN_EOS");
-    special_token.pad = caiwei::env::get("CAIWEI_VLM_TOKEN_PAD");
-    special_token.b_image = caiwei::env::get("CAIWEI_VLM_TOKEN_BIMAGE");
-    special_token.c_image = caiwei::env::get("CAIWEI_VLM_TOKEN_CIMAGE");
-    special_token.e_image = caiwei::env::get("CAIWEI_VLM_TOKEN_EIMAGE");
-    special_token.b_video = caiwei::env::get("CAIWEI_VLM_TOKEN_BVIDEO");
-    special_token.c_video = caiwei::env::get("CAIWEI_VLM_TOKEN_CVIDEO");
-    special_token.e_video = caiwei::env::get("CAIWEI_VLM_TOKEN_EVIDEO");
-    special_token.b_thinking = caiwei::env::get("CAIWEI_VLM_TOKEN_BTHINKING");
-    special_token.e_thinking = caiwei::env::get("CAIWEI_VLM_TOKEN_ETHINKING");
-    special_token.b_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
-    special_token.e_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
-    special_token.enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::context::get_embedding_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::RerankingContext> caiwei::context::get_reranking_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> runtime) {
-    return nullptr;
 }
 
 std::string caiwei::context::token_to_string(const llama_vocab* vocab, llama_token token, std::string default_token) {

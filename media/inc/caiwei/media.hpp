@@ -1,5 +1,7 @@
 /**
  * 媒体
+ * 
+ * TODO 如果输出和输入格式一样不要编码
  */
 #ifndef CAIWEI_MEDIA_MEDIA_HPP
 #define CAIWEI_MEDIA_MEDIA_HPP

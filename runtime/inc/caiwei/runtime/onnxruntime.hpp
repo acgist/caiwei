@@ -7,7 +7,6 @@
 #include "caiwei/log.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/context.hpp"
-#include "caiwei/runtime.hpp"
 
 #include "onnxruntime_cxx_api.h"
 
@@ -39,16 +38,16 @@ private:
     std::vector<float>   hwc;
     std::vector<float>   chw;
 public:
-    ONNXRuntimeContext(std::string path, const Ort::Env* env);
+    ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env);
     virtual ~ONNXRuntimeContext();
-protected:
+public:
     std::vector<Ort::Value> run(int h, int w, const caiwei::media::ImageFrame& image);
     virtual std::vector<Ort::Value> run(float* blob, int batch = 1);
 };
 
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
 public:
-    ClsONNXRuntimeContext(std::string path, int w, int h, int top_k, int class_size, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
+    ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~ClsONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
@@ -57,7 +56,7 @@ public:
 
 class DetONNXRuntimeContext : public DetContext, public ONNXRuntimeContext {
 public:
-    DetONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
+    DetONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~DetONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
@@ -66,7 +65,7 @@ public:
 
 class SegONNXRuntimeContext : public SegContext, public ONNXRuntimeContext {
 public:
-    SegONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
+    SegONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~SegONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
@@ -75,7 +74,7 @@ public:
 
 class PoseONNXRuntimeContext : public PoseContext, public ONNXRuntimeContext {
 public:
-    PoseONNXRuntimeContext(std::string path, int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
+    PoseONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~PoseONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
@@ -87,16 +86,6 @@ class LLMONNXRuntimeContext : public LLMContext, public ONNXRuntimeContext {};
 class VLMONNXRuntimeContext : public VLMContext, public ONNXRuntimeContext {};
 class EmbeddingRKNN3CONNXRuntimet : public EmbeddingContext, public ONNXRuntimeContext {};
 class RerankingRKNN3CONNXRuntimet : public RerankingContext, public ONNXRuntimeContext {};
-
-std::shared_ptr<caiwei::context::ClsContext>  get_cls_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::DetContext>  get_det_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::SegContext>  get_seg_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::PoseContext> get_pose_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::ASRContext>  get_asr_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::LLMContext>  get_llm_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::VLMContext>  get_vlm_context (const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::EmbeddingContext> get_embedding_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
-std::shared_ptr<caiwei::context::RerankingContext> get_reranking_context(const caiwei::context::ContextInfo* info, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime);
 
 }
 }

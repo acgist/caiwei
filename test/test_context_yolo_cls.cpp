@@ -4,7 +4,6 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
-#include <thread>
 #include <filesystem>
 
 [[maybe_unused]]
@@ -17,6 +16,9 @@ void cls_image() {
     frame.height = height;
     frame.channels = channels;
     auto ptr = caiwei::context::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+    if (ptr == nullptr) {
+        return;
+    }
     CAIWEI_FOR_EACH(100)
     auto result = ptr->run(frame);
     CAIWEI_FOR_EACH_END
@@ -30,6 +32,10 @@ void cls_video() {
     auto url  = "./caiwei.mp4";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
     auto ptr = caiwei::context::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+    if (ptr == nullptr) {
+        return;
+    }
+    caiwei::player::open_player(1, 16000, 640, 360);
     caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
         return caiwei::player::play_audio(frame.data.data(), frame.data_length);
     }, [&ptr](const caiwei::media::VideoFrame& frame) {
@@ -39,13 +45,9 @@ void cls_video() {
         }
         return caiwei::player::play_video(frame.data.data(), frame.width * 3);
     });
-    std::thread player([]() {
-        caiwei::player::open_player(1, 16000, 640, 360);
-    });
     media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
-    caiwei::player::stop_player();
-    player.join();
     media_demuxer.stop();
+    caiwei::player::stop_player();
 }
 
 [[maybe_unused]]
@@ -73,10 +75,10 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn");
     #endif
-    init_test();
-    cls_image();
-    // cls_video();
+    caiwei::test::init_test();
+    // cls_image();
+    cls_video();
     // cls_folder();
-    stop_test();
+    caiwei::test::stop_test();
     return 0;
 }

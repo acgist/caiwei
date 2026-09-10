@@ -8,7 +8,7 @@ extern "C" {
 }
 
 int main() {
-    init_test();
+    caiwei::test::init_test();
     // rtp|sdp|file|http|rtmp|rtsp|device
     auto type = "file";
     // 注意端口必须分开
@@ -66,7 +66,7 @@ int main() {
         CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
         std::fflush(stdout);
         media_muxer.on_video(frame);
-        // std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         return true;
     });
     media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
@@ -74,6 +74,6 @@ int main() {
     media_format.stop();
     media_muxer.stop();
     output.close();
-    stop_test();
+    caiwei::test::stop_test();
     return 0;
 }

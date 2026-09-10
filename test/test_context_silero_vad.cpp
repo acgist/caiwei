@@ -1,7 +1,7 @@
 #include "test.hpp"
 
 int main() {
-    init_test();
-    stop_test();
+    caiwei::test::init_test();
+    caiwei::test::stop_test();
     return 0;
 }

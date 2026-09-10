@@ -68,11 +68,6 @@ sudo update-alternatives --config     gcc
 sudo update-alternatives --display    gcc
 sudo update-alternatives --remove-all gcc
 
-sudo update-alternatives --list       cuda
-sudo update-alternatives --config     cuda
-sudo update-alternatives --display    cuda
-sudo update-alternatives --remove-all cuda
-
 # 编译安装
 # wget http://ftp.gnu.org/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.gz
 wget https://mirrors.aliyun.com/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.gz

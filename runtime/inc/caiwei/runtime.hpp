@@ -6,16 +6,14 @@
 #ifndef CAIWEI_RUNTIME_RUNTIME_HPP
 #define CAIWEI_RUNTIME_RUNTIME_HPP
 
+#include <map>
+#include <mutex>
 #include <atomic>
 #include <memory>
+#include <vector>
+#include <condition_variable>
 
-#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
-#ifdef __arm__
-typedef uint32_t rknn_context;
-#else
-typedef uint64_t rknn_context;
-#endif
-#endif
+#include "caiwei/context.hpp"
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 namespace Ort {
@@ -39,20 +37,34 @@ enum class Type {
 
 class Runtime {
 private:
+    int min_pool = 4;
+    int max_pool = 8;
+    std::mutex mutex;
+    std::condition_variable cv;
     caiwei::runtime::Type type;
-    std::atomic_int32_t ref_count = 0;
+    std::map<std::string, std::vector<std::shared_ptr<caiwei::context::Context>>> context_map;
 public:
-    Runtime(caiwei::runtime::Type type);
+    Runtime(int min_pool, int max_pool, caiwei::runtime::Type type);
     virtual ~Runtime();
 public:
-    uint32_t ref();
-    uint32_t unref();
+    virtual std::shared_ptr<caiwei::context::Context> get_context(const caiwei::context::ContextInfo* info);
+    virtual void put_context(std::shared_ptr<caiwei::context::Context> context);
+protected:
+    virtual std::shared_ptr<caiwei::context::ClsContext>  get_cls_context  (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::DetContext>  get_det_context  (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::SegContext>  get_seg_context  (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::PoseContext> get_pose_context (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::ASRContext>  get_asr_context  (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::LLMContext>  get_llm_context  (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::VLMContext>  get_vlm_context  (const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::EmbeddingContext> get_embedding_context(const caiwei::context::ContextInfo* info);
+    virtual std::shared_ptr<caiwei::context::RerankingContext> get_reranking_context(const caiwei::context::ContextInfo* info);
 };
 
 #ifdef ENABLE_CAIWEI_RUNTIME_CANN
 class CANNRuntime : public Runtime {
 public:
-    CANNRuntime();
+    CANNRuntime(int min_pool, int max_pool);
     ~CANNRuntime();
 };
 #endif
@@ -60,15 +72,20 @@ public:
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 class RKNN2Runtime : public Runtime {
 public:
-    RKNN2Runtime();
+    RKNN2Runtime(int min_pool, int max_pool);
     ~RKNN2Runtime();
+public:
+    std::shared_ptr<caiwei::context::ClsContext>  get_cls_context (const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::DetContext>  get_det_context (const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::SegContext>  get_seg_context (const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::PoseContext> get_pose_context(const caiwei::context::ContextInfo* info) override;
 };
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 class RKNN3Runtime : public Runtime {
 public:
-    RKNN3Runtime();
+    RKNN3Runtime(int min_pool, int max_pool);
     ~RKNN3Runtime();
 };
 #endif
@@ -76,8 +93,11 @@ public:
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 class LlamaCPPRuntime : public Runtime {
 public:
-    LlamaCPPRuntime();
+    LlamaCPPRuntime(int min_pool, int max_pool);
     ~LlamaCPPRuntime();
+public:
+    std::shared_ptr<caiwei::context::LLMContext> get_llm_context(const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::VLMContext> get_vlm_context(const caiwei::context::ContextInfo* info) override;
 };
 #endif
 
@@ -86,7 +106,12 @@ class ONNXRuntimeRuntime : public Runtime {
 public:
     Ort::Env* env = nullptr;
 public:
-    ONNXRuntimeRuntime();
+    std::shared_ptr<caiwei::context::ClsContext>  get_cls_context (const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::DetContext>  get_det_context (const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::SegContext>  get_seg_context (const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::PoseContext> get_pose_context(const caiwei::context::ContextInfo* info) override;
+public:
+    ONNXRuntimeRuntime(int min_pool, int max_pool);
     ~ONNXRuntimeRuntime();
 };
 #endif

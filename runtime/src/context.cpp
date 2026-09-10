@@ -7,14 +7,12 @@
 
 std::vector<caiwei::context::ContextInfo> caiwei::context::context_info_list;
 
-caiwei::context::Context::Context(std::shared_ptr<caiwei::runtime::Runtime> runtime)
-  : runtime(std::move(runtime)),
+caiwei::context::Context::Context(caiwei::runtime::Runtime* runtime)
+  : runtime(runtime),
     last_run_time(std::chrono::system_clock::now()) {
-    this->runtime->ref();
 }
 
 caiwei::context::Context::~Context() {
-    this->runtime->unref();
 }
 
 uint32_t caiwei::context::Context::ref() {
@@ -45,84 +43,88 @@ const caiwei::context::ContextInfo* caiwei::context::get_context_info(const std:
     return nullptr;
 }
 
-caiwei::context::ClsContext::ClsContext(int w, int h, int top_k, int class_size, float confidence_threshold, std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : w(w),
+caiwei::context::ClsContext::ClsContext(int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime)
+ : c(c),
    h(h),
+   w(w),
    top_k(top_k),
    class_size(class_size),
    confidence_threshold(confidence_threshold),
-   Context(std::move(runtime)) {
+   Context(runtime) {
 }
 
 caiwei::context::ClsContext::~ClsContext() {
 }
 
-caiwei::context::DetContext::DetContext(int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : w(w),
+caiwei::context::DetContext::DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
+ : c(c),
    h(h),
+   w(w),
    class_size(class_size),
    iou_threshold(iou_threshold),
    confidence_threshold(confidence_threshold),
-   Context(std::move(runtime)) {
+   Context(runtime) {
 }
 
 caiwei::context::DetContext::~DetContext() {
 }
 
-caiwei::context::SegContext::SegContext(int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::Runtime> runtime)
-  : w(w),
+caiwei::context::SegContext::SegContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
+  : c(c),
     h(h),
+    w(w),
     class_size(class_size),
     iou_threshold(iou_threshold),
     confidence_threshold(confidence_threshold),
-    Context(std::move(runtime)) {
+    Context(runtime) {
 }
 
 caiwei::context::SegContext::~SegContext() {
 }
 
-caiwei::context::PoseContext::PoseContext(int w, int h, int class_size, float iou_threshold, float confidence_threshold, std::shared_ptr<caiwei::runtime::Runtime> runtime)
-  : w(w),
+caiwei::context::PoseContext::PoseContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
+  : c(c),
     h(h),
+    w(w),
     class_size(class_size),
     iou_threshold(iou_threshold),
     confidence_threshold(confidence_threshold),
-    Context(std::move(runtime)) {
+    Context(runtime) {
 }
 
 caiwei::context::PoseContext::~PoseContext() {
 }
 
-caiwei::context::ASRContext::ASRContext(std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : Context(std::move(runtime)) {
+caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime)
+ : Context(runtime) {
 }
 
 caiwei::context::ASRContext::~ASRContext() {
 }
 
-caiwei::context::LLMContext::LLMContext(std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : Context(std::move(runtime)) {
+caiwei::context::LLMContext::LLMContext(caiwei::runtime::Runtime* runtime)
+ : Context(runtime) {
 }
 
 caiwei::context::LLMContext::~LLMContext() {
 }
 
-caiwei::context::VLMContext::VLMContext(std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : Context(std::move(runtime)) {
+caiwei::context::VLMContext::VLMContext(caiwei::runtime::Runtime* runtime)
+ : Context(runtime) {
 }
 
 caiwei::context::VLMContext::~VLMContext() {
 }
 
-caiwei::context::EmbeddingContext::EmbeddingContext(std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : Context(std::move(runtime)) {
+caiwei::context::EmbeddingContext::EmbeddingContext(caiwei::runtime::Runtime* runtime)
+ : Context(runtime) {
 }
 
 caiwei::context::EmbeddingContext::~EmbeddingContext() {
 }
 
-caiwei::context::RerankingContext::RerankingContext(std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : Context(std::move(runtime)) {
+caiwei::context::RerankingContext::RerankingContext(caiwei::runtime::Runtime* runtime)
+ : Context(runtime) {
 }
 
 caiwei::context::RerankingContext::~RerankingContext() {

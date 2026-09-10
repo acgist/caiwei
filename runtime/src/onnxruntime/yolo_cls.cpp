@@ -2,14 +2,9 @@
 
 #include "caiwei/image_tool.hpp"
 
-caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(std::string path, int w, int h, int top_k, int class_size, float confidence_threshold, std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> runtime)
- : ClsContext(w, h, top_k, class_size, confidence_threshold, runtime),
-   ONNXRuntimeContext(path, runtime->env) {
-    this->input_node_dims.push_back(1);
-    this->input_node_dims.push_back(3);
-    this->input_node_dims.push_back(this->h);
-    this->input_node_dims.push_back(this->w);
-    this->input_data_length = 3 * this->h * this->w;
+caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime)
+ : ClsContext(c, h, w, top_k, class_size, confidence_threshold, runtime),
+   ONNXRuntimeContext(path, c, h, w, env) {
 }
 
 caiwei::context::ClsONNXRuntimeContext::~ClsONNXRuntimeContext() {
