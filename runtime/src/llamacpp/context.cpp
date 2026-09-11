@@ -3,20 +3,8 @@
 #include <algorithm>
 
 caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token)
-  : path(std::move(path)), special_token(std::move(special_token)) {
+  : path(std::move(path)), max_token_length(max_token_length), special_token(std::move(special_token)) {
     CW_LOG_I("创建LlamaCPPContext: %s", this->path.c_str());
-    llama_model_params params = llama_model_default_params();
-    this->model = llama_model_load_from_file(this->path.c_str(), params);
-    if (this->model == nullptr) {
-        CW_LOG_W("加载LlamaCPPContext模型失败: %s", this->path.c_str());
-        return;
-    }
-    this->vocab = llama_model_get_vocab(this->model);
-    this->max_token_length = std::min(max_token_length, llama_model_n_ctx_train(this->model));
-    this->special_token.bos = token_to_string(this->vocab, llama_vocab_bos(this->vocab), this->special_token.bos);
-    this->special_token.eos = token_to_string(this->vocab, llama_vocab_eos(this->vocab), this->special_token.eos);
-    this->special_token.pad = token_to_string(this->vocab, llama_vocab_pad(this->vocab), this->special_token.pad);
-    this->chat_template.set_template(llama_model_chat_template(this->model, nullptr), this->special_token.bos, this->special_token.eos);
 }
 
 caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
@@ -25,6 +13,22 @@ caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
         llama_free_model(this->model);
         this->model = nullptr;
     }
+}
+
+bool caiwei::context::LlamaCPPContext::load_model() {
+    llama_model_params params = llama_model_default_params();
+    this->model = llama_model_load_from_file(this->path.c_str(), params);
+    if (this->model == nullptr) {
+        CW_LOG_W("加载LlamaCPPContext模型失败: %s", this->path.c_str());
+        return false;
+    }
+    this->vocab = llama_model_get_vocab(this->model);
+    this->max_token_length = std::min(this->max_token_length, llama_model_n_ctx_train(this->model));
+    this->special_token.bos = token_to_piece(this->vocab, llama_vocab_bos(this->vocab), this->special_token.bos);
+    this->special_token.eos = token_to_piece(this->vocab, llama_vocab_eos(this->vocab), this->special_token.eos);
+    this->special_token.pad = token_to_piece(this->vocab, llama_vocab_pad(this->vocab), this->special_token.pad);
+    this->chat_template.set_template(llama_model_chat_template(this->model, nullptr), this->special_token.bos, this->special_token.eos);
+    return true;
 }
 
 llama_context* caiwei::context::LlamaCPPContext::get_context(const caiwei::text::CompletionsRequest& request) {
@@ -75,13 +79,16 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
-    llama_context* context,
-    llama_sampler* sampler,
-    uint32_t max_tokens,
-    const std::string& prompt
-) {
-    const uint32_t n_ctx = llama_n_ctx(context);
+std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) {
+    llama_context_ptr context{ get_context(request) };
+    llama_sampler_ptr sampler{ get_sampler(request) };
+    if (!context || !sampler) {
+        co_return;
+    }
+    // TODO 多模态输入数据多态实现
+    std::string prompt = this->chat_template.apply(this->special_token, request);
+    uint32_t max_tokens = request.max_tokens.value_or(0);
+    const uint32_t n_ctx = llama_n_ctx(context.get());
     const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
     if (n_prompt_tokens > n_ctx) {
         CW_LOG_W("提示词超长: %d > %u", n_prompt_tokens, n_ctx);
@@ -104,10 +111,10 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     llama_token token_id;
     std::string buffer;
     buffer.resize(1024);
-    llama_token b_thinking = string_to_token(this->vocab, this->special_token.b_thinking);
-    llama_token e_thinking = string_to_token(this->vocab, this->special_token.e_thinking);
-    llama_token b_toolcall = string_to_token(this->vocab, this->special_token.b_toolcall);
-    llama_token e_toolcall = string_to_token(this->vocab, this->special_token.e_toolcall);
+    llama_token b_thinking = piece_to_token(this->vocab, this->special_token.b_thinking);
+    llama_token e_thinking = piece_to_token(this->vocab, this->special_token.e_thinking);
+    llama_token b_toolcall = piece_to_token(this->vocab, this->special_token.b_toolcall);
+    llama_token e_toolcall = piece_to_token(this->vocab, this->special_token.e_toolcall);
     bool thinking = false;
     bool toolcall = false;
     caiwei::text::ResultToolcall result_toolcall;
@@ -122,7 +129,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     // mtmd_get_output_embd
     // batch.embd
     while (max_tokens == 0 || generated_tokens < max_tokens) {
-        llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context), 0);
+        llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context.get()), 0);
         if (n_ctx_used < 0) {
             n_ctx_used = 0;
         } else {
@@ -133,13 +140,13 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
             co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             co_return;
         }
-        int ret = llama_decode(context, batch);
+        int ret = llama_decode(context.get(), batch);
         if (ret != 0) {
             CW_LOG_W("解码失败: ret = %d", ret);
             co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             co_return;
         }
-        token_id = llama_sampler_sample(sampler, context, -1);
+        token_id = llama_sampler_sample(sampler.get(), context.get(), -1);
         if (token_id == LLAMA_TOKEN_NULL) {
             CW_LOG_W("采样返回NULL");
             co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
@@ -191,30 +198,35 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
         }
         batch = llama_batch_get_one(&token_id, 1);
     }
+    #if CAIWEI_DEBUG
+    llama_perf_context_print(context.get());
+    llama_perf_sampler_print(sampler.get());
+    #endif
 }
 
-std::string caiwei::context::token_to_string(const llama_vocab* vocab, llama_token token, std::string default_token) {
-    if (token == LLAMA_TOKEN_NULL) {
-        return std::move(default_token);
-    }
-    static const int ret_length = 64;
-    std::string ret;
-    ret.resize(ret_length);
-    const int length = llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true);
-    if (length < 0) {
-        return std::move(default_token);
-    } else if (length >= ret_length) {
-        return std::move(default_token);
-    } else {
-        ret.resize(length);
-        return ret;
-    }
-}
-
-llama_token caiwei::context::string_to_token(const llama_vocab* vocab, const std::string& token) {
-    std::vector<llama_token> prompt_tokens(1);
-    if (llama_tokenize(vocab, token.c_str(), token.size(), prompt_tokens.data(), 1, true, true) < 0) {
+llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std::string& token) {
+    llama_token ret;
+    if (llama_tokenize(vocab, token.c_str(), token.size(), &ret, 1, false, true) < 0) {
+        CW_LOG_W("piece_to_token失败: %s", token.c_str());
         return LLAMA_TOKEN_NULL;
     }
-    return prompt_tokens[0];
+    return ret;
+}
+
+std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value) {
+    if (token == LLAMA_TOKEN_NULL) {
+        return std::move(default_value);
+    }
+    std::string ret;
+    ret.resize(64);
+    const int length = llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true);
+    if (length < 0) {
+        ret.resize(-length);
+        if (llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true) != -length) {
+            return std::move(default_value);
+        }
+    } else {
+        ret.resize(length);
+    }
+    return ret;
 }

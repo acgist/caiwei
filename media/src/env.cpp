@@ -8,96 +8,105 @@ std::atomic_uint32_t caiwei::env::id_index = 0;
 
 // 默认配置
 static std::map<std::string, std::string> default_config = {
-    {"CAIWEI_VERSION",     "1.0.0"   }, // 版本号
-    {"CAIWEI_CUDA_ID",     "0"       }, // CUDA ID
-    {"CAIWEI_SERVER_HOST", "0.0.0.0" }, // 监听主机
-    {"CAIWEI_SERVER_PORT", "8888"    }, // 监听端口
-    {"CAIWEI_SERVER_POOL", "8"       }, // 线程数量
-    {"CAIWEI_USERNAME",    "admin"   }, // 接口账号
-    {"CAIWEI_PASSWORD",    "admin"   }, // 接口密码
-    {"CAIWEI_SECURITY",    "OFF"     }, // 安全验证
-    {"CAIWEI_TIMEOUT",     "30000"   }, // 超时时间
-    {"CAIWEI_CANN_MIN_POOL",        "4" },
-    {"CAIWEI_CANN_MAX_POOL",        "8" },
-    {"CAIWEI_RKNN2_MIN_POOL",       "4" },
-    {"CAIWEI_RKNN2_MAX_POOL",       "8" },
-    {"CAIWEI_RKNN3_MIN_POOL",       "4" },
-    {"CAIWEI_RKNN3_MAX_POOL",       "8" },
-    {"CAIWEI_LLAMACPP_MIN_POOL",    "4" },
-    {"CAIWEI_LLAMACPP_MAX_POOL",    "8" },
-    {"CAIWEI_ONNXRUNTIME_MIN_POOL", "4" },
-    {"CAIWEI_ONNXRUNTIME_MAX_POOL", "8" },
+    {"CAIWEI_VERSION",     "1.0.0"  }, // 版本号
+    {"CAIWEI_CUDA_ID",     "0"      }, // CUDA ID
+    {"CAIWEI_SERVER_HOST", "0.0.0.0"}, // 监听主机
+    {"CAIWEI_SERVER_PORT", "8888"   }, // 监听端口
+    {"CAIWEI_SERVER_POOL", "4"      }, // 线程数量
+    {"CAIWEI_USERNAME",    "admin"  }, // 接口账号
+    {"CAIWEI_PASSWORD",    "admin"  }, // 接口密码
+    {"CAIWEI_SECURITY",    "OFF"    }, // 安全验证
+    {"CAIWEI_TIMEOUT",     "30000"  }, // 超时时间
+    // 运行配置
+    {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
+    {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},
+    {"CAIWEI_CANN_MIN_POOL",        "0"  },
+    {"CAIWEI_CANN_MAX_POOL",        "1"  },
+    {"CAIWEI_RKNN2_MIN_POOL",       "2"  },
+    {"CAIWEI_RKNN2_MAX_POOL",       "8"  },
+    {"CAIWEI_RKNN3_MIN_POOL",       "0"  },
+    {"CAIWEI_RKNN3_MAX_POOL",       "1"  },
+    {"CAIWEI_LLAMACPP_MIN_POOL",    "0"  },
+    {"CAIWEI_LLAMACPP_MAX_POOL",    "1"  },
+    {"CAIWEI_ONNXRUNTIME_MIN_POOL", "2"  },
+    {"CAIWEI_ONNXRUNTIME_MAX_POOL", "8"  },
     // CLS
-    {"CAIWEI_CLS_C",                    "3"                }, // 通道
-    {"CAIWEI_CLS_H",                    "224"              }, // 高度
-    {"CAIWEI_CLS_W",                    "224"              }, // 宽度
-    {"CAIWEI_CLS_TOP_K",                "5"                }, // TOP-K
-    {"CAIWEI_CLS_CLASS_SIZE",           "1000"             }, // 类型
-    {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
+    {"CAIWEI_CLS_C",                    "3"   },
+    {"CAIWEI_CLS_H",                    "224" },
+    {"CAIWEI_CLS_W",                    "224" },
+    {"CAIWEI_CLS_TOP_K",                "5"   },
+    {"CAIWEI_CLS_CLASS_SIZE",           "1000"},
+    {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.4" },
     // DET
-    {"CAIWEI_DET_C",                    "3"                }, // 通道
-    {"CAIWEI_DET_H",                    "640"              }, // 高度
-    {"CAIWEI_DET_W",                    "640"              }, // 宽度
-    {"CAIWEI_DET_CLASS_SIZE",           "80"               }, // 类型
-    {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
-    {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
+    {"CAIWEI_DET_C",                    "3"  },
+    {"CAIWEI_DET_H",                    "640"},
+    {"CAIWEI_DET_W",                    "640"},
+    {"CAIWEI_DET_CLASS_SIZE",           "80" },
+    {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"},
+    {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"},
     // SEG
-    {"CAIWEI_SEG_C",                    "3"                }, // 通道
-    {"CAIWEI_SEG_H",                    "640"              }, // 高度
-    {"CAIWEI_SEG_W",                    "640"              }, // 宽度
-    {"CAIWEI_SEG_CLASS_SIZE",           "80"               }, // 类型
-    {"CAIWEI_SEG_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
-    {"CAIWEI_SEG_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
+    {"CAIWEI_SEG_C",                    "3"  },
+    {"CAIWEI_SEG_H",                    "640"},
+    {"CAIWEI_SEG_W",                    "640"},
+    {"CAIWEI_SEG_CLASS_SIZE",           "80" },
+    {"CAIWEI_SEG_IOU_THRESHOLD",        "0.6"},
+    {"CAIWEI_SEG_CONFIDENCE_THRESHOLD", "0.4"},
     // POSE
-    {"CAIWEI_POSE_C",                    "3"                }, // 通道
-    {"CAIWEI_POSE_H",                    "640"              }, // 高度
-    {"CAIWEI_POSE_H",                    "640"              }, // 高度
-    {"CAIWEI_POSE_W",                    "640"              }, // 宽度
-    {"CAIWEI_POSE_CLASS_SIZE",           "1"                }, // 类型
-    {"CAIWEI_POSE_IOU_THRESHOLD",        "0.6"              }, // IOU阈值
-    {"CAIWEI_POSE_CONFIDENCE_THRESHOLD", "0.4"              }, // 置信度阈值
+    {"CAIWEI_POSE_C",                    "3"  },
+    {"CAIWEI_POSE_H",                    "640"},
+    {"CAIWEI_POSE_H",                    "640"},
+    {"CAIWEI_POSE_W",                    "640"},
+    {"CAIWEI_POSE_CLASS_SIZE",           "1"  },
+    {"CAIWEI_POSE_IOU_THRESHOLD",        "0.6"},
+    {"CAIWEI_POSE_CONFIDENCE_THRESHOLD", "0.4"},
     // ASR
-    {"CAIWEI_ASR_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
-    {"CAIWEI_ASR_TOKEN_BOS",            "<|im_start|>"     },
-    {"CAIWEI_ASR_TOKEN_EOS",            "<|im_end|>"       },
-    {"CAIWEI_ASR_TOKEN_PAD",            "<|endoftext|>"    },
-    {"CAIWEI_ASR_TOKEN_BAUDIO",         "<|audio_start|>"  },
-    {"CAIWEI_ASR_TOKEN_CAUDIO",         "<|audio_pad|>"    },
-    {"CAIWEI_ASR_TOKEN_EAUDIO",         "<|audio_end|>"    },
-    {"CAIWEI_ASR_TOKEN_BTHINKING",      "<think>"          },
-    {"CAIWEI_ASR_TOKEN_ETHINKING",      "</think>"         },
-    {"CAIWEI_ASR_TOKEN_BTOOLCALL",      "<tool_call>"      },
-    {"CAIWEI_ASR_TOKEN_ETOOLCALL",      "</tool_call>"     },
-    {"CAIWEI_ASR_ENABLE_THINKING",      "enable_thinking"  },
+    {"CAIWEI_ASR_MAX_TOKEN_LENGTH", "8092"           },
+    {"CAIWEI_ASR_TOKEN_BOS",        "<|im_start|>"   },
+    {"CAIWEI_ASR_TOKEN_EOS",        "<|im_end|>"     },
+    {"CAIWEI_ASR_TOKEN_PAD",        "<|endoftext|>"  },
+    {"CAIWEI_ASR_TOKEN_BAUDIO",     "<|audio_start|>"},
+    {"CAIWEI_ASR_TOKEN_CAUDIO",     "<|audio_pad|>"  },
+    {"CAIWEI_ASR_TOKEN_EAUDIO",     "<|audio_end|>"  },
+    {"CAIWEI_ASR_TOKEN_BTHINKING",  "<think>"        },
+    {"CAIWEI_ASR_TOKEN_ETHINKING",  "</think>"       },
+    {"CAIWEI_ASR_TOKEN_BTOOLCALL",  "<tool_call>"    },
+    {"CAIWEI_ASR_TOKEN_ETOOLCALL",  "</tool_call>"   },
+    {"CAIWEI_ASR_ENABLE_THINKING",  "enable_thinking"},
     // LLM
-    {"CAIWEI_LLM_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
-    {"CAIWEI_LLM_TOKEN_BOS",            "<|im_start|>"     },
-    {"CAIWEI_LLM_TOKEN_EOS",            "<|im_end|>"       },
-    {"CAIWEI_LLM_TOKEN_PAD",            "<|endoftext|>"    },
-    {"CAIWEI_LLM_TOKEN_BTHINKING",      "<think>"          },
-    {"CAIWEI_LLM_TOKEN_ETHINKING",      "</think>"         },
-    {"CAIWEI_LLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
-    {"CAIWEI_LLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
-    {"CAIWEI_LLM_ENABLE_THINKING",      "enable_thinking"  },
+    {"CAIWEI_LLM_MAX_TOKEN_LENGTH", "8092"           },
+    {"CAIWEI_LLM_TOKEN_BOS",        "<|im_start|>"   },
+    {"CAIWEI_LLM_TOKEN_EOS",        "<|im_end|>"     },
+    {"CAIWEI_LLM_TOKEN_PAD",        "<|endoftext|>"  },
+    {"CAIWEI_LLM_TOKEN_BTHINKING",  "<think>"        },
+    {"CAIWEI_LLM_TOKEN_ETHINKING",  "</think>"       },
+    {"CAIWEI_LLM_TOKEN_BTOOLCALL",  "<tool_call>"    },
+    {"CAIWEI_LLM_TOKEN_ETOOLCALL",  "</tool_call>"   },
+    {"CAIWEI_LLM_ENABLE_THINKING",  "enable_thinking"},
     // VLM
-    {"CAIWEI_VLM_MAX_TOKEN_LENGTH",     "8092"             }, // 最大上下文长度
-    {"CAIWEI_VLM_TOKEN_BOS",            "<|im_start|>"     },
-    {"CAIWEI_VLM_TOKEN_EOS",            "<|im_end|>"       },
-    {"CAIWEI_VLM_TOKEN_PAD",            "<|endoftext|>"    },
-    {"CAIWEI_VLM_TOKEN_BIMAGE",         "<|vision_start|>" },
-    {"CAIWEI_VLM_TOKEN_CIMAGE",         "<|image_pad|>"    },
-    {"CAIWEI_VLM_TOKEN_EIMAGE",         "<|vision_end|>"   },
-    {"CAIWEI_VLM_TOKEN_BVIDEO",         "<|vision_start|>" },
-    {"CAIWEI_VLM_TOKEN_CVIDEO",         "<|video_pad|>"    },
-    {"CAIWEI_VLM_TOKEN_EVIDEO",         "<|vision_end|>"   },
-    {"CAIWEI_VLM_TOKEN_BTHINKING",      "<think>"          },
-    {"CAIWEI_VLM_TOKEN_ETHINKING",      "</think>"         },
-    {"CAIWEI_VLM_TOKEN_BTOOLCALL",      "<tool_call>"      },
-    {"CAIWEI_VLM_TOKEN_ETOOLCALL",      "</tool_call>"     },
-    {"CAIWEI_VLM_ENABLE_THINKING",      "enable_thinking"  },
+    {"CAIWEI_VLM_MAX_TOKEN_LENGTH", "8092"            },
+    {"CAIWEI_VLM_TOKEN_BOS",        "<|im_start|>"    },
+    {"CAIWEI_VLM_TOKEN_EOS",        "<|im_end|>"      },
+    {"CAIWEI_VLM_TOKEN_PAD",        "<|endoftext|>"   },
+    {"CAIWEI_VLM_TOKEN_BIMAGE",     "<|vision_start|>"},
+    {"CAIWEI_VLM_TOKEN_CIMAGE",     "<|image_pad|>"   },
+    {"CAIWEI_VLM_TOKEN_EIMAGE",     "<|vision_end|>"  },
+    {"CAIWEI_VLM_TOKEN_BVIDEO",     "<|vision_start|>"},
+    {"CAIWEI_VLM_TOKEN_CVIDEO",     "<|video_pad|>"   },
+    {"CAIWEI_VLM_TOKEN_EVIDEO",     "<|vision_end|>"  },
+    {"CAIWEI_VLM_TOKEN_BTHINKING",  "<think>"         },
+    {"CAIWEI_VLM_TOKEN_ETHINKING",  "</think>"        },
+    {"CAIWEI_VLM_TOKEN_BTOOLCALL",  "<tool_call>"     },
+    {"CAIWEI_VLM_TOKEN_ETOOLCALL",  "</tool_call>"    },
+    {"CAIWEI_VLM_ENABLE_THINKING",  "enable_thinking" },
     // EMBEDDING
     // RERANKING
     // 模型配置: 类型,厂商,名称,路径
+    // RKNN3   : LLM模型文件|LLM权重文件|embedding文件|tokenizer文件
+    // RKNN3   : LLM模型文件|LLM权重文件|embedding文件|tokenizer文件|ASR模型文件|ASR权重文件
+    // RKNN3   : LLM模型文件|LLM权重文件|embedding文件|tokenizer文件|VLM模型文件|VLM权重文件
+    // LLAMACPP: LLM模型文件
+    // LLAMACPP: LLM模型文件|ASR模型文件
+    // LLAMACPP: LLM模型文件|VLM模型文件
     {"CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
@@ -127,6 +136,10 @@ std::string caiwei::env::get(const std::string& name) {
 
 int caiwei::env::get_int(const std::string& name) {
     return std::stoi(caiwei::env::get(name));
+}
+
+int64_t caiwei::env::get_long(const std::string& name) {
+    return std::stoll(caiwei::env::get(name));
 }
 
 bool caiwei::env::get_bool(const std::string& name) {

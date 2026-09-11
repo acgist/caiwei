@@ -10,6 +10,10 @@ caiwei::context::PoseONNXRuntimeContext::PoseONNXRuntimeContext(std::string path
 caiwei::context::PoseONNXRuntimeContext::~PoseONNXRuntimeContext() {
 }
 
+bool caiwei::context::PoseONNXRuntimeContext::load() {
+    return this->load_model();
+}
+
 std::vector<caiwei::image::Pose> caiwei::context::PoseONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
     float* output_data = output.front().GetTensorMutableData<float>();

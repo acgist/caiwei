@@ -119,10 +119,9 @@ bool caiwei::player::open_player(int channel, int sample_rate, int video_width, 
         SDL_Quit();
     });
     std::unique_lock<std::mutex> lock(player_state.player_mutex);
-    while (!player_state.player_cv.wait_for(lock, std::chrono::milliseconds(1000), []() {
+    player_state.player_cv.wait_for(lock, std::chrono::seconds(10), []() {
         return player_state.init_done;
-    })) {
-    }
+    });
     return player_state.running;
 }
 

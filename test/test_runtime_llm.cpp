@@ -21,7 +21,7 @@ void test_llm() {
         }
     };
     // {"name": "get_weather", "arguments": {"city": "北京"}}
-    auto ptr = caiwei::context::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<std::string>>("qwen3-llm");
+    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<std::string>>("qwen3-llm");
     if (!ptr) {
         return;
     }
@@ -34,7 +34,11 @@ void test_llm() {
 }
 
 int main() {
+    #if ENABLE_CAIWEI_RUNTIME_RKNN3
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,/data/model/Qwen3-4B.rknn|/data/model/Qwen3-4B.weight|/data/model/Qwen3-4B.embed.bin|/data/model/Qwen3-4B.tokenizer.gguf");
+    #else
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,D:/tmp/model/Qwen3-0.6B/Qwen3-0.6B-Q8_0.gguf");
+    #endif
     caiwei::test::init_test();
     test_llm();
     caiwei::test::stop_test();

@@ -11,8 +11,11 @@ caiwei::context::PoseRKNN2Context::PoseRKNN2Context(std::string path, int c, int
 caiwei::context::PoseRKNN2Context::~PoseRKNN2Context() {
 }
 
+bool caiwei::context::PoseRKNN2Context::load() {
+    return this->load_model();
+}
+
 std::vector<caiwei::image::Pose> caiwei::context::PoseRKNN2Context::run(const caiwei::media::ImageFrame& image) {
-    std::lock_guard<std::mutex> lock(this->mutex);
     auto output{ this->run(this->h, this->w, image) };
     const auto& output_attr = this->output_attrs[0];
     if (output_attr.type != RKNN_TENSOR_FLOAT16) {

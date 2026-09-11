@@ -3,12 +3,14 @@
 
 template<>
 std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
-    int min_pool = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MIN_POOL");
-    int max_pool = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MAX_POOL");
-    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>(min_pool, max_pool);
+    int min_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MIN_POOL");
+    int max_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MAX_POOL");
+    int timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
+    int keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
+    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>(min_pool, max_pool, timeout, keepalive);
 }
 
-caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(int min_pool, int max_pool) : Runtime(min_pool, max_pool, caiwei::runtime::Type::ONNXRUNTIME) {
+caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive) : Runtime(min_pool, max_pool, timeout, keepalive, caiwei::runtime::Type::ONNXRUNTIME) {
     CW_LOG_I("ONNXRuntimeRuntime init");
     this->env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
 }

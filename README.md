@@ -94,6 +94,3 @@ $ = 配置更新
 
 * 瑞芯微MPP解码
 * 内存直通static auto mem = rknn_create_mem(this->context, this->input_attrs[0].size_with_stride);
-* TODO 共享资源池 rknn2 context
-* TODO 共享资源池 rknn3 session
-* TODO 共享资源池 onnxruntime session

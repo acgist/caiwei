@@ -3,12 +3,14 @@
 
 template<>
 std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
-    int min_pool = caiwei::env::get_int("CAIWEI_LLAMACPP_MIN_POOL");
-    int max_pool = caiwei::env::get_int("CAIWEI_LLAMACPP_MAX_POOL");
-    return std::make_shared<caiwei::runtime::LlamaCPPRuntime>(min_pool, max_pool);
+    int min_pool  = caiwei::env::get_int("CAIWEI_LLAMACPP_MIN_POOL");
+    int max_pool  = caiwei::env::get_int("CAIWEI_LLAMACPP_MAX_POOL");
+    int timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
+    int keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
+    return std::make_shared<caiwei::runtime::LlamaCPPRuntime>(min_pool, max_pool, timeout, keepalive);
 }
 
-caiwei::runtime::LlamaCPPRuntime::LlamaCPPRuntime(int min_pool, int max_pool) : Runtime(min_pool, max_pool, caiwei::runtime::Type::LLAMACPP) {
+caiwei::runtime::LlamaCPPRuntime::LlamaCPPRuntime(int min_pool, int max_pool, int timeout, int keepalive) : Runtime(min_pool, max_pool, timeout, keepalive, caiwei::runtime::Type::LLAMACPP) {
     CW_LOG_I("LlamaCPPRuntime init");
 }
 

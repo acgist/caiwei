@@ -3,12 +3,14 @@
 
 template<>
 std::shared_ptr<caiwei::runtime::RKNN2Runtime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
-    int min_pool = caiwei::env::get_int("CAIWEI_RKNN2_MIN_POOL");
-    int max_pool = caiwei::env::get_int("CAIWEI_RKNN2_MAX_POOL");
-    return std::make_shared<caiwei::runtime::RKNN2Runtime>(min_pool, max_pool);
+    int min_pool  = caiwei::env::get_int("CAIWEI_RKNN2_MIN_POOL");
+    int max_pool  = caiwei::env::get_int("CAIWEI_RKNN2_MAX_POOL");
+    int timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
+    int keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
+    return std::make_shared<caiwei::runtime::RKNN2Runtime>(min_pool, max_pool, timeout, keepalive);
 }
 
-caiwei::runtime::RKNN2Runtime::RKNN2Runtime(int min_pool, int max_pool) : Runtime(min_pool, max_pool, caiwei::runtime::Type::RKNN2) {
+caiwei::runtime::RKNN2Runtime::RKNN2Runtime(int min_pool, int max_pool, int timeout, int keepalive) : Runtime(min_pool, max_pool, timeout, keepalive, caiwei::runtime::Type::RKNN2) {
     CW_LOG_I("RKNN2Runtime init");
 }
 

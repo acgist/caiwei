@@ -11,8 +11,11 @@ caiwei::context::DetRKNN2Context::DetRKNN2Context(std::string path, int c, int h
 caiwei::context::DetRKNN2Context::~DetRKNN2Context() {
 }
 
+bool caiwei::context::DetRKNN2Context::load() {
+    return this->load_model();
+}
+
 std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiwei::media::ImageFrame& image) {
-    std::lock_guard<std::mutex> lock(this->mutex);
     auto output{ this->run(this->h, this->w, image) };
     const auto& output_attr = this->output_attrs[0];
     const int64_t result_length = output_attr.dims[1];

@@ -13,7 +13,6 @@ namespace context {
 class RKNN2Context {
 protected:
     std::string path;
-    std::mutex  mutex;
     rknn_context context = 0;
     int input_size;
     int output_size;
@@ -37,6 +36,7 @@ public:
     RKNN2Context(std::string path, int c, int h, int w);
     virtual ~RKNN2Context();
 public:
+    bool load_model();
     std::vector<rknn_output> run(int h, int w, const caiwei::media::ImageFrame& image);
     std::vector<rknn_output> run(uint8_t* blob, int batch = 1);
     std::vector<rknn_output> run(float  * blob, int batch = 1);
@@ -48,6 +48,7 @@ public:
     ~ClsRKNN2Context();
 public:
     using RKNN2Context::run;
+    bool load() override;
     std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) override;
 };
 
@@ -57,6 +58,7 @@ public:
     ~DetRKNN2Context();
 public:
     using RKNN2Context::run;
+    bool load() override;
     std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
@@ -66,6 +68,7 @@ public:
     ~SegRKNN2Context();
 public:
     using RKNN2Context::run;
+    bool load() override;
     std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) override;
 };
 
@@ -75,6 +78,7 @@ public:
     ~PoseRKNN2Context();
 public:
     using RKNN2Context::run;
+    bool load() override;
     std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) override;
 };
 

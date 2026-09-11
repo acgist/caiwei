@@ -18,7 +18,7 @@ extern OrtLoggingLevel onnxruntime_log_level;
 class ONNXRuntimeContext {
 protected:
     std::string path;
-    std::mutex  mutex;
+    const Ort::Env * env;
     Ort::Session   * session    { nullptr };
     Ort::RunOptions* run_options{ nullptr };
     size_t input_data_length;
@@ -41,6 +41,7 @@ public:
     ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env);
     virtual ~ONNXRuntimeContext();
 public:
+    bool load_model();
     std::vector<Ort::Value> run(int h, int w, const caiwei::media::ImageFrame& image);
     virtual std::vector<Ort::Value> run(float* blob, int batch = 1);
 };
@@ -51,6 +52,7 @@ public:
     ~ClsONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
+    bool load() override;
     std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) override;
 };
 
@@ -60,6 +62,7 @@ public:
     ~DetONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
+    bool load() override;
     std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
@@ -69,6 +72,7 @@ public:
     ~SegONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
+    bool load() override;
     std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) override;
 };
 
@@ -78,6 +82,7 @@ public:
     ~PoseONNXRuntimeContext();
 public:
     using ONNXRuntimeContext::run;
+    bool load() override;
     std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) override;
 };
 

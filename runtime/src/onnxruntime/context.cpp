@@ -9,12 +9,38 @@ OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LO
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING;
 #endif
 
-caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env) : path(std::move(path)), input_data_length(c * h * w) {
+caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env)
+  : path(std::move(path)), env(env), input_data_length(c * h * w) {
+    CW_LOG_I("创建ONNXRuntimeContext: %s", this->path.c_str());
     this->input_node_dims.push_back(1);
     this->input_node_dims.push_back(c);
     this->input_node_dims.push_back(h);
     this->input_node_dims.push_back(w);
-    CW_LOG_I("创建ONNXRuntimeContext: %s", this->path.c_str());
+}
+
+caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
+    CW_LOG_D("释放ONNXRuntimeContext: %s", this->path.c_str());
+    if(this->run_options) {
+        CW_LOG_D("释放ONNXRuntimeContext run_options");
+        delete this->run_options;
+        this->run_options = nullptr;
+    }
+    if(this->session) {
+        CW_LOG_D("释放ONNXRuntimeContext session");
+        delete this->session;
+        this->session = nullptr;
+    }
+    for(auto ptr : this->input_node_names) {
+        delete[] ptr;
+    }
+    this->input_node_names.clear();
+    for(auto ptr : this->output_node_names) {
+        delete[] ptr;
+    }
+    this->output_node_names.clear();
+}
+
+bool caiwei::context::ONNXRuntimeContext::load_model() {
     Ort::SessionOptions options;
     // options.DisableCpuMemArena();
     #ifdef ENABLE_CAIWEI_BACKEND_CUDA
@@ -71,28 +97,7 @@ caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c,
         }
     }
     this->run_options = new Ort::RunOptions(nullptr);
-}
-
-caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
-    CW_LOG_D("释放ONNXRuntimeContext: %s", this->path.c_str());
-    if(this->run_options) {
-        CW_LOG_D("释放ONNXRuntimeContext run_options");
-        delete this->run_options;
-        this->run_options = nullptr;
-    }
-    if(this->session) {
-        CW_LOG_D("释放ONNXRuntimeContext session");
-        delete this->session;
-        this->session = nullptr;
-    }
-    for(auto ptr : this->input_node_names) {
-        delete[] ptr;
-    }
-    this->input_node_names.clear();
-    for(auto ptr : this->output_node_names) {
-        delete[] ptr;
-    }
-    this->output_node_names.clear();
+    return true;
 }
 
 std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, const caiwei::media::ImageFrame& image) {
@@ -113,7 +118,6 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, c
 }
 
 std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, int batch) {
-    std::lock_guard<std::mutex> lock(this->mutex);
     this->input_node_dims[0] = batch;
     #ifdef ENABLE_CAIWEI_BACKEND_CUDA
     Ort::IoBinding io_binding(*this->session);

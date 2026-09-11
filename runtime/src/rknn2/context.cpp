@@ -9,11 +9,21 @@
 #include <filesystem>
 
 caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)), input_data_length(c * h * w) {
+}
+
+caiwei::context::RKNN2Context::~RKNN2Context() {
+    if (this->context != 0) {
+        rknn_destroy(this->context);
+        this->context = 0;
+    }
+}
+
+bool caiwei::context::RKNN2Context::load_model() {
     auto size = std::filesystem::file_size(this->path);
     std::fstream stream(this->path);
     if (!stream.is_open()) {
         CW_LOG_W("打开RKNN2模型失败: %s", this->path.c_str());
-        return;
+        return false;
     }
     std::vector<char> data;
     data.resize(size);
@@ -23,7 +33,7 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int 
     ret = rknn_init(&this->context, data.data(), size, RKNN_FLAG_PRIOR_HIGH, nullptr);
     if (ret < 0) {
         CW_LOG_W("加载RKNN2模型失败: %d = %s", ret, this->path.c_str());
-        return;
+        return false;
     }
     rknn_core_mask mask = RKNN_NPU_CORE_ALL;
     rknn_set_core_mask(this->context, mask);
@@ -31,13 +41,14 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int 
     ret = rknn_query(this->context, RKNN_QUERY_SDK_VERSION, &version, sizeof(rknn_sdk_version));
     if (ret < 0) {
         CW_LOG_W("查询RKNN2模型版本失败: %d = %s", ret, this->path.c_str());
+        return false;
     }
     CW_LOG_I("加载RKNN2模型版本: %s = %s - %s", this->path.c_str(), version.api_version, version.drv_version);
     rknn_input_output_num io_num;
     ret = rknn_query(this->context, RKNN_QUERY_IN_OUT_NUM, &io_num, sizeof(io_num));
     if (ret < 0) {
         CW_LOG_W("读取RKNN2参数失败: %d - %s", ret, this->path.c_str());
-        return;
+        return false;
     }
     CW_LOG_I("读取RKNN2参数成功: %d - %d", io_num.n_input, io_num.n_output);
     this->input_size  = io_num.n_input;
@@ -49,7 +60,7 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int 
         ret = rknn_query(this->context, RKNN_QUERY_INPUT_ATTR, &input_attr, sizeof(rknn_tensor_attr));
         if (ret < 0) {
             CW_LOG_W("读取RKNN2输入参数失败: %d - %d - %s", i, ret, this->path.c_str());
-            return;
+            return false;
         }
         CW_LOG_I(
             "RKNN2输入参数: %d - %s - %d - %d - %d - %s - %s - %s",
@@ -81,7 +92,7 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int 
         ret = rknn_query(this->context, RKNN_QUERY_OUTPUT_ATTR, &output_attr, sizeof(rknn_tensor_attr));
         if (ret < 0) {
             CW_LOG_W("读取RKNN2输出参数失败: %d - %d - %s", i, ret, this->path.c_str());
-            return;
+            return false;
         }
         CW_LOG_I(
             "RKNN2输出参数: %d - %s - %d - %d - %d - %d - %.6f - %s - %s - %s",
@@ -108,13 +119,7 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int 
             output_attr.dims[7]
         );
     }
-}
-
-caiwei::context::RKNN2Context::~RKNN2Context() {
-    if (this->context != 0) {
-        rknn_destroy(this->context);
-        this->context = 0;
-    }
+    return true;
 }
 
 std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const caiwei::media::ImageFrame& image) {
@@ -203,7 +208,6 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int b
 }
 
 std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, int batch) {
-    std::lock_guard<std::mutex> lock(this->mutex);
     std::vector<uint16_t> data(this->input_data_length);
     caiwei::type::f32_to_fp16(data.data(), blob, this->input_data_length);
     std::vector<rknn_input>  inputs (this->input_size);

@@ -1,5 +1,5 @@
-#ifndef CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
-#define CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
+#ifndef CAIWEI_RUNTIME_MANAGER_HPP
+#define CAIWEI_RUNTIME_MANAGER_HPP
 
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
@@ -20,9 +20,10 @@
 #endif
 
 namespace caiwei  {
-namespace context {
+namespace manager {
 
-extern void free();
+void init();
+void stop();
 
 template <typename C, typename I, typename O>
 class ContextWrapper {
@@ -38,47 +39,44 @@ public:
 };
 
 template <typename C, typename I, typename O>
-caiwei::context::ContextWrapper<C, I, O>::ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime) : context(std::move(context)), runtime(std::move(runtime)) {
+caiwei::manager::ContextWrapper<C, I, O>::ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime) : context(std::move(context)), runtime(std::move(runtime)) {
     this->context->ref();
 }
 
 template <typename C, typename I, typename O>
-caiwei::context::ContextWrapper<C, I, O>::~ContextWrapper() {
+caiwei::manager::ContextWrapper<C, I, O>::~ContextWrapper() {
     this->context->unref();
     this->runtime->put_context(this->context);
 }
 
 template <typename C, typename I, typename O>
-std::shared_ptr<C> caiwei::context::ContextWrapper<C, I, O>::ptr() {
+std::shared_ptr<C> caiwei::manager::ContextWrapper<C, I, O>::ptr() {
     return this->context;
 }
 
 template <typename C, typename I, typename O>
-O caiwei::context::ContextWrapper<C, I, O>::run(const I& input) {
+O caiwei::manager::ContextWrapper<C, I, O>::run(const I& input) {
     this->context->last_run_time = std::chrono::system_clock::now();
     return this->context->run(input);
 }
 
-extern std::mutex runtime_mutex;
-extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> runtime_map;
-
 template <typename R>
 inline std::shared_ptr<R> get_runtime_impl(caiwei::runtime::Type type) {
-    std::lock_guard<std::mutex> lock(runtime_mutex);
-    auto iter = runtime_map.find(type);
-    if (iter != runtime_map.end()) {
+    std::lock_guard<std::mutex> lock(caiwei::runtime::runtime_mutex);
+    auto iter = caiwei::runtime::runtime_map.find(type);
+    if (iter != caiwei::runtime::runtime_map.end()) {
         return std::dynamic_pointer_cast<R>(iter->second);
     }
     auto runtime = caiwei::runtime::get_runtime<R>(type);
     if (runtime) {
-        runtime_map[type] = runtime;
+        caiwei::runtime::runtime_map.emplace(type, runtime);
         return runtime;
     }
     return nullptr;
 }
 
 template <typename R>
-inline std::shared_ptr<Context> get_context_impl(const ContextInfo* info, std::shared_ptr<R> runtime) {
+inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::context::ContextInfo* info, std::shared_ptr<R> runtime) {
     if (info == nullptr) {
         return nullptr;
     }
@@ -90,7 +88,7 @@ inline std::shared_ptr<Context> get_context_impl(const ContextInfo* info, std::s
 
 template <typename C, typename I, typename O>
 std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
-    const auto* info = get_context_info(name);
+    const auto* info = caiwei::context::get_context_info(name);
     if (info == nullptr) {
         return nullptr;
     }
@@ -145,4 +143,4 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
 }
 }
 
-#endif //CAIWEI_RUNTIME_CONTEXT_MANAGER_HPP
+#endif //CAIWEI_RUNTIME_MANAGER_HPP

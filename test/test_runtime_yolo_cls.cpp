@@ -15,7 +15,7 @@ void cls_image() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::context::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
@@ -31,7 +31,7 @@ void cls_video() {
     auto type = "file";
     auto url  = "./caiwei.mp4";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
-    auto ptr = caiwei::context::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
@@ -63,7 +63,7 @@ void cls_folder() {
         frame.width = width;
         frame.height = height;
         frame.channels = channels;
-        auto ptr = caiwei::context::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+        auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
         CW_LOG_I("%s", entry.path().string().c_str());
         for (const auto& index : ptr->run(frame)) {
             CW_LOG_I("%d = %.2f", index.first, index.second);

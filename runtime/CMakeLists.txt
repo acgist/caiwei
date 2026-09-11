@@ -6,7 +6,7 @@ set(
     src/context.cpp
     src/runtime.cpp
     src/session.cpp
-    src/context_manager.cpp
+    src/manager.cpp
     src/session/video_play.cpp
     src/session/video_yolo.cpp
     src/session/embeddings.cpp
@@ -51,11 +51,6 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN2)
         src/rknn2/yolo_det.cpp
         src/rknn2/yolo_seg.cpp
         src/rknn2/yolo_pose.cpp
-        src/rknn2/qwen3_asr.cpp
-        src/rknn2/qwen3_llm.cpp
-        src/rknn2/qwen3_vlm.cpp
-        src/rknn2/qwen3_embedding.cpp
-        src/rknn2/qwen3_reranking.cpp
     )
 endif()
 
@@ -64,10 +59,6 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
         APPEND CAIWEI_RUNTIME_SRCS
         src/rknn3/context.cpp
         src/rknn3/runtime.cpp
-        src/rknn3/yolo_cls.cpp
-        src/rknn3/yolo_det.cpp
-        src/rknn3/yolo_seg.cpp
-        src/rknn3/yolo_pose.cpp
         src/rknn3/qwen3_asr.cpp
         src/rknn3/qwen3_llm.cpp
         src/rknn3/qwen3_vlm.cpp
@@ -81,10 +72,7 @@ if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
         APPEND CAIWEI_RUNTIME_SRCS
         src/llamacpp/context.cpp
         src/llamacpp/runtime.cpp
-        src/llamacpp/yolo_cls.cpp
-        src/llamacpp/yolo_det.cpp
-        src/llamacpp/yolo_seg.cpp
-        src/llamacpp/yolo_pose.cpp
+        src/llamacpp/tokenizer.cpp
         src/llamacpp/qwen3_asr.cpp
         src/llamacpp/qwen3_llm.cpp
         src/llamacpp/qwen3_vlm.cpp
@@ -102,11 +90,6 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
         src/onnxruntime/yolo_det.cpp
         src/onnxruntime/yolo_seg.cpp
         src/onnxruntime/yolo_pose.cpp
-        src/onnxruntime/qwen3_asr.cpp
-        src/onnxruntime/qwen3_llm.cpp
-        src/onnxruntime/qwen3_vlm.cpp
-        src/onnxruntime/qwen3_embedding.cpp
-        src/onnxruntime/qwen3_reranking.cpp
     )
 endif()
 

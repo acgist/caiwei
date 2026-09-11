@@ -21,6 +21,7 @@ extern std::atomic_uint32_t id_index;
 
 std::string get       (const std::string& name);
 int         get_int   (const std::string& name);
+int64_t     get_long  (const std::string& name);
 bool        get_bool  (const std::string& name);
 float       get_float (const std::string& name);
 std::string get_string(const std::string& name);

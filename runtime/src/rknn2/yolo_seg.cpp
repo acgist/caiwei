@@ -11,8 +11,11 @@ caiwei::context::SegRKNN2Context::SegRKNN2Context(std::string path, int c, int h
 caiwei::context::SegRKNN2Context::~SegRKNN2Context() {
 }
 
+bool caiwei::context::SegRKNN2Context::load() {
+    return this->load_model();
+}
+
 std::vector<caiwei::image::Seg> caiwei::context::SegRKNN2Context::run(const caiwei::media::ImageFrame& image) {
-    std::lock_guard<std::mutex> lock(this->mutex);
     auto output{ this->run(this->h, this->w, image) };
     const auto& output_attr = this->output_attrs[0];
     const auto& output_attr1 = this->output_attrs[1];

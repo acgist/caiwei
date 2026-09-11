@@ -1,3 +1,4 @@
+#include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 
@@ -8,7 +9,15 @@
 #include "onnxruntime_cxx_api.h"
 #endif
 
-caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, caiwei::runtime::Type type) : min_pool(min_pool), max_pool(max_pool), type(type) {
+std::mutex caiwei::runtime::runtime_mutex;
+std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> caiwei::runtime::runtime_map;
+
+caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, int timeout, int keepalive, caiwei::runtime::Type type)
+  : id(caiwei::env::id()),
+    min_pool(min_pool),
+    max_pool(max_pool),
+    timeout(timeout),
+    keepalive(keepalive), type(type) {
 }
 
 caiwei::runtime::Runtime::~Runtime() {
@@ -25,12 +34,14 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
     }
     for (auto& context : iter->second) {
         if (context->share) {
+            CW_LOG_D("返回共享context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
             return context;
         }
         if (context->usage) {
             continue;
         }
         context->usage = true;
+        CW_LOG_D("返回独占context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
         return context;
     }
     std::shared_ptr<caiwei::context::Context> ptr{ nullptr };
@@ -50,24 +61,31 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         if (ptr == nullptr) {
             return nullptr;
         }
+        if (!ptr->load()) {
+            CW_LOG_E("加载context %s 失败", info->name.c_str());
+            return nullptr;
+        }
         iter->second.push_back(ptr);
-        CW_LOG_I("新建context: %s = %d", info->name.c_str(), iter->second.size());
+        CW_LOG_I("新建context: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());
+        ptr->usage = true;
+        CW_LOG_D("返回独占context: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());
         return ptr;
     } else {
-        while (!this->cv.wait_for(lock, std::chrono::milliseconds(1000), [&iter]() {
+        this->cv.wait_for(lock, std::chrono::seconds(this->timeout), [&iter]() {
             return std::any_of(iter->second.begin(), iter->second.end(), [](auto& context) {
                 return !context->usage;
             });
-        })) {
-        }
+        });
         for (auto& context : iter->second) {
             if (context->share) {
+                CW_LOG_D("返回共享context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
                 return context;
             }
             if (context->usage) {
                 continue;
             }
             context->usage = true;
+            CW_LOG_D("返回独占context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
             return context;
         }
         return nullptr;
@@ -78,9 +96,39 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
     if (context == nullptr) {
         return;
     }
+    CW_LOG_D("释放context: %s", context->id.c_str());
     std::lock_guard<std::mutex> lock(mutex);
     context->usage = false;
     this->cv.notify_all();
+}
+
+size_t caiwei::runtime::Runtime::optimize() {
+    std::lock_guard<std::mutex> lock(mutex);
+    for (auto map_iter = this->context_map.begin(); map_iter != this->context_map.end();) {
+        if (map_iter->second.size() <= this->min_pool) {
+            ++map_iter;
+            continue;
+        }
+        for (auto iter = map_iter->second.begin(); iter != map_iter->second.end();) {
+            if ((*iter)->usage) {
+                ++iter;
+                continue;
+            }
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - (*iter)->last_run_time);
+            if (duration.count() > this->keepalive) {
+                iter = map_iter->second.erase(iter);
+                CW_LOG_I("优化释放context: %s = %s", map_iter->first.c_str(), (*iter)->id.c_str());
+            } else {
+                ++iter;
+            }
+        }
+        if (map_iter->second.empty()) {
+            map_iter = this->context_map.erase(map_iter);
+        } else {
+            ++map_iter;
+        }
+    }
+    return this->context_map.size();
 }
 
 std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::Runtime::get_cls_context(const caiwei::context::ContextInfo* info) {

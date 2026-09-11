@@ -15,8 +15,8 @@
 namespace caiwei  {
 namespace context {
 
-extern std::string token_to_string(const llama_vocab* vocab, llama_token token, std::string default_token = "");
-extern llama_token string_to_token(const llama_vocab* vocab, const std::string& token);
+extern llama_token piece_to_token(const llama_vocab* vocab, const std::string& token);
+extern std::string token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value = "");
 
 class LlamaCPPContext {
 protected:
@@ -29,10 +29,12 @@ protected:
 protected:
     llama_context* get_context(const caiwei::text::CompletionsRequest& request);
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
-    std::generator<caiwei::text::Result> generate(llama_context* context, llama_sampler* sampler, uint32_t max_tokens, const std::string& prompt);
+    std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
 public:
     LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
     ~LlamaCPPContext();
+public:
+    bool load_model();
 };
 
 class ClsLlamaCPPContext  : public ClsContext,  public LlamaCPPContext {};
@@ -49,6 +51,7 @@ public:
     LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~LLMLlamaCPPContext();
 public:
+    bool load() override;
     std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
 };
 

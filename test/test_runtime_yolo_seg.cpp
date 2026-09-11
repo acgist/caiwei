@@ -13,7 +13,7 @@ void seg_draw() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::context::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
+    auto ptr = caiwei::manager::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
     if (ptr == nullptr) {
         return;
     }
@@ -55,7 +55,7 @@ void seg_image() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::context::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
+    auto ptr = caiwei::manager::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
     if (ptr == nullptr) {
         return;
     }
@@ -71,7 +71,7 @@ void seg_video() {
     auto type = "file";
     auto url  = "./caiwei.mp4";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
-    auto ptr = caiwei::context::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
+    auto ptr = caiwei::manager::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
     if (ptr == nullptr) {
         return;
     }

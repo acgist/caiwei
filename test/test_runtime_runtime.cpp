@@ -1,5 +1,3 @@
-// 没有其他任何变换直接输入数据测试单路理论极限
-
 #include "test.hpp"
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2

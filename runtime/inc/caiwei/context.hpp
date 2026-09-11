@@ -46,6 +46,7 @@ struct ContextInfo {
     std::string name;
     std::string path;
     std::string vendor;
+    std::vector<std::string> paths;
 };
 
 extern std::vector<ContextInfo> context_info_list;
@@ -59,6 +60,7 @@ public:
 private:
     std::atomic_int32_t ref_count = 0;
 public:
+    const std::string id;
     std::chrono::system_clock::time_point last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
@@ -66,6 +68,7 @@ public:
     Context(caiwei::runtime::Runtime* runtime);
     virtual ~Context();
 public:
+    virtual bool load();
     uint32_t ref();
     uint32_t unref();
 };

@@ -5,7 +5,7 @@
 ## 安装教程
 
 ```
-git clone https://github.com/ggml-org/llama.cpp --depth=1
+git clone https://github.com/ggml-org/llama.cpp.git --depth=1
 ```
 
 ## 模型转换
