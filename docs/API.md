@@ -30,3 +30,8 @@
 * `YOLO`: 视觉模型(`model/model_yolo`)
 * 正常单个模型参数`model`就是标准`OpenAI`接口
 * 如果指定多个模型输出结果根据`model`字段判断类型
+
+## 参考文档
+
+* https://github.com/openai/openai-openapi
+* https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md

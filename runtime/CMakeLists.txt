@@ -25,23 +25,6 @@ list(
     caiwei-media
 )
 
-if(ENABLE_CAIWEI_RUNTIME_CANN)
-    list(
-        APPEND CAIWEI_RUNTIME_SRCS
-        src/cann/context.cpp
-        src/cann/runtime.cpp
-        src/cann/yolo_cls.cpp
-        src/cann/yolo_det.cpp
-        src/cann/yolo_seg.cpp
-        src/cann/yolo_pose.cpp
-        src/cann/qwen3_asr.cpp
-        src/cann/qwen3_llm.cpp
-        src/cann/qwen3_vlm.cpp
-        src/cann/qwen3_embedding.cpp
-        src/cann/qwen3_reranking.cpp
-    )
-endif()
-
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
@@ -59,6 +42,10 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
         APPEND CAIWEI_RUNTIME_SRCS
         src/rknn3/context.cpp
         src/rknn3/runtime.cpp
+        src/rknn2/yolo_cls.cpp
+        src/rknn2/yolo_det.cpp
+        src/rknn2/yolo_seg.cpp
+        src/rknn2/yolo_pose.cpp
         src/rknn3/qwen3_asr.cpp
         src/rknn3/qwen3_llm.cpp
         src/rknn3/qwen3_vlm.cpp

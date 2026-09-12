@@ -23,11 +23,8 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ENABLE_CAIWEI_TEST                "Build Test"          OFF) # 是否编译测试
-option(ENABLE_CAIWEI_BACKEND_CANN        "Ascend NPU"          OFF) # llama.cpp ONNXRuntime
 option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"        OFF) #           ONNXRuntime
 option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"          OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_OPENVINO    "Intel GPU/NPU"       OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_CANN        "CANN"                OFF) # 昇腾
 option(ENABLE_CAIWEI_RUNTIME_RKNN2       "RKNN2"               OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
 option(ENABLE_CAIWEI_RUNTIME_RKNN3       "RKNN3"               OFF) # 瑞芯微: RK1820/RK1828
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"           ON)  # 跨平台
@@ -105,11 +102,6 @@ if (ENABLE_CAIWEI_TEST)
 add_definitions(-DENABLE_CAIWEI_TEST)
 endif()
 
-if(ENABLE_CAIWEI_BACKEND_CANN)
-    message(STATUS "Enable Ascend NPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_CANN)
-endif()
-
 if(ENABLE_CAIWEI_BACKEND_RKNN)
     message(STATUS "Enable Rockchip NPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN)
@@ -139,27 +131,6 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90)
     find_package(CUDA        REQUIRED)
     find_package(CUDAToolkit REQUIRED)
-endif()
-
-if(ENABLE_CAIWEI_BACKEND_OPENVINO)
-    message(STATUS "Enable Intel GPU/NPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_OPENVINO)
-    # CPU GPU NPU
-    add_definitions(-DOPENVINO_BACKEND=CPU)
-endif()
-
-if(ENABLE_CAIWEI_RUNTIME_CANN)
-    message(STATUS "Running with CANN")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_CANN)
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
-        list(APPEND CAIWEI_RUNTIME_LIBS ascendcl acl_op_compiler)
-    elseif(CMAKE_HOST_WIN32)
-    # -
-    else()
-    # -
-    endif()
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)

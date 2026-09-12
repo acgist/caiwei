@@ -50,6 +50,8 @@ struct CompletionsRequestMessageContentItem {
     std::optional<CompletionsRequestMessageContentUrl> audio_url;
     std::optional<CompletionsRequestMessageContentUrl> image_url;
     std::optional<CompletionsRequestMessageContentUrl> video_url;
+    // input_audio + format
+    // video_frames + frames
 };
 
 using CompletionsRequestMessageContent = std::variant<std::string, std::vector<CompletionsRequestMessageContentItem>>;
@@ -96,10 +98,14 @@ struct CompletionsRequest {
     std::optional<float> frequency_penalty;
     std::optional<uint32_t> max_tokens;
     std::optional<std::vector<CompletionsRequestTool>> tools;
-    // 自定义的属性
+    // 自定义的属性 extra_body enable_thinking
     std::string model_asr;
     std::string model_vlm;
     std::string model_yolo;
+    // top_k
+    // chat_template_kwargs
+    // repeat_penalty
+    // https://github.com/airockchip/rknn3-toolkit/blob/main/rknn3-runtime/rkllm3-server/README_CN.md
     // 内部属性
     std::string id;
     uint32_t    index;

@@ -7,15 +7,13 @@
 ## 模型推理
 ## 性能评估
 
-|设备|CANN|RKNN|llama.cpp|ONNXRuntime|原版|
-|:--|:--|:--|:--|:--|:--|
-|CANN(Ascend 310P)  ||||||
-|CANN(Ascend 910C)  ||||||
-|RKNN(RK1828)       ||||||
-|RKNN(RK3588)       ||||||
-|CUDA(Tesla L40S)   ||||||
-|CUDA(Tesla V100)   ||||||
-|CUDA(RTX 5060 Ti)  ||||||
-|OpenVINO(i5-1135G7)||||||
+|设备|RKNN|llama.cpp|ONNXRuntime|原版|
+|:--|:--|:--|:--|:--|
+|CPU(i5-1135G7)   |||||
+|RKNN(RK1828)     |||||
+|RKNN(RK3588)     |||||
+|CUDA(Tesla L40S) |||||
+|CUDA(Tesla V100) |||||
+|CUDA(RTX 5060 Ti)|||||
 
 ## 文档资料

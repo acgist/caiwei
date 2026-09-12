@@ -12,9 +12,6 @@
 pip install rknn-toolkit2
 ```
 
-* 目前`ultralytics`官方只有`DET`支持量化导出
-* 其他版本可以参考瑞芯微定制的`ultralytics`版本
-
 ### YOLO-CLS
 
 ```

@@ -20,8 +20,13 @@ static std::map<std::string, std::string> default_config = {
     // 运行配置
     {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
     {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},
-    {"CAIWEI_CANN_MIN_POOL",        "0"  },
-    {"CAIWEI_CANN_MAX_POOL",        "1"  },
+    // TODO
+    {"CAIWEI_CV_SHARE",          "false"},
+    {"CAIWEI_CV_MIN_POOL",       "2"    },
+    {"CAIWEI_CV_MAX_POOL",       "8"    },
+    {"CAIWEI_LM_SHARE",          "true" },
+    {"CAIWEI_LM_MIN_POOL",       "0"    },
+    {"CAIWEI_LM_MAX_POOL",       "1"    },
     {"CAIWEI_RKNN2_MIN_POOL",       "2"  },
     {"CAIWEI_RKNN2_MAX_POOL",       "8"  },
     {"CAIWEI_RKNN3_MIN_POOL",       "0"  },

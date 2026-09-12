@@ -38,39 +38,31 @@
 
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
-|CANN|https://www.hiascend.com/cann              |○|
-|RKNN|https://github.com/airockchip/rknn-toolkit2|○|
-|    |https://github.com/airockchip/rknn3-toolkit|○|
+|RKNN2|https://github.com/airockchip/rknn-toolkit2|○|
+|RKNN3|https://github.com/airockchip/rknn3-toolkit|○|
 
-## 后端支持
-
-|设备|llama.cpp|ONNXRuntime|
-|:--|:--|:--|
-|CANN    |?|?|
-|RKNN    |?|?|
-|CUDA    |○|○|
-|OpenVINO|○|○|
+> 其他`CANN`/`OpenVINO`等等可以使用通用推理`SDK`推理
 
 ## 模型支持
 
-|模型|CANN|RKNN|llama.cpp|ONNXRuntime|
-|:--|:--|:--|:--|:--|
-|YOLO-CLS          |○|○|×|√|
-|YOLO-DET          |○|○|×|√|
-|YOLO-OBB          |?|?|×|?|
-|YOLO-SEG          |○|○|×|√|
-|YOLO-SEM          |?|?|×|?|
-|YOLO-POSE         |○|○|×|√|
-|YOLO-DEPTH        |?|?|×|?|
-|Qwen3-ASR         |○|○|○|×|
-|Qwen3-TTS         |?|?|?|×|
-|Qwen3             |○|○|√|×|
-|Qwen3-VL          |○|○|○|×|
-|Qwen3-Omni        |?|?|?|×|
-|Qwen3-Reranker    |○|○|○|×|
-|Qwen3-Embedding   |○|○|○|×|
-|Qwen3-VL-Reranker |?|?|?|×|
-|Qwen3-VL-Embedding|?|?|?|×|
+|模型|RKNN|llama.cpp|ONNXRuntime|
+|:--|:--|:--|:--|
+|YOLO-CLS          |○|×|√|
+|YOLO-DET          |○|×|√|
+|YOLO-OBB          |?|×|?|
+|YOLO-SEG          |○|×|√|
+|YOLO-SEM          |?|×|?|
+|YOLO-POSE         |○|×|√|
+|YOLO-DEPTH        |?|×|?|
+|Qwen3-ASR         |○|○|×|
+|Qwen3-TTS         |?|?|×|
+|Qwen3             |○|√|×|
+|Qwen3-VL          |○|○|×|
+|Qwen3-Omni        |?|?|×|
+|Qwen3-Reranker    |○|○|×|
+|Qwen3-Embedding   |○|○|×|
+|Qwen3-VL-Reranker |?|?|×|
+|Qwen3-VL-Embedding|?|?|×|
 
 > √=已支持 ○=计划中 ?=未计划 ×=不支持
 

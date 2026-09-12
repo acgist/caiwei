@@ -73,6 +73,40 @@ public:
     ~RKNN3Context();
 };
 
+class RKNN3CVContext {
+protected:
+    std::string path;
+    rknn3_context context = 0;
+    int input_size;
+    int output_size;
+    size_t input_data_length;
+    std::vector<rknn3_tensor> inputs;
+    std::vector<rknn3_tensor> outputs;
+    std::vector<rknn3_tensor_attr> input_attrs;
+    std::vector<rknn3_tensor_attr> output_attrs;
+    int dst_w; // 缩放目标宽度
+    int dst_h; // 缩放目标高度
+    int pad_w; // 缩放填充宽度
+    int pad_h; // 缩放填充高度
+    float scale; // 缩放比例: 输入图片 / 原始图片
+private:
+    uint32_t image_width;
+    uint32_t image_height;
+    std::vector<uint8_t> dst;
+    std::vector<uint8_t> pad;
+    std::vector<float>   hwc;
+    std::vector<float>   chw;
+    std::vector<uint8_t> chw_i8;
+public:
+    RKNN3CVContext(std::string path, int c, int h, int w);
+    virtual ~RKNN3CVContext();
+public:
+    bool load_model();
+    std::vector<rknn3_tensor> run(int h, int w, const caiwei::media::ImageFrame& image);
+    std::vector<rknn3_tensor> run(uint8_t* blob, int batch = 1);
+    std::vector<rknn3_tensor> run(float  * blob, int batch = 1);
+};
+
 class ClsRKNN3Context  : public ClsContext,  public RKNN3Context {};
 class DetRKNN3Context  : public DetContext,  public RKNN3Context {};
 class SegRKNN3Context  : public SegContext,  public RKNN3Context {};

@@ -27,7 +27,6 @@ namespace caiwei  {
 namespace runtime {
 
 enum class Type {
-    CANN,
     RKNN2,
     RKNN3,
     LLAMACPP,
@@ -65,14 +64,6 @@ protected:
     virtual std::shared_ptr<caiwei::context::EmbeddingContext> get_embedding_context(const caiwei::context::ContextInfo* info);
     virtual std::shared_ptr<caiwei::context::RerankingContext> get_reranking_context(const caiwei::context::ContextInfo* info);
 };
-
-#ifdef ENABLE_CAIWEI_RUNTIME_CANN
-class CANNRuntime : public Runtime {
-public:
-    CANNRuntime(int min_pool, int max_pool, int timeout, int keepalive);
-    ~CANNRuntime();
-};
-#endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 class RKNN2Runtime : public Runtime {

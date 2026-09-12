@@ -3,9 +3,6 @@
 
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
-#ifdef ENABLE_CAIWEI_RUNTIME_CANN
-#include "caiwei/runtime/cann.hpp"
-#endif
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 #include "caiwei/runtime/rknn2.hpp"
 #endif
@@ -92,15 +89,6 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
     if (info == nullptr) {
         return nullptr;
     }
-    #ifdef ENABLE_CAIWEI_RUNTIME_CANN
-    if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::CANN) {
-        auto runtime = get_runtime_impl<caiwei::runtime::CANNRuntime>(caiwei::runtime::Type::CANN);
-        auto context = get_context_impl<caiwei::runtime::CANNRuntime>(info, runtime);
-        if (context != nullptr) {
-            return std::make_unique<ContextWrapper<C, I, O>>(std::dynamic_pointer_cast<C>(context), runtime);
-        }
-    }
-    #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN2) {
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>(caiwei::runtime::Type::RKNN2);

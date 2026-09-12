@@ -72,6 +72,7 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
         float top_p = std::clamp(request.top_p.value_or(0.95F), 0.0F, 1.0F);
         llama_sampler_chain_add(sampler, llama_sampler_init_temp(temp));
         llama_sampler_chain_add(sampler, llama_sampler_init_top_p(top_p, 1));
+        // llama_sampler_init_top_k
         if (!request.seed.has_value()) {
             llama_sampler_chain_add(sampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
         }

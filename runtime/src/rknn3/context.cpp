@@ -302,3 +302,137 @@ void caiwei::context::printf_session_perf(caiwei::context::ContextSession* sessi
     printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", decode_ms, decode_n_tokens, decode_tpt, decode_tps);
     printf("--------------------------------------------------------------------------------------\n");    
 }
+
+caiwei::context::RKNN3CVContext::RKNN3CVContext(std::string path, int c, int h, int w) : path(std::move(path)), input_data_length(c * h * w) {
+}
+
+caiwei::context::RKNN3CVContext::~RKNN3CVContext() {
+
+    if (this->inputs != NULL) {
+        for (int i = 0; i < this->io_num.n_input; i++) {
+            if (this->inputs[i].mem) {
+                rknn3_destroy_mem(this->rknn_ctx, this->inputs[i].mem);
+            }
+            if (this->inputs[i].attr != NULL) {
+                free(this->inputs[i].attr);
+                this->inputs[i].attr = NULL;
+            }
+        }
+        this->inputs.clear();
+    }
+
+    if (this->outputs != NULL) {
+        for (int i = 0; i < this->io_num.n_output; i++) {
+            if (this->outputs[i].mem) {
+                rknn3_destroy_mem(this->rknn_ctx, this->outputs[i].mem);
+            }
+            if (this->outputs[i].attr != NULL) {
+                free(this->outputs[i].attr);
+                this->outputs[i].attr = NULL;
+            }
+        }
+        this->outputs.clear();
+    }
+    if (this->context != 0) {
+        rknn3_destroy(this->context);
+        this->context = 0;
+    }
+}
+
+static void dump_tensor_attr(rknn3_tensor_attr* attrs)
+{
+    std::string shape_str = "";
+    for (int j = 0; j < attrs->n_dims; j++) {
+      shape_str += std::to_string(attrs->shape[j]);
+      if (j < attrs->n_dims - 1) {
+        shape_str += ", ";
+      }
+    }
+
+    std::string stride_str = "";
+    for (int j = 0; j < attrs->n_stride; j++) {
+      stride_str += std::to_string(attrs->stride[j]);
+      if (j < attrs->n_stride - 1) {
+        stride_str += ", ";
+      }
+    }
+
+    printf("Tensor: name=%s, n_dims=%d, shape=[%s], stride=[%s], aligned_size=%ld, layout=%s, dtype=%s, core_id=%d, "
+           "qnt_type=%s\n",
+           attrs->name, attrs->n_dims, shape_str.c_str(), stride_str.c_str(), attrs->aligned_size, rknn3_get_layout_string(attrs->layout),
+           rknn3_get_type_string(attrs->dtype), attrs->core_id, rknn3_get_qnt_type_string(attrs->qnt_type));
+}
+
+bool caiwei::context::RKNN3CVContext::load_model() {
+    rknn3_config config;
+    config.run_core_mask = 0xFF;
+    int ret = rknn3_init(&this->context, nullptr);
+    if (ret < 0) {
+        CW_LOG_W("加载模型失败: %s", this->path.c_str());
+        return false;
+    }
+    ret = rknn3_load_model_from_path(this->context, this->path.c_str(), nullptr);
+    if (ret < 0) {
+        CW_LOG_W("加载模型失败: %s", this->path.c_str());
+        return false;
+    }
+    ret = rknn3_model_init(this->context, &config);
+    if (ret < 0) {
+        CW_LOG_W("初始化模型失败: %s", this->path.c_str());
+        return false;
+    }
+    rknn3_input_output_num io_num;
+    ret = rknn3_query(this->context, RKNN3_QUERY_IN_OUT_NUM, &io_num, sizeof(io_num));
+    if (ret < 0) {
+        CW_LOG_W("查询参数数量失败: %s", this->path.c_str());
+        return false;
+    }
+    this->input_size = io_num.n_input;
+    this->output_size = io_num.n_output;
+    this->input_attrs.resize(io_num.n_input);
+    for (int i = 0; i < io_num.n_input; i++)
+    {
+        this->input_attrs[i].index = i;
+        ret = rknn3_query(this->context, RKNN3_QUERY_INPUT_ATTR, this->input_attrs + i, sizeof(rknn3_tensor_attr));
+        if (ret < 0)
+        {
+            printf("rknn_query fail! ret=%d\n", ret);
+            return false;
+        }
+        dump_tensor_attr(this->input_attrs + i);
+    }
+
+    std_attrs.resize(io_num.n_output);
+    for (int i = 0; i < io_num.n_output; i++)
+    {
+        std_attrs[i].index = i;
+        ret = rknn3_query(this->context, RKNN3_QUERY_OUTPUT_ATTR, std->output_attrs + i, sizeof(rknn3_tensor_attr));
+        if (ret < 0)
+        {
+            return false;
+        }
+        dump_tensor_attr(this->output_attrs + i);
+    }
+    this->inputs.resize(io_num.n_input);
+    this->outputs.resize(io_num.n_output);
+    for (int i = 0; i < io_num.n_input; i++) {
+        this->inputs[i].mem  = rknn3_create_mem(ctx, input_attrs[i].aligned_size, input_attrs[i].core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+        this->inputs[i].attr = new rknn3_tensor_attr;
+        if (this->inputs[i].mem == nullptr || this->inputs[i].attr == nullptr)
+        {
+            printf("create input tensor memory failed, index=%d\n", i);
+            return false;
+        }
+        memcpy(this->inputs[i].attr, &(input_attrs[i]), sizeof(rknn3_tensor_attr));
+    }
+    for (int i = 0; i < io_num.n_output; i++) {
+        this->outputs[i].mem  = rknn3_create_mem(this->, output_attrs[i].aligned_size, output_attrs[i].core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+        this->outputs[i].attr = new rknn3_tensor_attr;
+        if (this->outputs[i].mem == nullptr || this->outputs[i].attr == nullptr)
+        {
+            printf("create output tensor memory failed, index=%d\n", i);
+            return false;
+        }
+        memcpy(this->outputs[i].attr, &(output_attrs[i]), sizeof(rknn3_tensor_attr));
+    }
+}
