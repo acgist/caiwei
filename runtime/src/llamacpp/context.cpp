@@ -31,7 +31,7 @@ bool caiwei::context::LlamaCPPContext::load_model() {
     return true;
 }
 
-llama_context* caiwei::context::LlamaCPPContext::get_context(const caiwei::text::CompletionsRequest& request) {
+llama_context* caiwei::context::LlamaCPPContext::get_context() {
     llama_context_params params = llama_context_default_params();
     params.n_ctx   = this->max_token_length;
     params.n_batch = this->max_token_length;
@@ -80,28 +80,35 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
+std::vector<llama_token> caiwei::context::LlamaCPPContext::tokenize(const std::string& prompt, llama_context* context) {
+    const uint32_t n_ctx = llama_n_ctx(context);
+    const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
+    if (n_prompt_tokens > n_ctx) {
+        CW_LOG_W("提示词超长: %d > %u", n_prompt_tokens, n_ctx);
+        return {};
+    }
+    std::vector<llama_token> prompt_tokens(n_prompt_tokens);
+    if (llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), true, true) < 0) {
+        CW_LOG_W("提示词分词失败: %s", prompt.c_str());
+        return {};
+    }
+    return prompt_tokens;
+}
+
 std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) {
-    llama_context_ptr context{ get_context(request) };
+    llama_context_ptr context{ get_context() };
     llama_sampler_ptr sampler{ get_sampler(request) };
     if (!context || !sampler) {
         co_return;
     }
     // TODO 多模态输入数据多态实现
     std::string prompt = this->chat_template.apply(this->special_token, request);
-    uint32_t max_tokens = request.max_tokens.value_or(0);
-    const uint32_t n_ctx = llama_n_ctx(context.get());
-    const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
-    if (n_prompt_tokens > n_ctx) {
-        CW_LOG_W("提示词超长: %d > %u", n_prompt_tokens, n_ctx);
-        co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), 0 };
+    std::vector<llama_token> prompt_tokens = tokenize(prompt, context.get());
+    if (prompt_tokens.empty()) {
+        co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(0), 0 };
         co_return;
     }
-    std::vector<llama_token> prompt_tokens(n_prompt_tokens);
-    if (llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), true, true) < 0) {
-        CW_LOG_W("提示词分词失败: %s", prompt.c_str());
-        co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), 0 };
-        co_return;
-    }
+    const int n_prompt_tokens = prompt_tokens.size();
     llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
     if (llama_model_has_encoder(this->model)) {
         CW_LOG_W("不支持的编码模型: %s", this->path.c_str());
@@ -129,6 +136,8 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     // mtmd_bitmap_set_mergeable()
     // mtmd_get_output_embd
     // batch.embd
+    const uint32_t n_ctx = llama_n_ctx(context.get());
+    uint32_t max_tokens = request.max_tokens.value_or(0);
     while (max_tokens == 0 || generated_tokens < max_tokens) {
         llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context.get()), 0);
         if (n_ctx_used < 0) {
@@ -198,6 +207,9 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
             }
         }
         batch = llama_batch_get_one(&token_id, 1);
+    }
+    if (generated_tokens >= max_tokens) {
+        // FINISH_REASON_MAX_TOKENS
     }
     #if CAIWEI_DEBUG
     llama_perf_context_print(context.get());

@@ -167,6 +167,8 @@ class ASRContext : public Context {
 public:
     ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
+public:
+    virtual std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -187,6 +189,8 @@ class VLMContext : public Context {
 public:
     VLMContext(caiwei::runtime::Runtime* runtime);
     ~VLMContext();
+public:
+    virtual std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -196,6 +200,8 @@ class EmbeddingContext : public Context {
 public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
+public:
+    virtual std::string run(const caiwei::text::EmbeddingRequest& request) = 0;
 };
 
 /**
@@ -205,6 +211,8 @@ class RerankingContext : public Context {
 public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
+public:
+    virtual std::string run(const caiwei::text::RerankingRequest& request) = 0;
 };
 
 void init();

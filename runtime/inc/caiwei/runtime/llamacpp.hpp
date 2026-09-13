@@ -27,8 +27,9 @@ protected:
     caiwei::text::ChatTemplate chat_template;
     caiwei::text::SpecialToken special_token;
 protected:
-    llama_context* get_context(const caiwei::text::CompletionsRequest& request);
+    llama_context* get_context();
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
+    std::vector<llama_token> tokenize(const std::string& prompt, llama_context* context);
     std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
 public:
     LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
@@ -43,7 +44,9 @@ class SegLlamaCPPContext  : public SegContext,  public LlamaCPPContext {};
 class PoseRLlamaCPPontext : public PoseContext, public LlamaCPPContext {};
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
-
+public:
+    bool load() override;
+    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
@@ -55,10 +58,29 @@ public:
     std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
-class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {};
+class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {
+public:
+    bool load() override;
+    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+};
 
-class EmbeddingRKNN3CLlamaCPPt : public EmbeddingContext, public LlamaCPPContext {};
-class RerankingRKNN3CLlamaCPPt : public RerankingContext, public LlamaCPPContext {};
+class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {
+public:
+    EmbeddingLlamaCPPContext();
+    ~EmbeddingLlamaCPPContext();
+public:
+    bool load() override;
+    std::string run(const caiwei::text::EmbeddingRequest& request) override;
+};
+
+class RerankingLlamaCPPContext : public RerankingContext, public LlamaCPPContext {
+public:
+    RerankingLlamaCPPContext();
+    ~RerankingLlamaCPPContext();
+public:
+    bool load() override;
+    std::string run(const caiwei::text::RerankingRequest& request) override;
+};
 
 } // context
 } // caiwei

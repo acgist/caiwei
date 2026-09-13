@@ -38,14 +38,12 @@ python export_llm.py                \
     --model_path      Qwen/Qwen3-4B \
     --export_llm_path onnx/Qwen3-4B.onnx
 
-python export_rknn.py                    \
-    --platform  rk1828                   \
-    --config    onnx/Qwen3-4B.config.pkl \
-    --onnx_path onnx/Qwen3-4B.onnx       \
+python export_rknn.py              \
+    --platform  rk1828             \
+    --onnx_path onnx/Qwen3-4B.onnx \
     --rknn_path rknn/Qwen3-4B.rknn
 
 scp                              \
-    onnx/Qwen3-4B.config.pkl     \
     onnx/Qwen3-4B.embed.bin      \
     onnx/Qwen3-4B.tokenizer.gguf \
     rknn/Qwen3-4B.*              \
@@ -94,14 +92,12 @@ python export_llm.py                            \
     --model_path      Qwen/Qwen3-VL-2B-Instruct \
     --export_llm_path onnx-llm/Qwen3-VL-2B-Instruct.onnx
 
-python export_rknn.py                                    \
-    --platform  rk1828                                   \
-    --config    onnx-llm/Qwen3-VL-2B-Instruct.config.pkl \
-    --onnx_path onnx-llm/Qwen3-VL-2B-Instruct.onnx       \
+python export_rknn.py                              \
+    --platform  rk1828                             \
+    --onnx_path onnx-llm/Qwen3-VL-2B-Instruct.onnx \
     --rknn_path rknn-llm/Qwen3-VL-2B-Instruct.rknn
 
 scp                                              \
-    onnx-llm/Qwen3-VL-2B-Instruct.config.pkl     \
     onnx-llm/Qwen3-VL-2B-Instruct.embed.bin      \
     onnx-llm/Qwen3-VL-2B-Instruct.tokenizer.gguf \
     rknn-llm/Qwen3-VL-2B-Instruct.*              \
@@ -155,14 +151,12 @@ python export_llm.py                      \
     --model_path      Qwen/Qwen3-ASR-0.6B \
     --export_llm_path onnx-llm/Qwen3-ASR-0.6B.onnx
 
-python export_rknn.py                              \
-    --platform  rk1828                             \
-    --config    onnx-llm/Qwen3-ASR-0.6B.config.pkl \
-    --onnx_path onnx-llm/Qwen3-ASR-0.6B.onnx       \
+python export_rknn.py                        \
+    --platform  rk1828                       \
+    --onnx_path onnx-llm/Qwen3-ASR-0.6B.onnx \
     --rknn_path rknn-llm/Qwen3-ASR-0.6B.rknn
 
 scp                                        \
-    onnx-llm/Qwen3-ASR-0.6B.config.pkl     \
     onnx-llm/Qwen3-ASR-0.6B.embed.bin      \
     onnx-llm/Qwen3-ASR-0.6B.tokenizer.gguf \
     rknn-llm/Qwen3-ASR-0.6B.*              \
@@ -196,14 +190,12 @@ python export_llm.py                           \
     --model_path      Qwen/Qwen3-Reranker-0.6B \
     --export_llm_path onnx/Qwen3-Reranker-0.6B.onnx
 
-python export_rknn.py                               \
-    --platform  rk1820                              \
-    --config    onnx/Qwen3-Reranker-0.6B.config.pkl \
-    --onnx_path onnx/Qwen3-Reranker-0.6B.onnx       \
+python export_rknn.py                         \
+    --platform  rk1820                        \
+    --onnx_path onnx/Qwen3-Reranker-0.6B.onnx \
     --rknn_path rknn/Qwen3-Reranker-0.6B.rknn
 
 scp                                         \
-    onnx/Qwen3-Reranker-0.6B.config.pkl     \
     onnx/Qwen3-Reranker-0.6B.embed.bin      \
     onnx/Qwen3-Reranker-0.6B.tokenizer.gguf \
     rknn/Qwen3-Reranker-0.6B.*              \
@@ -233,14 +225,12 @@ python export_llm.py                            \
     --model_path      Qwen/Qwen3-Embedding-0.6B \
     --export_llm_path onnx/Qwen3-Embedding-0.6B.onnx
 
-python export_rknn.py                                \
-    --platform  rk1828                               \
-    --config    onnx/Qwen3-Embedding-0.6B.config.pkl \
-    --onnx_path onnx/Qwen3-Embedding-0.6B.onnx       \
+python export_rknn.py                          \
+    --platform  rk1828                         \
+    --onnx_path onnx/Qwen3-Embedding-0.6B.onnx \
     --rknn_path rknn/Qwen3-Embedding-0.6B.rknn
 
 scp                                          \
-    onnx/Qwen3-Embedding-0.6B.config.pkl     \
     onnx/Qwen3-Embedding-0.6B.embed.bin      \
     onnx/Qwen3-Embedding-0.6B.tokenizer.gguf \
     rknn/Qwen3-Embedding-0.6B.*              \

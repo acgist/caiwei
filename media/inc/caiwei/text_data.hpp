@@ -206,7 +206,6 @@ using EmbeddingRequestInput = std::variant<EmbeddingRequestInputItem, std::vecto
 
 struct EmbeddingRequest {
     std::string model;
-    std::optional<std::string> instruct;
     EmbeddingRequestInput input;
 };
 

@@ -14,6 +14,10 @@
 
 #include <sys/stat.h>
 
+#ifdef ENABLE_SPEEDUP
+#include "speedup.h"
+#endif
+
 #include "rknn3/rknn3_api.h"
 #include "caiwei/runtime/tokenizer.hpp"
 
@@ -34,6 +38,7 @@ int32_t b_thinking;
 int32_t e_thinking;
 int32_t b_toolcall;
 int32_t e_toolcall;
+int vision_latency;
 int n_decode_tokens;
 int n_prefill_tokens;
 caiwei::text::ResultToolcall result_toolcall;
@@ -61,11 +66,16 @@ protected:
     int      embedding_fd;
     int      embedding_dim;
     float16* embedding_data;
+    int n_output_tensors;
+    std::vector<rknn3_tensor> output_tensors;
+    std::vector<std::vector<float16>> model_output;
     struct stat emb_st{};
     caiwei::text::ChatTemplate chat_template;
     caiwei::text::SpecialToken special_token;
 public:
     bool load_model();
+    bool init_output();
+    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request);
     rknn3_session* get_session(const caiwei::text::CompletionsRequest& request, ContextSession* context_session);
     std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
 public:
@@ -89,6 +99,9 @@ protected:
     int pad_w; // 缩放填充宽度
     int pad_h; // 缩放填充高度
     float scale; // 缩放比例: 输入图片 / 原始图片
+    #ifdef ENABLE_SPEEDUP
+    SpeedUPHandle speedup;
+    #endif
 private:
     uint32_t image_width;
     uint32_t image_height;
@@ -102,6 +115,7 @@ public:
     virtual ~RKNN3CVContext();
 public:
     bool load_model();
+    bool load_embedding();
     std::vector<rknn3_tensor> run(int h, int w, const caiwei::media::ImageFrame& image);
     std::vector<rknn3_tensor> run(uint8_t* blob, int batch = 1);
     std::vector<rknn3_tensor> run(float  * blob, int batch = 1);
@@ -118,14 +132,59 @@ public:
     LLMRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~LLMRKNN3Context();
 public:
-public:
     bool load() override;
     std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
-class VLMRKNN3Context  : public VLMContext,  public RKNN3Context {};
-class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {};
-class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {};
+class VLMRKNN3Context : public VLMContext,  public RKNN3Context {
+public:
+    int n_internal_mems;
+    std::vector<rknn3_tensor_mem*> internal_mems;
+protected:
+    std::string vlm_model_path;
+    rknn3_context vlm_context = 0;
+    int input_size;
+    int output_size;
+    int model_channel;
+    int model_height;
+    int model_width;
+    uint32_t* embeds_shape;
+    uint32_t embeds_ndims;
+    std::vector<rknn3_tensor> inputs;
+    std::vector<rknn3_tensor> outputs;
+    std::vector<rknn3_tensor_attr> input_attrs;
+    std::vector<rknn3_tensor_attr> output_attrs;
+    int deepstack_aligned_size;
+    int pruned_version_flag;
+    rknn3_tensor_attr deepstack_attrs[3];
+    std::vector<rknn3_aux_tensor> deepstack_tensor;
+public:
+    bool load_vlm_model();
+    bool vlm_run(float16* img_embeds, float16* deepstack_data0, float16* deepstack_data1, float16* deepstack_data2);
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
+    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+public:
+    VLMRKNN3Context();
+    ~VLMRKNN3Context();
+};
+
+class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {
+public:
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
+    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+public:
+    EmbeddingRKNN3Context();
+    ~EmbeddingRKNN3Context();
+};
+
+class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {
+public:
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
+    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+public:
+    RerankingRKNN3Context();
+    ~RerankingRKNN3Context();
+};
 
 }
 }

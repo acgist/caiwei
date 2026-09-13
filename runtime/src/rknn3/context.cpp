@@ -16,6 +16,23 @@ caiwei::context::RKNN3Context::RKNN3Context(
 }
 
 caiwei::context::RKNN3Context::~RKNN3Context() {
+    for (int i = 0; i < n_output_tensors; i++)
+    {
+        if (output_tensors[i].attr)
+        {
+            free(output_tensors[i].attr);
+            output_tensors[i].attr = NULL;
+        }
+        if (output_tensors[i].mem)
+        {
+            rknn3_destroy_mem(rknn_app_ctx.rknn_ctx, output_tensors[i].mem);
+            output_tensors[i].mem = NULL;
+        }
+    }
+    if (this->speedup) {
+        speedup_destroy(this->speedup);
+        this->speedup = nullptr;
+    }
     if (this->context != 0) {
         rknn3_destroy(this->context);
         this->context = 0;
@@ -38,7 +55,34 @@ bool caiwei::context::RKNN3Context::load_model() {
     rknn3_config config;
     config.run_core_mask = 0xFF;
     // config.run_core_mask = RKNN3_NPU_CORE_ALL;
-    int ret = rknn3_init(&this->context, NULL);
+    // TODO 理解测试
+    config.user_mem_internal = 1; // 使用用户管理的internal内存
+    rknn3_devices devs;
+    // Query available devices
+    memset(&devs, 0, sizeof(devs));
+    ret = rknn3_find_devices(&devs);
+    if (ret != RKNN3_SUCCESS) {
+        printf("rknn3_find_devices failed! ret=%d\n", ret);
+        return -1;
+    }
+    printf("Found %d RK182X devices\n", devs.n_devices);
+    for (int i = 0; i < devs.n_devices; i++) {
+        printf("  Device %d: transfer_type=%s, id=%s\n", i, devs.devices[i].type, devs.devices[i].id);
+    }
+
+    // Select the first device
+    if (devs.n_devices == 0) {
+        printf("No RK182X devices found\n");
+        return -1;
+    } else if (devs.n_devices == 1) {
+        // If only one device found, the init_extend can be NULL
+        printf("Info: Only one device found (id=%s), init_extend can be NULL\n", devs.devices[0].id);
+    } else {
+        printf("Multiple devices found, using the first one (id=%s)\n", devs.devices[0].id);
+    }
+    rknn3_init_extend init_extend{};
+    init_extend.device_id = devs.devices[0].id;
+    int ret = rknn3_init(&this->context, &init_extend);
     if (ret < 0) {
         CW_LOG_W("加载RKNN3上下文失败: %d", ret);
         return false;
@@ -53,6 +97,14 @@ bool caiwei::context::RKNN3Context::load_model() {
         CW_LOG_W("初始化RKNN3模型失败: %d = %s + %s", ret, this->model_path.c_str(), this->weight_path.c_str());
         return false;
     }
+        // // Set Chat Template
+        // ret = rknn3_session_set_chat_template(session, system_prompt, prompt_prefix, prompt_postfix);
+        // if (ret < 0)
+        // {
+        //     printf("Failed to set chat template\n");
+        //     return -1;
+        // }
+        // TODO 移到 load embedding
     this->tokenizer = new Tokenizer(this->tokenizer_path);
     if (!this->tokenizer) {
         CW_LOG_W("加载分词器失败: %s", this->tokenizer_path.c_str());
@@ -77,6 +129,33 @@ bool caiwei::context::RKNN3Context::load_model() {
     return true;
 }
 
+bool caiwei::context::RKNN3Context::init_output() {
+    this->model_output.resize(n_output_tensors);
+    for (int i = 0; i < n_output_tensors; i++)
+    {
+        output_tensors[i].attr = (rknn3_tensor_attr *)malloc(sizeof(rknn3_tensor_attr));
+        // Query output tensor info according to the output tensor index
+        output_tensors[i].attr->index = output_tensors_index[i];
+        ret = rknn3_query(rknn_app_ctx.rknn_ctx, RKNN3_QUERY_OUTPUT_ATTR, output_tensors[i].attr, sizeof(rknn3_tensor_attr));
+        if (ret < 0)
+        {
+            printf("rknn3_query fail! ret=%d\n", ret);
+            goto out;
+        }
+
+        output_tensors[i].mem =
+            rknn3_create_mem(rknn_app_ctx.rknn_ctx, output_tensors[i].attr->aligned_size, output_tensors[i].attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+
+            this->model_output[i].resize(output_tensors[i].attr->n_elems);
+        // model_output = (float *)malloc(output_tensors[i].attr->n_elems * sizeof(float));
+        // if (!model_output)
+        // {
+        //     printf("Failed to allocate memory for model output!\n");
+        // }
+    }
+    return true;
+}
+
 rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::CompletionsRequest& request, ContextSession* context_session) {
     const rknn3_sampling_params sampling_params = {
         .top_k             = 1,
@@ -92,6 +171,7 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::Co
     params.max_context_len       = request.max_tokens.value_or(this->max_token_length);
     params.sampling_param        = sampling_params;
     params.vocab_info.vocab_size = this->tokenizer->get_size();
+    params.vocab_info.linefeed_id = this->tokenizer->get_nl();
     params.vocab_info.n_special_eos_id = 1;
     params.vocab_info.n_special_bos_id = 1;
     params.vocab_info.special_bos_id[0] = this->tokenizer->get_bos();
@@ -103,6 +183,12 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::Co
     callback.result_userdata    = context_session;
     callback.tokenizer_callback = tokenizer_callback;
     callback.tokenizer_userdata = context_session;
+    if (this->n_output_tensors != 0) {
+        callback.output_callback = output_callback;
+        callback.output_userdata = &model_output;
+        callback.output_tensors = output_tensors.data();
+        callback.n_output_tensors = n_output_tensors;
+    }
     rknn3_session* session = rknn3_session_init(this->context, &params, n_params);
     if (!session) {
         CW_LOG_W("初始化RKNN3会话失败");
@@ -114,7 +200,46 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::Co
         rknn3_session_destroy(session);
         return nullptr;
     }
+    #ifdef ENABLE_SPEEDUP
+    SpeedUPConfig g_speedup_config = {
+        .tau = 0.90f,
+        .min_ratio = 0.6f,
+        .max_ratio = 0.75f,
+        .stride = 16
+    };
+    this->speedup = speedup_create(&g_speedup_config);
+    if (!this->speedup) {
+        return false;
+    }
+    ret = speedup_attach_mrope_callback(this->speedup,
+        this->context,
+                                             session,
+                                             &callback);
+    if (ret != 0) {
+        printf("[SpeedUP] attach persistent input_callback failed, ret=%d; fallback to normal inference without SpeedUP\n", ret);
+        speedup_destroy(this->speedup);
+        this->speedup = NULL;
+    } else {
+        printf("[SpeedUP] persistent input_callback attached, version=%s\n",
+               speedup_get_version());
+    }
+    #endif
     return session;
+}
+
+std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) {
+    rknn3_llm_tensor tensor{};
+    tensor.name     = "input_embeds";
+    // TODO
+    tensor.prompt   = "prompt";
+    tensor.embed    = NULL;
+    tensor.tokens   = NULL;
+    tensor.n_tokens = 0;
+    tensor.enable_thinking = false;
+    std::vector<rknn3_llm_input> inputs(1);
+    inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
+    inputs[0].llm_input  = tensor;
+    return inputs;
 }
 
 std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& request) {
@@ -126,30 +251,18 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
     context_session.e_thinking = this->tokenizer->piece_to_token(this->special_token.e_thinking);
     context_session.b_toolcall = this->tokenizer->piece_to_token(this->special_token.b_toolcall);
     context_session.e_toolcall = this->tokenizer->piece_to_token(this->special_token.e_toolcall);
-    // TODO 多模态输入数据多态实现
-    rknn3_llm_tensor tensor{};
-    tensor.name     = "input_embeds";
-    // TODO
-    tensor.prompt   = "prompt";
-    tensor.embed    = NULL;
-    tensor.tokens   = NULL;
-    tensor.n_tokens = 0;
-    tensor.enable_thinking = false;
-    int n_inputs = 1;
-    rknn3_llm_input inputs[1];
-    rknn3_llm_infer_param llm_infer_param;
-    llm_infer_param.keep_history = 0;
-    llm_infer_param.max_new_tokens = request.max_tokens.value_or(this->max_token_length);
-    inputs[0].role       = "user";
-    inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
-    inputs[0].llm_input  = tensor;
-    context_session.llm_begin_time = std::chrono::system_clock::now();
     rknn3_session* session = this->get_session(request, &context_session);
     if (!session) {
         co_return;
     }
-    // int ret = rknn3_session_run(session, inputs, n_inputs, &llm_infer_param);
-    int ret = rknn3_session_run_async(session, inputs, n_inputs, &llm_infer_param);
+    // TODO 多模态输入数据多态实现
+    std::vector<rknn3_llm_input> inputs = this->get_inputs(session, request);
+    rknn3_llm_infer_param llm_infer_param;
+    llm_infer_param.keep_history = 0;
+    llm_infer_param.max_new_tokens = request.max_tokens.value_or(this->max_token_length);
+    context_session.llm_begin_time = std::chrono::system_clock::now();
+    // int ret = rknn3_session_run(session, inputs.data(), inputs.size(), &llm_infer_param);
+    int ret = rknn3_session_run_async(session, inputs.data(), inputs.size(), &llm_infer_param);
     {
         std::unique_lock<std::mutex> lock(context_session.mutex);
         while (!context_session.end) {
@@ -197,6 +310,44 @@ int caiwei::context::embed_callback(void* userdata, int32_t* tokens, uint64_t n_
         );
     }
     session->n_prefill_tokens = n_tokens;
+    return 0;
+}
+
+int output_callback(void *userdata, rknn3_tensor *output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state)
+{
+
+    printf("\noutput_callback: state = %d\n", state);
+    if (state != RKLLM_OUTPUT_CALLBACK_PREFILL_FINISHED)
+    {
+        return 0;
+    }
+    else if (state == RKLLM_OUTPUT_CALLBACK_PREFILL_FINISHED)
+    {
+        if (first_decode)
+        {
+            first_token = getCurrentTimeUs();
+            first_decode = false;
+        }
+
+        std::vector<std::vector<float16>>& model_output = *((std::vector<std::vector<float16>>*)userdata);
+
+        for (int i = 0; i < n_output_tensors; i++)
+        {
+            printf("output_callback: output[%d]->attr->index = %d\n", i, output_tensors[i].attr->index);
+            printf("output_callback: output[%d]->attr->name = %s\n", i, output_tensors[i].attr->name);
+            printf("output_callback: output[%d]->mem->size = %lu\n", i, output_tensors[i].mem->size);
+            for (int j = 0; j < output_tensors[i].attr->n_elems; j++)
+            {
+                model_output[i][j] = fp16_to_fp32(((float16 *)output_tensors[i].mem->virt_addr)[j]);
+
+                if (j < 10)
+                {
+                    printf("output_callback: output[%d][%d] = %f\n", i, j, model_output[j]);
+                }
+            }
+        }
+    }
+
     return 0;
 }
 
@@ -301,6 +452,23 @@ void caiwei::context::printf_session_perf(caiwei::context::ContextSession* sessi
     float decode_tps = decode_n_tokens == 0 ? 0.0f : 1e3f / decode_ms * decode_n_tokens;
     printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", decode_ms, decode_n_tokens, decode_tpt, decode_tps);
     printf("--------------------------------------------------------------------------------------\n");    
+    printf("--------------------------------------------------------------------------------------\n");
+    
+    // printf(" Vision latency = %.2f ms, FPS = %.2f\n", 
+    //        (int)session->vision_latency / 1000.f, 1000.f * 1000.f / (int)session->vision_latency);
+
+    //        if (p->audio_latency > 0) {
+    //         printf(" Audio latency = %.2f ms, FPS = %.2f\n", 
+    //             (int)p->audio_latency / 1000.f, 1000.f * 1000.f / (int)p->audio_latency);
+    //     }
+    //     float total_inference_us = (float)(p->llm_end_time - inference_start);
+    //     float rtf = (audio_duration_sec > 0) ? (total_inference_us / 1000.0f / 1000.0f / audio_duration_sec) : 0.0f;
+    //     float ttft_include_encoder = prefill_ms + (int)p->audio_latency / 1000.0f;
+    //     printf("\n");
+    //     printf(" Audio Duration = %.2f s\n", audio_duration_sec);
+    //     printf(" Total Inference = %.2f ms\n", total_inference_us / 1000.0f);
+    //     printf(" RTF = %.4f (%.2fx)\n", rtf, rtf);
+    //     printf(" TTFT (include encoder) = %.2f ms\n", ttft_include_encoder);
 }
 
 caiwei::context::RKNN3CVContext::RKNN3CVContext(std::string path, int c, int h, int w) : path(std::move(path)), input_data_length(c * h * w) {
@@ -418,21 +586,25 @@ bool caiwei::context::RKNN3CVContext::load_model() {
     for (int i = 0; i < io_num.n_input; i++) {
         this->inputs[i].mem  = rknn3_create_mem(ctx, input_attrs[i].aligned_size, input_attrs[i].core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
         this->inputs[i].attr = new rknn3_tensor_attr;
+        this->inputs[i].attr->index = i;
         if (this->inputs[i].mem == nullptr || this->inputs[i].attr == nullptr)
         {
             printf("create input tensor memory failed, index=%d\n", i);
             return false;
         }
         memcpy(this->inputs[i].attr, &(input_attrs[i]), sizeof(rknn3_tensor_attr));
+        dump_tensor_attr(this->inputs[i].attr);
     }
     for (int i = 0; i < io_num.n_output; i++) {
         this->outputs[i].mem  = rknn3_create_mem(this->, output_attrs[i].aligned_size, output_attrs[i].core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
         this->outputs[i].attr = new rknn3_tensor_attr;
+        this->outputs[i].attr->index = i;
         if (this->outputs[i].mem == nullptr || this->outputs[i].attr == nullptr)
         {
             printf("create output tensor memory failed, index=%d\n", i);
             return false;
         }
         memcpy(this->outputs[i].attr, &(output_attrs[i]), sizeof(rknn3_tensor_attr));
+        dump_tensor_attr(this->outputs[i].attr);
     }
 }

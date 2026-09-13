@@ -20,6 +20,10 @@ caiwei::context::Tokenizer::~Tokenizer() {
     }
 }
 
+int32_t caiwei::context::Tokenizer::get_nl() {
+    return llama_vocab_nl(this->vocab);
+}
+
 int32_t caiwei::context::Tokenizer::get_size() {
     return llama_vocab_n_tokens(this->vocab);
 }
