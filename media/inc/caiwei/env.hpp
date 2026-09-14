@@ -15,6 +15,33 @@
 namespace caiwei {
 namespace env    {
 
+class MessageCodeException : public std::runtime_error {
+public:
+    const std::string& code;
+    const std::string& message;
+public:
+    MessageCodeException(const std::string& message) : code("9999"), message(message), std::runtime_error(message) {}
+    MessageCodeException(const std::string& code, const std::string& message) : code(code), message(message), std::runtime_error(message) {}
+};
+
+inline void check_bool(bool value, const std::string& message, const std::string& code = "9999") {
+    if (value) {
+        throw MessageCodeException(code, message);
+    }
+}
+
+inline void check_empty(const std::string& value, const std::string& message = "字符串不能为空", const std::string& code = "9999") {
+    if (value.empty()) {
+        throw MessageCodeException(code, message);
+    }
+}
+
+inline void check_nullptr(void* ptr, const std::string& message = "指针不能为空", const std::string& code = "9999") {
+    if (ptr == nullptr) {
+        throw MessageCodeException(code, message);
+    }
+}
+
 const int max_id_index = 10000;
 
 extern std::atomic_uint32_t id_index;

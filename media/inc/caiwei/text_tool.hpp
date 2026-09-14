@@ -26,9 +26,6 @@ public:
     std::string apply(const SpecialToken& special_token, const caiwei::text::CompletionsRequest& request);
 };
 
-std::string chunk_choice(const CompletionsRequest& request, const Result& result);
-std::string response_choice(const CompletionsRequest& request, const std::string& finish_reason, std::string content, std::string thinking, std::string toolcall);
-
 } // namespace text
 } // namespace caiwei
 

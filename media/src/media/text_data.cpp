@@ -1,8 +1,6 @@
 #include "caiwei/env.hpp"
 #include "caiwei/text_data.hpp"
 
-#include "nlohmann/json.hpp"
-
 caiwei::text::Result::Result(bool thinking, bool toolcall, std::string token)
   : thinking(thinking)
   , toolcall(toolcall)
@@ -29,6 +27,11 @@ caiwei::text::ResultToolcall::ResultToolcall() : toolcall_id(caiwei::env::id()),
     this->content.reserve(1024);
 }
 
+void caiwei::text::ResultToolcall::reset() {
+    this->toolcall_id    =  caiwei::env::id();
+    this->toolcall_index += 1;
+}
+
 void caiwei::text::ResultToolcall::finish() {
     this->arguments += this->token;
     auto pos = this->arguments.rfind("}");
@@ -38,11 +41,6 @@ void caiwei::text::ResultToolcall::finish() {
         // 异常情况
     }
     this->token.clear();
-}
-
-void caiwei::text::ResultToolcall::increment() {
-    this->toolcall_id    =  caiwei::env::id();
-    this->toolcall_index += 1;
 }
 
 void caiwei::text::ResultToolcall::put_token(std::string token) {
@@ -82,6 +80,89 @@ std::string caiwei::text::ResultToolcall::get_arguments() {
     return "";
 }
 
+
+std::string caiwei::text::completions_response(const CompletionsRequest& request, const std::string& finish_reason, std::string content, std::string thinking, std::string toolcall) {
+    return "";
+}
+
+std::string caiwei::text::completions_chunk(const CompletionsRequest& request, const Result& result) {
+    CompletionsChunk chunk;
+    chunk.id      = request.id;
+    chunk.model   = request.model;
+    chunk.created = request.created;
+    CompletionsChunkChoice choice;
+    choice.index         = request.index;
+    choice.finish_reason = result.finish_reason;
+    choice.delta.role    = caiwei::text::ROLE_ASSISTANT;
+    if (result.thinking) {
+        choice.delta.reasoning_content = result.token;
+    } else if (result.toolcall) {
+        CompletionsChunkChoiceMessageToolCall tool_call;
+        CompletionsChunkChoiceMessageToolCallFunction function;
+        function.name      = result.result_toolcall->get_name();
+        function.arguments = result.result_toolcall->get_arguments();
+        tool_call.id    = result.result_toolcall->toolcall_id;
+        tool_call.type  = "function";
+        tool_call.index = result.result_toolcall->toolcall_index;
+        tool_call.function = function;
+        if (function.name.value_or("").empty() && function.arguments.value_or("").empty()) {
+            return "";
+        } else {
+            return function.name.value_or("") + function.arguments.value_or("");
+        }
+    } else {
+        choice.delta.content = result.token;
+    }
+    chunk.choices.push_back(choice);
+    if (!result.finish_reason.empty()) {
+        chunk.usage = CompletionsChunkUsage {
+            .prompt_tokens     = result.prompt_tokens,
+            .completion_tokens = result.completion_tokens,
+            .total_tokens      = result.total_tokens,
+        };
+    }
+    return result.token;
+}
+
+caiwei::text::EmbeddingRequest caiwei::text::json_to_embedding(const std::string& json) {
+    EmbeddingRequest request;
+    nlohmann::json data = nlohmann::json::parse(json);
+    request.model = data.value("model", "");
+    caiwei::env::check_empty(request.model, "模型不能为空");
+    nlohmann::json input_json = data.value("input", nlohmann::json());
+    if (input_json.is_string()) {
+        std::string input = input_json.get<std::string>();
+        caiwei::env::check_empty(input, "输入不能为空");
+        request.input = input;
+    } else if (input_json.is_array()) {
+        std::vector<std::string> input = input_json.get<std::vector<std::string>>();
+        caiwei::env::check_bool(input.empty(), "输入不能为空");
+        request.input = input;
+    } else {
+        throw caiwei::env::MessageCodeException("输入格式错误");
+    }
+    return request;
+}
+
+caiwei::text::RerankingRequest caiwei::text::json_to_reranking(const std::string& json) {
+    caiwei::text::RerankingRequest request;
+    nlohmann::json data = nlohmann::json::parse(json);
+    request.model = data.value("model", "");
+    caiwei::env::check_empty(request.model, "模型不能为空");
+    request.query = data.value("query", "");
+    caiwei::env::check_empty(request.query, "查询不能为空");
+    nlohmann::json documents_json = data.value("documents", nlohmann::json());
+    if (documents_json.is_array()) {
+        std::vector<std::string> documents = documents_json.get<std::vector<std::string>>();
+        caiwei::env::check_bool(documents.empty(), "文档不能为空");
+        request.documents = documents;
+    } else {
+        throw caiwei::env::MessageCodeException("文档格式错误");
+    }
+    request.instruct = data.value("instruct", "");
+    return request;
+}
+
 // TODO 需要手写
 
 // void to_json(json& j, const CompletionsRequestToolChoiceVariant& v) {
@@ -96,55 +177,4 @@ std::string caiwei::text::ResultToolcall::get_arguments() {
 //     } else {
 //         throw json::type_error::create(301, R"(tool_choice must be string("auto"/"none"/"required") or object)", j);
 //     }
-// }
-
-
-// void to_json(json& j, const CompletionsRequest& v) {
-//     j = json::object();
-//     j["stream"] = v.stream;
-//     j["top_p"] = v.top_p;
-//     j["temperature"] = v.temperature;
-//     j["presence_penalty"] = v.presence_penalty;
-//     j["frequency_penalty"] = v.frequency_penalty;
-//     j["n"] = v.n;
-//     j["max_tokens"] = v.max_tokens;
-//     j["model"] = v.model;
-
-//     if(v.thinking) j["thinking"] = *v.thinking;
-//     if(v.stop) j["stop"] = *v.stop;
-//     if(v.stream_options) j["stream_options"] = *v.stream_options;
-//     if(v.response_format) j["response_format"] = *v.response_format;
-//     if(v.tool_choice) j["tool_choice"] = *v.tool_choice;
-//     if(v.tools) j["tools"] = *v.tools;
-
-//     j["messages"] = v.messages;
-
-//     if(v.parallel_tool_calls) j["parallel_tool_calls"] = *v.parallel_tool_calls;
-//     if(v.seed) j["seed"] = *v.seed;
-//     if(v.user) j["user"] = *v.user;
-// }
-
-// void from_json(const json& j, CompletionsRequest& v) {
-//     // 默认值已经在构造函数，json里不存在则保留默认
-//     if(j.contains("stream")) j["stream"].get_to(v.stream);
-//     if(j.contains("top_p")) j["top_p"].get_to(v.top_p);
-//     if(j.contains("temperature")) j["temperature"].get_to(v.temperature);
-//     if(j.contains("presence_penalty")) j["presence_penalty"].get_to(v.presence_penalty);
-//     if(j.contains("frequency_penalty")) j["frequency_penalty"].get_to(v.frequency_penalty);
-//     if(j.contains("n")) j["n"].get_to(v.n);
-//     if(j.contains("max_tokens")) j["max_tokens"].get_to(v.max_tokens);
-//     j.at("model").get_to(v.model);
-
-//     if(j.contains("thinking")) v.thinking = j["thinking"].get<std::string>();
-//     if(j.contains("stop")) v.stop = j["stop"].get<CompletionsRequestStop>();
-//     if(j.contains("stream_options")) v.stream_options = j["stream_options"].get<CompletionsRequestStreamOptions>();
-//     if(j.contains("response_format")) v.response_format = j["response_format"].get<CompletionsRequestResponseFormat>();
-//     if(j.contains("tool_choice")) v.tool_choice = j["tool_choice"].get<CompletionsRequestToolChoiceVariant>();
-//     if(j.contains("tools")) v.tools = j["tools"].get<std::vector<CompletionsRequestTool>>();
-
-//     j.at("messages").get_to(v.messages);
-
-//     if(j.contains("parallel_tool_calls")) v.parallel_tool_calls = j["parallel_tool_calls"].get<bool>();
-//     if(j.contains("seed")) v.seed = j["seed"].get<int64_t>();
-//     if(j.contains("user")) v.user = j["user"].get<std::string>();
 // }

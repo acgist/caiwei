@@ -10,6 +10,8 @@ caiwei::context::Tokenizer::Tokenizer(const std::string& path) {
         CW_LOG_W("加载Tokenizer模型失败: %s", path.c_str());
         return;
     }
+    // TODO
+    // llama_model_chat_template
     this->vocab = llama_model_get_vocab(this->model);
 }
 

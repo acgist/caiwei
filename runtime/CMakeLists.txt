@@ -8,7 +8,6 @@ set(
     src/session.cpp
     src/manager.cpp
     src/session/video_play.cpp
-    src/session/video_yolo.cpp
     src/session/embeddings.cpp
     src/session/rerankings.cpp
     src/session/completions.cpp

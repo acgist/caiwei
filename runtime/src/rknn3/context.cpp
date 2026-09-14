@@ -375,7 +375,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
     } else if (state == RKLLM_RUN_MAX_NEW_TOKEN_REACHED) {
         CW_LOG_W("RKNN3会话超过最大次元数量");
         std::lock_guard<std::mutex> lock(session->mutex);
-        session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_MAX_TOKENS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+        session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
         session->end = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_STOP) {
@@ -403,7 +403,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
                 session->thinking = false;
             } else if (token_id == session->b_toolcall) {
                 session->toolcall = true;
-                session->result_toolcall.increment();
+                session->result_toolcall.reset();
             } else if (token_id == session->e_toolcall) {
                 // TOOLCALL不要修改状态
                 session->result_toolcall.finish();

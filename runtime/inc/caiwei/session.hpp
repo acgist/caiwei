@@ -40,10 +40,6 @@ public:
     virtual std::future<bool> get() = 0;
 };
 
-class VideoYoloSession : public StatefulSession {
-
-};
-
 class VideoPlaySession : public StatefulSession {
 private:
     std::string type;

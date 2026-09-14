@@ -2,8 +2,8 @@
 
 #include "caiwei/text_tool.hpp"
 
-int main() {
-    caiwei::test::init_test();
+[[maybe_unused]]
+void test_chat_template() {
     caiwei::text::ChatTemplate chat_template;
     {
         // CAIWEI_FOR_EACH(100)
@@ -11,7 +11,9 @@ int main() {
         // CAIWEI_FOR_EACH_END
     }
     caiwei::text::CompletionsRequest request;
-    request.enable_thinking = true;
+    request.extra_body = {
+        .enable_thinking = true
+    };
     request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
     request.messages.push_back({.role = "user", .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
         caiwei::text::CompletionsRequestMessageContentItem {
@@ -56,6 +58,53 @@ int main() {
     }
     std::string prompt = chat_template.apply(special_token, request);
     CW_LOG_D("prompt: %s", prompt.c_str());
+}
+
+[[maybe_unused]]
+void test_json_to_embedding() {
+    auto request1 = caiwei::text::json_to_embedding(R"({
+        "model": "qwen3-embedding",
+        "input": "你好"
+    })");
+    assert(request1.model == "qwen3-embedding");
+    std::visit([](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>) {
+            assert(arg == "你好");
+        } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+            assert(arg == std::vector<std::string>{"你好"});
+        }
+    }, request1.input);
+    auto request2 = caiwei::text::json_to_embedding(R"({
+        "model": "qwen3-embedding",
+        "input": ["你好"]
+    })");
+    assert(request2.model == "qwen3-embedding");
+    std::visit([](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>) {
+            assert(arg == "你好");
+        } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+            assert(arg == std::vector<std::string>{"你好"});
+        }
+    }, request2.input);
+}
+
+[[maybe_unused]]
+void test_json_to_reranking() {
+    auto request = caiwei::text::json_to_reranking(R"({
+        "model": "qwen3-reranking",
+        "query": "你好",
+        "documents": ["你好", "你好吗", "你好啊"]
+    })");
+    assert(request.model == "qwen3-reranking");
+}
+
+int main() {
+    caiwei::test::init_test();
+    // test_chat_template();
+    test_json_to_embedding();
+    test_json_to_reranking();
     caiwei::test::stop_test();
     return 0;
 }

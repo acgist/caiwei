@@ -19,7 +19,7 @@ std::generator<std::string> caiwei::context::LLMRKNN3Context::run(const caiwei::
   std::string finish_reason;
   for (const auto& result : this->generate(request)) {
       if (request.stream) {
-          std::string ret = caiwei::text::chunk_choice(request, result);
+          std::string ret = caiwei::text::completions_chunk(request, result);
           if (ret.empty()) {
               continue;
           }
@@ -38,6 +38,6 @@ std::generator<std::string> caiwei::context::LLMRKNN3Context::run(const caiwei::
       }
   }
   if (!request.stream) {
-    co_yield caiwei::text::response_choice(request, finish_reason, std::move(content), std::move(thinking), std::move(toolcall));
+    co_yield caiwei::text::completions_response(request, finish_reason, std::move(content), std::move(thinking), std::move(toolcall));
   }
 }

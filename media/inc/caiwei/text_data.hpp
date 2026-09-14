@@ -4,7 +4,6 @@
 #ifndef CAIWEI_MEDIA_TEXT_DATA_HPP
 #define CAIWEI_MEDIA_TEXT_DATA_HPP
 
-#include <map>
 #include <string>
 #include <cstdint>
 #include <variant>
@@ -12,46 +11,50 @@
 
 #include "nlohmann/json.hpp"
 
+#ifndef CW_TRANSIENT
+#define CW_TRANSIENT
+#endif
+
 namespace caiwei {
 namespace text   {
+    
+const std::string ROLE_USER      = "user";
+const std::string ROLE_TOOL      = "tool";
+const std::string ROLE_SYSTEM    = "system";
+const std::string ROLE_FUNCTION  = "function";
+const std::string ROLE_ASSISTANT = "assistant";
+const std::string ROLE_DEVELOPER = "developer";
 
-const std::string FINISH_REASON_STOP       = "stop";
-const std::string FINISH_REASON_LENGTH     = "length";
-const std::string FINISH_REASON_MAX_TOKENS = "max_tokens";
-const std::string FINISH_REASON_TOOL_CALLS = "tool_calls";
+const std::string FINISH_REASON_STOP           = "stop";
+const std::string FINISH_REASON_LENGTH         = "length";
+const std::string FINISH_REASON_TOOL_CALLS     = "tool_calls";
+const std::string FINISH_REASON_CONTENT_FILTER = "content_filter";
 
-enum class Role {
-    USER,
-    TOOL,
-    SYSTEM,
-    ASSISTANT,
-};
-
-enum class Type {
-    TEXT,
-    AUDIO,
-    IMAGE,
-    VIDEO,
-    AUDIO_URL,
-    IMAGE_URL,
-    VIDEO_URL,
-};
-
-struct CompletionsRequestMessageContentUrl {
+struct CompletionsRequestMessageContentItemUrl {
     std::optional<std::string> url;
 };
 
+using AudioData = std::vector<std::vector<float>>;
+using ImageData = std::vector<std::vector<uint8_t>>;
+using VideoData = std::vector<std::vector<std::vector<uint8_t>>>;
+
+// 支持格式: file/http/base64
+// file://
+// http://
+// data:image/png;base64,
+// data:image/jpeg;base64,
 struct CompletionsRequestMessageContentItem {
     std::optional<std::string> type;
     std::optional<std::string> text;
     std::optional<std::string> audio;
     std::optional<std::string> image;
     std::optional<std::string> video;
-    std::optional<CompletionsRequestMessageContentUrl> audio_url;
-    std::optional<CompletionsRequestMessageContentUrl> image_url;
-    std::optional<CompletionsRequestMessageContentUrl> video_url;
-    // input_audio + format
-    // video_frames + frames
+    std::optional<CompletionsRequestMessageContentItemUrl> audio_url;
+    std::optional<CompletionsRequestMessageContentItemUrl> image_url;
+    std::optional<CompletionsRequestMessageContentItemUrl> video_url;
+    CW_TRANSIENT AudioData audio_data;
+    CW_TRANSIENT ImageData image_data;
+    CW_TRANSIENT VideoData video_data;
 };
 
 using CompletionsRequestMessageContent = std::variant<std::string, std::vector<CompletionsRequestMessageContentItem>>;
@@ -86,30 +89,35 @@ struct CompletionsRequestTool {
     std::optional<CompletionsRequestToolFunction> function;
 };
 
+struct CompletionsRequestExtraBody {
+    std::optional<int> video_fps  = 8;     // 视频识别间隔帧数: VLM/YOLO
+    std::optional<int> asr_frames = 16000; // ASR识别帧数: 16000 * 1 * 16 * 0.5 / 8 = 16000
+    std::optional<int> vlm_frames = 8;     // VLM识别帧数
+    std::optional<int> audio_queue_size = 128000; // 音频识别队列大小: 16000 * 1 * 16 * 4 / 8 = 128000
+    std::optional<int> video_queue_size = 8;      // 视频识别队列大小
+    std::optional<std::string> video_url;  // 持续识别视频文件地址
+    std::optional<std::string> video_type; // 持续识别视频文件类型
+    std::optional<bool> enable_thinking = false;
+    std::optional<std::vector<std::string>> model_list;
+};
+
 struct CompletionsRequest {
     bool stream = false;
     std::string model;
     std::vector<CompletionsRequestMessage> messages;
-    std::optional<bool>  enable_thinking;
     std::optional<int>   seed;
+    std::optional<int>   top_k;
     std::optional<float> top_p;
     std::optional<float> temperature;
+    std::optional<float> repeat_penalty;
     std::optional<float> presence_penalty;
     std::optional<float> frequency_penalty;
-    std::optional<uint32_t> max_tokens;
+    std::optional<uint32_t> max_completion_tokens;
     std::optional<std::vector<CompletionsRequestTool>> tools;
-    // 自定义的属性 extra_body enable_thinking
-    std::string model_asr;
-    std::string model_vlm;
-    std::string model_yolo;
-    // top_k
-    // chat_template_kwargs
-    // repeat_penalty
-    // https://github.com/airockchip/rknn3-toolkit/blob/main/rknn3-runtime/rkllm3-server/README_CN.md
-    // 内部属性
-    std::string id;
-    uint32_t    index;
-    uint32_t    created;
+    std::optional<CompletionsRequestExtraBody> extra_body;
+    CW_TRANSIENT std::string id;
+    CW_TRANSIENT uint32_t    index;
+    CW_TRANSIENT uint32_t    created;
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {
@@ -120,7 +128,7 @@ struct CompletionsResponseChoiceMessageToolCallFunction {
 struct CompletionsResponseChoiceMessageToolCall {
     std::optional<std::string> id;
     std::optional<std::string> type;
-    std::optional<uint32_t> index;
+    std::optional<uint32_t>    index;
     std::optional<CompletionsResponseChoiceMessageToolCallFunction> function;
 };
 
@@ -134,7 +142,7 @@ struct CompletionsResponseChoiceMessage {
 
 struct CompletionsResponseChoice {
     uint32_t index;
-    std::optional<std::string> finish_reason;
+    std::string finish_reason;
     CompletionsResponseChoiceMessage message;
 };
 
@@ -149,8 +157,8 @@ struct CompletionsResponse {
     std::string id;
     std::string model;
     std::string object = "chat.completion";
-    std::optional<CompletionsResponseUsage> usage;
     std::vector<CompletionsResponseChoice>  choices;
+    std::optional<CompletionsResponseUsage> usage;
 };
 
 struct CompletionsChunkChoiceMessageToolCallFunction {
@@ -161,7 +169,7 @@ struct CompletionsChunkChoiceMessageToolCallFunction {
 struct CompletionsChunkChoiceMessageToolCall {
     std::optional<std::string> id;
     std::optional<std::string> type;
-    std::optional<uint32_t> index;
+    std::optional<uint32_t>    index;
     std::optional<CompletionsChunkChoiceMessageToolCallFunction> function;
 };
 
@@ -175,7 +183,7 @@ struct CompletionsChunkDelta {
 
 struct CompletionsChunkChoice {
     uint32_t index;
-    std::optional<std::string> finish_reason;
+    std::string finish_reason;
     CompletionsChunkDelta delta;
 };
 
@@ -185,28 +193,18 @@ struct CompletionsChunkUsage {
     uint32_t total_tokens;
 };
 
-// TODO 最后 data: [DONE]
 struct CompletionsChunk {
     uint32_t    created;
     std::string id;
     std::string model;
     std::string object = "chat.completion.chunk";
-    std::optional<CompletionsChunkUsage> usage;
     std::vector<CompletionsChunkChoice>  choices;
+    std::optional<CompletionsChunkUsage> usage;
 };
-
-struct EmbeddingRequestInputContent {
-    std::optional<std::string> text;
-    std::optional<std::string> image;
-    std::optional<std::string> video;
-};
-
-using EmbeddingRequestInputItem = std::variant<std::string, EmbeddingRequestInputContent>;
-using EmbeddingRequestInput = std::variant<EmbeddingRequestInputItem, std::vector<EmbeddingRequestInputItem>>;
 
 struct EmbeddingRequest {
     std::string model;
-    EmbeddingRequestInput input;
+    std::variant<std::string, std::vector<std::string>> input;
 };
 
 struct EmbeddingResponseData {
@@ -227,19 +225,11 @@ struct EmbeddingResponse {
     std::optional<EmbeddingResponseUsage> usage;
 };
 
-struct RerankingRequestInputContent {
-    std::optional<std::string> text;
-    std::optional<std::string> image;
-    std::optional<std::string> video;
-};
-
-using RerankingRequestInput = std::variant<std::string, RerankingRequestInputContent>;
-
 struct RerankingRequest {
     std::string model;
+    std::string query;
+    std::vector<std::string>   documents;
     std::optional<std::string> instruct;
-    RerankingRequestInput query;
-    std::vector<RerankingRequestInput> documents;
 };
 
 struct RerankingResponseData {
@@ -281,16 +271,18 @@ struct SpecialToken {
 };
 
 struct ResultToolcall {
-    bool name_return = false;
+    bool name_return      = false;
     bool arguments_return = false;
     std::string toolcall_id;
     uint32_t    toolcall_index;
     std::string token;
     std::string content;
     std::string arguments;
+    
     ResultToolcall();
+
+    void reset();
     void finish();
-    void increment();
     void put_token(std::string token);
     std::string get_name();
     std::string get_arguments();
@@ -299,16 +291,28 @@ struct ResultToolcall {
 struct Result {
     bool thinking = false;
     bool toolcall = false;
-    ResultToolcall* result_toolcall = nullptr;
     std::string token;
     std::string finish_reason;
     uint32_t prompt_tokens;
     uint32_t completion_tokens;
     uint32_t total_tokens;
+    ResultToolcall* result_toolcall = nullptr;
+
     Result(bool thinking, bool toolcall, std::string token);
     Result(bool thinking, bool toolcall, ResultToolcall* result_toolcall);
     Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
+
+std::string completions_response(const CompletionsRequest& request, const std::string& finish_reason, std::string content, std::string thinking, std::string toolcall);
+std::string completions_chunk   (const CompletionsRequest& request, const Result& result);
+
+CompletionsRequest json_to_completions(const std::string& json);
+EmbeddingRequest   json_to_embedding  (const std::string& json);
+RerankingRequest   json_to_reranking  (const std::string& json);
+std::string to_json(const CompletionsResponse& response);
+std::string to_json(const CompletionsChunk   & chunk);
+std::string to_json(const EmbeddingResponse  & response);
+std::string to_json(const RerankingResponse  & response);
 
 } // namespace text
 } // namespace caiwei

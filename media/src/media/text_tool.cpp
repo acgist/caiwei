@@ -18,7 +18,11 @@ std::string caiwei::text::ChatTemplate::apply(const SpecialToken& special_token,
     nlohmann::json tools;
     nlohmann::json extra_context;
     if (!special_token.enable_thinking.empty()) {
-        extra_context[special_token.enable_thinking] = request.enable_thinking.value_or(true);
+        if (request.extra_body.has_value()) {
+            extra_context[special_token.enable_thinking] = request.extra_body.value().enable_thinking.value_or(true);
+        } else {
+            extra_context[special_token.enable_thinking] = false;
+        }
     }
     for (const auto& message : request.messages) {
         nlohmann::json copy;
@@ -32,8 +36,8 @@ std::string caiwei::text::ChatTemplate::apply(const SpecialToken& special_token,
             if (std::holds_alternative<std::string>(message.content.value())) {
                 copy["content"] = std::get<std::string>(message.content.value());
             } else if (std::holds_alternative<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value())) {
-                const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
                 nlohmann::json parts;
+                const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
                 for (const auto& item : items) {
                     if (item.type.has_value()) {
                         nlohmann::json part;
@@ -81,47 +85,4 @@ std::string caiwei::text::ChatTemplate::apply(const SpecialToken& special_token,
         .add_generation_prompt = true,
         .extra_context         = extra_context
     });
-}
-
-std::string caiwei::text::chunk_choice(const CompletionsRequest& request, const Result& result) {
-    CompletionsChunk chunk;
-    chunk.id      = request.id;
-    chunk.model   = request.model;
-    chunk.created = request.created;
-    CompletionsChunkChoice choice;
-    choice.index         = request.index;
-    choice.finish_reason = result.finish_reason;
-    choice.delta.role    = "assistant";
-    if (result.thinking) {
-        choice.delta.reasoning_content = result.token;
-    } else if (result.toolcall) {
-        CompletionsChunkChoiceMessageToolCall tool_call;
-        CompletionsChunkChoiceMessageToolCallFunction function;
-        function.name      = result.result_toolcall->get_name();
-        function.arguments = result.result_toolcall->get_arguments();
-        tool_call.id    = result.result_toolcall->toolcall_id;
-        tool_call.type  = "function";
-        tool_call.index = result.result_toolcall->toolcall_index;
-        tool_call.function = function;
-        if (function.name.value_or("").empty() && function.arguments.value_or("").empty()) {
-            return "";
-        } else {
-            return function.name.value_or("") + function.arguments.value_or("");
-        }
-    } else {
-        choice.delta.content = result.token;
-    }
-    chunk.choices.push_back(choice);
-    if (!result.finish_reason.empty()) {
-        chunk.usage = CompletionsChunkUsage {
-            .prompt_tokens     = result.prompt_tokens,
-            .completion_tokens = result.completion_tokens,
-            .total_tokens      = result.total_tokens,
-        };
-    }
-    return result.token;
-}
-
-std::string caiwei::text::response_choice(const CompletionsRequest& request, const std::string& finish_reason, std::string content, std::string thinking, std::string toolcall) {
-    return "";
 }

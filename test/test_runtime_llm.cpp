@@ -7,7 +7,9 @@
 void test_llm() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
-    request.enable_thinking = false;
+    request.extra_body = {
+        .enable_thinking = false,
+    };
     request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
     request.messages.push_back({.role = "user", .content = "北京"});
     request.tools = {
@@ -25,12 +27,12 @@ void test_llm() {
     if (!ptr) {
         return;
     }
-    CAIWEI_FOR_EACH(100)
+    // CAIWEI_FOR_EACH(100)
     for (const std::string& value : ptr->run(request)) {
         std::printf("%s", value.c_str());
         std::fflush(stdout);
     }
-    CAIWEI_FOR_EACH_END
+    // CAIWEI_FOR_EACH_END
 }
 
 int main() {

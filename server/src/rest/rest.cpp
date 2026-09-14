@@ -95,6 +95,8 @@ static void restHandler() {
         std::string message;
         try {
             std::rethrow_exception(std::move(e));
+        } catch (caiwei::env::MessageCodeException& e) {
+            message = caiwei::json::buildResponse(e.code, e.message);
         } catch (std::exception& e) {
             message = caiwei::json::buildResponse("9999", e.what());
         } catch (...) {

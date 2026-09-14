@@ -4,7 +4,6 @@
       <div class="tool-bar" style="margin:auto;">
         <el-select v-model="type" style="width:8rem;margin-right:1rem;">
           <el-option value="VideoPlay"   label="媒体播放"></el-option>
-          <el-option value="VideoYolo"   label="视频识别"></el-option>
           <el-option value="Rerankings"  label="重新排序"></el-option>
           <el-option value="Embeddings"  label="嵌入向量"></el-option>
           <el-option value="Completions" label="文本生成"></el-option>
@@ -17,7 +16,6 @@
       </div>
     </el-row>
     <video-play  v-if="type === 'VideoPlay'  " :host="host" ref="videoPlay"  ></video-play>
-    <video-yolo  v-if="type === 'VideoYolo'  " :host="host" ref="videoYolo"  ></video-yolo>
     <rerankings  v-if="type === 'Rerankings' " :host="host" ref="rerankings" ></rerankings>
     <embeddings  v-if="type === 'Embeddings' " :host="host" ref="embeddings" ></embeddings>
     <completions v-if="type === 'Completions'" :host="host" ref="completions"></completions>
@@ -29,13 +27,11 @@ import Completions from "./Completions.vue";
 import Embeddings from "./Embeddings.vue";
 import Rerankings from "./Rerankings.vue";
 import VideoPlay from "./VideoPlay.vue";
-import VideoYolo from "./VideoYolo.vue";
 export default {
   
   name: "App",
   components: {
     VideoPlay,
-    VideoYolo,
     Rerankings,
     Embeddings,
     Completions,
