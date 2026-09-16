@@ -37,9 +37,7 @@ extern httplib::Server* server;
 
 void open();
 void stop();
-void rest_api();
-void rest_text_api();
-void rest_video_api();
+void register_api();
 
 } // rest
 } // caiwei

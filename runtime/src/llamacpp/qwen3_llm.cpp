@@ -12,32 +12,6 @@ bool caiwei::context::LLMLlamaCPPContext::load() {
     return this->load_model();
 }
 
-std::generator<std::string> caiwei::context::LLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
-    std::string content;
-    std::string thinking;
-    std::string toolcall;
-    std::string finish_reason;
-    for (const auto& result : this->generate(request)) {
-        if (request.stream) {
-            std::string ret = caiwei::text::completions_chunk(request, result);
-            if (ret.empty()) {
-                continue;
-            }
-            co_yield ret;
-        } else {
-          if (result.thinking) {
-            thinking += result.token;
-          } else if (result.toolcall) {
-            toolcall += result.token;
-          } else {
-            content += result.token;
-          }
-          if (!result.finish_reason.empty()) {
-              finish_reason = result.finish_reason;
-          }
-        }
-    }
-    if (!request.stream) {
-      co_yield caiwei::text::completions_response(request, finish_reason, std::move(content), std::move(thinking), std::move(toolcall));
-    }
+std::generator<caiwei::text::Result> caiwei::context::LLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
+    return this->generate(request);
 }

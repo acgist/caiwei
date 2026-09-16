@@ -43,6 +43,7 @@ enum class Type {
 
 struct ContextInfo {
     Type type;
+    std::string type_;
     std::string name;
     std::string path;
     std::string vendor;
@@ -88,7 +89,7 @@ public:
     ClsContext(int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsContext();
 public:
-    virtual std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) = 0;
+    virtual std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) = 0;
 };
 
 /**
@@ -168,7 +169,7 @@ public:
     ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
-    virtual std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -179,7 +180,7 @@ public:
     LLMContext(caiwei::runtime::Runtime* runtime);
     ~LLMContext();
 public:
-    virtual std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -190,7 +191,7 @@ public:
     VLMContext(caiwei::runtime::Runtime* runtime);
     ~VLMContext();
 public:
-    virtual std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -201,7 +202,7 @@ public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
 public:
-    virtual std::string run(const caiwei::text::EmbeddingRequest& request) = 0;
+    virtual std::string run(const caiwei::text::EmbeddingsRequest& request) = 0;
 };
 
 /**
@@ -212,7 +213,7 @@ public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
 public:
-    virtual std::string run(const caiwei::text::RerankingRequest& request) = 0;
+    virtual std::string run(const caiwei::text::RerankingsRequest& request) = 0;
 };
 
 void init();

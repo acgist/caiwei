@@ -7,7 +7,7 @@ void test_manager() {
     std::vector<std::thread> threads;
     for (int i = 0; i < 10; ++i) {
         threads.push_back(std::thread([i]() {
-            auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+            auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
             if (ptr) {
                 CW_LOG_I("获取context: %d", i);
                 std::this_thread::sleep_for(std::chrono::seconds(4));
@@ -25,7 +25,7 @@ void test_manager() {
 [[maybe_unused]]
 void test_manager_get() {
     CAIWEI_FOR_EACH(100'000)
-    caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<std::pair<uint32_t, float>>>("yolo26n-cls");
+    caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
     CAIWEI_FOR_EACH_END
 }
 

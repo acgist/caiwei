@@ -18,9 +18,8 @@ list(
 if(ENABLE_CAIWEI_CPPHTTPLIB)
     list(
         APPEND CAIWEI_SERVER_SRCS
+        src/rest/api.cpp
         src/rest/rest.cpp
-        src/rest/text.cpp
-        src/rest/video.cpp
     )
 endif()
 

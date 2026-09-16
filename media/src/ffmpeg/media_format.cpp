@@ -114,7 +114,7 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
             CW_LOG_W("发送媒体包失败");
         }
     }
-    return true;
+    return this->callable;
 }
 
 void caiwei::media::MediaFormat::send_header() {
@@ -160,9 +160,9 @@ static int write_fragmented(void* opaque, const uint8_t* buf, int buf_size) {
 #endif
     caiwei::media::MediaFormat* format = static_cast<caiwei::media::MediaFormat*>(opaque);
     if(format->format_callback) {
-        format->format_callback(buf_size, buf);
+        format->callable = format->format_callback(buf_size, buf);
     } else {
-        // 没有回调
+        format->callable = false;
     }
     return 0;
 }

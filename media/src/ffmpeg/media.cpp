@@ -4,10 +4,12 @@
 #include <filesystem>
 
 extern "C" {
+#include "libavformat/avio.h"
 #include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
 }
 
+static void print_all_protocols();
 static void print_all_decoder();
 static void print_all_encoder();
 static void delete_old_sdp_file();
@@ -15,6 +17,7 @@ static void delete_old_sdp_file();
 void caiwei::media::init() {
     avformat_network_init();
     avdevice_register_all();
+    print_all_protocols();
     print_all_decoder();
     print_all_encoder();
     delete_old_sdp_file();
@@ -22,6 +25,14 @@ void caiwei::media::init() {
 
 void caiwei::media::stop() {
     avformat_network_deinit();
+}
+
+static void print_all_protocols() {
+    void* iter = nullptr;
+    const char* name = nullptr;
+    while ((name = avio_enum_protocols(&iter, 0)) != nullptr) {
+        CW_LOG_D("protocol: %s", name);
+    }
 }
 
 static void print_all_decoder() {

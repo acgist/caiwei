@@ -11,6 +11,8 @@
 #include <vector>
 #include <functional>
 
+#include "caiwei/text_data.hpp"
+
 namespace caiwei  {
 namespace session {
     
@@ -24,7 +26,7 @@ public:
 
 class StatelessSession : public Session {
 public:
-    virtual std::vector<char> get() = 0;
+    virtual std::string get() = 0;
 };
 
 // 返回连接是否断开标识是否需要继续处理
@@ -50,16 +52,32 @@ public:
     std::future<bool> get() override;
 };
 
-class RerankingsSession : public StatelessSession {
-
-};
-
 class EmbeddingsSession : public StatelessSession {
-
+private:
+    const caiwei::text::EmbeddingsRequest& request;
+public:
+    EmbeddingsSession(const caiwei::text::EmbeddingsRequest& request);
+public:
+    virtual std::string get() override;
 };
 
-class ChatCompletionsSession : public StatefulSession {
+class RerankingsSession : public StatelessSession {
+private:
+    const caiwei::text::RerankingsRequest& request;
+public:
+    RerankingsSession(const caiwei::text::RerankingsRequest& request);
+public:
+    virtual std::string get() override;
+};
 
+class CompletionsSession : public StatefulSession {
+private:
+    caiwei::text::CompletionsRequest& request;
+public:
+    CompletionsSession(caiwei::text::CompletionsRequest& request, Callback callback = nullptr);
+public:
+    std::string get_sync();
+    std::future<bool> get() override;
 };
 
 } // session

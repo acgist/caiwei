@@ -16,43 +16,39 @@ caiwei::session::VideoPlaySession::VideoPlaySession(std::string type, std::strin
 
 std::future<bool> caiwei::session::VideoPlaySession::get() {
     std::promise<bool> promise;
-    caiwei::media::MediaDemuxer* demuxer = nullptr;
-    caiwei::media::MediaFormat media_format([this, &demuxer](uint32_t length, const uint8_t* data) {
+    caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
         if (this->callback) {
             auto output = base64_encode(data, length);
-            bool ret = this->callback("data", output.data(), output.length());
-            if(!ret) {
+            if (this->callback("data", output.data(), output.length())) {
+                return true;
+            } else {
                 CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
-                if (demuxer) {
-                    demuxer->stop();
-                }
+                return false;
             }
-            return ret;
         }
-        return true;
+        return false;
     });
     caiwei::media::MediaMuxer media_muxer(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 360, AV_PIX_FMT_RGB24),
         caiwei::media::AudioInfo(2, 48000, AV_SAMPLE_FMT_FLTP),
-        caiwei::media::VideoInfo(25, 640, 360, AV_PIX_FMT_YUV420P),
+        caiwei::media::VideoInfo(    640, 360, AV_PIX_FMT_RGB24),
+        caiwei::media::VideoInfo(24, 640, 360, AV_PIX_FMT_YUV420P),
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
-            media_format.send(type, packet);
-            return true;
+            return media_format.send(type, packet);
         }
     );
     media_muxer.open();
     media_format.open(media_muxer);
     caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, [&media_muxer](const caiwei::media::AudioFrame& frame) {
-        media_muxer.on_audio(frame);
-        return true;
+        return media_muxer.on_audio(frame);
     }, [&media_muxer](const caiwei::media::VideoFrame& frame) {
-        media_muxer.on_video(frame);
-        return true;
+        return media_muxer.on_video(frame);
     });
-    demuxer = &media_demuxer;
     CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
-    bool ret = media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
+    bool ret = media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+    );
     media_demuxer.stop();
     media_format.stop();
     media_muxer.stop();

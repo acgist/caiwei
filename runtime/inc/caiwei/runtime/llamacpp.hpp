@@ -46,7 +46,7 @@ class PoseRLlamaCPPontext : public PoseContext, public LlamaCPPContext {};
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
 public:
     bool load() override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
@@ -55,13 +55,13 @@ public:
     ~LLMLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {
 public:
     bool load() override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {
@@ -70,7 +70,7 @@ public:
     ~EmbeddingLlamaCPPContext();
 public:
     bool load() override;
-    std::string run(const caiwei::text::EmbeddingRequest& request) override;
+    std::string run(const caiwei::text::EmbeddingsRequest& request) override;
 };
 
 class RerankingLlamaCPPContext : public RerankingContext, public LlamaCPPContext {
@@ -79,7 +79,7 @@ public:
     ~RerankingLlamaCPPContext();
 public:
     bool load() override;
-    std::string run(const caiwei::text::RerankingRequest& request) override;
+    std::string run(const caiwei::text::RerankingsRequest& request) override;
 };
 
 } // context

@@ -17,11 +17,16 @@ namespace env    {
 
 class MessageCodeException : public std::runtime_error {
 public:
-    const std::string& code;
-    const std::string& message;
+    const std::string code;
+    const std::string message;
 public:
-    MessageCodeException(const std::string& message) : code("9999"), message(message), std::runtime_error(message) {}
-    MessageCodeException(const std::string& code, const std::string& message) : code(code), message(message), std::runtime_error(message) {}
+    MessageCodeException(const std::string message) : code("9999"), message(), std::runtime_error("") {}
+    MessageCodeException(const std::string code, const std::string message) : code(std::move(code)), message(std::move(message)), std::runtime_error("") {}
+    virtual ~MessageCodeException() = default;
+public:
+    const char* what() const noexcept override {
+        return this->message.c_str();
+    }
 };
 
 inline void check_bool(bool value, const std::string& message, const std::string& code = "9999") {
@@ -36,7 +41,14 @@ inline void check_empty(const std::string& value, const std::string& message = "
     }
 }
 
-inline void check_nullptr(void* ptr, const std::string& message = "指针不能为空", const std::string& code = "9999") {
+template<typename T>
+inline void check_range(T val, T min, T max, const std::string& message = "数据范围错误", const std::string& code = "9999") {
+    if (val < min || val > max) {
+        throw MessageCodeException(code, message);
+    }
+}
+
+inline void check_nullptr(const void* ptr, const std::string& message = "指针不能为空", const std::string& code = "9999") {
     if (ptr == nullptr) {
         throw MessageCodeException(code, message);
     }
@@ -59,6 +71,10 @@ void print_all_env();
 
 inline size_t timestamp() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+inline size_t unix_timestamp() {
+    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 inline std::string id() {

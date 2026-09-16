@@ -2,27 +2,25 @@
 #include "caiwei/env.hpp"
 #include "caiwei/json.hpp"
 #include "caiwei/rest.hpp"
-#include "caiwei/context.hpp"
 
 #include "httplib.h"
 
 #include <fstream>
 #include <filesystem>
 
-static void restHandler();
-static void restGetIndex();
-static void restGetHealth();
-static void restGetModels();
-static void restGetFavicon();
-static void restGetShutdown();
+static void get_index();
+static void get_favicon();
+static void get_shutdown();
+static void register_handler();
 
 httplib::Server* caiwei::rest::server = new httplib::Server;
 
 void caiwei::rest::open() {
-    restHandler();
-    rest_api();
-    rest_text_api();
-    rest_video_api();
+    get_index();
+    get_favicon();
+    get_shutdown();
+    register_api();
+    register_handler();
     auto host = caiwei::env::get("CAIWEI_SERVER_HOST");
     auto port = caiwei::env::get_int("CAIWEI_SERVER_PORT");
     auto pool = caiwei::env::get_int("CAIWEI_SERVER_POOL");
@@ -51,15 +49,7 @@ void caiwei::rest::stop() {
     caiwei::rest::server->stop();
 }
 
-void caiwei::rest::rest_api() {
-    restGetIndex();
-    restGetHealth();
-    restGetModels();
-    restGetFavicon();
-    restGetShutdown();
-}
-
-static void restHandler() {
+static void register_handler() {
     caiwei::rest::server->set_pre_routing_handler([](const httplib::Request& request, httplib::Response& response) {
         if(caiwei::env::get_bool("CAIWEI_SECURITY")) {
             auto authorization = request.get_header_value("Authorization");
@@ -107,7 +97,7 @@ static void restHandler() {
     });
 }
 
-static void restGetIndex() {
+static void get_index() {
     caiwei::rest::server->Get("/", [](const httplib::Request&, httplib::Response& response) {
         response.set_content(R"(<!DOCTYPE html>
 <html lang="zh-cn">
@@ -145,27 +135,7 @@ static void restGetIndex() {
     });
 }
 
-static void restGetHealth() {
-    caiwei::rest::server->Get("/v1/health", [](const httplib::Request&, httplib::Response& response) {
-        response.set_content(caiwei::json::buildResponse("running"), caiwei::rest::content::type::JSON);
-    });
-}
-
-static void restGetModels() {
-    caiwei::rest::server->Get("/v1/models", [](const httplib::Request&, httplib::Response& response) {
-        const auto& list = caiwei::context::context_info_list;
-        nlohmann::json ret;
-        for (const auto& value : list) {
-            ret.push_back({
-                {"name", value.name},
-                {"path", value.path}
-            });
-        }
-        response.set_content(caiwei::json::buildResponse(ret), caiwei::rest::content::type::JSON);
-    });
-}
-
-static void restGetFavicon() {
+static void get_favicon() {
     caiwei::rest::server->Get("/favicon.ico", [](const httplib::Request&, httplib::Response& response) {
         std::filesystem::path path("./favicon.ico");
         auto file_size = std::filesystem::file_size(path);
@@ -185,7 +155,7 @@ static void restGetFavicon() {
     });
 }
 
-static void restGetShutdown() {
+static void get_shutdown() {
     caiwei::rest::server->Get("/shutdown", [](const httplib::Request&, httplib::Response& response) {
         response.set_content(caiwei::json::buildResponse("正在关机..."), caiwei::rest::content::type::JSON);
         caiwei::rest::stop();

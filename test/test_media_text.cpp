@@ -61,8 +61,82 @@ void test_chat_template() {
 }
 
 [[maybe_unused]]
-void test_json_to_embedding() {
-    auto request1 = caiwei::text::json_to_embedding(R"({
+void test_json_to_completions() {
+    auto request1 = caiwei::text::json_to_completions(R"({
+        "model": "qwen3",
+        "messages": [{
+            "role": "system",
+            "content": "碧螺萧萧"
+        }]
+    })");
+    assert(request1.model == "qwen3");
+    assert(request1.messages.size() == 1);
+    auto request2 = caiwei::text::json_to_completions(R"({
+        "model": "qwen3",
+        "messages": [{
+            "role": "system",
+            "content": "碧螺萧萧"
+        }, {
+            "role": "user",
+            "content": [{
+                "type": "text",
+                "text": "测试"
+            }, {
+                "type": "audio_url",
+                "audio_url": {
+                    "url": "https://www.acgist.com/demo.mp3"
+                }
+            }]
+        }, {
+            "role": "tool",
+            "tool_call_id": "123456",
+            "tool_calls": [{
+                "id": "123456",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"city\":\"广州\"}"
+                }
+            }]
+        }],
+        "seed": 12345,
+        "temperature": 0.5,
+        "enable_thinking": true,
+        "tools": [{
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "查询城市天气",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "城市名称"
+                        }
+                    },
+                    "required": ["location"]
+                }
+            }
+        }],
+        "extra_body": {
+            "video_fps": 30,
+            "media_url": "https://www.acgist.com/demo.mp4",
+            "media_type": "http",
+            "model_list": ["qwen3", "qwen3-vlm"]
+        }
+    })");
+    assert(request2.model == "qwen3");
+    assert(request2.messages.size() == 3);
+    assert(request2.messages[0].role == "system");
+    assert(request2.messages[1].role == "user");
+    assert(request2.seed == 12345);
+    assert(!request2.repeat_penalty.has_value());
+}
+
+[[maybe_unused]]
+void test_json_to_embeddings() {
+    auto request1 = caiwei::text::json_to_embeddings(R"({
         "model": "qwen3-embedding",
         "input": "你好"
     })");
@@ -75,7 +149,7 @@ void test_json_to_embedding() {
             assert(arg == std::vector<std::string>{"你好"});
         }
     }, request1.input);
-    auto request2 = caiwei::text::json_to_embedding(R"({
+    auto request2 = caiwei::text::json_to_embeddings(R"({
         "model": "qwen3-embedding",
         "input": ["你好"]
     })");
@@ -91,8 +165,8 @@ void test_json_to_embedding() {
 }
 
 [[maybe_unused]]
-void test_json_to_reranking() {
-    auto request = caiwei::text::json_to_reranking(R"({
+void test_json_to_rerankings() {
+    auto request = caiwei::text::json_to_rerankings(R"({
         "model": "qwen3-reranking",
         "query": "你好",
         "documents": ["你好", "你好吗", "你好啊"]
@@ -100,11 +174,84 @@ void test_json_to_reranking() {
     assert(request.model == "qwen3-reranking");
 }
 
+[[maybe_unused]]
+void test_completions_response_to_json() {
+    caiwei::text::CompletionsResponse response;
+    response.created = 1694502400;
+    response.id      = "123456";
+    response.model   = "qwen3";
+    response.choices = std::vector<caiwei::text::CompletionsResponseChoice> {
+        {
+            .index = 0,
+            .finish_reason = "stop",
+            .message = {
+                .role = "assistant",
+                .content = "你好"
+            }
+        },
+    };
+    std::string json = caiwei::text::to_json(response);
+    CW_LOG_D("test_completions_response_to_json: %s", json.c_str());
+}
+
+[[maybe_unused]]
+void test_completions_chunk_to_json() {
+    caiwei::text::CompletionsChunk chunk;
+    chunk.created = 1694502400;
+    chunk.id      = "123456";
+    chunk.model   = "qwen3";
+    chunk.choices = std::vector<caiwei::text::CompletionsChunkChoice> {
+        {
+            .index = 0,
+            .finish_reason = "stop",
+            .delta = {
+                .role = "assistant",
+                .content = "你好"
+            }
+        },
+    };
+    std::string json = caiwei::text::to_json(chunk);
+    CW_LOG_D("test_completions_chunk_to_json: %s", json.c_str());
+}
+
+[[maybe_unused]]
+void test_embedding_response_to_json() {
+    caiwei::text::EmbeddingResponse response;
+    response.model = "qwen3-embedding";
+    response.data.push_back({.index = 0, .embedding = {0.5, 1.0}});
+    response.data.push_back({.index = 1, .embedding = {0.5, 0.5}});
+    response.usage = {
+        .prompt_tokens = 100,
+        .total_tokens  = 100
+    };
+    std::string json = caiwei::text::to_json(response);
+    CW_LOG_D("test_embedding_response_to_json: %s", json.c_str());
+}
+
+[[maybe_unused]]
+void test_reranking_response_to_json() {
+    caiwei::text::RerankingResponse response;
+    response.model = "qwen3-reranking";
+    response.data.push_back({.index = 0, .score = 0.5});
+    response.data.push_back({.index = 1, .score = 0.5});
+    response.usage = {
+        .prompt_tokens = 100,
+        .total_tokens  = 100
+    };
+    std::string json = caiwei::text::to_json(response);
+    CW_LOG_D("test_reranking_response_to_json: %s", json.c_str());
+}
+
 int main() {
     caiwei::test::init_test();
     // test_chat_template();
-    test_json_to_embedding();
-    test_json_to_reranking();
+    test_json_to_completions();
+    // test_json_to_embeddings();
+    // test_json_to_rerankings();
+    // test_completions_response_to_json();
+    // test_completions_chunk_to_json();
+    // test_embedding_response_to_json();
+    // test_reranking_response_to_json();
     caiwei::test::stop_test();
     return 0;
 }

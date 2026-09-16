@@ -158,23 +158,23 @@ static void init_context_info_list() {
         }
         CW_LOG_I("模型配置: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());
         if (type == "CLS") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::CLS, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::CLS, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "DET") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::DET, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::DET, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "SEG") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::SEG, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::SEG, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "POSE") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::POSE, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::POSE, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "ASR") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::ASR, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::ASR, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "LLM") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::LLM, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::LLM, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "VLM") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::VLM, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::VLM, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "EMBEDDING") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::EMBEDDING, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::EMBEDDING, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "RERANKING") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::RERANKING, std::move(name), std::move(path), std::move(vendor), std::move(paths) });
+            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::RERANKING, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else {
             // -
         }

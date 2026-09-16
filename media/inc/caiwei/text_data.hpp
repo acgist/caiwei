@@ -38,11 +38,17 @@ using AudioData = std::vector<std::vector<float>>;
 using ImageData = std::vector<std::vector<uint8_t>>;
 using VideoData = std::vector<std::vector<std::vector<uint8_t>>>;
 
-// 支持格式: file/http/base64
-// file://
-// http://
-// data:image/png;base64,
-// data:image/jpeg;base64,
+const std::string CONTENT_TYPE_DATA  = "data:";
+const std::string CONTENT_TYPE_FILE  = "file:";
+const std::string CONTENT_TYPE_HTTP  = "http:";
+const std::string CONTENT_TYPE_HTTPS = "https:";
+
+const std::string BASE64_AUDIO_MP3 = "data:audio/mp3;base64,";
+const std::string BASE64_AUDIO_WAV = "data:audio/wav;base64,";
+const std::string BASE64_IMAGE_JPG = "data:image/jpeg;base64,";
+const std::string BASE64_IMAGE_PNG = "data:image/png;base64,";
+const std::string BASE64_VIDEO_MP4 = "data:video/mpeg4;base64,";
+
 struct CompletionsRequestMessageContentItem {
     std::optional<std::string> type;
     std::optional<std::string> text;
@@ -95,8 +101,8 @@ struct CompletionsRequestExtraBody {
     std::optional<int> vlm_frames = 8;     // VLM识别帧数
     std::optional<int> audio_queue_size = 128000; // 音频识别队列大小: 16000 * 1 * 16 * 4 / 8 = 128000
     std::optional<int> video_queue_size = 8;      // 视频识别队列大小
-    std::optional<std::string> video_url;  // 持续识别视频文件地址
-    std::optional<std::string> video_type; // 持续识别视频文件类型
+    std::optional<std::string> media_url;  // 持续识别视频文件地址
+    std::optional<std::string> media_type; // 持续识别视频文件类型
     std::optional<bool> enable_thinking = false;
     std::optional<std::vector<std::string>> model_list;
 };
@@ -116,7 +122,6 @@ struct CompletionsRequest {
     std::optional<std::vector<CompletionsRequestTool>> tools;
     std::optional<CompletionsRequestExtraBody> extra_body;
     CW_TRANSIENT std::string id;
-    CW_TRANSIENT uint32_t    index;
     CW_TRANSIENT uint32_t    created;
 };
 
@@ -157,7 +162,7 @@ struct CompletionsResponse {
     std::string id;
     std::string model;
     std::string object = "chat.completion";
-    std::vector<CompletionsResponseChoice>  choices;
+    std::vector<CompletionsResponseChoice> choices;
     std::optional<CompletionsResponseUsage> usage;
 };
 
@@ -198,11 +203,11 @@ struct CompletionsChunk {
     std::string id;
     std::string model;
     std::string object = "chat.completion.chunk";
-    std::vector<CompletionsChunkChoice>  choices;
+    std::vector<CompletionsChunkChoice> choices;
     std::optional<CompletionsChunkUsage> usage;
 };
 
-struct EmbeddingRequest {
+struct EmbeddingsRequest {
     std::string model;
     std::variant<std::string, std::vector<std::string>> input;
 };
@@ -221,14 +226,14 @@ struct EmbeddingResponseUsage {
 struct EmbeddingResponse {
     std::string object = "list";
     std::string model;
-    std::vector<EmbeddingResponseData>    data;
+    std::vector<EmbeddingResponseData> data;
     std::optional<EmbeddingResponseUsage> usage;
 };
 
-struct RerankingRequest {
+struct RerankingsRequest {
     std::string model;
     std::string query;
-    std::vector<std::string>   documents;
+    std::vector<std::string> documents;
     std::optional<std::string> instruct;
 };
 
@@ -246,7 +251,7 @@ struct RerankingResponseUsage {
 struct RerankingResponse {
     std::string object = "list";
     std::string model;
-    std::vector<RerankingResponseData>    data;
+    std::vector<RerankingResponseData> data;
     std::optional<RerankingResponseUsage> usage;
 };
 
@@ -303,12 +308,9 @@ struct Result {
     Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 
-std::string completions_response(const CompletionsRequest& request, const std::string& finish_reason, std::string content, std::string thinking, std::string toolcall);
-std::string completions_chunk   (const CompletionsRequest& request, const Result& result);
-
 CompletionsRequest json_to_completions(const std::string& json);
-EmbeddingRequest   json_to_embedding  (const std::string& json);
-RerankingRequest   json_to_reranking  (const std::string& json);
+EmbeddingsRequest  json_to_embeddings (const std::string& json);
+RerankingsRequest  json_to_rerankings (const std::string& json);
 std::string to_json(const CompletionsResponse& response);
 std::string to_json(const CompletionsChunk   & chunk);
 std::string to_json(const EmbeddingResponse  & response);

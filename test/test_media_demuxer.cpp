@@ -1,14 +1,26 @@
 #include "test.hpp"
 
 #include <thread>
+#include <fstream>
+#include <filesystem>
+
+#include "base64/base64.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
+static std::string base64_file(const std::string& type, const std::string& path) {
+    std::ifstream stream(path, std::ios::binary);
+    std::string data;
+    data.resize(std::filesystem::file_size(path));
+    stream.read(data.data(), data.size());
+    return type + base64_encode(data);
+}
+
 int main() {
     caiwei::test::init_test();
-    // rtp|sdp|file|http|rtmp|rtsp|device
+    // rtp|sdp|data|file|http|rtmp|rtsp|device
     auto type = "file";
     // 注意端口必须分开
     // ffmpeg -re -i caiwei.mp4 -c:a pcm_alaw -ar 8000 -ac 1 -vn -f rtp -payload_type  8 -ssrc 1000 rtp://127.0.0.1:44444 > audio.sdp
@@ -27,15 +39,19 @@ int main() {
 // a=rtpmap:96 H264/90000
 // a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
 // a=recvonly)";
-    auto url  = "./caiwei.mp4";
-    // auto url  = "https://static.acgist.com/demo/barrage/video.mp4";
-    // auto url  = "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid";
-    // auto url  = "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream";
+    // auto url = base64_file(caiwei::text::BASE64_AUDIO_MP3, "./caiwei.mp3");
+    // TODO MP4修复
+    // auto url = base64_file(caiwei::text::BASE64_VIDEO_MP4, "./caiwei.mp4");
+    auto url = "./caiwei.mp4";
+    // auto url = "https://static.acgist.com/demo/barrage/video.mp4";
+    // auto url = "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid";
+    // auto url = "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
     caiwei::player::open_player(1, 16000, 640, 360);
     caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
         // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data_length, frame.samples);
         std::fflush(stdout);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         return caiwei::player::play_audio(frame.data.data(), frame.data_length);
     }, [](const caiwei::media::VideoFrame& frame) {
         // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
@@ -43,7 +59,10 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         return caiwei::player::play_video(frame.data.data(), frame.width * 3);
     });
-    media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
+    media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+    );
     media_demuxer.stop();
     caiwei::player::stop_player();
     caiwei::test::stop_test();

@@ -53,7 +53,7 @@ public:
 public:
     using ONNXRuntimeContext::run;
     bool load() override;
-    std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) override;
+    std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class DetONNXRuntimeContext : public DetContext, public ONNXRuntimeContext {

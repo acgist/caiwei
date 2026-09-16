@@ -78,7 +78,13 @@ public:
     AVCodecContext* audio_codec_ctx{ nullptr }; // 音频编码器上下文
     AVCodecContext* video_codec_ctx{ nullptr }; // 视频编码器上下文
 public:
-    MediaMuxer(AudioInfo in_audio_info, VideoInfo in_video_info, AudioInfo out_audio_info, VideoInfo out_video_info, PacketCallback packet_callback);
+    MediaMuxer(
+        AudioInfo in_audio_info,
+        AudioInfo out_audio_info,
+        VideoInfo in_video_info,
+        VideoInfo out_video_info,
+        PacketCallback packet_callback
+    );
     ~MediaMuxer();
 public:
     bool open();
@@ -95,6 +101,8 @@ private:
 };
 
 class MediaFormat {
+public:
+    bool callable = true;
 private:
     bool need_header = true;
     AudioInfo audio_info; // 音频

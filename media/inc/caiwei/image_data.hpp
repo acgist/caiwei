@@ -9,6 +9,8 @@
 namespace caiwei {
 namespace image  {
 
+using Cls = std::pair<uint32_t, float>;
+
 struct Box {
     float x1; // 左上角x百分比
     float y1; // 左上角y百分比

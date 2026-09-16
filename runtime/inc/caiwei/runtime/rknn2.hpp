@@ -49,7 +49,7 @@ public:
 public:
     using RKNN2Context::run;
     bool load() override;
-    std::vector<std::pair<uint32_t, float>> run(const caiwei::media::ImageFrame& image) override;
+    std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class DetRKNN2Context : public DetContext, public RKNN2Context {

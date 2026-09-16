@@ -15,7 +15,7 @@ bool caiwei::context::ClsRKNN2Context::load() {
     return this->load_model();
 }
 
-std::vector<std::pair<uint32_t, float>> caiwei::context::ClsRKNN2Context::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
     const auto& output_attr = this->output_attrs[0];
     const int64_t output_data_length = output_attr.dims[1];

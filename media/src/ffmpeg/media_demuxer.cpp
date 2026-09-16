@@ -100,10 +100,10 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
     auto last_send_time = std::chrono::system_clock::now(); // 最后发送时间
     caiwei::media::AudioFrame audioFrame(     256 * 1024);
     caiwei::media::VideoFrame videoFrame(8 * 1024 * 1024);
-    av_dict_set(&opts, "seekable",          "0",                                          0);
-    av_dict_set(&opts, "buffer_size",       "262144",                                     0);
-    av_dict_set(&opts, "thread_queue_size", "2048",                                       0);
-    av_dict_set(&opts, "protocol_whitelist", "tcp,tls,udp,rtp,file,http,rtmp,rtsp,https", 0);
+    av_dict_set(&opts, "seekable",          "0",                                               0);
+    av_dict_set(&opts, "buffer_size",       "262144",                                          0);
+    av_dict_set(&opts, "thread_queue_size", "2048",                                            0);
+    av_dict_set(&opts, "protocol_whitelist", "tcp,tls,udp,rtp,data,file,http,https,rtmp,rtsp", 0);
     if(this->type == "rtp" || this->type == "sdp") {
         av_dict_set(&opts, "timeout",                     "10000000",               0);
         av_dict_set(&opts, "rw_timeout",                  "10000000",               0);
@@ -115,6 +115,8 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
         if (save_file(this->url.c_str(), this->url.size(), sdp_file)) {
             ret = avformat_open_input(&fmt_ctx, sdp_file.c_str(), nullptr, &opts);
         }
+    } else if(this->type == "data") {
+        ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
     } else if(this->type == "file") {
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
     } else if(this->type == "http") {

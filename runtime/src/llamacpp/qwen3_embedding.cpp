@@ -80,7 +80,7 @@
 //     }
 // }
 
-// std::string caiwei::context::EmbeddingLlamaCPPContext::run(const caiwei::text::EmbeddingRequest& request) {
+// std::string caiwei::context::EmbeddingLlamaCPPContext::run(const caiwei::text::EmbeddingsRequest& request) {
 //     llama_context_ptr context{ get_context() };
 //     const enum llama_pooling_type pooling_type = llama_pooling_type(context.get());
 //     if (pooling_type != LLAMA_POOLING_TYPE_MEAN) {
@@ -92,23 +92,23 @@
 //     }
 //     const int n_batch = llama_n_batch(context.get());
 //     std::vector<std::vector<llama_token>> inputs;
-//     if (std::holds_alternative<caiwei::text::EmbeddingRequestInputItem>(request.input)) {
-//         const auto& item = std::get<caiwei::text::EmbeddingRequestInputItem>(request.input);
+//     if (std::holds_alternative<caiwei::text::EmbeddingsRequestInputItem>(request.input)) {
+//         const auto& item = std::get<caiwei::text::EmbeddingsRequestInputItem>(request.input);
 //         if (std::holds_alternative<std::string>(item)) {
 //             inputs.push_back(this->tokenize(std::get<std::string>(item), context.get()));
-//         } else if (std::holds_alternative<caiwei::text::EmbeddingRequestInputContent>(item)) {
-//             const auto& x = std::get<caiwei::text::EmbeddingRequestInputContent>(item);
+//         } else if (std::holds_alternative<caiwei::text::EmbeddingsRequestInputContent>(item)) {
+//             const auto& x = std::get<caiwei::text::EmbeddingsRequestInputContent>(item);
 //             inputs.push_back(this->tokenize(x.text.value_or(""), context.get()));
 //         } else {
 //             // =
 //         }
-//     } else if (std::holds_alternative<std::vector<caiwei::text::EmbeddingRequestInputItem>>(request.input)) {
-//         const auto& items = std::get<std::vector<caiwei::text::EmbeddingRequestInputItem>>(request.input);
+//     } else if (std::holds_alternative<std::vector<caiwei::text::EmbeddingsRequestInputItem>>(request.input)) {
+//         const auto& items = std::get<std::vector<caiwei::text::EmbeddingsRequestInputItem>>(request.input);
 //         for (const auto& item : items) {
 //             if (std::holds_alternative<std::string>(item)) {
 //                 inputs.push_back(this->tokenize(std::get<std::string>(item), context.get()));
-//             } else if (std::holds_alternative<caiwei::text::EmbeddingRequestInputContent>(item)) {
-//                 const auto& x = std::get<caiwei::text::EmbeddingRequestInputContent>(item);
+//             } else if (std::holds_alternative<caiwei::text::EmbeddingsRequestInputContent>(item)) {
+//                 const auto& x = std::get<caiwei::text::EmbeddingsRequestInputContent>(item);
 //                 inputs.push_back(this->tokenize(x.text.value_or(""), context.get()));
 //             } else {
 //                 // =

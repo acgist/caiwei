@@ -19,8 +19,8 @@ static void sws_free(SwsContext** sws);
 
 caiwei::media::MediaMuxer::MediaMuxer(
     AudioInfo in_audio_info,
-    VideoInfo in_video_info,
     AudioInfo out_audio_info,
+    VideoInfo in_video_info,
     VideoInfo out_video_info,
     PacketCallback packet_callback
 ) : in_audio_info(in_audio_info),
@@ -268,7 +268,8 @@ bool caiwei::media::MediaMuxer::on_audio(const int nb_samples, const size_t msec
     }
     av_audio_fifo_write(this->audio_fifo, (void**) this->audio_ch_buffer, out_samples);
     int frame_size = this->audio_codec_ctx->frame_size;
-    while (av_audio_fifo_size(this->audio_fifo) >= frame_size) {
+    bool callable = true;
+    while (av_audio_fifo_size(this->audio_fifo) >= frame_size && callable) {
         ret = av_frame_make_writable(this->audio_frame);
         if (ret != 0) {
             CW_LOG_W("音频帧标记可写入失败: %d", ret);
@@ -288,11 +289,11 @@ bool caiwei::media::MediaMuxer::on_audio(const int nb_samples, const size_t msec
             break;
         }
         while ((ret = avcodec_receive_packet(this->audio_codec_ctx, this->audio_packet)) == 0) {
-            this->packet_callback(caiwei::media::MediaType::AUDIO, this->audio_packet);
+            callable = this->packet_callback(caiwei::media::MediaType::AUDIO, this->audio_packet);
             av_packet_unref(this->audio_packet);
         }
     }
-    return true;
+    return callable;
 }
 
 bool caiwei::media::MediaMuxer::on_video(const int width, const int height, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t* data) {
@@ -338,11 +339,12 @@ bool caiwei::media::MediaMuxer::on_video(const int width, const int height, cons
         CW_LOG_W("视频帧编码失败: %d", ret);
         return false;
     }
+    bool callable = true;
     while ((ret = avcodec_receive_packet(this->video_codec_ctx, this->video_packet)) == 0) {
-        this->packet_callback(caiwei::media::MediaType::VIDEO, this->video_packet);
+        callable = this->packet_callback(caiwei::media::MediaType::VIDEO, this->video_packet);
         av_packet_unref(this->video_packet);
     }
-    return true;
+    return callable;
 }
 
 static SwrContext* init_audio_swr(caiwei::media::AudioInfo& in_audio_info, caiwei::media::AudioInfo& out_audio_info) {

@@ -95,7 +95,7 @@
 //            "\n" + RERANKER_SUFFIX;
 // }
 
-// std::string caiwei::context::RerankingLlamaCPPContext::run(const caiwei::text::RerankingRequest& request) {
+// std::string caiwei::context::RerankingLlamaCPPContext::run(const caiwei::text::RerankingsRequest& request) {
 //     llama_context_ptr context{ get_context() };
 //     const enum llama_pooling_type pooling_type = llama_pooling_type(context.get());
 //     if (pooling_type != LLAMA_POOLING_TYPE_MEAN) {
@@ -116,8 +116,8 @@
 //                 query,
 //                 std::get<std::string>(item)
 //             ), context.get()));
-//         } else if (std::holds_alternative<caiwei::text::RerankingRequestInputContent>(item)) {
-//             const auto& x = std::get<caiwei::text::RerankingRequestInputContent>(item);
+//         } else if (std::holds_alternative<caiwei::text::RerankingsRequestInputContent>(item)) {
+//             const auto& x = std::get<caiwei::text::RerankingsRequestInputContent>(item);
 //             inputs.push_back(this->tokenize(format_reranker_prompt(
 //                 nullptr,
 //                 query,

@@ -103,7 +103,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     }
     // TODO 多模态输入数据多态实现
     std::string prompt = this->chat_template.apply(this->special_token, request);
-    std::vector<llama_token> prompt_tokens = tokenize(prompt, context.get());
+    std::vector<llama_token> prompt_tokens = this->tokenize(prompt, context.get());
     if (prompt_tokens.empty()) {
         co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(0), 0 };
         co_return;

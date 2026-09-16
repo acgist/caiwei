@@ -1,11 +1,10 @@
 import json
 import requests
 
-url = "http://192.168.1.100:8000/reranking"
+url = "http://127.0.0.1:8888/v1/rerankings"
 payload = {
     "model": "Qwen3-Reranker-0.6B",
     "query": "中国首都是哪里",
-    "top_n": 3,
     "documents": [
         "北京",
         "中国首都是北京",
