@@ -248,11 +248,11 @@ bool caiwei::media::MediaMuxer::stop_video() {
 }
 
 bool caiwei::media::MediaMuxer::on_audio(const AudioFrame& frame) {
-    return this->on_audio(frame.samples, frame.msec, frame.frames, frame.data_length, frame.data.data());
+    return this->on_audio(frame.samples, frame.msec, frame.frames, frame.data.size(), frame.data.data());
 }
 
 bool caiwei::media::MediaMuxer::on_video(const VideoFrame& frame) {
-    return this->on_video(frame.width, frame.height, frame.msec, frame.frames, frame.data_length, frame.data.data());
+    return this->on_video(frame.width, frame.height, frame.msec, frame.frames, frame.data.size(), frame.data.data());
 }
 
 bool caiwei::media::MediaMuxer::on_audio(const int nb_samples, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t* data) {

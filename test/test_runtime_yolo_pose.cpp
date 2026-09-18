@@ -100,9 +100,9 @@ void pose_video() {
     int frame_count = 0;
     std::vector<caiwei::image::Pose> ret;
     caiwei::player::open_player(1, 16000, 640, 360);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
-        return caiwei::player::play_audio(frame.data.data(), frame.data_length);
-    }, [&ptr, &ret, &frame_count](const caiwei::media::VideoFrame& frame) {
+    caiwei::media::MediaDemuxer media_demuxer(type, url, [](caiwei::media::AudioFrame& frame) {
+        return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+    }, [&ptr, &ret, &frame_count](caiwei::media::VideoFrame& frame) {
         auto data = frame.data;
         if (frame_count++ % 8 == 0) {
             ret = ptr->run(frame);

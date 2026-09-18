@@ -19,9 +19,9 @@ enum class MediaType {
 
 class Frame {
 public:
-    uint32_t             data_length;
     std::vector<uint8_t> data;
 public:
+    Frame() = default;
     Frame(uint32_t size);
     virtual ~Frame();
 };
@@ -32,6 +32,7 @@ public:
     uint64_t frames;
     uint32_t samples;
 public:
+    AudioFrame() = default;
     AudioFrame(uint32_t size);
 };
 
@@ -41,6 +42,7 @@ public:
     uint32_t height;
     uint32_t channels;
 public:
+    ImageFrame() = default;
     ImageFrame(uint32_t size);
 };
 
@@ -49,6 +51,7 @@ public:
     uint64_t msec;
     uint64_t frames;
 public:
+    VideoFrame() = default;
     VideoFrame(uint32_t size);
 };
 

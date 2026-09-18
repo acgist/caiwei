@@ -51,6 +51,9 @@ static void get_video_play() {
             auto url  = request.get_param_value("url");
             auto type = request.get_param_value("type");
             caiwei::session::VideoPlaySession session(type, url, [&sink](const char* type, const char* data, size_t length) {
+                if (length == 0) {
+                    return sink.is_writable();
+                }
                 if (sink.is_writable()) {
                     sink.write("event: ", 7);
                     sink.write(type, std::strlen(type));
@@ -92,6 +95,9 @@ static void post_chat_completions() {
         if (completions.stream) {
             response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [&](size_t /*offset*/, httplib::DataSink& sink) {
                 caiwei::session::CompletionsSession session(completions, [&sink](const char* type, const char* data, size_t length) {
+                    if (length == 0) {
+                        return sink.is_writable();
+                    }
                     if (sink.is_writable()) {
                         sink.write("data: ", 6);
                         if(length > 0) {

@@ -4,7 +4,12 @@
 #ifndef CAIWEI_MEDIA_IMAGE_DATA_HPP
 #define CAIWEI_MEDIA_IMAGE_DATA_HPP
 
+#include <vector>
+#include <string>
 #include <cstdint>
+#include <utility>
+
+#include "nlohmann/json_fwd.hpp"
 
 namespace caiwei {
 namespace image  {
@@ -43,6 +48,20 @@ struct Pose {
     Box box;
     PosePoint point;
 };
+
+std::string to_json(const Cls & cls);
+std::string to_json(const Box & box);
+std::string to_json(const Seg & seg);
+std::string to_json(const Pose& pose);
+
+template <typename T>
+inline std::string to_json(const std::vector<T>& v) {
+    nlohmann::json ret;
+    for (const auto& x : v) {
+        ret.push_back(to_json(x));
+    }
+    return ret.dump();
+}
 
 } // namespace image
 } // namespace caiwei

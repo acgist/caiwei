@@ -49,9 +49,9 @@ struct VideoInfo {
     VideoInfo(int fps, int width, int height, int format);
 };
 
-using AudioCallback = std::function<bool(const AudioFrame&)>;
-using ImageCallback = std::function<bool(const ImageFrame&)>;
-using VideoCallback = std::function<bool(const VideoFrame&)>;
+using AudioCallback = std::function<bool(AudioFrame&)>;
+using ImageCallback = std::function<bool(ImageFrame&)>;
+using VideoCallback = std::function<bool(VideoFrame&)>;
 using PacketCallback = std::function<bool(MediaType, AVPacket*)>;
 using FormatCallback = std::function<bool(uint32_t, const uint8_t*)>;
 

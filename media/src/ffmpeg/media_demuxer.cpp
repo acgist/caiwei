@@ -8,6 +8,7 @@
 
 extern "C" {
 #include "libavutil/opt.h"
+#include "libavutil/pixdesc.h"
 #include "libavcodec/avcodec.h"
 #include "libswscale/swscale.h"
 #include "libavformat/avformat.h"
@@ -39,34 +40,35 @@ caiwei::media::MediaDemuxer::~MediaDemuxer() {
 }
 
 inline bool recv_audio_frame(size_t msec, size_t audio_frames, SwrContext* swr_ctx, AVFrame* frame, caiwei::media::AudioInfo& audio_info, caiwei::media::AudioFrame& audioFrame) {
-    uint8_t* dst_data = audioFrame.data.data();
     int nb_samples = swr_get_out_samples(swr_ctx, frame->nb_samples);
-        nb_samples = swr_convert(swr_ctx, &dst_data, nb_samples, (const uint8_t**) frame->data, frame->nb_samples);
+    audioFrame.data.resize(nb_samples * audio_info.channels * audio_info.bytes_per_sample);
+    uint8_t* dst_data = audioFrame.data.data();
+    nb_samples = swr_convert(swr_ctx, &dst_data, nb_samples, (const uint8_t**) frame->data, frame->nb_samples);
     if (nb_samples < 0) {
         CW_LOG_W("音频重采样失败: %d", nb_samples);
         return false;
     }
-    audioFrame.msec        = msec;
-    audioFrame.frames      = audio_frames;
-    audioFrame.samples     = nb_samples;
-    audioFrame.data_length = nb_samples * audio_info.channels * audio_info.bytes_per_sample;
+    audioFrame.msec    = msec;
+    audioFrame.frames  = audio_frames;
+    audioFrame.samples = nb_samples;
+    audioFrame.data.resize(nb_samples * audio_info.channels * audio_info.bytes_per_sample);
     return true;
 }
 
 inline bool recv_video_frame(size_t msec, size_t video_frames, SwsContext* sws_ctx, AVFrame* frame, caiwei::media::VideoInfo& video_info, caiwei::media::VideoFrame& videoFrame) {
-    uint8_t* dst_data   = videoFrame.data.data();
-    int      dst_stride = video_info.width * 3;
+    int dst_stride = video_info.width * 3;
+    videoFrame.data.resize(video_info.width * video_info.height * videoFrame.channels);
+    uint8_t* dst_data = videoFrame.data.data();
     int height = sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, &dst_data, &dst_stride);
     if (height < 0) {
         CW_LOG_W("视频重采样失败: %d", height);
         return false;
     }
-    videoFrame.width       = video_info.width;
-    videoFrame.height      = height;
-    videoFrame.channels    = 3;
-    videoFrame.msec        = msec;
-    videoFrame.frames      = video_frames;
-    videoFrame.data_length = video_info.width * height * 3;
+    videoFrame.width  = video_info.width;
+    videoFrame.height = height;
+    videoFrame.msec   = msec;
+    videoFrame.frames = video_frames;
+    videoFrame.data.resize(video_info.width * height * 3);
     return true;
 }
 
@@ -98,8 +100,8 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
     auto timeout = caiwei::env::get_int("CAIWEI_TIMEOUT"); // 超时时间
     auto last_recv_time = std::chrono::system_clock::now(); // 最后接收时间
     auto last_send_time = std::chrono::system_clock::now(); // 最后发送时间
-    caiwei::media::AudioFrame audioFrame(     256 * 1024);
-    caiwei::media::VideoFrame videoFrame(8 * 1024 * 1024);
+    caiwei::media::AudioFrame audioFrame;
+    caiwei::media::VideoFrame videoFrame;
     av_dict_set(&opts, "seekable",          "0",                                               0);
     av_dict_set(&opts, "buffer_size",       "262144",                                          0);
     av_dict_set(&opts, "thread_queue_size", "2048",                                            0);
@@ -258,9 +260,10 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
                     ret = avcodec_receive_frame(video_decoder_ctx, decoder_frame);
                     if(ret == 0) {
                         if(sws_ctx == nullptr) {
-                            video_frame_width  = decoder_frame->width;
-                            video_frame_height = decoder_frame->height;
-                            video_frame_format = decoder_frame->format;
+                            video_frame_width   = decoder_frame->width;
+                            video_frame_height  = decoder_frame->height;
+                            video_frame_format  = decoder_frame->format;
+                            videoFrame.channels = av_pix_fmt_count_planes((AVPixelFormat) decoder_frame->format);
                             sws_ctx = init_video_sws(video_info, decoder_frame);
                         } else if(
                             video_frame_width  != decoder_frame->width  ||
@@ -269,9 +272,10 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
                         ) {
                             CW_LOG_W("视频格式变化: %s - %s", this->type.c_str(), this->url.c_str());
                             sws_free(&sws_ctx);
-                            video_frame_width  = decoder_frame->width;
-                            video_frame_height = decoder_frame->height;
-                            video_frame_format = decoder_frame->format;
+                            video_frame_width   = decoder_frame->width;
+                            video_frame_height  = decoder_frame->height;
+                            video_frame_format  = decoder_frame->format;
+                            videoFrame.channels = av_pix_fmt_count_planes((AVPixelFormat) decoder_frame->format);
                             sws_ctx = init_video_sws(video_info, decoder_frame);
                         }
                         if (recv_video_frame(msec, video_frames, sws_ctx, decoder_frame, video_info, videoFrame)) {
@@ -374,10 +378,12 @@ static SwrContext* init_audio_swr(caiwei::media::AudioInfo& audio_info, AVFrame*
 }
 
 static SwsContext* init_video_sws(caiwei::media::VideoInfo& video_info, AVFrame* frame) {
-    int height = video_info.height > 0 ? video_info.height : video_info.width * frame->height / frame->width / 2 * 2;
+    if (video_info.height <= 0) {
+        video_info.height = video_info.width * frame->height / frame->width / 2 * 2;
+    }
     SwsContext* sws = sws_getContext(
-        frame->    width, frame->height, (AVPixelFormat) frame->    format,
-        video_info.width,        height, (AVPixelFormat) video_info.format,
+        frame->    width, frame->    height, (AVPixelFormat) frame->    format,
+        video_info.width, video_info.height, (AVPixelFormat) video_info.format,
 //      SWS_BILINEAR,
         SWS_FAST_BILINEAR,
         nullptr, nullptr, nullptr

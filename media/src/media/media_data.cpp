@@ -1,7 +1,7 @@
 #include "caiwei/media_data.hpp"
 
 caiwei::media::Frame::Frame(uint32_t size) {
-    this->data.resize(size);
+    this->data.reserve(size);
 }
 
 caiwei::media::Frame::~Frame() {

@@ -28,7 +28,7 @@ private:
     std::shared_ptr<C> context{ nullptr };
     std::shared_ptr<caiwei::runtime::Runtime> runtime{ nullptr };
 public:
-    std::shared_ptr<C> ptr();
+    C* ptr();
     O run(const I& input);
 public:
     ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
@@ -47,8 +47,8 @@ caiwei::manager::ContextWrapper<C, I, O>::~ContextWrapper() {
 }
 
 template <typename C, typename I, typename O>
-std::shared_ptr<C> caiwei::manager::ContextWrapper<C, I, O>::ptr() {
-    return this->context;
+C* caiwei::manager::ContextWrapper<C, I, O>::ptr() {
+    return this->context.get();
 }
 
 template <typename C, typename I, typename O>

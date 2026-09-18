@@ -39,9 +39,9 @@ std::future<bool> caiwei::session::VideoPlaySession::get() {
     );
     media_muxer.open();
     media_format.open(media_muxer);
-    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, [&media_muxer](const caiwei::media::AudioFrame& frame) {
+    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, [&media_muxer](caiwei::media::AudioFrame& frame) {
         return media_muxer.on_audio(frame);
-    }, [&media_muxer](const caiwei::media::VideoFrame& frame) {
+    }, [&media_muxer](caiwei::media::VideoFrame& frame) {
         return media_muxer.on_video(frame);
     });
     CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());

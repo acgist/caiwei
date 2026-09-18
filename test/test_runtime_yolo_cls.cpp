@@ -36,9 +36,9 @@ void cls_video() {
         return;
     }
     caiwei::player::open_player(1, 16000, 640, 360);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [](const caiwei::media::AudioFrame& frame) {
-        return caiwei::player::play_audio(frame.data.data(), frame.data_length);
-    }, [&ptr](const caiwei::media::VideoFrame& frame) {
+    caiwei::media::MediaDemuxer media_demuxer(type, url, [](caiwei::media::AudioFrame& frame) {
+        return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+    }, [&ptr](caiwei::media::VideoFrame& frame) {
         auto ret = ptr->run(frame);
         for (const auto& index : ret) {
             CW_LOG_D("%d = %.2f", index.first, index.second);

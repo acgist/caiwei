@@ -57,14 +57,14 @@ int main() {
     });
     media_muxer.open();
     media_format.open(media_muxer);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [&media_muxer](const caiwei::media::AudioFrame& frame) {
-        CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data_length, frame.samples);
-        std::fflush(stdout);
+    caiwei::media::MediaDemuxer media_demuxer(type, url, [&media_muxer](caiwei::media::AudioFrame& frame) {
+        // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
+        // std::fflush(stdout);
         media_muxer.on_audio(frame);
         return true;
-    }, [&media_muxer](const caiwei::media::VideoFrame& frame) {
-        CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data_length, frame.width, frame.height);
-        std::fflush(stdout);
+    }, [&media_muxer](caiwei::media::VideoFrame& frame) {
+        // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+        // std::fflush(stdout);
         media_muxer.on_video(frame);
         return true;
     });

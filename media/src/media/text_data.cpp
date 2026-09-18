@@ -1,6 +1,8 @@
 #include "caiwei/env.hpp"
 #include "caiwei/text_data.hpp"
 
+#include "nlohmann/json.hpp"
+
 caiwei::text::Result::Result(bool thinking, bool toolcall, std::string token)
   : thinking(thinking)
   , toolcall(toolcall)
@@ -149,9 +151,9 @@ void from_json(const nlohmann::json& json, CompletionsRequestTool& tool) {
 void from_json(const nlohmann::json& json, CompletionsRequestExtraBody& extra_body) {
     set_opt(json, extra_body.video_fps, "video_fps");
     set_opt(json, extra_body.asr_frames, "asr_frames");
+    set_opt(json, extra_body.asr_queue_size, "asr_queue_size");
     set_opt(json, extra_body.vlm_frames, "vlm_frames");
-    set_opt(json, extra_body.audio_queue_size, "audio_queue_size");
-    set_opt(json, extra_body.video_queue_size, "video_queue_size");
+    set_opt(json, extra_body.yolo_queue_size, "yolo_queue_size");
     set_opt(json, extra_body.media_url, "media_url");
     set_opt(json, extra_body.media_type, "media_type");
     set_opt(json, extra_body.enable_thinking, "enable_thinking");
