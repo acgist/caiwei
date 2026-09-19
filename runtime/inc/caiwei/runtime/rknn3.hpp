@@ -133,7 +133,7 @@ public:
     ~LLMRKNN3Context();
 public:
     bool load() override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class VLMRKNN3Context : public VLMContext,  public RKNN3Context {
@@ -162,7 +162,7 @@ public:
     bool load_vlm_model();
     bool vlm_run(float16* img_embeds, float16* deepstack_data0, float16* deepstack_data1, float16* deepstack_data2);
     std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     VLMRKNN3Context();
     ~VLMRKNN3Context();
@@ -171,7 +171,7 @@ public:
 class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {
 public:
     std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     EmbeddingRKNN3Context();
     ~EmbeddingRKNN3Context();
@@ -180,7 +180,7 @@ public:
 class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {
 public:
     std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-    std::generator<std::string> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     RerankingRKNN3Context();
     ~RerankingRKNN3Context();

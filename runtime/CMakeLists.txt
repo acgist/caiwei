@@ -2,15 +2,26 @@ project(caiwei-runtime VERSION 1.0.0 LANGUAGES C CXX)
 
 set(
     CAIWEI_RUNTIME_SRCS
+    src/env.cpp
+    src/log.cpp
     src/caiwei.cpp
     src/context.cpp
     src/runtime.cpp
     src/session.cpp
     src/manager.cpp
+    src/media/text_data.cpp
+    src/media/text_tool.cpp
+    src/media/audio_tool.cpp
+    src/media/audio_data.cpp
+    src/media/image_tool.cpp
+    src/media/image_data.cpp
+    src/media/media.cpp
+    src/media/media_data.cpp
     src/session/video_play.cpp
     src/session/embeddings.cpp
     src/session/rerankings.cpp
     src/session/completions.cpp
+    third_party/base64/base64.cpp
 )
 
 list(
@@ -19,10 +30,15 @@ list(
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party
 )
 
-list(
-    APPEND CAIWEI_RUNTIME_LIBS
-    caiwei-media
-)
+if(ENABLE_CAIWEI_FFMPEG)
+    list(
+        APPEND CAIWEI_RUNTIME_SRCS
+        src/ffmpeg/media.cpp
+        src/ffmpeg/media_muxer.cpp
+        src/ffmpeg/media_format.cpp
+        src/ffmpeg/media_demuxer.cpp
+    )
+endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     list(

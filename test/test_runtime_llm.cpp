@@ -23,13 +23,13 @@ void test_llm() {
         }
     };
     // {"name": "get_weather", "arguments": {"city": "北京"}}
-    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<std::string>>("qwen3-llm");
+    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-llm");
     if (!ptr) {
         return;
     }
     // CAIWEI_FOR_EACH(100)
-    for (const std::string& value : ptr->run(request)) {
-        std::printf("%s", value.c_str());
+    for (const auto& value : ptr->run(request)) {
+        std::printf("%s", value.token.c_str());
         std::fflush(stdout);
     }
     // CAIWEI_FOR_EACH_END

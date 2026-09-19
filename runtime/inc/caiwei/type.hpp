@@ -1,8 +1,8 @@
 /**
  * 类型转换
  */
-#ifndef CAIWEI_MEDIA_TYPE_HPP
-#define CAIWEI_MEDIA_TYPE_HPP
+#ifndef CAIWEI_RUNTIME_TYPE_HPP
+#define CAIWEI_RUNTIME_TYPE_HPP
 
 #include <bit>
 #include <cmath>
@@ -161,4 +161,4 @@ inline void fp16_to_f32(float* dst, const uint16_t* src, int count) {
 }
 }
 
-#endif // CAIWEI_MEDIA_TYPE_HPP
+#endif // CAIWEI_RUNTIME_TYPE_HPP

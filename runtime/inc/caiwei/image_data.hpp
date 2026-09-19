@@ -1,8 +1,8 @@
 /**
  * 图片结构
  */
-#ifndef CAIWEI_MEDIA_IMAGE_DATA_HPP
-#define CAIWEI_MEDIA_IMAGE_DATA_HPP
+#ifndef CAIWEI_RUNTIME_IMAGE_DATA_HPP
+#define CAIWEI_RUNTIME_IMAGE_DATA_HPP
 
 #include <vector>
 #include <string>
@@ -56,7 +56,7 @@ std::string to_json(const Pose& pose);
 
 template <typename T>
 inline std::string to_json(const std::vector<T>& v) {
-    nlohmann::json ret;
+    nlohmann::json ret = nlohmann::json::array();
     for (const auto& x : v) {
         ret.push_back(to_json(x));
     }
@@ -66,4 +66,4 @@ inline std::string to_json(const std::vector<T>& v) {
 } // namespace image
 } // namespace caiwei
 
-#endif // CAIWEI_IMAGE_DATA_HPP
+#endif // CAIWEI_RUNTIME_IMAGE_DATA_HPP

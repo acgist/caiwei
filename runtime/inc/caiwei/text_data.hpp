@@ -1,8 +1,8 @@
 /**
  * 文本结构
  */
-#ifndef CAIWEI_MEDIA_TEXT_DATA_HPP
-#define CAIWEI_MEDIA_TEXT_DATA_HPP
+#ifndef CAIWEI_RUNTIME_TEXT_DATA_HPP
+#define CAIWEI_RUNTIME_TEXT_DATA_HPP
 
 #include <string>
 #include <cstdint>
@@ -32,20 +32,14 @@ const std::string FINISH_REASON_LENGTH         = "length";
 const std::string FINISH_REASON_TOOL_CALLS     = "tool_calls";
 const std::string FINISH_REASON_CONTENT_FILTER = "content_filter";
 
-struct CompletionsRequestMessageContentItemUrl {
-    std::optional<std::string> url;
-};
-
 const std::string CONTENT_TYPE_DATA  = "data:";
 const std::string CONTENT_TYPE_FILE  = "file:";
 const std::string CONTENT_TYPE_HTTP  = "http:";
 const std::string CONTENT_TYPE_HTTPS = "https:";
 
-const std::string BASE64_AUDIO_MP3 = "data:audio/mp3;base64,";
-const std::string BASE64_AUDIO_WAV = "data:audio/wav;base64,";
-const std::string BASE64_IMAGE_JPG = "data:image/jpeg;base64,";
-const std::string BASE64_IMAGE_PNG = "data:image/png;base64,";
-const std::string BASE64_VIDEO_MP4 = "data:video/mpeg4;base64,";
+struct CompletionsRequestMessageContentItemUrl {
+    std::optional<std::string> url;
+};
 
 struct CompletionsRequestMessageContentItem {
     std::optional<std::string> type;
@@ -95,7 +89,7 @@ struct CompletionsRequestTool {
 
 struct CompletionsRequestExtraBody {
     std::optional<int> video_fps       = 8;      // 视频识别间隔帧数: VLM/YOLO
-    std::optional<int> asr_frames      = 16000;  // ASR 识别帧数: 16000 * 1 * 16 * 0.5 / 8 = 16000
+    std::optional<int> asr_samples     = 16000;  // ASR 识别帧数: 16000 * 1 * 16 * 0.5 / 8 = 16000
     std::optional<int> asr_queue_size  = 128000; // ASR 识别队列: 16000 * 1 * 16 * 4 / 8 = 128000
     std::optional<int> vlm_frames      = 8;      // VLM 识别帧数
     std::optional<int> yolo_queue_size = 8;      // YOLO识别队列
@@ -317,4 +311,4 @@ std::string to_json(const RerankingResponse  & response);
 } // namespace text
 } // namespace caiwei
 
-#endif // CAIWEI_MEDIA_TEXT_DATA_HPP
+#endif // CAIWEI_RUNTIME_TEXT_DATA_HPP

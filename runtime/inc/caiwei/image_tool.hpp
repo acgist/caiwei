@@ -1,8 +1,8 @@
 /**
  * 图片工具
  */
-#ifndef CAIWEI_MEDIA_IMAGE_TOOL_HPP
-#define CAIWEI_MEDIA_IMAGE_TOOL_HPP
+#ifndef CAIWEI_RUNTIME_IMAGE_TOOL_HPP
+#define CAIWEI_RUNTIME_IMAGE_TOOL_HPP
 
 #include <cmath>
 #include <vector>
@@ -237,4 +237,4 @@ void chw_to_hwc(const T* chw, T* hwc, const int H, const int W, const int C) {
 } // namespace image
 } // namespace caiwei
 
-#endif // CAIWEI_MEDIA_IMAGE_TOOL_HPP
+#endif // CAIWEI_RUNTIME_IMAGE_TOOL_HPP

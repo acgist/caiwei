@@ -90,12 +90,6 @@ elseif(CMAKE_HOST_WIN32)
         $<$<CONFIG:Debug>:/SUBSYSTEM:CONSOLE>
         $<$<CONFIG:Release>:/SUBSYSTEM:WINDOWS /entry:mainCRTStartup>
     )
-    if(CAIWEI_MEDIA_DLLS)
-        add_custom_command(
-            TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_MEDIA_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
-        )
-    endif()
     if(CAIWEI_RUNTIME_DLLS)
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD

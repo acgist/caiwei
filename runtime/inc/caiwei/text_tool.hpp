@@ -1,8 +1,8 @@
 /**
  * 文本工具
  */
-#ifndef CAIWEI_MEDIA_TEXT_TOOL_HPP
-#define CAIWEI_MEDIA_TEXT_TOOL_HPP
+#ifndef CAIWEI_RUNTIME_TEXT_TOOL_HPP
+#define CAIWEI_RUNTIME_TEXT_TOOL_HPP
 
 #include "caiwei/text_data.hpp"
 
@@ -29,4 +29,4 @@ public:
 } // namespace text
 } // namespace caiwei
 
-#endif // CAIWEI_MEDIA_TEXT_TOOL_HPP
+#endif // CAIWEI_RUNTIME_TEXT_TOOL_HPP

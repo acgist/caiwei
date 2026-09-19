@@ -2,23 +2,41 @@ from openai import OpenAI
 
 
 def test_cls():
+    stream = True
     client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
     resp = client.chat.completions.create(
         model="yolo26n-cls",
-        stream=False,
+        stream=stream,
         messages=[
             {
                 "role": "user",
                 "content": [
+                    # {
+                    #     "type": "image_url",
+                    #     "image_url": {"url": "https://static.acgist.com/logo.png"},
+                    # },
                     {
                         "type": "image_url",
-                        "image_url": {"url": "data:image/jpeg;base64,...."},
+                        "image_url": {"url": "./acgist.jpg"},
                     },
                 ],
             },
         ],
     )
-    print(resp)
+    if stream:
+        full_text = ""
+        for chunk in resp:
+            if not chunk.choices:
+                continue
+            for choice in chunk.choices:
+                delta = choice.delta
+                if delta.content:
+                    print(delta.content, end="", flush=True)
+                    full_text += delta.content
+        print("")
+        print(full_text)
+    else:
+        print(resp)
 
 
 def test_llm():
@@ -51,5 +69,6 @@ def test_llm():
         # ],
     )
     print(resp)
+
 
 test_cls()

@@ -19,7 +19,7 @@ std::future<bool> caiwei::session::VideoPlaySession::get() {
     caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
         if (this->callback) {
             auto output = base64_encode(data, length);
-            if (this->callback("data", output.data(), output.length())) {
+            if (this->callback(output.data(), output.length())) {
                 return true;
             } else {
                 CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());

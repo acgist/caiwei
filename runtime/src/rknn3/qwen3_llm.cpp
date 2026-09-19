@@ -12,7 +12,7 @@ bool caiwei::context::LLMRKNN3Context::load() {
     return this->load_model();
 }
 
-std::generator<std::string> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
   std::string content;
   std::string thinking;
   std::string toolcall;

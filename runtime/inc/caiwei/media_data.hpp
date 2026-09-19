@@ -1,8 +1,8 @@
 /**
  * 媒体结构
  */
-#ifndef CAIWEI_MEDIA_MEDIA_DATA_HPP
-#define CAIWEI_MEDIA_MEDIA_DATA_HPP
+#ifndef CAIWEI_RUNTIME_MEDIA_DATA_HPP
+#define CAIWEI_RUNTIME_MEDIA_DATA_HPP
 
 #include <cstdio>
 #include <vector>
@@ -58,4 +58,4 @@ public:
 } // namespace media
 } // namespace caiwei
 
-#endif // CAIWEI_MEDIA_MEDIA_DATA_HPP
+#endif // CAIWEI_RUNTIME_MEDIA_DATA_HPP

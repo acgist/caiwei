@@ -3,8 +3,8 @@
  * 
  * TODO 如果输出和输入格式一样不要编码
  */
-#ifndef CAIWEI_MEDIA_MEDIA_HPP
-#define CAIWEI_MEDIA_MEDIA_HPP
+#ifndef CAIWEI_RUNTIME_MEDIA_HPP
+#define CAIWEI_RUNTIME_MEDIA_HPP
 
 #include <string>
 #include <functional>
@@ -143,4 +143,4 @@ public:
 } // namespace media
 } // namespace caiwei
 
-#endif // CAIWEI_MEDIA_MEDIA_HPP
+#endif // CAIWEI_RUNTIME_MEDIA_HPP

@@ -213,7 +213,7 @@ if(ENABLE_CAIWEI_FFMPEG)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
-        # list(APPEND CAIWEI_MEDIA_LIBS
+        # list(APPEND CAIWEI_RUNTIME_LIBS
         #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
         #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
         #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
@@ -221,7 +221,7 @@ if(ENABLE_CAIWEI_FFMPEG)
         #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
         #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
         # )
-        list(APPEND CAIWEI_MEDIA_LIBS avutil avcodec avdevice avformat swscale swresample)
+        list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
     elseif(CMAKE_HOST_WIN32)
         set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
         set(
@@ -235,9 +235,9 @@ if(ENABLE_CAIWEI_FFMPEG)
             file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/bin/*.dll")
         endif()
         find_package(FFMPEG REQUIRED)
-        list(APPEND CAIWEI_MEDIA_DLLS ${FFMPEG_DLLS})
-        list(APPEND CAIWEI_MEDIA_INCS ${FFMPEG_INCLUDE_DIRS})
-        list(APPEND CAIWEI_MEDIA_LIBS ${FFMPEG_LIBRARIES})
+        list(APPEND CAIWEI_RUNTIME_DLLS ${FFMPEG_DLLS})
+        list(APPEND CAIWEI_RUNTIME_INCS ${FFMPEG_INCLUDE_DIRS})
+        list(APPEND CAIWEI_RUNTIME_LIBS ${FFMPEG_LIBRARIES})
     else()
     # -
     endif()
@@ -263,14 +263,13 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
             file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
         endif()
         find_package(httplib REQUIRED)
-        list(APPEND CAIWEI_SERVER_DLLS ${CPP_HTTPLIB_DLLS})
-        list(APPEND CAIWEI_SERVER_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
+        list(APPEND CAIWEI_RUNTIME_DLLS ${CPP_HTTPLIB_DLLS})
+        list(APPEND CAIWEI_RUNTIME_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
     else()
     # -
     endif()
 endif()
 
-add_subdirectory(media)
 add_subdirectory(runtime)
 add_subdirectory(server)
 if(ENABLE_CAIWEI_TEST)

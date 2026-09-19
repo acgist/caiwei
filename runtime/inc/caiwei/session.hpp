@@ -30,7 +30,7 @@ public:
 };
 
 // 返回连接是否断开标识是否需要继续处理
-using Callback = std::function<bool(const char* type, const char* data, size_t length)>;
+using Callback = std::function<bool(const char* data, int length)>;
 
 class StatefulSession : public Session {
 protected:

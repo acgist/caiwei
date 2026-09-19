@@ -4,8 +4,8 @@
  * Win  : $env:name="value"
  * Linux: export name="value"
  */
-#ifndef CAIWEI_MEDIA_ENV_HPP
-#define CAIWEI_MEDIA_ENV_HPP
+#ifndef CAIWEI_RUNTIME_ENV_HPP
+#define CAIWEI_RUNTIME_ENV_HPP
 
 #include <ctime>
 #include <atomic>
@@ -94,4 +94,4 @@ inline std::string yyyyMMdd_HHmmss() {
 
 } // namespace env
 } // namespace caiwei
-#endif // CAIWEI_MEDIA_ENV_HPP
+#endif // CAIWEI_RUNTIME_ENV_HPP

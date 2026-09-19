@@ -50,17 +50,16 @@ static void get_video_play() {
         response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [&](size_t /*offset*/, httplib::DataSink& sink) {
             auto url  = request.get_param_value("url");
             auto type = request.get_param_value("type");
-            caiwei::session::VideoPlaySession session(type, url, [&sink](const char* type, const char* data, size_t length) {
+            caiwei::session::VideoPlaySession session(type, url, [&sink](const char* data, int length) {
                 if (length == 0) {
                     return sink.is_writable();
                 }
                 if (sink.is_writable()) {
-                    sink.write("event: ", 7);
-                    sink.write(type, std::strlen(type));
-                    sink.write("\n", 1);
                     sink.write("data: ", 6);
                     if(length > 0) {
                         sink.write(data, length);
+                    } else {
+                        sink.write(data, std::strlen(data));
                     }
                     sink.write("\n\n", 2);
                 }
@@ -93,8 +92,8 @@ static void post_chat_completions() {
     caiwei::rest::server->Post("/v1/chat/completions", [](const httplib::Request& request, httplib::Response& response) {
         auto completions = caiwei::text::json_to_completions(request.body);
         if (completions.stream) {
-            response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [&](size_t /*offset*/, httplib::DataSink& sink) {
-                caiwei::session::CompletionsSession session(completions, [&sink](const char* type, const char* data, size_t length) {
+            response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [req = std::move(completions)](size_t /*offset*/, httplib::DataSink& sink) mutable -> bool {
+                caiwei::session::CompletionsSession session(req, [&sink](const char* data, int length) {
                     if (length == 0) {
                         return sink.is_writable();
                     }
@@ -102,6 +101,8 @@ static void post_chat_completions() {
                         sink.write("data: ", 6);
                         if(length > 0) {
                             sink.write(data, length);
+                        } else {
+                            sink.write(data, std::strlen(data));
                         }
                         sink.write("\n\n", 2);
                     }

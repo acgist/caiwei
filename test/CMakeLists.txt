@@ -43,7 +43,6 @@ set_target_properties(caiwei-test PROPERTIES FOLDER "test")
 target_link_libraries(
     caiwei-test
     PUBLIC
-    caiwei-media
     caiwei-runtime
     ${CAIWEI_TEST_LIBS}
 )

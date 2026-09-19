@@ -150,7 +150,7 @@ void from_json(const nlohmann::json& json, CompletionsRequestTool& tool) {
 
 void from_json(const nlohmann::json& json, CompletionsRequestExtraBody& extra_body) {
     set_opt(json, extra_body.video_fps, "video_fps");
-    set_opt(json, extra_body.asr_frames, "asr_frames");
+    set_opt(json, extra_body.asr_samples, "asr_samples");
     set_opt(json, extra_body.asr_queue_size, "asr_queue_size");
     set_opt(json, extra_body.vlm_frames, "vlm_frames");
     set_opt(json, extra_body.yolo_queue_size, "yolo_queue_size");

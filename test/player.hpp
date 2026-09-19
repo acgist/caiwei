@@ -1,8 +1,8 @@
 /**
  * 播放器
  */
-#ifndef CAIWEI_MEDIA_PLAYER_HPP
-#define CAIWEI_MEDIA_PLAYER_HPP
+#ifndef CAIWEI_RUNTIME_PLAYER_HPP
+#define CAIWEI_RUNTIME_PLAYER_HPP
 
 namespace caiwei {
 namespace player {
@@ -16,4 +16,4 @@ bool play_video(const void* data, int len);
 } // player
 } // caiwei
 
-#endif // CAIWEI_MEDIA_PLAYER_HPP
+#endif // CAIWEI_RUNTIME_PLAYER_HPP
