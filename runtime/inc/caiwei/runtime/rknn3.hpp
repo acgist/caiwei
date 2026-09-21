@@ -38,20 +38,26 @@ int32_t b_thinking;
 int32_t e_thinking;
 int32_t b_toolcall;
 int32_t e_toolcall;
-int vision_latency;
-int n_decode_tokens;
-int n_prefill_tokens;
+int vision_latency   = 0;
+int n_decode_tokens  = 0;
+int n_prefill_tokens = 0;
 caiwei::text::ResultToolcall result_toolcall;
 std::vector<caiwei::text::Result> token;
 std::chrono::system_clock::time_point llm_begin_time;
 std::chrono::system_clock::time_point llm_first_time;
 std::chrono::system_clock::time_point llm_end_time;
+std::vector<rknn3_tensor> output_tensors{};
+std::vector<std::vector<float>> model_output{};
 };
 
 int embed_callback(void* userdata, int32_t* tokens, uint64_t num_tokens, void* embed, uint64_t len);
 int result_callback(void* userdata, RKLLMResult* result, LLMCallState state);
 int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max);
+int output_callback(void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state);
 void printf_session_perf(caiwei::context::ContextSession* session);
+
+bool init_output(rknn3_context context, caiwei::context::ContextSession* session, int n_output_tensors);
+void free_output(rknn3_context context, caiwei::context::ContextSession* session);
 
 class RKNN3Context {
 protected:
@@ -66,66 +72,20 @@ protected:
     int      embedding_fd;
     int      embedding_dim;
     float16* embedding_data;
-    int n_output_tensors;
-    std::vector<rknn3_tensor> output_tensors;
-    std::vector<std::vector<float16>> model_output;
     struct stat emb_st{};
     caiwei::text::ChatTemplate chat_template;
     caiwei::text::SpecialToken special_token;
 public:
     bool load_model();
-    bool init_output();
     virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request);
-    rknn3_session* get_session(const caiwei::text::CompletionsRequest& request, ContextSession* context_session);
+    rknn3_session* get_session(int max_tokens, rknn3_sampling_params sampling_params, ContextSession* context_session);
     std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
     ~RKNN3Context();
 };
 
-class RKNN3CVContext {
-protected:
-    std::string path;
-    rknn3_context context = 0;
-    int input_size;
-    int output_size;
-    size_t input_data_length;
-    std::vector<rknn3_tensor> inputs;
-    std::vector<rknn3_tensor> outputs;
-    std::vector<rknn3_tensor_attr> input_attrs;
-    std::vector<rknn3_tensor_attr> output_attrs;
-    int dst_w; // 缩放目标宽度
-    int dst_h; // 缩放目标高度
-    int pad_w; // 缩放填充宽度
-    int pad_h; // 缩放填充高度
-    float scale; // 缩放比例: 输入图片 / 原始图片
-    #ifdef ENABLE_SPEEDUP
-    SpeedUPHandle speedup;
-    #endif
-private:
-    uint32_t image_width;
-    uint32_t image_height;
-    std::vector<uint8_t> dst;
-    std::vector<uint8_t> pad;
-    std::vector<float>   hwc;
-    std::vector<float>   chw;
-    std::vector<uint8_t> chw_i8;
-public:
-    RKNN3CVContext(std::string path, int c, int h, int w);
-    virtual ~RKNN3CVContext();
-public:
-    bool load_model();
-    bool load_embedding();
-    std::vector<rknn3_tensor> run(int h, int w, const caiwei::media::ImageFrame& image);
-    std::vector<rknn3_tensor> run(uint8_t* blob, int batch = 1);
-    std::vector<rknn3_tensor> run(float  * blob, int batch = 1);
-};
-
-class ClsRKNN3Context  : public ClsContext,  public RKNN3Context {};
-class DetRKNN3Context  : public DetContext,  public RKNN3Context {};
-class SegRKNN3Context  : public SegContext,  public RKNN3Context {};
-class PoseRKNN3Context : public PoseContext, public RKNN3Context {};
-class ASRRKNN3Context  : public ASRContext,  public RKNN3Context {};
+// class ASRRKNN3Context  : public ASRContext,  public RKNN3Context {};
 
 class LLMRKNN3Context : public LLMContext, public RKNN3Context {
 public:
@@ -136,53 +96,76 @@ public:
     std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
-class VLMRKNN3Context : public VLMContext,  public RKNN3Context {
-public:
-    int n_internal_mems;
-    std::vector<rknn3_tensor_mem*> internal_mems;
-protected:
-    std::string vlm_model_path;
-    rknn3_context vlm_context = 0;
-    int input_size;
-    int output_size;
-    int model_channel;
-    int model_height;
-    int model_width;
-    uint32_t* embeds_shape;
-    uint32_t embeds_ndims;
-    std::vector<rknn3_tensor> inputs;
-    std::vector<rknn3_tensor> outputs;
-    std::vector<rknn3_tensor_attr> input_attrs;
-    std::vector<rknn3_tensor_attr> output_attrs;
-    int deepstack_aligned_size;
-    int pruned_version_flag;
-    rknn3_tensor_attr deepstack_attrs[3];
-    std::vector<rknn3_aux_tensor> deepstack_tensor;
-public:
-    bool load_vlm_model();
-    bool vlm_run(float16* img_embeds, float16* deepstack_data0, float16* deepstack_data1, float16* deepstack_data2);
-    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
-public:
-    VLMRKNN3Context();
-    ~VLMRKNN3Context();
-};
+// class VLMRKNN3Context : public VLMContext,  public RKNN3Context {
+// public:
+//     int n_internal_mems;
+//     std::vector<rknn3_tensor_mem*> internal_mems;
+// protected:
+//     std::string vlm_model_path;
+//     rknn3_context vlm_context = 0;
+//     int input_size;
+//     int output_size;
+//     int model_channel;
+//     int model_height;
+//     int model_width;
+//     uint32_t* embeds_shape;
+//     uint32_t embeds_ndims;
+//     std::vector<rknn3_tensor> inputs;
+//     std::vector<rknn3_tensor> outputs;
+//     std::vector<rknn3_tensor_attr> input_attrs;
+//     std::vector<rknn3_tensor_attr> output_attrs;
+//     int deepstack_aligned_size;
+//     int pruned_version_flag;
+//     rknn3_tensor_attr deepstack_attrs[3];
+//     std::vector<rknn3_aux_tensor> deepstack_tensor;
+// public:
+//     bool load_vlm_model();
+//     bool vlm_run(float16* img_embeds, float16* deepstack_data0, float16* deepstack_data1, float16* deepstack_data2);
+//     std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
+//     std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+// public:
+//     VLMRKNN3Context();
+//     ~VLMRKNN3Context();
+// };
 
 class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {
 public:
-    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    bool load() override;
+    caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) override;
 public:
-    EmbeddingRKNN3Context();
+    EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~EmbeddingRKNN3Context();
 };
 
 class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {
+    private:
+    std::string bos_key;
+    std::string eos_key;
+    std::string system_prompt;
+    std::string instruction_prompt;
+    std::string instruction_key;
+    std::string query_key;
+    std::string document_key;
 public:
-    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    bool load() override;
+    caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
 public:
-    RerankingRKNN3Context();
+    RerankingRKNN3Context(
+        std::string model_path,
+        std::string weight_path,
+        std::string embedding_path,
+        std::string tokenizer_path,
+        int32_t max_token_length,
+        std::string bos_key,
+        std::string eos_key,
+        std::string system_prompt,
+        std::string instruction_prompt,
+        std::string instruction_key,
+        std::string query_key,
+        std::string document_key,
+        caiwei::text::SpecialToken special_token,
+        caiwei::runtime::Runtime* runtime
+    );
     ~RerankingRKNN3Context();
 };
 

@@ -31,10 +31,15 @@ bool caiwei::context::LlamaCPPContext::load_model() {
     return true;
 }
 
-llama_context* caiwei::context::LlamaCPPContext::get_context() {
+llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) {
     llama_context_params params = llama_context_default_params();
-    params.n_ctx   = this->max_token_length;
-    params.n_batch = this->max_token_length;
+    params.n_ctx      = this->max_token_length;
+    params.n_batch    = this->max_token_length;
+    params.embeddings = embeddings;
+    if (embeddings) {
+        params.kv_unified = true;
+        params.n_seq_max  = llama_max_parallel_sequences();
+    }
     #if CAIWEI_DEBUG
     params.no_perf = false;
     #else
@@ -80,15 +85,15 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
-std::vector<llama_token> caiwei::context::LlamaCPPContext::tokenize(const std::string& prompt, llama_context* context) {
+std::vector<llama_token> caiwei::context::LlamaCPPContext::tokenize(const std::string& prompt, llama_context* context, bool add_special, bool parse_special) {
     const uint32_t n_ctx = llama_n_ctx(context);
-    const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
+    const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, add_special, parse_special);
     if (n_prompt_tokens > n_ctx) {
         CW_LOG_W("提示词超长: %d > %u", n_prompt_tokens, n_ctx);
         return {};
     }
     std::vector<llama_token> prompt_tokens(n_prompt_tokens);
-    if (llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), true, true) < 0) {
+    if (llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), add_special, parse_special) < 0) {
         CW_LOG_W("提示词分词失败: %s", prompt.c_str());
         return {};
     }

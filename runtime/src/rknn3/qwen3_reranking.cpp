@@ -1,46 +1,132 @@
 #include "caiwei/runtime/rknn3.hpp"
 
-static const char *DEFAULT_INSTRUCTION = "Given a web search query, retrieve relevant passages that answer the query";
-
-static const char *RERANKER_PREFIX = "<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be \"yes\" or \"no\".<|im_end|>\n<|im_start|>user\n";
-static const char *RERANKER_SUFFIX = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n";
-
-static std::string format_reranker_prompt(const char *instruction, const char *query, const char *doc)
-{
-    const char *inst = instruction ? instruction : DEFAULT_INSTRUCTION;
-    return std::string(RERANKER_PREFIX) +
-           "<Instruct>: " + inst +
-           "\n<Query>: " + query +
-           "\n<Document>: " + doc +
-           "\n" + RERANKER_SUFFIX;
-}
-
-caiwei::context::RerankingRKNN3Context::RerankingRKNN3Context() {
-    
+caiwei::context::RerankingRKNN3Context::RerankingRKNN3Context(
+    std::string model_path,
+    std::string weight_path,
+    std::string embedding_path,
+    std::string tokenizer_path,
+    int32_t max_token_length,
+    std::string bos_key,
+    std::string eos_key,
+    std::string system_prompt,
+    std::string instruction_prompt,
+    std::string instruction_key,
+    std::string query_key,
+    std::string document_key,
+    caiwei::text::SpecialToken special_token,
+    caiwei::runtime::Runtime* runtime
+) : RerankingContext(runtime),
+    RKNN3Context(std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path), max_token_length, std::move(special_token)),
+    bos_key(std::move(bos_key)),
+    eos_key(std::move(eos_key)),
+    system_prompt(std::move(system_prompt)),
+    instruction_prompt(std::move(instruction_prompt)),
+    instruction_key(std::move(instruction_key)),
+    query_key(std::move(query_key)),
+    document_key(std::move(document_key)) {
 }
 
 caiwei::context::RerankingRKNN3Context::~RerankingRKNN3Context() {
-
 }
 
-std::vector<rknn3_llm_input> caiwei::context::RerankingRKNN3Context::get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) {
-    auto formatted_prompt = format_reranker_prompt(DEFAULT_INSTRUCTION, "query", "document");
-
-    rknn3_llm_tensor tensor;
-    // LLM Input
-    tensor.name = "input";
-    tensor.prompt = formatted_prompt.c_str();
-    tensor.embed = NULL;
-    tensor.tokens = NULL;
-    tensor.n_tokens = 0;
-    tensor.enable_thinking = false;
-    std::vector<rknn3_llm_input> inputs(1);
-    inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
-    inputs[0].llm_input  = tensor;
-    return inputs;
+bool caiwei::context::RerankingRKNN3Context::load() {
+    return this->load_model();
 }
 
-std::generator<std::string> caiwei::context::RerankingRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
-    auto reranker_score = model_output[0];
-    return {};
+static void euclidean(const float* embd, float* out, int size) {
+    double sum = 0.0;
+    for (int i = 0; i < size; i++) {
+        sum += embd[i] * embd[i];
+    }
+    sum = std::sqrt(sum);
+    const float norm = sum > 0.0 ? 1.0 / sum : 0.0F;
+    for (int i = 0; i < size; i++) {
+        out[i] = embd[i] * norm;
+    }
+}
+
+caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const caiwei::text::RerankingsRequest& request) {
+    ContextSession context_session;
+    context_session.tokenizer = this->tokenizer;
+    context_session.embedding_dim = this->embedding_dim;
+    context_session.embedding_data = this->embedding_data;
+    init_output(this->context, &context_session, 1);
+    rknn3_session* session = this->get_session(this->max_token_length, {}, &context_session);
+    if (!session) {
+        CW_LOG_W("获取RKNN3会话失败");
+        free_output(this->context, &context_session);
+        return {};
+    }
+    caiwei::text::RerankingResult result;
+    for (const auto& document : request.documents) {
+        std::string prompt;
+        prompt
+            .append(this->bos_key)
+            .append("system\n")
+            .append(this->system_prompt)
+            .append(this->eos_key)
+            .append("\n")
+            .append(this->bos_key)
+            .append("user\n")
+            .append(this->instruction_key)
+            .append(request.instruct.value_or(this->instruction_prompt))
+            .append("\n")
+            .append(this->query_key)
+            .append(request.query)
+            .append("\n")
+            .append(this->document_key)
+            .append(document)
+            .append("\n")
+            .append(this->eos_key)
+            .append("\n")
+            .append(this->bos_key)
+            .append("assistant\n")
+            .append(this->special_token.b_thinking)
+            .append("\n\n")
+            .append(this->special_token.e_thinking)
+            .append("\n\n");
+        CW_LOG_D("reranking prompt: %s", prompt.c_str());
+        std::vector<rknn3_llm_input> inputs(1);
+        rknn3_llm_tensor tensor{};
+        tensor.name     = "input";
+        // TODO
+        tensor.prompt   = prompt.c_str();
+        tensor.embed    = NULL;
+        tensor.tokens   = NULL;
+        tensor.n_tokens = 0;
+        tensor.enable_thinking = false;
+        inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
+        inputs[0].llm_input  = tensor;
+        rknn3_llm_infer_param llm_infer_param;
+        llm_infer_param.keep_history = 0;
+        llm_infer_param.max_new_tokens = this->max_token_length;
+        context_session.llm_begin_time = std::chrono::system_clock::now();
+        context_session.first = true;
+        int ret = rknn3_session_run(session, inputs.data(), inputs.size(), &llm_infer_param);
+        context_session.llm_end_time = std::chrono::system_clock::now();
+        if (ret < 0) {
+            CW_LOG_W("RKNN3会话运行失败: %d", ret);
+        } else {
+            euclidean(context_session.model_output[0].data(), context_session.model_output[0].data(), context_session.model_output[0].size());
+            result.result.push_back(std::move(context_session.model_output[0]));
+            CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
+            #ifdef CAIWEI_DEBUG
+            RKLLMRunState state{};
+            ret = rknn3_session_query_state(session, &state);
+            if (ret < 0) {
+                CW_LOG_W("RKNN3会话查询状态失败: %d", ret);
+            } else {
+                CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, state.n_decode_tokens, state.n_prefill_tokens);
+                // context_session.n_decode_tokens  = state.n_decode_tokens;
+                // context_session.n_prefill_tokens = state.n_prefill_tokens;
+                printf_session_perf(&context_session);
+            }
+            #endif
+        }
+    }
+    result.prompt_tokens = context_session.n_prefill_tokens;
+    result.total_tokens  = context_session.n_prefill_tokens;
+    free_output(this->context, &context_session);
+    rknn3_session_destroy(session);
+    return result;
 }

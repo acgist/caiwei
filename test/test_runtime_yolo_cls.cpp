@@ -76,8 +76,8 @@ int main() {
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn");
     #endif
     caiwei::test::init_test();
-    // cls_image();
-    cls_video();
+    cls_image();
+    // cls_video();
     // cls_folder();
     caiwei::test::stop_test();
     return 0;

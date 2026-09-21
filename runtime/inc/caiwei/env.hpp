@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <string>
+#include <stdexcept>
 
 namespace caiwei {
 namespace env    {

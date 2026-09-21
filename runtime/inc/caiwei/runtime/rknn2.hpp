@@ -16,7 +16,6 @@ protected:
     rknn_context context = 0;
     int input_size;
     int output_size;
-    size_t input_data_length;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
     int dst_w; // 缩放目标宽度
@@ -38,8 +37,8 @@ public:
 public:
     bool load_model();
     std::vector<rknn_output> run(int h, int w, const caiwei::media::ImageFrame& image);
-    std::vector<rknn_output> run(uint8_t* blob, int batch = 1);
-    std::vector<rknn_output> run(float  * blob, int batch = 1);
+    std::vector<rknn_output> run(uint8_t* blob, size_t size, int batch = 1);
+    std::vector<rknn_output> run(float  * blob, size_t size, int batch = 1);
 };
 
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {

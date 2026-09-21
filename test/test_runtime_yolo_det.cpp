@@ -37,7 +37,7 @@ void det_draw() {
 [[maybe_unused]]
 void det_image() {
     int width, height, channels;
-    auto data = stbi_load("./caiwei.jpg", &width, &height, &channels, STBI_default);
+    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
     frame.width = width;
@@ -95,10 +95,11 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn");
     #endif
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
     caiwei::test::init_test();
-    // det_draw();
+    det_draw();
     // det_image();
-    det_video();
+    // det_video();
     caiwei::test::stop_test();
     return 0;
 }

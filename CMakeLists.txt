@@ -270,6 +270,11 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
     endif()
 endif()
 
+if (ENABLE_CAIWEI_YOLO_E2E)
+    add_definitions(-DENABLE_CAIWEI_YOLO_E2E)
+    message(STATUS "Enable YOLO E2E")
+endif ()
+
 add_subdirectory(runtime)
 add_subdirectory(server)
 if(ENABLE_CAIWEI_TEST)

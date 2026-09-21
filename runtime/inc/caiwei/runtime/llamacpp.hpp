@@ -27,9 +27,9 @@ protected:
     caiwei::text::ChatTemplate chat_template;
     caiwei::text::SpecialToken special_token;
 protected:
-    llama_context* get_context();
+    llama_context* get_context(bool embeddings = false);
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
-    std::vector<llama_token> tokenize(const std::string& prompt, llama_context* context);
+    std::vector<llama_token> tokenize(const std::string& prompt, llama_context* context, bool add_special = true, bool parse_special = true);
     std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
 public:
     LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
@@ -37,11 +37,6 @@ public:
 public:
     bool load_model();
 };
-
-class ClsLlamaCPPContext  : public ClsContext,  public LlamaCPPContext {};
-class DetLlamaCPPContext  : public DetContext,  public LlamaCPPContext {};
-class SegLlamaCPPContext  : public SegContext,  public LlamaCPPContext {};
-class PoseRLlamaCPPontext : public PoseContext, public LlamaCPPContext {};
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
 public:
@@ -66,20 +61,40 @@ public:
 
 class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {
 public:
-    EmbeddingLlamaCPPContext();
+    EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~EmbeddingLlamaCPPContext();
 public:
     bool load() override;
-    std::string run(const caiwei::text::EmbeddingsRequest& request) override;
+    caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) override;
 };
 
 class RerankingLlamaCPPContext : public RerankingContext, public LlamaCPPContext {
+private:
+    std::string bos_key;
+    std::string eos_key;
+    std::string system_prompt;
+    std::string instruction_prompt;
+    std::string instruction_key;
+    std::string query_key;
+    std::string document_key;
 public:
-    RerankingLlamaCPPContext();
+    RerankingLlamaCPPContext(
+        std::string path,
+        int32_t max_token_length,
+        std::string bos_key,
+        std::string eos_key,
+        std::string system_prompt,
+        std::string instruction_prompt,
+        std::string instruction_key,
+        std::string query_key,
+        std::string document_key,
+        caiwei::text::SpecialToken special_token,
+        caiwei::runtime::Runtime* runtime
+    );
     ~RerankingLlamaCPPContext();
 public:
     bool load() override;
-    std::string run(const caiwei::text::RerankingsRequest& request) override;
+    caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
 };
 
 } // context

@@ -21,11 +21,32 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     const int64_t result_length = output_dims[1];
     const int64_t stride_length = output_dims[2];
     // TODO
-    std::vector<float> out_dst;
-    out_dst.resize(result_length * stride_length);
-    caiwei::image::transpose(output_data, out_dst.data(), result_length, stride_length);
-    float* data = out_dst.data();
+    float* data = output_data;
     std::vector<caiwei::image::Box> ret;
+    #ifdef ENABLE_CAIWEI_YOLO_E2E
+    for (int index = 0; index < result_length; ++index) {
+        int   max_class = data[5];
+        float max_score = data[4];
+        if(max_score > this->confidence_threshold) {
+            float box_x1 = (data[0] - this->pad_w) / (float) this->dst_w;
+            float box_y1 = (data[1] - this->pad_h) / (float) this->dst_h;
+            float box_x2 = (data[2] - this->pad_w) / (float) this->dst_w;
+            float box_y2 = (data[3] - this->pad_h) / (float) this->dst_h;
+            ret.push_back(
+                caiwei::image::Box(
+                    std::clamp(box_x1, 0.0F, 1.0F),
+                    std::clamp(box_y1, 0.0F, 1.0F),
+                    std::clamp(box_x2, 0.0F, 1.0F),
+                    std::clamp(box_y2, 0.0F, 1.0F),
+                    max_class,
+                    max_score
+                )
+            );
+        }
+        data += stride_length;
+    }
+    return ret;
+    #else
     for (int index = 0; index < stride_length; ++index) {
         int   max_class;
         float max_score;
@@ -58,4 +79,5 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
         ++j;
     }
     return result;
+    #endif
 }

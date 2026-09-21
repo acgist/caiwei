@@ -300,6 +300,14 @@ struct Result {
     Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 
+struct EmbeddingResult {
+    std::vector<std::vector<float>> result;
+    uint32_t prompt_tokens;
+    uint32_t total_tokens;
+};
+
+using RerankingResult = EmbeddingResult;
+
 CompletionsRequest json_to_completions(const std::string& json);
 EmbeddingsRequest  json_to_embeddings (const std::string& json);
 RerankingsRequest  json_to_rerankings (const std::string& json);

@@ -21,8 +21,7 @@ protected:
     const Ort::Env * env;
     Ort::Session   * session    { nullptr };
     Ort::RunOptions* run_options{ nullptr };
-    size_t input_data_length;
-    std::vector<int64_t>     input_node_dims;
+    std::vector<std::vector<int64_t>> input_node_dims;
     std::vector<const char*> input_node_names;
     std::vector<const char*> output_node_names;
     int dst_w; // 缩放目标宽度
@@ -43,7 +42,7 @@ public:
 public:
     bool load_model();
     std::vector<Ort::Value> run(int h, int w, const caiwei::media::ImageFrame& image);
-    virtual std::vector<Ort::Value> run(float* blob, int batch = 1);
+    virtual std::vector<Ort::Value> run(float* blob, size_t size, int batch = 1);
 };
 
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
@@ -85,12 +84,6 @@ public:
     bool load() override;
     std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) override;
 };
-
-class ASRONNXRuntimeContext : public ASRContext, public ONNXRuntimeContext {};
-class LLMONNXRuntimeContext : public LLMContext, public ONNXRuntimeContext {};
-class VLMONNXRuntimeContext : public VLMContext, public ONNXRuntimeContext {};
-class EmbeddingRKNN3CONNXRuntimet : public EmbeddingContext, public ONNXRuntimeContext {};
-class RerankingRKNN3CONNXRuntimet : public RerankingContext, public ONNXRuntimeContext {};
 
 }
 }

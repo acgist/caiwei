@@ -37,11 +37,12 @@ python run.py
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)   |||||
+|CPU(i5-1135G7)   |-|-|100ms|75ms|
 |RKNN(RK1828)     |||||
-|RKNN(RK3588)     |||||
+|RKNN(RK3588)-i8  |53ms||||
+|RKNN(RK3588)-fp16|100ms||||
 |CUDA(Tesla L40S) |||||
-|CUDA(Tesla V100) |||||
+|CUDA(Tesla V100) |||18ms||
 |CUDA(RTX 5060 Ti)|||||
 
 ## 文档资料

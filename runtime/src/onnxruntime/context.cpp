@@ -9,13 +9,12 @@ OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LO
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING;
 #endif
 
+static void print_tensor_info(const char* title, size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape);
+
 caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env)
-  : path(std::move(path)), env(env), input_data_length(c * h * w) {
+  : path(std::move(path)), env(env) {
+    this->input_node_dims.push_back({ 1, c, h, w });
     CW_LOG_I("创建ONNXRuntimeContext: %s", this->path.c_str());
-    this->input_node_dims.push_back(1);
-    this->input_node_dims.push_back(c);
-    this->input_node_dims.push_back(h);
-    this->input_node_dims.push_back(w);
 }
 
 caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
@@ -44,15 +43,21 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     Ort::SessionOptions options;
     // options.DisableCpuMemArena();
     #ifdef ENABLE_CAIWEI_BACKEND_CUDA
-    // options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
-    // options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
-    // options.SetIntraOpNumThreads(1);
-    // options.SetInterOpNumThreads(1);
-    // options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    OrtCUDAProviderOptions cudaOptions;
-    cudaOptions.device_id = caiwei::env::get_int("CAIWEI_CUDA_ID");
-    options.AppendExecutionProvider_CUDA(cudaOptions);
-    CW_LOG_I("ONNXRuntimeContext使用CUDA推理: %d", cudaOptions.device_id);
+    options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
+    options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
+    options.SetIntraOpNumThreads(1);
+    options.SetInterOpNumThreads(1);
+    options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+    Ort::CUDAProviderOptions cudaOptions;
+    std::unordered_map<std::string, std::string> opts = {
+        {"device_id",     "0"         },
+        {"gpu_mem_limit", "1073741824"},
+    };
+    cudaOptions.Update(opts);
+//  cudaOptions.device_id     = caiwei::env::get_int("CAIWEI_CUDA_ID");
+//  cudaOptions.gpu_mem_limit = caiwei::env::get_int("CAIWEI_CUDA_LIMIT");
+    options.AppendExecutionProvider_CUDA_V2(*cudaOptions);
+    CW_LOG_I("ONNXRuntimeContext使用CUDA推理: %d", caiwei::env::get_int("CAIWEI_CUDA_ID"));
     #else
     options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
     options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
@@ -70,18 +75,27 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     Ort::AllocatorWithDefaultOptions allocator;
     const size_t inputNodeCount  = this->session->GetInputCount();
     const size_t outputNodeCount = this->session->GetOutputCount();
+    this->input_node_dims.resize(inputNodeCount);
     for(size_t index = 0; index < inputNodeCount; ++index) {
         const Ort::AllocatedStringPtr name = this->session->GetInputNameAllocated(index, allocator);
+        // TODO
+        // this->session->GetInputNames();
         // TODO 长度
         char* node_name = new char[64];
         std::strcpy(node_name, name.get());
         this->input_node_names.push_back(node_name);
-        CW_LOG_I("ONNXRuntimeContext输入节点: %" PRId64 " = %s", index, node_name);
         auto info = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
         auto shape = info.GetShape();
-        for (auto dim : shape) {
-            CW_LOG_I("ONNXRuntimeContext输入节点维度: %" PRId64, dim);
+        // TODO GPU shape - 0
+        if (shape.size() == 0) {
+            shape.assign(this->input_node_dims[index].begin(), this->input_node_dims[index].end());
+        } else {
+            this->input_node_dims[index].clear();
+            for (auto dim : shape) {
+                this->input_node_dims[index].push_back(dim);
+            }
         }
+        print_tensor_info("ONNXRuntimeContext输入节点", index, node_name, shape);
     }
     for(size_t index = 0; index < outputNodeCount; ++ index) {
         const Ort::AllocatedStringPtr name = this->session->GetOutputNameAllocated(index, allocator);
@@ -89,12 +103,10 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         char* node_name = new char[64];
         std::strcpy(node_name, name.get());
         this->output_node_names.push_back(node_name);
-        CW_LOG_I("ONNXRuntimeContext输出节点: %" PRId64 " = %s", index, node_name);
         auto info = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
         auto shape = info.GetShape();
-        for (auto dim : shape) {
-            CW_LOG_I("ONNXRuntimeContext输出节点维度: %" PRId64, dim);
-        }
+        // TODO GPU shape - 0
+        print_tensor_info("ONNXRuntimeContext输出节点", index, node_name, shape);
     }
     this->run_options = new Ort::RunOptions(nullptr);
     return true;
@@ -114,52 +126,76 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, c
     caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
     caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
     caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
-    return this->run(this->chw.data());
+    return this->run(this->chw.data(), this->chw.size());
 }
 
-std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, int batch) {
-    this->input_node_dims[0] = batch;
+std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, size_t size, int batch) {
     #ifdef ENABLE_CAIWEI_BACKEND_CUDA
     Ort::IoBinding io_binding(*this->session);
-    auto memory_info = Ort::MemoryInfo("CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault);
-    const Ort::Value inputTensor = Ort::Value::CreateTensor<float>(
-        memory_info,
-        blob,
-        this->input_data_length * batch,
-        this->input_node_dims.data(),
-        this->input_node_dims.size()
-    );
-    io_binding.BindInput(this->input_node_names[0], inputTensor);
-    Ort::MemoryInfo output_memory_info{"CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault};
-    io_binding.BindOutput(this->output_node_names[0], output_memory_info);
+    std::vector<Ort::Value> input_tensors;
+    for (int i = 0; i < this->input_node_names.size(); ++i) {
+        this->input_node_dims[i][0] = batch;
+        auto memory_info = Ort::MemoryInfo("CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault);
+        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+            memory_info,
+            blob,
+            size,
+            this->input_node_dims[i].data(),
+            this->input_node_dims[i].size()
+        );
+        input_tensors.push_back(std::move(input_tensor));
+        io_binding.BindInput(this->input_node_names[i], input_tensors[i]);
+    }
+    for (int i = 0; i < this->output_node_names.size(); ++i) {
+        Ort::MemoryInfo output_memory_info{"CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault};
+        io_binding.BindOutput(this->output_node_names[i], output_memory_info);
+    }
     this->session->Run(
         *this->run_options,
         io_binding
     );
-    auto outputTensor = io_binding.GetOutputValues();
+    auto output_tensor = io_binding.GetOutputValues();
     #else
-    auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
-    const Ort::Value inputTensor = Ort::Value::CreateTensor<float>(
-        memory_info,
-        blob,
-        this->input_data_length * batch,
-        this->input_node_dims.data(),
-        this->input_node_dims.size()
-    );
-    auto outputTensor = this->session->Run(
+    std::vector<Ort::Value> input_tensors;
+    for (int i = 0; i < this->input_node_names.size(); ++i) {
+        this->input_node_dims[i][0] = batch;
+        auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+            memory_info,
+            blob,
+            size,
+            this->input_node_dims[i].data(),
+            this->input_node_dims[i].size()
+        );
+        input_tensors.push_back(std::move(input_tensor));
+    }
+    auto output_tensor = this->session->Run(
         *this->run_options,
         this->input_node_names.data(),
-        &inputTensor,
+        input_tensors.data(),
         this->input_node_names.size(),
         this->output_node_names.data(),
         this->output_node_names.size()
     );
     #endif
     std::vector<Ort::Value> ret;
-    ret.reserve(outputTensor.size());
-    for (auto iter = outputTensor.begin(); iter != outputTensor.end(); ++iter) {
-        auto& out = *iter;
-        ret.push_back(std::move(out));
+    ret.reserve(output_tensor.size());
+    for (auto iter = output_tensor.begin(); iter != output_tensor.end(); ++iter) {
+        ret.push_back(std::move(*iter));
     }
     return ret;
+}
+
+static void print_tensor_info(const char* title, size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape) {
+    std::string shape_info = "(";
+    if (shape.size() > 0) {
+        shape_info += std::to_string(shape[0]);
+        for (int i = 1; i < shape.size(); ++i) {
+            shape_info += ", " + std::to_string(shape[i]);
+        }
+    } else {
+        shape_info += "0";
+    }
+    shape_info += ")";
+    CW_LOG_I("%s: %" PRId64 " = %s shape: %s", title, index, name, shape_info.c_str());
 }

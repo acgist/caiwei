@@ -19,7 +19,7 @@ std::vector<caiwei::image::Pose> caiwei::context::PoseRKNN2Context::run(const ca
     auto output{ this->run(this->h, this->w, image) };
     const auto& output_attr = this->output_attrs[0];
     if (output_attr.type != RKNN_TENSOR_FLOAT16) {
-        CW_LOG_E("不支持的输出类型: %s", get_type_string(output_attr.type));
+        CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
         rknn_outputs_release(this->context, output.size(), output.data());
         return {};
     }

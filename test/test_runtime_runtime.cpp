@@ -6,9 +6,10 @@
 [[maybe_unused]]
 void test_rknn2() {
     caiwei::context::RKNN2Context context("yolo26n-det.rknn", 3, 640, 640);
+    context.load_model();
     std::vector<uint8_t> data(3 * 640 * 640);
     CAIWEI_FOR_EACH(100)
-    context.run(data.data());
+    context.run(data.data(), data.size());
     CAIWEI_FOR_EACH_END
 }
 #endif
@@ -20,9 +21,10 @@ void test_rknn2() {
 void test_onnxruntime() {
     auto* env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
     caiwei::context::ONNXRuntimeContext context("yolo26n-det.onnx", 3, 640, 640, env);
+    context.load_model();
     std::vector<float> data(3 * 640 * 640);
     CAIWEI_FOR_EACH(100)
-    auto result = context.run(data.data());
+    auto result = context.run(data.data(), data.size());
     CAIWEI_FOR_EACH_END
 }
 #endif

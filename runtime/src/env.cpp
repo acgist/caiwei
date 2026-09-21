@@ -104,7 +104,18 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VLM_TOKEN_ETOOLCALL",  "</tool_call>"    },
     {"CAIWEI_VLM_ENABLE_THINKING",  "enable_thinking" },
     // EMBEDDING
+    {"CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH", "8092"},
     // RERANKING
+    {"CAIWEI_RERANKING_MAX_TOKEN_LENGTH", "8092"},
+    {"CAIWEI_RERANKING_TOKEN_BOS",        "<|im_start|>"    },
+    {"CAIWEI_RERANKING_TOKEN_EOS",        "<|im_end|>"      },
+    {"CAIWEI_RERANKING_TOKEN_BTHINKING",  "<think>"         },
+    {"CAIWEI_RERANKING_TOKEN_ETHINKING",  "</think>"        },
+    {"CAIWEI_RERANKING_SYSTEM",           R"(Judge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".)"},
+    {"CAIWEI_RERANKING_INSTRUCTION",      "Given a web search query, retrieve relevant passages that answer the query"},
+    {"CAIWEI_RERANKING_INSTRUCTION_KEY",  "<Instruct>: "},
+    {"CAIWEI_RERANKING_QUERY_KEY",        "<Query>: "   },
+    {"CAIWEI_RERANKING_DOCUMENT_KEY",     "<Document>: "},
     // 模型配置: 类型,厂商,名称,路径
     // RKNN3   : LLM模型文件|LLM权重文件|embedding文件|tokenizer文件
     // RKNN3   : LLM模型文件|LLM权重文件|embedding文件|tokenizer文件|ASR模型文件|ASR权重文件

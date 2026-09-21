@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <utility>
 
-#include "nlohmann/json_fwd.hpp"
+#include "nlohmann/json.hpp"
 
 namespace caiwei {
 namespace image  {

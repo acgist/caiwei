@@ -57,10 +57,6 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
         APPEND CAIWEI_RUNTIME_SRCS
         src/rknn3/context.cpp
         src/rknn3/runtime.cpp
-        src/rknn2/yolo_cls.cpp
-        src/rknn2/yolo_det.cpp
-        src/rknn2/yolo_seg.cpp
-        src/rknn2/yolo_pose.cpp
         src/rknn3/qwen3_asr.cpp
         src/rknn3/qwen3_llm.cpp
         src/rknn3/qwen3_vlm.cpp

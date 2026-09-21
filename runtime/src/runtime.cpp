@@ -2,6 +2,9 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+#include "rknn3/rknn3_api.h"
+#endif
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 #include "llama.h"
 #endif
@@ -167,6 +170,9 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::Runtime::get
     return nullptr;
 }
 
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+static void init_rknn3();
+#endif
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 static void init_llamacpp();
 #endif
@@ -175,6 +181,9 @@ static void init_onnxruntime();
 #endif
 
 void caiwei::runtime::init() {
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+    init_rknn3();
+    #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
     init_llamacpp();
     #endif
@@ -185,6 +194,20 @@ void caiwei::runtime::init() {
 
 void caiwei::runtime::stop() {
 }
+
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+static void init_rknn3() {
+    rknn3_devices devs;
+    int ret = rknn3_find_devices(&devs);
+    if (ret != RKNN3_SUCCESS) {
+        CW_LOG_I("没有找到RKNN3设备");
+        return;
+    }
+    for (int i = 0; i < devs.n_devices; i++) {
+        CW_LOG_I("RKNN3设备 %d: 类型=%s, ID=%s", i, devs.devices[i].type, devs.devices[i].id);
+    }
+}
+#endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 static void init_llamacpp() {

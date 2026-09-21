@@ -20,7 +20,7 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
     const auto& output_attr = this->output_attrs[0];
     const int64_t output_data_length = output_attr.dims[1];
     if (output_attr.type != RKNN_TENSOR_FLOAT16) {
-        CW_LOG_E("不支持的输出类型: %s", get_type_string(output_attr.type));
+        CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
         rknn_outputs_release(this->context, output.size(), output.data());
         return {};
     }

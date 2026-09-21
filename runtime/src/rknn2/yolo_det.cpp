@@ -88,7 +88,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
             data += result_length;
         }
     } else {
-        CW_LOG_E("不支持的输出类型: %s", get_type_string(output_attr.type));
+        CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
         rknn_outputs_release(this->context, output.size(), output.data());
         return {};
     }

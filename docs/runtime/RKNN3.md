@@ -19,11 +19,6 @@ pip install rknn3_toolkit-1.1.0-cp312-cp312-manylinux2014_x86_64.whl
 
 如果开启量化使用参考官方文档。
 
-### YOLO-CLS
-### YOLO-DET
-### YOLO-SEG
-### YOLO-POSE
-
 ### Qwen3
 
 ```

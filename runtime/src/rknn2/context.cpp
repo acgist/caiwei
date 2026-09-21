@@ -8,7 +8,9 @@
 #include <fstream>
 #include <filesystem>
 
-caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)), input_data_length(c * h * w) {
+static void print_tensor_info(const char* title, const rknn_tensor_attr& attr);
+
+caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)) {
 }
 
 caiwei::context::RKNN2Context::~RKNN2Context() {
@@ -62,28 +64,7 @@ bool caiwei::context::RKNN2Context::load_model() {
             CW_LOG_W("读取RKNN2输入参数失败: %d - %d - %s", i, ret, this->path.c_str());
             return false;
         }
-        CW_LOG_I(
-            "RKNN2输入参数: %d - %s - %d - %d - %d - %s - %s - %s",
-            input_attr.index,
-            input_attr.name,
-            input_attr.size,
-            input_attr.n_dims,
-            input_attr.n_elems,
-            get_format_string  (input_attr.fmt),
-            get_type_string    (input_attr.type),
-            get_qnt_type_string(input_attr.qnt_type)
-        );
-        CW_LOG_I(
-            "RKNN2输入维度: %d - %d - %d - %d - %d - %d - %d - %d",
-            input_attr.dims[0],
-            input_attr.dims[1],
-            input_attr.dims[2],
-            input_attr.dims[3],
-            input_attr.dims[4],
-            input_attr.dims[5],
-            input_attr.dims[6],
-            input_attr.dims[7]
-        );
+        print_tensor_info("RKNN2输入参数", input_attr);
     }
     this->output_attrs.resize(io_num.n_output);
     for (uint32_t i = 0; i < io_num.n_output; ++i) {
@@ -94,30 +75,7 @@ bool caiwei::context::RKNN2Context::load_model() {
             CW_LOG_W("读取RKNN2输出参数失败: %d - %d - %s", i, ret, this->path.c_str());
             return false;
         }
-        CW_LOG_I(
-            "RKNN2输出参数: %d - %s - %d - %d - %d - %d - %.6f - %s - %s - %s",
-            output_attr.index,
-            output_attr.name,
-            output_attr.size,
-            output_attr.n_dims,
-            output_attr.n_elems,
-            output_attr.zp,
-            output_attr.scale,
-            get_format_string  (output_attr.fmt),
-            get_type_string    (output_attr.type),
-            get_qnt_type_string(output_attr.qnt_type)
-        );
-        CW_LOG_I(
-            "RKNN2输出维度: %d - %d - %d - %d - %d - %d - %d - %d",
-            output_attr.dims[0],
-            output_attr.dims[1],
-            output_attr.dims[2],
-            output_attr.dims[3],
-            output_attr.dims[4],
-            output_attr.dims[5],
-            output_attr.dims[6],
-            output_attr.dims[7]
-        );
+        print_tensor_info("RKNN2输出参数", output_attr);
     }
     return true;
 }
@@ -150,21 +108,21 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
             caiwei::image::hwc_to_chw(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
-            return this->run(this->chw_i8.data());
+            return this->run(this->chw_i8.data(), this->chw_i8.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
             caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
             caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
-            return this->run(this->chw.data());
+            return this->run(this->chw.data(), this->chw.size());
         } else {
             CW_LOG_E("不支持的输入类型: %s", get_type_string(input_attr.type));
             return {};
         }
     } else if (input_attr.fmt == RKNN_TENSOR_NHWC) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
-            return this->run(this->pad.data());
+            return this->run(this->pad.data(), this->pad.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
             caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
-            return this->run(this->hwc.data());
+            return this->run(this->hwc.data(), this->hwc.size());
         } else {
             CW_LOG_E("不支持的输入类型: %s", get_type_string(input_attr.type));
             return {};
@@ -175,7 +133,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
     }
 }
 
-std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int batch) {
+std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_t size, int batch) {
     std::vector<rknn_input>  inputs (this->input_size);
     std::vector<rknn_output> outputs(this->output_size);
     for (int i = 0; i < this->input_size; ++i) {
@@ -207,9 +165,9 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, int b
     return outputs;
 }
 
-std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, int batch) {
-    std::vector<uint16_t> data(this->input_data_length);
-    caiwei::type::f32_to_fp16(data.data(), blob, this->input_data_length);
+std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, size_t size, int batch) {
+    std::vector<uint16_t> data(size);
+    caiwei::type::f32_to_fp16(data.data(), blob, size);
     std::vector<rknn_input>  inputs (this->input_size);
     std::vector<rknn_output> outputs(this->output_size);
     for (int i = 0; i < this->input_size; ++i) {
@@ -239,4 +197,29 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, int bat
         CW_LOG_W("RKNN2读取输出失败: %d", ret);
     }
     return outputs;
+}
+
+static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {
+    CW_LOG_I(
+        "%s: %d name: %s size: %d n_dims: %d n_elems: %d zp: %d scale: %.6f fmt: %s type: %s qnt_type: %s shape: (%d, %d, %d, %d, %d, %d, %d, %d)",
+        title,
+        attr.index,
+        attr.name,
+        attr.size,
+        attr.n_dims,
+        attr.n_elems,
+        attr.zp,
+        attr.scale,
+        get_format_string  (attr.fmt),
+        get_type_string    (attr.type),
+        get_qnt_type_string(attr.qnt_type),
+        attr.dims[0],
+        attr.dims[1],
+        attr.dims[2],
+        attr.dims[3],
+        attr.dims[4],
+        attr.dims[5],
+        attr.dims[6],
+        attr.dims[7]
+    );
 }
