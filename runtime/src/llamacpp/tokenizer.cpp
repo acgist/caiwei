@@ -38,6 +38,10 @@ int32_t caiwei::context::Tokenizer::get_eos() {
     return llama_vocab_eos(this->vocab);
 }
 
+int32_t caiwei::context::Tokenizer::get_eot() {
+    return llama_vocab_eot(this->vocab);
+}
+
 int32_t caiwei::context::Tokenizer::get_pad() {
     return llama_vocab_pad(this->vocab);
 }

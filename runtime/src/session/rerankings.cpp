@@ -1,7 +1,7 @@
 #include "caiwei/manager.hpp"
 #include "caiwei/session.hpp"
 
-caiwei::session::RerankingsSession::RerankingsSession(const caiwei::text::RerankingsRequest& request) : request(request) {
+caiwei::session::RerankingsSession::RerankingsSession(caiwei::text::RerankingsRequest& request) : request(request) {
 }
 
 std::string caiwei::session::RerankingsSession::get() {

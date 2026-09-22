@@ -54,18 +54,18 @@ public:
 
 class EmbeddingsSession : public StatelessSession {
 private:
-    const caiwei::text::EmbeddingsRequest& request;
+    caiwei::text::EmbeddingsRequest& request;
 public:
-    EmbeddingsSession(const caiwei::text::EmbeddingsRequest& request);
+    EmbeddingsSession(caiwei::text::EmbeddingsRequest& request);
 public:
     virtual std::string get() override;
 };
 
 class RerankingsSession : public StatelessSession {
 private:
-    const caiwei::text::RerankingsRequest& request;
+    caiwei::text::RerankingsRequest& request;
 public:
-    RerankingsSession(const caiwei::text::RerankingsRequest& request);
+    RerankingsSession(caiwei::text::RerankingsRequest& request);
 public:
     virtual std::string get() override;
 };

@@ -48,17 +48,6 @@ target_link_libraries(
 )
 
 add_executable(
-    test_media_env
-    test_media_env.cpp
-)
-add_test(NAME test_media_env COMMAND test_media_env)
-set_target_properties(test_media_env PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_media_env
-    caiwei-test
-)
-
-add_executable(
     test_media_text
     test_media_text.cpp
 )
@@ -99,6 +88,17 @@ add_test(NAME test_media_demuxer COMMAND test_media_demuxer)
 set_target_properties(test_media_demuxer PROPERTIES FOLDER "test")
 target_link_libraries(
     test_media_demuxer
+    caiwei-test
+)
+
+add_executable(
+    test_runtime_env
+    test_runtime_env.cpp
+)
+add_test(NAME test_runtime_env COMMAND test_runtime_env)
+set_target_properties(test_runtime_env PROPERTIES FOLDER "test")
+target_link_libraries(
+    test_runtime_env
     caiwei-test
 )
 
@@ -158,46 +158,46 @@ target_link_libraries(
 )
 
 add_executable(
-    test_runtime_yolo_cls
-    test_runtime_yolo_cls.cpp
+    test_runtime_cls
+    test_runtime_cls.cpp
 )
-add_test(NAME test_runtime_yolo_cls COMMAND test_runtime_yolo_cls)
-set_target_properties(test_runtime_yolo_cls PROPERTIES FOLDER "test")
+add_test(NAME test_runtime_cls COMMAND test_runtime_cls)
+set_target_properties(test_runtime_cls PROPERTIES FOLDER "test")
 target_link_libraries(
-    test_runtime_yolo_cls
+    test_runtime_cls
     caiwei-test
 )
 
 add_executable(
-    test_runtime_yolo_det
-    test_runtime_yolo_det.cpp
+    test_runtime_det
+    test_runtime_det.cpp
 )
-add_test(NAME test_runtime_yolo_det COMMAND test_runtime_yolo_det)
-set_target_properties(test_runtime_yolo_det PROPERTIES FOLDER "test")
+add_test(NAME test_runtime_det COMMAND test_runtime_det)
+set_target_properties(test_runtime_det PROPERTIES FOLDER "test")
 target_link_libraries(
-    test_runtime_yolo_det
+    test_runtime_det
     caiwei-test
 )
 
 add_executable(
-    test_runtime_yolo_seg
-    test_runtime_yolo_seg.cpp
+    test_runtime_seg
+    test_runtime_seg.cpp
 )
-add_test(NAME test_runtime_yolo_seg COMMAND test_runtime_yolo_seg)
-set_target_properties(test_runtime_yolo_seg PROPERTIES FOLDER "test")
+add_test(NAME test_runtime_seg COMMAND test_runtime_seg)
+set_target_properties(test_runtime_seg PROPERTIES FOLDER "test")
 target_link_libraries(
-    test_runtime_yolo_seg
+    test_runtime_seg
     caiwei-test
 )
 
 add_executable(
-    test_runtime_yolo_pose
-    test_runtime_yolo_pose.cpp
+    test_runtime_pose
+    test_runtime_pose.cpp
 )
-add_test(NAME test_runtime_yolo_pose COMMAND test_runtime_yolo_pose)
-set_target_properties(test_runtime_yolo_pose PROPERTIES FOLDER "test")
+add_test(NAME test_runtime_pose COMMAND test_runtime_pose)
+set_target_properties(test_runtime_pose PROPERTIES FOLDER "test")
 target_link_libraries(
-    test_runtime_yolo_pose
+    test_runtime_pose
     caiwei-test
 )
 

@@ -1,7 +1,7 @@
 #include "caiwei/manager.hpp"
 #include "caiwei/session.hpp"
 
-caiwei::session::EmbeddingsSession::EmbeddingsSession(const caiwei::text::EmbeddingsRequest& request) : request(request) {
+caiwei::session::EmbeddingsSession::EmbeddingsSession(caiwei::text::EmbeddingsRequest& request) : request(request) {
 }
 
 std::string caiwei::session::EmbeddingsSession::get() {

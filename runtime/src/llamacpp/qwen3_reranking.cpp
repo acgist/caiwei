@@ -85,7 +85,7 @@ static void batch_decode(llama_context* ctx, llama_batch& batch, float* output, 
     }
 }
 
-caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(const caiwei::text::RerankingsRequest& request) {
+caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(caiwei::text::RerankingsRequest& request) {
     llama_context_ptr context{ get_context(true) };
     const enum llama_pooling_type pooling_type = llama_pooling_type(context.get());
     if (llama_model_has_encoder(this->model)) {
@@ -126,7 +126,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(con
             .append("\n\n")
             .append(this->special_token.e_thinking)
             .append("\n\n");
-        CW_LOG_D("reranking prompt: %s", prompt.c_str());
+        CW_LOG_D("reranking prompt:\n%s", prompt.c_str());
         inputs.push_back(this->tokenize(prompt, context.get(), false, true));
         prompt_tokens += inputs.back().size();
     }

@@ -95,7 +95,7 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn");
     #endif
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
     caiwei::test::init_test();
     det_draw();
     // det_image();

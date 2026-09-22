@@ -12,6 +12,6 @@ bool caiwei::context::LLMLlamaCPPContext::load() {
     return this->load_model();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::LLMLlamaCPPContext::run(caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }

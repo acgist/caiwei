@@ -64,7 +64,7 @@ static void batch_decode(llama_context* ctx, llama_batch& batch, float* output, 
     }
 }
 
-caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(const caiwei::text::EmbeddingsRequest& request) {
+caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(caiwei::text::EmbeddingsRequest& request) {
     llama_context_ptr context{ get_context(true) };
     const enum llama_pooling_type pooling_type = llama_pooling_type(context.get());
     if (llama_model_has_encoder(this->model)) {

@@ -24,9 +24,18 @@
 namespace caiwei  {
 namespace context {
 
+inline auto rknn3_session_deleter = [](rknn3_session* session) {
+    if (session) {
+        rknn3_session_destroy(session);
+    }
+};
+
+using rknn3_session_ptr = std::unique_ptr<rknn3_session, decltype(rknn3_session_deleter)>;
+
 struct ContextSession {
 std::mutex mutex;
 std::condition_variable cv;
+rknn3_context context;
 Tokenizer* tokenizer = nullptr;
 int      embedding_dim;
 float16* embedding_data = nullptr;
@@ -48,6 +57,8 @@ std::chrono::system_clock::time_point llm_first_time;
 std::chrono::system_clock::time_point llm_end_time;
 std::vector<rknn3_tensor> output_tensors{};
 std::vector<std::vector<float>> model_output{};
+bool init_output_tensors(int n_output_tensors);
+~ContextSession();
 };
 
 int embed_callback(void* userdata, int32_t* tokens, uint64_t num_tokens, void* embed, uint64_t len);
@@ -55,9 +66,6 @@ int result_callback(void* userdata, RKLLMResult* result, LLMCallState state);
 int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max);
 int output_callback(void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state);
 void printf_session_perf(caiwei::context::ContextSession* session);
-
-bool init_output(rknn3_context context, caiwei::context::ContextSession* session, int n_output_tensors);
-void free_output(rknn3_context context, caiwei::context::ContextSession* session);
 
 class RKNN3Context {
 protected:
@@ -78,8 +86,8 @@ protected:
 public:
     bool load_model();
     virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request);
-    rknn3_session* get_session(int max_tokens, rknn3_sampling_params sampling_params, ContextSession* context_session);
-    std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
+    rknn3_session* get_session(rknn3_sampling_params sampling_params, ContextSession* context_session);
+    std::generator<caiwei::text::Result> generate(caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
     ~RKNN3Context();
@@ -93,7 +101,7 @@ public:
     ~LLMRKNN3Context();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
 };
 
 // class VLMRKNN3Context : public VLMContext,  public RKNN3Context {
@@ -122,7 +130,7 @@ public:
 //     bool load_vlm_model();
 //     bool vlm_run(float16* img_embeds, float16* deepstack_data0, float16* deepstack_data1, float16* deepstack_data2);
 //     std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, const caiwei::text::CompletionsRequest& request) override;
-//     std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+//     std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
 // public:
 //     VLMRKNN3Context();
 //     ~VLMRKNN3Context();
@@ -131,7 +139,7 @@ public:
 class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {
 public:
     bool load() override;
-    caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) override;
+    caiwei::text::EmbeddingResult run(caiwei::text::EmbeddingsRequest& request) override;
 public:
     EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~EmbeddingRKNN3Context();
@@ -148,7 +156,7 @@ class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {
     std::string document_key;
 public:
     bool load() override;
-    caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
+    caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) override;
 public:
     RerankingRKNN3Context(
         std::string model_path,

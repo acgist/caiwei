@@ -22,19 +22,19 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_CAIWEI_TEST                "Build Test"          OFF) # 是否编译测试
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"        OFF) #           ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"          OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_RKNN2       "RKNN2"               OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
-option(ENABLE_CAIWEI_RUNTIME_RKNN3       "RKNN3"               OFF) # 瑞芯微: RK1820/RK1828
-option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"           ON)  # 跨平台
-option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"         ON)  # 跨平台
-option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"             ON)  # ASR前置ANS
-option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"             ON)  # ASR前置VAD
-option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"             ON)  # ASR前置AGC
-option(ENABLE_CAIWEI_YOLO_E2E            "YOLO end2end"        ON)  # YOLO end2end
-option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"              ON)  # FFmpeg
-option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"         ON)  # cpp-httplib
+option(ENABLE_CAIWEI_TEST                "Build Test"     OFF) # 是否编译测试
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"   OFF) #           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"     OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2" OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
+option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # 瑞芯微: RK1820/RK1828
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"      ON)  # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"    ON)  # 跨平台
+option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"        ON)  # ASR前置ANS
+option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"        ON)  # ASR前置VAD
+option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"        ON)  # ASR前置AGC
+option(ENABLE_CAIWEI_YOLO_E2E            "YOLO end2end"   ON)  # YOLO end2end
+option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"         ON)  # FFmpeg
+option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"    ON)  # cpp-httplib
 
 if(ANDROID)
     add_definitions(-DCAIWEI_OS_ANDROID=1)
@@ -99,17 +99,17 @@ if(ENABLE_ASAN)
 endif()
 
 if (ENABLE_CAIWEI_TEST)
-add_definitions(-DENABLE_CAIWEI_TEST)
+add_definitions(-DENABLE_CAIWEI_TEST=1)
 endif()
 
 if(ENABLE_CAIWEI_BACKEND_RKNN)
     message(STATUS "Enable Rockchip NPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN)
+    add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN=1)
 endif()
 
 if(ENABLE_CAIWEI_BACKEND_CUDA)
     message(STATUS "Enable Nvidia GPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_CUDA)
+    add_definitions(-DENABLE_CAIWEI_BACKEND_CUDA=1)
     # CUDA架构列表
     # 120 Blackwell    RTX PRO 6000/4500、RTX 5090/5080/5070 Ti/5070/5060 Ti/5060/5050
     # 110 Blackwell    Jetson T5000、Jetson T4000
@@ -135,7 +135,7 @@ endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     message(STATUS "Running with RKNN2")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2)
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2=1)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
@@ -149,7 +149,7 @@ endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN3)
     message(STATUS "Running with RKNN3")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3)
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3=1)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
@@ -163,7 +163,7 @@ endif()
 
 if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
     message(STATUS "Running with llama.cpp")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_LLAMACPP)
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_LLAMACPP=1)
     set(LLAMACPP_PATH "${CMAKE_SOURCE_DIR}/deps/llama.cpp" CACHE STRING "LlamaCPP Path")
     if(ENABLE_CAIWEI_BACKEND_CUDA)
         set(GGML_CUDA ON)
@@ -185,7 +185,7 @@ endif()
 
 if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     message(STATUS "Running with ONNXRuntime")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME=1)
     set(ONNXRUNTIME_PATH "${CMAKE_SOURCE_DIR}/deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
     set(
         CMAKE_PREFIX_PATH
@@ -245,7 +245,7 @@ endif()
 
 if(ENABLE_CAIWEI_CPPHTTPLIB)
     message(STATUS "Enable cpp-httplib")
-    add_definitions(-DENABLE_CAIWEI_REST)
+    add_definitions(-DENABLE_CAIWEI_REST=1)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
@@ -271,7 +271,7 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
 endif()
 
 if (ENABLE_CAIWEI_YOLO_E2E)
-    add_definitions(-DENABLE_CAIWEI_YOLO_E2E)
+    add_definitions(-DENABLE_CAIWEI_YOLO_E2E=1)
     message(STATUS "Enable YOLO E2E")
 endif ()
 

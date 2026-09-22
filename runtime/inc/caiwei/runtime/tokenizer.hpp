@@ -1,6 +1,7 @@
 #ifndef CAIWEI_RUNTIME_TOKENIZER_HPP
 #define CAIWEI_RUNTIME_TOKENIZER_HPP
 
+#include <set>
 #include <string>
 #include <cstdint>
 
@@ -20,6 +21,7 @@ public:
     int32_t get_size();
     int32_t get_bos();
     int32_t get_eos();
+    int32_t get_eot();
     int32_t get_pad();
     int32_t get_nl();
     int32_t piece_to_token(const std::string& piece);

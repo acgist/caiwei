@@ -18,6 +18,38 @@ caiwei::runtime::LlamaCPPRuntime::~LlamaCPPRuntime() {
     CW_LOG_I("LlamaCPPRuntime stop");
 }
 
+std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::get_asr_context(const caiwei::context::ContextInfo* info) {
+    std::vector<std::string> paths = info->paths;
+    if (paths.size() != 2) {
+        CW_LOG_W("LlamaCPP模型路径配置无效: %s", info->path.c_str());
+        return nullptr;
+    }
+    std::string model_path = paths[0];
+    std::string mmproj_path = paths[1];
+    if (!std::filesystem::exists(model_path)) {
+        CW_LOG_W("LlamaCPP模型无效: %s", model_path.c_str());
+        return nullptr;
+    }
+    if (!std::filesystem::exists(mmproj_path)) {
+        CW_LOG_W("LlamaCPP模型无效: %s", mmproj_path.c_str());
+        return nullptr;
+    }
+    caiwei::text::SpecialToken special_token;
+    special_token.bos = caiwei::env::get("CAIWEI_ASR_TOKEN_BOS");
+    special_token.eos = caiwei::env::get("CAIWEI_ASR_TOKEN_EOS");
+    special_token.pad = caiwei::env::get("CAIWEI_ASR_TOKEN_PAD");
+    special_token.b_audio = caiwei::env::get("CAIWEI_ASR_TOKEN_BAUDIO");
+    special_token.c_audio = caiwei::env::get("CAIWEI_ASR_TOKEN_CAUDIO");
+    special_token.e_audio = caiwei::env::get("CAIWEI_ASR_TOKEN_EAUDIO");
+    special_token.b_thinking = caiwei::env::get("CAIWEI_ASR_TOKEN_BTHINKING");
+    special_token.e_thinking = caiwei::env::get("CAIWEI_ASR_TOKEN_ETHINKING");
+    special_token.b_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_BTOOLCALL");
+    special_token.e_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_ETOOLCALL");
+    special_token.enable_thinking = caiwei::env::get("CAIWEI_ASR_ENABLE_THINKING");
+    std::string media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
+    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
+    return std::make_shared<caiwei::context::ASRLlamaCPPContext>(model_path, mmproj_path, media_marker, max_token_length, special_token, this);
+}
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::get_llm_context(const caiwei::context::ContextInfo* info) {
     if (!std::filesystem::exists(info->path)) {
@@ -38,6 +70,21 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::g
 }
 
 std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::get_vlm_context(const caiwei::context::ContextInfo* info) {
+    std::vector<std::string> paths = info->paths;
+    if (paths.size() != 2) {
+        CW_LOG_W("LlamaCPP模型路径配置无效: %s", info->path.c_str());
+        return nullptr;
+    }
+    std::string model_path = paths[0];
+    std::string mmproj_path = paths[1];
+    if (!std::filesystem::exists(model_path)) {
+        CW_LOG_W("LlamaCPP模型无效: %s", model_path.c_str());
+        return nullptr;
+    }
+    if (!std::filesystem::exists(mmproj_path)) {
+        CW_LOG_W("LlamaCPP模型无效: %s", mmproj_path.c_str());
+        return nullptr;
+    }
     caiwei::text::SpecialToken special_token;
     special_token.bos = caiwei::env::get("CAIWEI_VLM_TOKEN_BOS");
     special_token.eos = caiwei::env::get("CAIWEI_VLM_TOKEN_EOS");
@@ -53,8 +100,9 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::g
     special_token.b_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
     special_token.e_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
+    std::string media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
-    return nullptr;
+    return std::make_shared<caiwei::context::VLMLlamaCPPContext>(model_path, mmproj_path, media_marker, max_token_length, special_token, this);
 }
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::LlamaCPPRuntime::get_embedding_context(const caiwei::context::ContextInfo* info) {

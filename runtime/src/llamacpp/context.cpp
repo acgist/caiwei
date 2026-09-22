@@ -1,9 +1,17 @@
 #include "caiwei/runtime/llamacpp.hpp"
 
 #include <algorithm>
+#include "mtmd-helper.h"
 
 caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token)
   : path(std::move(path)), max_token_length(max_token_length), special_token(std::move(special_token)) {
+    CW_LOG_I("创建LlamaCPPContext: %s", this->path.c_str());
+}
+
+caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token)
+  : path(std::move(path)), mtmd_path(std::move(mtmd_path)),
+  media_marker(std::move(media_marker)),
+  max_token_length(max_token_length), special_token(std::move(special_token)) {
     CW_LOG_I("创建LlamaCPPContext: %s", this->path.c_str());
 }
 
@@ -28,6 +36,16 @@ bool caiwei::context::LlamaCPPContext::load_model() {
     this->special_token.eos = token_to_piece(this->vocab, llama_vocab_eos(this->vocab), this->special_token.eos);
     this->special_token.pad = token_to_piece(this->vocab, llama_vocab_pad(this->vocab), this->special_token.pad);
     this->chat_template.set_template(llama_model_chat_template(this->model, nullptr), this->special_token.bos, this->special_token.eos);
+    return true;
+}
+
+bool caiwei::context::LlamaCPPContext::load_mtmd() {
+    if (this->media_marker.empty()) {
+        this->media_marker = mtmd_default_marker();
+    }
+    mtmd_context_params params = mtmd_context_params_default();
+    params.media_marker = this->media_marker.c_str();
+    this->mtmd_context.reset(mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params));
     return true;
 }
 
@@ -100,7 +118,7 @@ std::vector<llama_token> caiwei::context::LlamaCPPContext::tokenize(const std::s
     return prompt_tokens;
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(caiwei::text::CompletionsRequest& request) {
     llama_context_ptr context{ get_context() };
     llama_sampler_ptr sampler{ get_sampler(request) };
     if (!context || !sampler) {
@@ -108,6 +126,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     }
     // TODO 多模态输入数据多态实现
     std::string prompt = this->chat_template.apply(this->special_token, request);
+    CW_LOG_D("提示词: %s", prompt.c_str());
     std::vector<llama_token> prompt_tokens = this->tokenize(prompt, context.get());
     if (prompt_tokens.empty()) {
         co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(0), 0 };
@@ -131,21 +150,8 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     bool thinking = false;
     bool toolcall = false;
     caiwei::text::ResultToolcall result_toolcall;
-    // mtmd_bitmap_init()
-    // mtmd_bitmap_init_from_audio()
-    // mtmd_helper_bitmap_init_from_buf
-    // mtmd_input_text()
-    // mtmd_input_chunks* d;
-    // mtmd_image_tokens d;
-    // mtmd_batch_init
-    // mtmd_tokenize()
-    // mtmd_bitmap_set_mergeable()
-    // mtmd_get_output_embd
-    // batch.embd
-    // for example: "a <__media__> b <__media__> c" --> "a", "<__media__>", "b", "<__media__>", "c"
-    // split_text
     const uint32_t n_ctx = llama_n_ctx(context.get());
-    uint32_t max_completion_tokens = request.max_completion_tokens.value_or(0);
+    uint32_t max_completion_tokens = request.max_completion_tokens.value_or(this->max_token_length);
     while (true) {
         llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context.get()), 0);
         if (n_ctx_used < 0) {
@@ -158,7 +164,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
             co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             break;
         }
-        if (max_completion_tokens != 0 && generated_tokens > max_completion_tokens) {
+        if (generated_tokens > max_completion_tokens) {
             CW_LOG_W("生成内容超过最大长度: %d", max_completion_tokens);
             co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             break;
@@ -227,6 +233,189 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     #endif
 }
 
+static void batch_add(
+    struct llama_batch & batch,
+           llama_token   id,
+             llama_pos   pos,
+const std::vector<llama_seq_id> & seq_ids,
+                  bool   logits) {
+
+    batch.token   [batch.n_tokens] = id;
+    batch.pos     [batch.n_tokens] = pos;
+    batch.n_seq_id[batch.n_tokens] = seq_ids.size();
+    for (size_t i = 0; i < seq_ids.size(); ++i) {
+        batch.seq_id[batch.n_tokens][i] = seq_ids[i];
+    }
+    batch.logits  [batch.n_tokens] = logits;
+    batch.n_tokens++;
+}
+
+static std::string common_token_to_piece(const struct llama_vocab * vocab, llama_token token, bool special) {
+    std::string piece;
+    piece.resize(piece.capacity());  // using string internal cache, 15 bytes + '\n'
+    const int n_chars = llama_token_to_piece(vocab, token, &piece[0], piece.size(), 0, special);
+    if (n_chars < 0) {
+        piece.resize(-n_chars);
+        int check = llama_token_to_piece(vocab, token, &piece[0], piece.size(), 0, special);
+        GGML_ASSERT(check == -n_chars);
+    }
+    else {
+        piece.resize(n_chars);
+    }
+
+    return piece;
+}
+
+std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_mtmd(caiwei::text::CompletionsRequest& request) {
+    mtmd::bitmaps bitmaps;
+    this->build_bitmaps(request, bitmaps);
+    llama_context_ptr context{ get_context() };
+    llama_sampler_ptr sampler{ get_sampler(request) };
+    if (!context || !sampler) {
+        co_return;
+    }
+    std::string prompt = this->chat_template.apply(this->special_token, request);
+    CW_LOG_D("提示词: %s", prompt.c_str());
+    mtmd_input_text text;
+    text.text          = prompt.data();
+    text.text_len      = prompt.size();
+    text.add_special   = true;
+    text.parse_special = true;
+    llama_pos n_past = 0;
+    mtmd::batch_ptr mbatch{ nullptr };
+    int n_batch = 2048; // TODO
+    mtmd::input_chunks chunks(mtmd_input_chunks_init());
+    auto bitmaps_c_ptr = bitmaps.c_ptr();
+    int32_t res = mtmd_tokenize(this->mtmd_context.get(),
+                        chunks.ptr.get(), // output
+                        &text, // text
+                        bitmaps_c_ptr.data(),
+                        bitmaps_c_ptr.size());
+    size_t n_chunks = mtmd_input_chunks_size(chunks.ptr.get());
+    if (n_chunks == 0) {
+        co_return;
+    }
+    for (size_t i = 0; i < n_chunks; i++) {
+        auto chunk = mtmd_input_chunks_get(chunks.ptr.get(), i);
+        auto chunk_type = mtmd_input_chunk_get_type(chunk);
+        if (chunk_type == MTMD_INPUT_CHUNK_TYPE_TEXT) {
+            llama_pos new_n_past = n_past;
+            res = mtmd_helper_eval_chunk_single(this->mtmd_context.get(),
+                        context.get(),
+                        chunk,
+                        n_past,
+                        0, // seq_id
+                        n_batch,
+                        i == n_chunks - 1, // logits_last
+                        &new_n_past);
+            if (res != 0) {
+                CW_LOG_W("Unable to eval text chunk %zu\n", i);
+                co_return;
+            }
+            n_past = new_n_past;
+        } else {
+            // media chunk: try to get embd from existing batch, or create a new batch
+            float * embd = nullptr;
+            if (mbatch) {
+                embd = mtmd_batch_get_output_embd(mbatch.get(), chunk);
+
+                if (embd) {
+                    CW_LOG_D("found embd for media chunk %zu in existing batch\n", i);
+                } else {
+                    CW_LOG_W("media chunk %zu not found in existing batch, creating new batch\n", i);
+                }
+            }
+
+            if (!embd) {
+                mbatch.reset(mtmd_batch_init(this->mtmd_context.get()));
+                res = mtmd_batch_add_chunk(mbatch.get(), chunk);
+                int n_added = 1;
+                for (size_t j = i + 1; j < n_chunks; j++) {
+                    auto next_chunk = mtmd_input_chunks_get(chunks.ptr.get(), j);
+                    auto next_type = mtmd_input_chunk_get_type(next_chunk);
+                    if (next_type == MTMD_INPUT_CHUNK_TYPE_TEXT) {
+                        break; // text chunk splits the batch
+                    }
+                    res = mtmd_batch_add_chunk(mbatch.get(), next_chunk);
+                    if (res != 0) {
+                        break; // batch full or incompatible
+                    }
+                    n_added++;
+                }
+
+                int64_t time_start = ggml_time_ms();
+                CW_LOG_I("encoding mtmd batch, n_chunks = %d (done = %zu, total = %zu)\n", n_added, i, n_chunks);
+                res = mtmd_batch_encode(mbatch.get());
+                if (res != 0) {
+                    CW_LOG_E("Failed to encode mtmd batch, res = %d\n", res);
+                    co_return;
+                }
+                CW_LOG_I("mtmd batch encoding done in %d ms\n", (int)(ggml_time_ms() - time_start));
+
+                embd = mtmd_batch_get_output_embd(mbatch.get(), chunk);
+            }
+
+            GGML_ASSERT(embd != nullptr);
+
+            llama_pos new_n_past = n_past;
+            res = mtmd_helper_decode_image_chunk(this->mtmd_context.get(),
+                        context.get(),
+                        chunk,
+                        embd,
+                        n_past,
+                        0, // seq_id
+                        n_batch,
+                        &new_n_past,
+                        nullptr, // callback
+                        nullptr  // user_data
+                    );
+            if (res != 0) {
+                CW_LOG_W("Unable to decode media chunk %zu\n", i);
+                co_return;
+            }
+            n_past = new_n_past;
+        }
+    }
+    llama_batch batch = llama_batch_init(1, 0, 1);
+    uint32_t n_predict = request.max_completion_tokens.value_or(this->max_token_length);
+    llama_token token_id;
+    for (int i = 0; i < n_predict; i++) {
+        if (i > n_predict) {
+            // TODO
+            break;
+        }
+
+        token_id = llama_sampler_sample(sampler.get(), context.get(), -1);
+        // llama_token token_id = common_sampler_sample(ctx.smpl, ctx.lctx, -1);
+        // generated_tokens.push_back(token_id);
+        // common_sampler_accept(ctx.smpl, token_id, true);
+
+        if (llama_vocab_is_eog(this->vocab, token_id)) {
+            break; // end of generation
+        }
+
+        std::string token = common_token_to_piece(this->vocab, token_id, true);
+
+        #if CAIWEI_DEBUG
+        std::printf("%s", token.c_str());
+        std::fflush(stdout);
+        #endif
+
+        // eval the token
+        batch.n_tokens = 0;
+        batch_add(batch, token_id, n_past++, {0}, true);
+        if (llama_decode(context.get(), batch)) {
+            CW_LOG_E("failed to decode token\n");
+            co_return;
+        }
+    }
+    llama_batch_free(batch);
+    #if CAIWEI_DEBUG
+    llama_perf_sampler_print(sampler.get());
+    llama_perf_context_print(context.get());
+    #endif
+}
+
 llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std::string& token) {
     llama_token ret;
     if (llama_tokenize(vocab, token.c_str(), token.size(), &ret, 1, false, true) < 0) {
@@ -252,4 +441,7 @@ std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_toke
         ret.resize(length);
     }
     return ret;
+}
+
+void caiwei::context::LlamaCPPContext::build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
 }

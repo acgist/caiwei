@@ -29,7 +29,7 @@ private:
     std::shared_ptr<caiwei::runtime::Runtime> runtime{ nullptr };
 public:
     C* ptr();
-    O run(const I& input);
+    O run(I& input);
 public:
     ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~ContextWrapper();
@@ -52,7 +52,7 @@ C* caiwei::manager::ContextWrapper<C, I, O>::ptr() {
 }
 
 template <typename C, typename I, typename O>
-O caiwei::manager::ContextWrapper<C, I, O>::run(const I& input) {
+O caiwei::manager::ContextWrapper<C, I, O>::run(I& input) {
     this->context->last_run_time = std::chrono::system_clock::now();
     return this->context->run(input);
 }
@@ -127,6 +127,16 @@ std::unique_ptr<ContextWrapper<C, I, O>> get_context(const std::string& name, ca
     #endif
     return nullptr;
 }
+
+using ClsWrapper  = caiwei::manager::ContextWrapper<caiwei::context::ClsContext,  caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>;
+using DetWrapper  = caiwei::manager::ContextWrapper<caiwei::context::DetContext,  caiwei::media::ImageFrame, std::vector<caiwei::image::Box>>;
+using SegWrapper  = caiwei::manager::ContextWrapper<caiwei::context::SegContext,  caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>;
+using PoseWrapper = caiwei::manager::ContextWrapper<caiwei::context::PoseContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Pose>>;
+using ASRWrapper  = caiwei::manager::ContextWrapper<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>;
+using LLMWrapper  = caiwei::manager::ContextWrapper<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>;
+using VLMWrapper  = caiwei::manager::ContextWrapper<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>;
+using EmbeddingWrapper = caiwei::manager::ContextWrapper<caiwei::context::EmbeddingContext, caiwei::text::EmbeddingsRequest, caiwei::text::EmbeddingResult>;
+using RerankingWrapper = caiwei::manager::ContextWrapper<caiwei::context::RerankingContext, caiwei::text::RerankingsRequest, caiwei::text::RerankingResult>;
 
 }
 }

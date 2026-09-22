@@ -169,7 +169,7 @@ public:
     ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -180,7 +180,7 @@ public:
     LLMContext(caiwei::runtime::Runtime* runtime);
     ~LLMContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -191,7 +191,7 @@ public:
     VLMContext(caiwei::runtime::Runtime* runtime);
     ~VLMContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -202,7 +202,7 @@ public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
 public:
-    virtual caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) = 0;
+    virtual caiwei::text::EmbeddingResult run(caiwei::text::EmbeddingsRequest& request) = 0;
 };
 
 /**
@@ -213,7 +213,7 @@ public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
 public:
-    virtual caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) = 0;
+    virtual caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) = 0;
 };
 
 void init();

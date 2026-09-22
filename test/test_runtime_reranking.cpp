@@ -30,8 +30,9 @@ void test_reranking() {
 int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "RERANKING,QWEN,qwen3-reranking,/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.rknn|/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.weight|/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.embed.bin|/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.tokenizer.gguf");
-    #else
+    #elif CAIWEI_OS_WIN
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
+    #else
     #endif
     caiwei::test::init_test();
     test_reranking();

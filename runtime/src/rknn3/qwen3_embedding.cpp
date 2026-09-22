@@ -24,16 +24,16 @@ static void euclidean(const float* embd, float* out, int size) {
     }
 }
 
-caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const caiwei::text::EmbeddingsRequest& request) {
+caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(caiwei::text::EmbeddingsRequest& request) {
     ContextSession context_session;
+    context_session.context = this->context;
     context_session.tokenizer = this->tokenizer;
     context_session.embedding_dim = this->embedding_dim;
     context_session.embedding_data = this->embedding_data;
-    init_output(this->context, &context_session, 1);
-    rknn3_session* session = this->get_session(this->max_token_length, {}, &context_session);
+    context_session.init_output_tensors(1);
+    rknn3_session_ptr session{ this->get_session({}, &context_session) };
     if (!session) {
         CW_LOG_W("获取RKNN3会话失败");
-        free_output(this->context, &context_session);
         return {};
     }
     std::vector<const std::string*> input_list;
@@ -67,7 +67,7 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
         llm_infer_param.max_new_tokens = this->max_token_length;
         context_session.llm_begin_time = std::chrono::system_clock::now();
         context_session.first = true;
-        int ret = rknn3_session_run(session, inputs.data(), inputs.size(), &llm_infer_param);
+        int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
         context_session.llm_end_time = std::chrono::system_clock::now();
         if (ret < 0) {
             CW_LOG_W("RKNN3会话运行失败: %d", ret);
@@ -77,7 +77,7 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
             CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
             #ifdef CAIWEI_DEBUG
             RKLLMRunState state{};
-            ret = rknn3_session_query_state(session, &state);
+            ret = rknn3_session_query_state(session.get(), &state);
             if (ret < 0) {
                 CW_LOG_W("RKNN3会话查询状态失败: %d", ret);
             } else {
@@ -91,7 +91,5 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
     }
     result.prompt_tokens = context_session.n_prefill_tokens;
     result.total_tokens  = context_session.n_prefill_tokens;
-    free_output(this->context, &context_session);
-    rknn3_session_destroy(session);
     return result;
 }
