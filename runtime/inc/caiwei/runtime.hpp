@@ -84,7 +84,9 @@ public:
     RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive);
     ~RKNN3Runtime();
 public:
+    std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::LLMContext> get_llm_context(const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::VLMContext> get_vlm_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::EmbeddingContext> get_embedding_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::RerankingContext> get_reranking_context(const caiwei::context::ContextInfo* info) override;
 };

@@ -16,11 +16,11 @@ git clone https://github.com/ggml-org/llama.cpp.git --depth=1
 
 ```
 # 模型转换
-python convert_hf_to_gguf.py Qwen/Qwen3-4B --outfile Qwen3-4B --outtype f16
+python convert_hf_to_gguf.py Qwen/Qwen3-1.7B --outfile Qwen3-1.7B --outtype f16
 # 模型量化
-llama-quantize Qwen3-4B/Qwen3-4B-F16.gguf Qwen3-4B/Qwen3-4B-Q4_K_M.gguf q4_k_m
+llama-quantize Qwen3-1.7B/Qwen3-1.7B-F16.gguf Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf q4_k_m
 # 模型测试
-llama-cli -m Qwen3-4B/Qwen3-4B-Q4_K_M.gguf --jinja
+llama-cli -m Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf --jinja
 ```
 
 ### Qwen3-VL

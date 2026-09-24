@@ -100,7 +100,7 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::g
     special_token.b_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
     special_token.e_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
-    std::string media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
+    std::string media_marker = caiwei::env::get("CAIWEI_VLM_MEDIA_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::VLMLlamaCPPContext>(model_path, mmproj_path, media_marker, max_token_length, special_token, this);
 }

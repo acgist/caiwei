@@ -18,6 +18,7 @@ public:
     Tokenizer(const std::string& path);
     ~Tokenizer();
 public:
+    bool    is_eog(int32_t token_id);
     int32_t get_size();
     int32_t get_bos();
     int32_t get_eos();

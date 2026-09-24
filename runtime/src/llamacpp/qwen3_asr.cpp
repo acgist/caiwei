@@ -1,5 +1,10 @@
 #include "caiwei/runtime/llamacpp.hpp"
 
+/**
+ * 参考代码
+ * deps\llama.cpp\tools\mtmd\mtmd-cli.cpp
+ */
+
 caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
     : LlamaCPPContext(std::move(path), std::move(mtmd_path), std::move(media_marker), max_token_length, special_token),
     ASRContext(runtime) {
@@ -26,7 +31,7 @@ void caiwei::context::ASRLlamaCPPContext::build_bitmaps(caiwei::text::Completion
         }
         std::string content{};
         for (const auto& audio : message.audio_data) {
-            std::vector<float> audio_data(audio.data.size());
+            std::vector<float> audio_data(audio.data.size() * sizeof(uint8_t) / sizeof(int16_t));
             const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio.data.data());
             std::transform(audio_data_ptr, audio_data_ptr + audio.data.size() * sizeof(uint8_t) / sizeof(int16_t), audio_data.data(), [](int16_t v) {
                 return static_cast<float>(v) / 32768.0F;

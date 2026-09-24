@@ -1,6 +1,7 @@
 # RKNN3
 
-* 版本: `RK1820/RK1828`
+* 版本: `1.1.0`
+* 设备: `RK1820/RK1828`
 
 * `RKNN2`跑`YOLO`模型
 * `RKNN3`跑`Qwen`模型
@@ -13,7 +14,7 @@ pip install rknn3_toolkit-1.1.0-cp312-cp312-manylinux2014_x86_64.whl
 ```
 
 * 不要随便修改依赖🤡🤡🤡(遇到依赖问题重新安装环境)
-* 尽量保证`rknn3-toolkit`/`rknn3-model-zoo`和`rknn3_api`版本一致
+* 必须保证`rknn3-toolkit`/`rknn3-model-zoo`/`rknn3_transfer_proxy`/`rknn3_api`/`librknn3_api_rkcp`/`librknn3_api_native`版本一致
 
 ## 模型转换
 
@@ -28,30 +29,31 @@ cd rknn3-model-zoo/examples/Qwen3/python
 
 mkdir onnx rknn
 
-python export_llm.py                \
-    --modelscope                    \
-    --model_path      Qwen/Qwen3-4B \
-    --export_llm_path onnx/Qwen3-4B.onnx
+python export_llm.py                  \
+    --modelscope                      \
+    --model_path      Qwen/Qwen3-1.7B \
+    --export_llm_path onnx/Qwen3-1.7B.onnx
 
-python export_rknn.py              \
-    --platform  rk1828             \
-    --onnx_path onnx/Qwen3-4B.onnx \
-    --rknn_path rknn/Qwen3-4B.rknn
+python export_rknn.py                      \
+    --platform  rk1828                     \
+    --config    onnx/Qwen3-1.7B.config.pkl \
+    --onnx_path onnx/Qwen3-1.7B.onnx       \
+    --rknn_path rknn/Qwen3-1.7B.rknn
 
-scp                              \
-    onnx/Qwen3-4B.embed.bin      \
-    onnx/Qwen3-4B.tokenizer.gguf \
-    rknn/Qwen3-4B.*              \
-    192.168.1.100:/data/model/Qwen3-4B
+scp                                \
+    onnx/Qwen3-1.7B.embed.bin      \
+    onnx/Qwen3-1.7B.tokenizer.gguf \
+    rknn/Qwen3-1.7B.*              \
+    192.168.1.100:/data/model/Qwen3-1.7B
 
-rkllm3-server                             \
-    -a          "Qwen3-4B"                \
-    -c          4096                      \
-    --port      8000                      \
-    --host      0.0.0.0                   \
-    --model     ./Qwen3-4B.rknn           \
-    --embed     ./Qwen3-4B.embed.bin      \
-    --vocab     ./Qwen3-4B.tokenizer.gguf \
+rkllm3-server                               \
+    -a          "Qwen3-1.7B"                \
+    -c          4096                        \
+    --port      8000                        \
+    --host      0.0.0.0                     \
+    --model     ./Qwen3-1.7B.rknn           \
+    --embed     ./Qwen3-1.7B.embed.bin      \
+    --vocab     ./Qwen3-1.7B.tokenizer.gguf \
     --log_level 0
 ```
 
@@ -70,6 +72,7 @@ python export_vision.py                            \
     --export_vision_path onnx-vlm/Qwen3-VL-2B-Instruct.onnx
 
 python export_rknn.py                              \
+    --no_prune_mode                                \
     --platform  rk1828                             \
     --onnx_path onnx-vlm/Qwen3-VL-2B-Instruct.onnx \
     --rknn_path rknn-vlm/Qwen3-VL-2B-Instruct.rknn
@@ -87,9 +90,10 @@ python export_llm.py                            \
     --model_path      Qwen/Qwen3-VL-2B-Instruct \
     --export_llm_path onnx-llm/Qwen3-VL-2B-Instruct.onnx
 
-python export_rknn.py                              \
-    --platform  rk1828                             \
-    --onnx_path onnx-llm/Qwen3-VL-2B-Instruct.onnx \
+python export_rknn.py                                    \
+    --platform  rk1828                                   \
+    --config    onnx-llm/Qwen3-VL-2B-Instruct.config.pkl \
+    --onnx_path onnx-llm/Qwen3-VL-2B-Instruct.onnx       \
     --rknn_path rknn-llm/Qwen3-VL-2B-Instruct.rknn
 
 scp                                              \
@@ -119,7 +123,7 @@ rkllm3-server                                               \
 ```
 # https://github.com/airockchip/rknn3-model-zoo/tree/main/examples/Qwen3_ASR
 
-cd rknn3-model-zoo/examples/Qwen3_ASR/python/audio/online
+cd rknn3-model-zoo/examples/Qwen3_ASR/python/audio/offline
 
 mkdir onnx-asr rknn-asr
 
@@ -146,9 +150,10 @@ python export_llm.py                      \
     --model_path      Qwen/Qwen3-ASR-0.6B \
     --export_llm_path onnx-llm/Qwen3-ASR-0.6B.onnx
 
-python export_rknn.py                        \
-    --platform  rk1828                       \
-    --onnx_path onnx-llm/Qwen3-ASR-0.6B.onnx \
+python export_rknn.py                              \
+    --platform  rk1828                             \
+    --config    onnx-llm/Qwen3-ASR-0.6B.config.pkl \
+    --onnx_path onnx-llm/Qwen3-ASR-0.6B.onnx       \
     --rknn_path rknn-llm/Qwen3-ASR-0.6B.rknn
 
 scp                                        \
@@ -185,9 +190,10 @@ python export_llm.py                           \
     --model_path      Qwen/Qwen3-Reranker-0.6B \
     --export_llm_path onnx/Qwen3-Reranker-0.6B.onnx
 
-python export_rknn.py                         \
-    --platform  rk1820                        \
-    --onnx_path onnx/Qwen3-Reranker-0.6B.onnx \
+python export_rknn.py                               \
+    --platform  rk1820                              \
+    --config    onnx/Qwen3-Reranker-0.6B.config.pkl \
+    --onnx_path onnx/Qwen3-Reranker-0.6B.onnx       \
     --rknn_path rknn/Qwen3-Reranker-0.6B.rknn
 
 scp                                         \
@@ -220,9 +226,10 @@ python export_llm.py                            \
     --model_path      Qwen/Qwen3-Embedding-0.6B \
     --export_llm_path onnx/Qwen3-Embedding-0.6B.onnx
 
-python export_rknn.py                          \
-    --platform  rk1828                         \
-    --onnx_path onnx/Qwen3-Embedding-0.6B.onnx \
+python export_rknn.py                                \
+    --platform  rk1828                               \
+    --config    onnx/Qwen3-Embedding-0.6B.config.pkl \
+    --onnx_path onnx/Qwen3-Embedding-0.6B.onnx       \
     --rknn_path rknn/Qwen3-Embedding-0.6B.rknn
 
 scp                                          \

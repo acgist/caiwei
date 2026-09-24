@@ -1,5 +1,10 @@
 #include "caiwei/runtime/llamacpp.hpp"
 
+/**
+ * 参考代码
+ * deps\llama.cpp\examples\embedding\embedding.cpp
+ */
+
 caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
   : EmbeddingContext(runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {

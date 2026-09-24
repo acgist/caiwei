@@ -275,11 +275,14 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
         co_return;
     }
     std::string prompt = this->chat_template.apply(this->special_token, request);
+//     std::string prompt = R"(<|im_start|>user
+// 不要分析内容，告诉我有几张图片和几个视频。<__media__><__media__><__media__><|im_end|>
+// <|im_start|>assistant)";
     CW_LOG_D("提示词: %s", prompt.c_str());
     mtmd_input_text text;
     text.text          = prompt.data();
     text.text_len      = prompt.size();
-    text.add_special   = true;
+    text.add_special   = false;
     text.parse_special = true;
     llama_pos n_past = 0;
     mtmd::batch_ptr mbatch{ nullptr };
@@ -291,6 +294,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
                         &text, // text
                         bitmaps_c_ptr.data(),
                         bitmaps_c_ptr.size());
+    // TODO check res
     size_t n_chunks = mtmd_input_chunks_size(chunks.ptr.get());
     if (n_chunks == 0) {
         co_return;

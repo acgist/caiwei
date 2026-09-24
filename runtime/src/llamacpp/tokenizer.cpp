@@ -22,6 +22,10 @@ caiwei::context::Tokenizer::~Tokenizer() {
     }
 }
 
+bool caiwei::context::Tokenizer::is_eog(int32_t token_id) {
+    return llama_vocab_is_eog(this->vocab, token_id);
+}
+
 int32_t caiwei::context::Tokenizer::get_nl() {
     return llama_vocab_nl(this->vocab);
 }

@@ -1,5 +1,10 @@
 #include "caiwei/runtime/llamacpp.hpp"
 
+/**
+ * 参考代码
+ * deps\llama.cpp\examples\embedding\embedding.cpp
+ */
+
 caiwei::context::RerankingLlamaCPPContext::RerankingLlamaCPPContext(
     std::string path,
     int32_t max_token_length,

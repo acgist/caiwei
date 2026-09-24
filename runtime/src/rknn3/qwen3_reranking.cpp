@@ -1,5 +1,7 @@
 #include "caiwei/runtime/rknn3.hpp"
 
+// 1.0.0不能正常使用
+
 caiwei::context::RerankingRKNN3Context::RerankingRKNN3Context(
     std::string model_path,
     std::string weight_path,
@@ -34,6 +36,9 @@ bool caiwei::context::RerankingRKNN3Context::load() {
 }
 
 static void euclidean(const float* embd, float* out, int size) {
+    if (size <= 1) {
+        return;
+    }
     double sum = 0.0;
     for (int i = 0; i < size; i++) {
         sum += embd[i] * embd[i];
@@ -89,7 +94,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(caiwei
         CW_LOG_D("reranking prompt:\n%s", prompt.c_str());
         std::vector<rknn3_llm_input> inputs(1);
         rknn3_llm_tensor tensor{};
-        tensor.name     = "input";
+        tensor.name     = "input_embeds";
         // TODO
         tensor.prompt   = prompt.c_str();
         tensor.embed    = NULL;

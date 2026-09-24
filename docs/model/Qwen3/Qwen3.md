@@ -5,7 +5,7 @@
 ```
 modelscope download --model Qwen/Qwen3-0.6B --local_dir ./Qwen/Qwen3-0.6B
 modelscope download --model Qwen/Qwen3-1.7B --local_dir ./Qwen/Qwen3-1.7B
-modelscope download --model Qwen/Qwen3-4B --local_dir ./Qwen/Qwen3-4B
+modelscope download --model Qwen/Qwen3-4B   --local_dir ./Qwen/Qwen3-4B
 ```
 
 ## 模型训练
