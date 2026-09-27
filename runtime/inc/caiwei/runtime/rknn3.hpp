@@ -87,10 +87,10 @@ protected:
     std::vector<rknn3_tensor> media_output;
     std::vector<rknn3_tensor_mem*> internal_mems;
 public:
-    bool load_model();
-    bool load_media_model();
+    bool load_model(bool user_mem_internal = false);
+    bool load_media_model(bool user_mem_internal = false);
     bool init_internal_mems(uint32_t core_mask_llm, uint32_t core_mask_media);
-    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request);
+    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) = 0;
     rknn3_session* get_session(rknn3_sampling_params sampling_params, ContextSession* context_session);
     std::generator<caiwei::text::Result> generate(caiwei::text::CompletionsRequest& request);
 public:
@@ -124,6 +124,7 @@ public:
     ~LLMRKNN3Context();
 public:
     bool load() override;
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) override;
     std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
 };
 

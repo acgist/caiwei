@@ -29,3 +29,7 @@
 * 版本：main
 * 协议：Apache-2.0 license
 * https://github.com/airockchip/rknn3-model-zoo/blob/main/tokenizer
+
+## pocketfft_hdronly
+
+* https://github.com/hayguen/pocketfft

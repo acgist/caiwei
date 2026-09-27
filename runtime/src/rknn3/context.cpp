@@ -85,13 +85,16 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
     }
 }
 
-bool caiwei::context::RKNN3Context::load_model() {
+bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal) {
     rknn3_config config;
     config.run_core_mask = 0xFF;
+    if (user_mem_internal) {
+        config.user_mem_internal = 1;
+    }
     // config.run_core_mask = RKNN3_NPU_CORE_ALL;
-    rknn3_init_extend extend{};
-    extend.device_id = "0004:41:00.0";
-    int ret = rknn3_init(&this->context, &extend);
+    // rknn3_init_extend extend{};
+    // extend.device_id = "0004:41:00.0";
+    int ret = rknn3_init(&this->context, nullptr);
     if (ret < 0) {
         CW_LOG_W("加载RKNN3上下文失败: %d", ret);
         return false;
@@ -147,10 +150,12 @@ bool caiwei::context::RKNN3Context::load_model() {
     return true;
 }
 
-bool caiwei::context::RKNN3Context::load_media_model() {
+bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal) {
     rknn3_config config{};
     config.run_core_mask = 0xFF;
-    config.user_mem_internal = 1;
+    if (user_mem_internal) {
+        config.user_mem_internal = 1;
+    }
     int ret = rknn3_init(&this->media_context, NULL);
     if (ret < 0) {
         printf("rknn_init fail ret=%d\n", ret);
@@ -366,21 +371,6 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(rknn3_sampling_params 
         return nullptr;
     }
     return session;
-}
-
-std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) {
-    rknn3_llm_tensor tensor{};
-    tensor.name     = "input_embeds";
-    // TODO
-    tensor.prompt   = "你好，解释一下碧螺萧萧";
-    tensor.embed    = NULL;
-    tensor.tokens   = NULL;
-    tensor.n_tokens = 0;
-    tensor.enable_thinking = false;
-    std::vector<rknn3_llm_input> inputs(1);
-    inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
-    inputs[0].llm_input  = tensor;
-    return inputs;
 }
 
 std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(caiwei::text::CompletionsRequest& request) {
