@@ -1,3 +1,4 @@
+#include "caiwei/env.hpp"
 #include "caiwei/manager.hpp"
 #include "caiwei/session.hpp"
 

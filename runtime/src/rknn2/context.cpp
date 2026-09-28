@@ -53,10 +53,8 @@ bool caiwei::context::RKNN2Context::load_model() {
         return false;
     }
     CW_LOG_I("读取RKNN2参数成功: %d - %d", io_num.n_input, io_num.n_output);
-    this->input_size  = io_num.n_input;
-    this->output_size = io_num.n_output;
-    this->input_attrs.resize(this->input_size);
-    for (uint32_t i = 0; i < this->input_size; ++i) {
+    this->input_attrs.resize(io_num.n_input);
+    for (uint32_t i = 0; i < io_num.n_input; ++i) {
         auto& input_attr = this->input_attrs[i];
         input_attr.index = i;
         ret = rknn_query(this->context, RKNN_QUERY_INPUT_ATTR, &input_attr, sizeof(rknn_tensor_attr));
@@ -134,9 +132,9 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
 }
 
 std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_t size, int batch) {
-    std::vector<rknn_input>  inputs (this->input_size);
-    std::vector<rknn_output> outputs(this->output_size);
-    for (int i = 0; i < this->input_size; ++i) {
+    std::vector<rknn_input>  inputs (this->input_attrs.size());
+    std::vector<rknn_output> outputs(this->output_attrs.size());
+    for (int i = 0; i < inputs.size(); ++i) {
         inputs[i].buf   = blob;
         inputs[i].fmt   = this->input_attrs[i].fmt;
         inputs[i].type  = this->input_attrs[i].type;
@@ -145,12 +143,12 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_
         // TODO
         inputs[i].pass_through = 1;
     }
-    for (int i = 0; i < this->output_size; ++i) {
+    for (int i = 0; i < outputs.size(); ++i) {
         outputs[i].index = i;
         outputs[i].want_float = 0;
     }
     int ret = 0;
-    ret = rknn_inputs_set(this->context, this->input_size, inputs.data());
+    ret = rknn_inputs_set(this->context, inputs.size(), inputs.data());
     if (ret < 0) {
         CW_LOG_W("RKNN2设置输入失败: %d", ret);
     }
@@ -158,7 +156,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_
     if (ret < 0) {
         CW_LOG_W("RKNN2执行运算失败: %d", ret);
     }
-    ret = rknn_outputs_get(this->context, this->output_size, outputs.data(), nullptr);
+    ret = rknn_outputs_get(this->context, outputs.size(), outputs.data(), nullptr);
     if (ret < 0) {
         CW_LOG_W("RKNN2读取输出失败: %d", ret);
     }
@@ -168,9 +166,9 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_
 std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, size_t size, int batch) {
     std::vector<uint16_t> data(size);
     caiwei::type::f32_to_fp16(data.data(), blob, size);
-    std::vector<rknn_input>  inputs (this->input_size);
-    std::vector<rknn_output> outputs(this->output_size);
-    for (int i = 0; i < this->input_size; ++i) {
+    std::vector<rknn_input>  inputs (this->input_attrs.size());
+    std::vector<rknn_output> outputs(this->output_attrs.size());
+    for (int i = 0; i < inputs.size(); ++i) {
         inputs[i].buf   = data.data();
         inputs[i].fmt   = this->input_attrs[i].fmt;
         inputs[i].type  = this->input_attrs[i].type;
@@ -179,12 +177,12 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, size_t 
         // TODO
         inputs[i].pass_through = 1;
     }
-    for (int i = 0; i < this->output_size; ++i) {
+    for (int i = 0; i < outputs.size(); ++i) {
         outputs[i].index = i;
         outputs[i].want_float = 0;
     }
     int ret = 0;
-    ret = rknn_inputs_set(this->context, this->input_size, inputs.data());
+    ret = rknn_inputs_set(this->context, inputs.size(), inputs.data());
     if (ret < 0) {
         CW_LOG_W("RKNN2设置输入失败: %d", ret);
     }
@@ -192,7 +190,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, size_t 
     if (ret < 0) {
         CW_LOG_W("RKNN2执行运算失败: %d", ret);
     }
-    ret = rknn_outputs_get(this->context, this->output_size, outputs.data(), nullptr);
+    ret = rknn_outputs_get(this->context, outputs.size(), outputs.data(), nullptr);
     if (ret < 0) {
         CW_LOG_W("RKNN2读取输出失败: %d", ret);
     }

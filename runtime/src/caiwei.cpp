@@ -1,8 +1,8 @@
-#include "caiwei/media.hpp"
 #include "caiwei/caiwei.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
 #include "caiwei/manager.hpp"
+#include "caiwei/media_tool.hpp"
 
 void caiwei::init() {
     caiwei::media::init();

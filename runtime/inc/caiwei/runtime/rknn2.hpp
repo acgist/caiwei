@@ -1,8 +1,6 @@
 #ifndef CAIWEI_RUNTIME_RKNN2_HPP
 #define CAIWEI_RUNTIME_RKNN2_HPP
 
-#include "caiwei/log.hpp"
-#include "caiwei/env.hpp"
 #include "caiwei/context.hpp"
 
 #include "rknn2/rknn_api.h"
@@ -14,23 +12,21 @@ class RKNN2Context {
 protected:
     std::string path;
     rknn_context context = 0;
-    int input_size;
-    int output_size;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
-    int dst_w; // 缩放目标宽度
-    int dst_h; // 缩放目标高度
-    int pad_w; // 缩放填充宽度
-    int pad_h; // 缩放填充高度
+    int dst_w;   // 缩放目标宽度
+    int dst_h;   // 缩放目标高度
+    int pad_w;   // 缩放填充宽度
+    int pad_h;   // 缩放填充高度
     float scale; // 缩放比例: 输入图片 / 原始图片
 private:
-    uint32_t image_width;
-    uint32_t image_height;
-    std::vector<uint8_t> dst;
-    std::vector<uint8_t> pad;
-    std::vector<float>   hwc;
-    std::vector<float>   chw;
-    std::vector<uint8_t> chw_i8;
+    uint32_t image_width;  // 输入图片宽度
+    uint32_t image_height; // 输入图片高度
+    std::vector<uint8_t> dst; // 缩放图片
+    std::vector<uint8_t> pad; // 填充图片
+    std::vector<float>   hwc; // HWC填充图片
+    std::vector<float>   chw; // CHW填充图片
+    std::vector<uint8_t> chw_i8; // CHW填充图片
 public:
     RKNN2Context(std::string path, int c, int h, int w);
     virtual ~RKNN2Context();
@@ -42,52 +38,46 @@ public:
 };
 
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {
+using RKNN2Context::run;
 public:
     ClsRKNN2Context(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsRKNN2Context();
 public:
-    using RKNN2Context::run;
     bool load() override;
     std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class DetRKNN2Context : public DetContext, public RKNN2Context {
+using RKNN2Context::run;
 public:
     DetRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~DetRKNN2Context();
 public:
-    using RKNN2Context::run;
     bool load() override;
     std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class SegRKNN2Context : public SegContext, public RKNN2Context {
+using RKNN2Context::run;
 public:
     SegRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~SegRKNN2Context();
 public:
-    using RKNN2Context::run;
     bool load() override;
     std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class PoseRKNN2Context : public PoseContext, public RKNN2Context {
+using RKNN2Context::run;
 public:
     PoseRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~PoseRKNN2Context();
 public:
-    using RKNN2Context::run;
     bool load() override;
     std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) override;
 };
 
-class ASRRKNN2Context  : public ASRContext,  public RKNN2Context {};
-class LLMRKNN2Context  : public LLMContext,  public RKNN2Context {};
-class VLMRKNN2Context  : public VLMContext,  public RKNN2Context {};
-class EmbeddingRKNN2Context : public EmbeddingContext, public RKNN2Context {};
-class RerankingRKNN2Context : public RerankingContext, public RKNN2Context {};
-
-}
-}
+} // context
+} // caiwei
 
 #endif //CAIWEI_RUNTIME_RKNN2_HPP

@@ -11,12 +11,12 @@ set(
     src/manager.cpp
     src/media/text_data.cpp
     src/media/text_tool.cpp
-    src/media/audio_tool.cpp
     src/media/audio_data.cpp
-    src/media/image_tool.cpp
+    src/media/audio_tool.cpp
     src/media/image_data.cpp
-    src/media/media.cpp
+    src/media/image_tool.cpp
     src/media/media_data.cpp
+    src/media/media_tool.cpp
     src/session/video_play.cpp
     src/session/embeddings.cpp
     src/session/rerankings.cpp
@@ -33,8 +33,8 @@ list(
 if(ENABLE_CAIWEI_FFMPEG)
     list(
         APPEND CAIWEI_RUNTIME_SRCS
-        src/ffmpeg/media.cpp
         src/ffmpeg/media_muxer.cpp
+        src/ffmpeg/media_ffmpeg.cpp
         src/ffmpeg/media_format.cpp
         src/ffmpeg/media_demuxer.cpp
     )

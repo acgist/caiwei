@@ -1,5 +1,9 @@
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
+
+#include <filesystem>
 
 template<>
 std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
@@ -136,14 +140,14 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::LlamaCPPRunt
     return std::make_shared<caiwei::context::RerankingLlamaCPPContext>(
         info->path,
         max_token_length,
+        special_token,
+        this,
         bos_key,
         eos_key,
         system_prompt,
         instruction_prompt,
         instruction_key,
         query_key,
-        document_key,
-        special_token,
-        this
+        document_key
     );
 }

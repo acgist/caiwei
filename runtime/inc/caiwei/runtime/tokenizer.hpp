@@ -1,7 +1,6 @@
 #ifndef CAIWEI_RUNTIME_TOKENIZER_HPP
 #define CAIWEI_RUNTIME_TOKENIZER_HPP
 
-#include <set>
 #include <string>
 #include <cstdint>
 
@@ -9,6 +8,9 @@
 
 namespace caiwei  {
 namespace context {
+
+extern llama_token piece_to_token(const llama_vocab* vocab, const std::string& token);
+extern std::string token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value = "");
 
 class Tokenizer {
 private:

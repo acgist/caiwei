@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
 /**

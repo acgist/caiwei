@@ -1,7 +1,7 @@
-#include "caiwei/runtime/onnxruntime.hpp"
-
+#include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
+#include "caiwei/runtime/onnxruntime.hpp"
 
 #if CAIWEI_DEBUG
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO;

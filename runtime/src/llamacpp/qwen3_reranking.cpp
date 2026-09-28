@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
 /**
@@ -8,15 +9,15 @@
 caiwei::context::RerankingLlamaCPPContext::RerankingLlamaCPPContext(
     std::string path,
     int32_t max_token_length,
+    caiwei::text::SpecialToken special_token,
+    caiwei::runtime::Runtime* runtime,
     std::string bos_key,
     std::string eos_key,
     std::string system_prompt,
     std::string instruction_prompt,
     std::string instruction_key,
     std::string query_key,
-    std::string document_key,
-    caiwei::text::SpecialToken special_token,
-    caiwei::runtime::Runtime* runtime
+    std::string document_key
 ) : RerankingContext(runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)),
     bos_key(std::move(bos_key)),

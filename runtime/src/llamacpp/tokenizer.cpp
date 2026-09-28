@@ -95,3 +95,30 @@ std::string caiwei::context::Tokenizer::detokenize(int32_t* tokens, int32_t n_to
     }
     return text;
 }
+
+llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std::string& token) {
+    llama_token ret;
+    if (llama_tokenize(vocab, token.c_str(), token.size(), &ret, 1, false, true) < 0) {
+        CW_LOG_W("piece_to_token失败: %s", token.c_str());
+        return LLAMA_TOKEN_NULL;
+    }
+    return ret;
+}
+
+std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value) {
+    if (token == LLAMA_TOKEN_NULL) {
+        return std::move(default_value);
+    }
+    std::string ret;
+    ret.resize(64);
+    const int length = llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true);
+    if (length < 0) {
+        ret.resize(-length);
+        if (llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true) != -length) {
+            return std::move(default_value);
+        }
+    } else {
+        ret.resize(length);
+    }
+    return ret;
+}

@@ -1,21 +1,18 @@
 #ifndef CAIWEI_RUNTIME_RKNN3_HPP
 #define CAIWEI_RUNTIME_RKNN3_HPP
 
-#include "caiwei/log.hpp"
-#include "caiwei/env.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
+#include "caiwei/runtime/tokenizer.hpp"
 
 #include <mutex>
 #include <chrono>
 #include <generator>
-#include <filesystem>
 #include <condition_variable>
 
 #include <sys/stat.h>
 
 #include "rknn3/rknn3_api.h"
-#include "caiwei/runtime/tokenizer.hpp"
 
 namespace caiwei  {
 namespace context {
@@ -31,10 +28,10 @@ using rknn3_session_ptr = std::unique_ptr<rknn3_session, decltype(rknn3_session_
 struct ContextSession {
 std::mutex mutex;
 std::condition_variable cv;
-rknn3_context context;
-Tokenizer* tokenizer = nullptr;
+rknn3_context context = 0;
+Tokenizer* tokenizer{ nullptr };
 int      embedding_dim;
-float16* embedding_data = nullptr;
+float16* embedding_data{ nullptr };
 bool first = false;
 bool end   = false;
 bool thinking = false;
@@ -46,22 +43,23 @@ int32_t e_toolcall;
 int vision_latency   = 0;
 int n_decode_tokens  = 0;
 int n_prefill_tokens = 0;
-caiwei::text::ResultToolcall result_toolcall;
-std::vector<caiwei::text::Result> token;
 std::chrono::system_clock::time_point llm_begin_time;
 std::chrono::system_clock::time_point llm_first_time;
 std::chrono::system_clock::time_point llm_end_time;
+std::vector<caiwei::text::Result> token{};
 std::vector<rknn3_tensor> output_tensors{};
 std::vector<std::vector<float>> model_output{};
+caiwei::text::ResultToolcall result_toolcall;
 // TODO 图片 提示词等等放这里
 bool init_output_tensors(int n_output_tensors);
 ~ContextSession();
 };
 
-int embed_callback(void* userdata, int32_t* tokens, uint64_t num_tokens, void* embed, uint64_t len);
-int result_callback(void* userdata, RKLLMResult* result, LLMCallState state);
+int embed_callback    (void* userdata, int32_t* tokens, uint64_t num_tokens, void* embed, uint64_t len);
+int output_callback   (void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state);
+int result_callback   (void* userdata, RKLLMResult* result, LLMCallState state);
 int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max);
-int output_callback(void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state);
+
 void printf_session_perf(caiwei::context::ContextSession* session);
 
 class RKNN3Context {
@@ -100,11 +98,10 @@ public:
         std::string media_model_path, std::string media_weight_path,
         int32_t max_token_length, caiwei::text::SpecialToken special_token
     );
-    ~RKNN3Context();
+    virtual ~RKNN3Context();
 };
 
 class ASRRKNN3Context : public ASRContext,  public RKNN3Context {
-protected:
 public:
     bool load() override;
     std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) override;

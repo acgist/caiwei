@@ -1,5 +1,9 @@
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
+
+#include <filesystem>
 
 template<>
 std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {

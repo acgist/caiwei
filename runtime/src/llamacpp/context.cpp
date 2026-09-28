@@ -1,6 +1,9 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
+#include "caiwei/runtime/tokenizer.hpp"
 
 #include <algorithm>
+
 #include "mtmd-helper.h"
 
 caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token)
@@ -418,33 +421,6 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
     llama_perf_sampler_print(sampler.get());
     llama_perf_context_print(context.get());
     #endif
-}
-
-llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std::string& token) {
-    llama_token ret;
-    if (llama_tokenize(vocab, token.c_str(), token.size(), &ret, 1, false, true) < 0) {
-        CW_LOG_W("piece_to_token失败: %s", token.c_str());
-        return LLAMA_TOKEN_NULL;
-    }
-    return ret;
-}
-
-std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value) {
-    if (token == LLAMA_TOKEN_NULL) {
-        return std::move(default_value);
-    }
-    std::string ret;
-    ret.resize(64);
-    const int length = llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true);
-    if (length < 0) {
-        ret.resize(-length);
-        if (llama_token_to_piece(vocab, token, ret.data(), ret.size(), 0, true) != -length) {
-            return std::move(default_value);
-        }
-    } else {
-        ret.resize(length);
-    }
-    return ret;
 }
 
 void caiwei::context::LlamaCPPContext::build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {

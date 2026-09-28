@@ -16,9 +16,6 @@
 #include "stb/stb_image_write.h"
 #endif
 
-#include "caiwei/image_data.hpp"
-#include "caiwei/media_data.hpp"
-
 namespace caiwei {
 namespace image  {
 

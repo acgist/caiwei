@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/manager.hpp"
 
 #include <mutex>
