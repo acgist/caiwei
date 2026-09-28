@@ -77,5 +77,7 @@ $ = 配置更新
 
 ## TODO
 
+* 优化docs/model文档
+* 优化docs/runtime文档
 * 瑞芯微MPP解码
 * 内存直通static auto mem = rknn_create_mem(this->context, this->input_attrs[0].size_with_stride);

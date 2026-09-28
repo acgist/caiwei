@@ -77,7 +77,7 @@ cd gcc-14.2.0
 sudo apt install libgmp-dev libmpc-dev libmpfr-dev
 
 mkdir build
-cd    build
+cd build
 ../configure -v --prefix=/usr/local/gcc-14.2.0 --disable-multilib --enable-checking=release --enable-languages=c,c++
 make -j4
 sudo make install

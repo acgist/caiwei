@@ -66,6 +66,7 @@ public:
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
 public:
+    Context();
     Context(caiwei::runtime::Runtime* runtime);
     virtual ~Context();
 public:

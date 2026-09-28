@@ -7,6 +7,9 @@
 
 std::vector<caiwei::context::ContextInfo> caiwei::context::context_info_list;
 
+caiwei::context::Context::Context() {
+}
+
 caiwei::context::Context::Context(caiwei::runtime::Runtime* runtime)
   : id(caiwei::env::id()),
     runtime(runtime),

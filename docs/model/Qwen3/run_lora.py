@@ -3,7 +3,7 @@ import torch
 from peft import PeftModel
 from modelscope import AutoTokenizer, AutoModelForCausalLM
 
-end_id = 151668
+thinking_end_token_id = 151668
 model = AutoModelForCausalLM.from_pretrained(
     "Qwen/Qwen3-1.7B",
     dtype=torch.float16,
@@ -39,8 +39,8 @@ inputs = tokenizer(
 # ).to(model.device)
 generated_ids = model.generate(**inputs, max_new_tokens=1024)
 output_ids = generated_ids[0][len(inputs.input_ids[0]) :].tolist()
-if end_id in output_ids:
-    index = len(output_ids) - output_ids[::-1].index(end_id)
+if thinking_end_token_id in output_ids:
+    index = len(output_ids) - output_ids[::-1].index(thinking_end_token_id)
 else:
     index = 0
 thinking = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")

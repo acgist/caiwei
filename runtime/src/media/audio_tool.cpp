@@ -1,5 +1,6 @@
 #include "caiwei/audio_tool.hpp"
 
+#include <corecrt_math_defines.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -8,19 +9,11 @@
 
 #include "pocketfft_hdronly/pocketfft_hdronly.h"
 
-#define MA_NO_DEVICE_IO
-#define MA_NO_THREADING
-#define MA_NO_ENCODING
-#define MA_NO_GENERATION
-#define MA_NO_RESOURCE_MANAGER
-#define MA_NO_NODE_GRAPH
-#define MINIAUDIO_IMPLEMENTATION
-
 #if defined(__aarch64__)
 #include "arm_neon.h"
 #endif
 
-int read_mel_filters(const char *fileName, float *data, int max_lines)
+int caiwei::audio::read_mel_filters(const char *fileName, float *data, int max_lines)
 {
     FILE *file;
     int line_count = 0;
@@ -300,11 +293,10 @@ static void log_mel_spectrogram(float *audio_data, int audio_length, int cur_num
 
 }
 
-void audio_preprocess(audio_buffer_t *audio, float *mel_filters, int n_fft, int hop_length, int n_mels, int max_audio_length, std::vector<float> &x_mel, int *actual_len)
+void caiwei::audio::audio_preprocess(const float *audio, int audio_length, float *mel_filters, int n_fft, int hop_length, int n_mels, int max_audio_length, std::vector<float> &x_mel, int *actual_len)
 {
     int ret;
-    int audio_length = audio->num_frames;
-    std::vector<float> ori_audio_data(audio->data, audio->data + audio_length);
+    std::vector<float> ori_audio_data(audio, audio + audio_length);
 
     if (audio_length >= max_audio_length)
     {

@@ -89,10 +89,10 @@ struct CompletionsRequestTool {
 
 struct CompletionsRequestExtraBody {
     std::optional<int> video_fps       = 8;      // 视频识别间隔帧数: VLM/YOLO
-    std::optional<int> asr_samples     = 16000;  // ASR 识别帧数: 16000 * 1 * 16 * 0.5 / 8 = 16000
-    std::optional<int> asr_queue_size  = 128000; // ASR 识别队列: 16000 * 1 * 16 * 4 / 8 = 128000
-    std::optional<int> vlm_frames      = 8;      // VLM 识别帧数
-    std::optional<int> yolo_queue_size = 8;      // YOLO识别队列
+    std::optional<int> asr_samples     = 16000;  // ASR 识别帧数大小: 16000 * 1 * 16 * 0.5 / 8 = 16000
+    std::optional<int> asr_queue_size  = 128000; // ASR 识别队列大小: 16000 * 1 * 16 * 4 / 8 = 128000
+    std::optional<int> vlm_frames      = 8;      // VLM 识别帧数间隔
+    std::optional<int> yolo_queue_size = 8;      // YOLO识别队列大小
     std::optional<std::string> media_url;  // 持续识别视频文件地址
     std::optional<std::string> media_type; // 持续识别视频文件类型
     std::optional<bool> enable_thinking = false;

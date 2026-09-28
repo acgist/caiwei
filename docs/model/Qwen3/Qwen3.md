@@ -31,10 +31,6 @@ swift sft                            \
     --bnb_4bit_compute_dtype float16 \
     --bnb_4bit_use_double_quant true \
     --output_dir ./Qwen3-1.7B-lora
-    # 忽略空的思考内容损失
-    --loss_scale ignore_empty_think
-    # 指定微调线性层的名称
-    --target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
 ```
 
 > 没有思考内容自动填充思考内容`<think>\n\n</think>\n\n`
@@ -73,6 +69,8 @@ swift infer               \
 ```
 
 ## 性能评估
+
+* 模型: `Qwen3-1.7B`
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
