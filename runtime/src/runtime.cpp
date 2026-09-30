@@ -170,6 +170,9 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::Runtime::get
     return nullptr;
 }
 
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+static void init_rknn2();
+#endif
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 static void init_rknn3();
 #endif
@@ -181,6 +184,9 @@ static void init_onnxruntime();
 #endif
 
 void caiwei::runtime::init() {
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+    init_rknn2();
+    #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
     init_rknn3();
     #endif
@@ -194,6 +200,11 @@ void caiwei::runtime::init() {
 
 void caiwei::runtime::stop() {
 }
+
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+static void init_rknn2() {
+}
+#endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 static void init_rknn3() {

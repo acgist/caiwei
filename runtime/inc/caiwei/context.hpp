@@ -225,6 +225,8 @@ public:
 void init();
 void stop();
 
+void euclidean(const float* embd, float* out, int size);
+
 } // namespace context
 } // namespace caiwei
 

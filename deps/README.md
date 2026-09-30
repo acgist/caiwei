@@ -4,7 +4,7 @@
 
 **编译测试时才需要安装**
 
-* 版本：2.32.10
+* 版本: 2.32.10
 * 官网: https://www.libsdl.org/
 
 ```
@@ -46,7 +46,7 @@ sudo make install
 
 ## cpp-httplib
 
-* 版本：0.58.0
+* 版本: 0.58.0
 * 官网: https://github.com/yhirose/cpp-httplib
 
 ```

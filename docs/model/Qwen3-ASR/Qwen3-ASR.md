@@ -44,7 +44,7 @@ python run.py
 |RKNN(RK3588)     |||||
 |CUDA(Tesla L40S) |||||
 |CUDA(Tesla V100) |||||
-|CUDA(RTX 5060 Ti)|||||
+|CUDA(RTX 4060)   |||||
 
 ## 文档资料
 

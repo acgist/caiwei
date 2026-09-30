@@ -77,8 +77,8 @@ std::string caiwei::context::Tokenizer::token_to_piece(int32_t token) {
     return piece;
 }
 
-int caiwei::context::Tokenizer::tokenize(const char* text, int32_t length, int32_t* tokens, int32_t n_tokens) {
-    return llama_tokenize(this->vocab, text, length, reinterpret_cast<llama_token*>(tokens), n_tokens, true, true);
+int caiwei::context::Tokenizer::tokenize(const char* text, int32_t length, int32_t* tokens, int32_t n_tokens, bool add_special, bool parse_special) {
+    return llama_tokenize(this->vocab, text, length, reinterpret_cast<llama_token*>(tokens), n_tokens, add_special, parse_special);
 }
 
 std::string caiwei::context::Tokenizer::detokenize(int32_t* tokens, int32_t n_tokens) {
@@ -88,6 +88,7 @@ std::string caiwei::context::Tokenizer::detokenize(int32_t* tokens, int32_t n_to
     if (length < 0) {
         text.resize(-length);
         if (llama_detokenize(this->vocab, reinterpret_cast<llama_token*>(tokens), n_tokens, text.data(), text.size(), false, false) != -length) {
+            CW_LOG_W("解码失败: %d", length);
             return "";
         }
     } else {

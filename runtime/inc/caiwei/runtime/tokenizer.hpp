@@ -14,7 +14,7 @@ extern std::string token_to_piece(const llama_vocab* vocab, llama_token token, s
 
 class Tokenizer {
 private:
-    llama_model* model = nullptr;
+          llama_model* model = nullptr;
     const llama_vocab* vocab = nullptr;
 public:
     Tokenizer(const std::string& path);
@@ -29,11 +29,11 @@ public:
     int32_t get_nl();
     int32_t piece_to_token(const std::string& piece);
     std::string token_to_piece(int32_t token);
-    int tokenize(const char* text, int32_t length, int32_t* tokens, int32_t n_tokens);
+    int tokenize(const char* text, int32_t length, int32_t* tokens, int32_t n_tokens, bool add_special = true, bool parse_special = true);
     std::string detokenize(int32_t* tokens, int32_t n_tokens);
 };
 
-}
-}
+} // context
+} // caiwei
 
-#endif
+#endif // CAIWEI_RUNTIME_TOKENIZER_HPP

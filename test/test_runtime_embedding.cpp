@@ -42,7 +42,8 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.rknn|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.weight|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.embed.bin|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.tokenizer.gguf");
     #elif CAIWEI_OS_WIN
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf");
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q8_0.gguf");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf");
     #else
     #endif
     caiwei::test::init_test();

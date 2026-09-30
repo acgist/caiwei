@@ -39,7 +39,7 @@ python run.py
 |RKNN(RK3588)-fp16|12ms|-|-   |-   |
 |CUDA(Tesla L40S) |-   |-|-   |-   |
 |CUDA(Tesla V100) |-   |-|7ms |-   |
-|CUDA(RTX 5060 Ti)|-   |-|-   |-   |
+|CUDA(RTX 4060)   |-   |-|-   |-   |
 
 ## 文档资料
 

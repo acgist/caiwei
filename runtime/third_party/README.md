@@ -2,32 +2,32 @@
 
 ## std
 
-* 版本：master
-* 协议：MIT License
+* 版本: master
+* 协议: MIT License
 * https://github.com/nothings/stb
 
 ## minja
 
-* main
-* 协议：MIT License
+* 版本: main
+* 协议: MIT License
 * https://github.com/google/minja
 
 ## base64
 
-* 版本：master
-* 协议：MIT License
+* 版本: master
+* 协议: MIT License
 * https://github.com/ReneNyffenegger/cpp-base64
 
 ## nlohmann
 
-* 版本：v3.12.0
-* 协议：MIT License
+* 版本: v3.12.0
+* 协议: MIT License
 * https://github.com/nlohmann/json
 
 ## tokenizer
 
-* 版本：main
-* 协议：Apache-2.0 license
+* 版本: main
+* 协议: Apache-2.0 license
 * https://github.com/airockchip/rknn3-model-zoo/blob/main/tokenizer
 
 ## pocketfft_hdronly

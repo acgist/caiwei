@@ -1,3 +1,4 @@
+#include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"

@@ -29,18 +29,6 @@ static void batch_add(struct llama_batch& batch, llama_token id, llama_pos pos, 
     batch.n_tokens++;
 }
 
-static void euclidean(const float* embd, float* out, int size) {
-    double sum = 0.0;
-    for (int i = 0; i < size; i++) {
-        sum += embd[i] * embd[i];
-    }
-    sum = std::sqrt(sum);
-    const float norm = sum > 0.0 ? 1.0 / sum : 0.0F;
-    for (int i = 0; i < size; i++) {
-        out[i] = embd[i] * norm;
-    }
-}
-
 static void batch_decode(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out) {
     const enum llama_pooling_type pooling_type = llama_pooling_type(ctx);
     llama_memory_clear(llama_get_memory(ctx), true);
@@ -66,7 +54,7 @@ static void batch_decode(llama_context* ctx, llama_batch& batch, float* output, 
             continue;
         }
         float* out = output + embd_pos * n_embd_out;
-        euclidean(embd, out, n_embd_out);
+        caiwei::context::euclidean(embd, out, n_embd_out);
     }
 }
 

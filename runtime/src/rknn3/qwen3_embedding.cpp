@@ -12,18 +12,6 @@ bool caiwei::context::EmbeddingRKNN3Context::load() {
     return this->load_model();
 }
 
-static void euclidean(const float* embd, float* out, int size) {
-    double sum = 0.0;
-    for (int i = 0; i < size; i++) {
-        sum += embd[i] * embd[i];
-    }
-    sum = std::sqrt(sum);
-    const float norm = sum > 0.0 ? 1.0 / sum : 0.0F;
-    for (int i = 0; i < size; i++) {
-        out[i] = embd[i] * norm;
-    }
-}
-
 caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(caiwei::text::EmbeddingsRequest& request) {
     ContextSession context_session;
     context_session.context = this->context;
@@ -72,7 +60,7 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(caiwei
         if (ret < 0) {
             CW_LOG_W("RKNN3会话运行失败: %d", ret);
         } else {
-            euclidean(context_session.model_output[0].data(), context_session.model_output[0].data(), context_session.model_output[0].size());
+            caiwei::context::euclidean(context_session.model_output[0].data(), context_session.model_output[0].data(), context_session.model_output[0].size());
             result.result.push_back(std::move(context_session.model_output[0]));
             CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
             #ifdef CAIWEI_DEBUG

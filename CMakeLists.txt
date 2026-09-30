@@ -64,12 +64,18 @@ elseif(CMAKE_HOST_WIN32)
         set(CMAKE_CXX_STANDARD 23)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
         set(CMAKE_CXX_EXTENSIONS OFF)
-        add_compile_options("/utf-8" "/Zc:__cplusplus")
+        add_compile_options(
+            $<$<COMPILE_LANGUAGE:C>:/utf-8>
+            $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
+            $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:__cplusplus>
+        )
     else()
         message(FATAL_ERROR "需要安装MSVC开发环境")
     endif()
 else()
-    message(FATAL_ERROR "不支持的操作系统：${CMAKE_HOST_SYSTEM_NAME}")
+    message(FATAL_ERROR "不支持的操作系统: ${CMAKE_HOST_SYSTEM_NAME}")
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
@@ -128,7 +134,16 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     # 50  Maxwell      GTX 750 Ti/750
     # 35  Kepler       GTX Titan、Tesla K80/K40/K20
     # 30  Kepler       GTX 680/670/660/650
-    set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90)
+    if(ANDROID)
+    # -
+    elseif(CMAKE_HOST_UNIX)
+        set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90)
+    elseif(CMAKE_HOST_WIN32)
+        set(CMAKE_CUDA_ARCHITECTURES 89)
+        set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0")
+    else()
+    # -
+    endif()
     find_package(CUDA        REQUIRED)
     find_package(CUDAToolkit REQUIRED)
 endif()

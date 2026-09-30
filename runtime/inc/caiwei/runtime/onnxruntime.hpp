@@ -34,10 +34,9 @@ private:
 public:
     ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env);
     virtual ~ONNXRuntimeContext();
-protected:
-    std::vector<Ort::Value> run(float* blob, size_t size, int batch = 1);
 public:
     bool load_model();
+    std::vector<Ort::Value> run(float* blob, size_t size, int batch = 1);
     std::vector<Ort::Value> run(int h, int w, const caiwei::media::ImageFrame& image);
 };
 

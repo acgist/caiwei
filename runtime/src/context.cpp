@@ -42,6 +42,28 @@ void caiwei::context::init() {
 void caiwei::context::stop() {
 }
 
+void caiwei::context::euclidean(const float* embd, float* out, int size) {
+    if (size < 0) {
+        return;
+    }
+    if (size == 1) {
+        if (embd == out) {
+            return;
+        }
+        out[0] = embd[0];
+        return;
+    }
+    double sum = 0.0;
+    for (int i = 0; i < size; i++) {
+        sum += embd[i] * embd[i];
+    }
+    sum = std::sqrt(sum);
+    const float norm = sum > 0.0 ? 1.0 / sum : 0.0F;
+    for (int i = 0; i < size; i++) {
+        out[i] = embd[i] * norm;
+    }
+}
+
 const caiwei::context::ContextInfo* caiwei::context::get_context_info(const std::string& name) {
     for (const auto& info : context_info_list) {
         if (info.name == name) {
