@@ -1,11 +1,6 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-/**
- * 参考代码
- * deps\llama.cpp\examples\embedding\embedding.cpp
- */
-
 caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
   : EmbeddingContext(runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {
@@ -16,46 +11,6 @@ caiwei::context::EmbeddingLlamaCPPContext::~EmbeddingLlamaCPPContext() {
 
 bool caiwei::context::EmbeddingLlamaCPPContext::load() {
     return this->load_model();
-}
-
-static void batch_add(struct llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits) {
-    batch.token   [batch.n_tokens] = id;
-    batch.pos     [batch.n_tokens] = pos;
-    batch.n_seq_id[batch.n_tokens] = seq_id.size();
-    for (size_t i = 0; i < seq_id.size(); ++i) {
-        batch.seq_id[batch.n_tokens][i] = seq_id[i];
-    }
-    batch.logits[batch.n_tokens] = logits;
-    batch.n_tokens++;
-}
-
-static void batch_decode(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out) {
-    const enum llama_pooling_type pooling_type = llama_pooling_type(ctx);
-    llama_memory_clear(llama_get_memory(ctx), true);
-    int ret = llama_decode(ctx, batch);
-    if (ret != 0) {
-        CW_LOG_W("解码失败: %d", ret);
-    }
-    for (int i = 0; i < batch.n_tokens; i++) {
-        if (!batch.logits[i]) {
-            continue;
-        }
-        const float* embd = nullptr;
-        int embd_pos = 0;
-        if (pooling_type == LLAMA_POOLING_TYPE_NONE) {
-            embd = llama_get_embeddings_ith(ctx, i);
-            embd_pos = i;
-        } else {
-            embd = llama_get_embeddings_seq(ctx, batch.seq_id[i][0]);
-            embd_pos = batch.seq_id[i][0];
-        }
-        if (embd == nullptr) {
-            CW_LOG_W("获取嵌入失败: %d", i);
-            continue;
-        }
-        float* out = output + embd_pos * n_embd_out;
-        caiwei::context::euclidean(embd, out, n_embd_out);
-    }
 }
 
 caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(caiwei::text::EmbeddingsRequest& request) {
@@ -106,18 +61,18 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(cai
         const size_t n_tokens = input.size();
         if (batch.n_tokens + n_tokens > n_batch || seq_pos >= n_seq_max) {
             float* out = emb + emb_pos * n_embd_out;
-            batch_decode(context.get(), batch, out, seq_pos, n_embd_out);
+            caiwei::context::batch_decode(context.get(), batch, out, seq_pos, n_embd_out);
             emb_pos += pooling_type == LLAMA_POOLING_TYPE_NONE ? batch.n_tokens : seq_pos;
             seq_pos = 0;
             batch.n_tokens = 0;
         }
         for (size_t i = 0; i < n_tokens; ++i) {
-            batch_add(batch, input[i], i, { seq_pos }, true);
+            caiwei::context::batch_add(batch, input[i], i, { seq_pos }, true);
         }
         seq_pos += 1;
     }
     float* out = emb + emb_pos * n_embd_out;
-    batch_decode(context.get(), batch, out, seq_pos, n_embd_out);
+    caiwei::context::batch_decode(context.get(), batch, out, seq_pos, n_embd_out);
 #if CAIWEI_DEBUG
     llama_perf_context_print(context.get());
 #endif

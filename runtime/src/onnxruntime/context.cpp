@@ -27,6 +27,7 @@ caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
     }
     if(this->session) {
         CW_LOG_D("释放ONNXRuntimeContext session");
+        // TODO 释放崩溃
         delete this->session;
         this->session = nullptr;
     }
@@ -110,6 +111,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         print_tensor_info("ONNXRuntimeContext输出节点", index, node_name, shape);
     }
     this->run_options = new Ort::RunOptions(nullptr);
+    this->memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
     return true;
 }
 
@@ -136,7 +138,6 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, si
     std::vector<Ort::Value> input_tensors;
     for (int i = 0; i < this->input_node_names.size(); ++i) {
         this->input_node_dims[i][0] = batch;
-        auto memory_info = Ort::MemoryInfo("CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault);
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
             memory_info,
             blob,
@@ -148,19 +149,14 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, si
         io_binding.BindInput(this->input_node_names[i], input_tensors[i]);
     }
     for (int i = 0; i < this->output_node_names.size(); ++i) {
-        Ort::MemoryInfo output_memory_info{"CudaPinned", OrtDeviceAllocator, 0, OrtMemTypeDefault};
-        io_binding.BindOutput(this->output_node_names[i], output_memory_info);
+        io_binding.BindOutput(this->output_node_names[i], memory_info);
     }
-    this->session->Run(
-        *this->run_options,
-        io_binding
-    );
+    this->session->Run(*this->run_options, io_binding);
     auto output_tensor = io_binding.GetOutputValues();
     #else
     std::vector<Ort::Value> input_tensors;
     for (int i = 0; i < this->input_node_names.size(); ++i) {
         this->input_node_dims[i][0] = batch;
-        auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
             memory_info,
             blob,

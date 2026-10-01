@@ -16,6 +16,7 @@ protected:
     const Ort::Env * env        { nullptr };
     Ort::Session   * session    { nullptr };
     Ort::RunOptions* run_options{ nullptr };
+    Ort::MemoryInfo  memory_info{ nullptr };
     std::vector<std::vector<int64_t>> input_node_dims;
     std::vector<const char*>          input_node_names;
     std::vector<const char*>          output_node_names;

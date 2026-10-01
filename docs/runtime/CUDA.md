@@ -16,3 +16,4 @@ nvidia-smi
 
 * https://developer.nvidia.com/cuda-downloads
 * https://developer.nvidia.com/cuda-toolkit-archive
+* https://developer.download.nvidia.cn/compute/cudnn/redist/cudnn/

@@ -1,4 +1,4 @@
-#include "caiwei/runtime/tokenizer.hpp"
+#include "caiwei/tokenizer.hpp"
 
 #include "caiwei/log.hpp"
 

@@ -9,6 +9,7 @@ set(
     src/runtime.cpp
     src/session.cpp
     src/manager.cpp
+    src/tokenizer.cpp
     src/media/text_data.cpp
     src/media/text_tool.cpp
     src/media/audio_data.cpp
@@ -70,7 +71,6 @@ if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
         APPEND CAIWEI_RUNTIME_SRCS
         src/llamacpp/context.cpp
         src/llamacpp/runtime.cpp
-        src/llamacpp/tokenizer.cpp
         src/llamacpp/qwen3_asr.cpp
         src/llamacpp/qwen3_llm.cpp
         src/llamacpp/qwen3_vlm.cpp

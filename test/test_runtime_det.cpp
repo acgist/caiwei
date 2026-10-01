@@ -97,9 +97,9 @@ int main() {
     #endif
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
     caiwei::test::init_test();
-    det_draw();
+    // det_draw();
     // det_image();
-    // det_video();
+    det_video();
     caiwei::test::stop_test();
     return 0;
 }

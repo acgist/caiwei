@@ -103,6 +103,9 @@ public:
     caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) override;
 };
 
+void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits);
+void batch_decode(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out);
+
 } // context
 } // caiwei
 

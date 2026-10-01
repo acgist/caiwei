@@ -1,13 +1,26 @@
 #include "caiwei/runtime/rknn3.hpp"
 
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
-    std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path,
-    std::string media_model_path, std::string media_weight_path,
-    int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
-) : VLMContext(runtime),
-    RKNN3Context(
-        std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path),
-        std::move(media_model_path), std::move(media_weight_path), max_token_length, special_token) {
+    std::string model_path,
+    std::string weight_path,
+    std::string embedding_path,
+    std::string tokenizer_path,
+    std::string media_model_path,
+    std::string media_weight_path,
+    int32_t max_token_length,
+    caiwei::text::SpecialToken special_token,
+    caiwei::runtime::Runtime* runtime
+) : VLMContext(runtime)
+  , RKNN3Context(
+    std::move(model_path),
+    std::move(weight_path),
+    std::move(embedding_path),
+    std::move(tokenizer_path),
+    std::move(media_model_path),
+    std::move(media_weight_path),
+    max_token_length,
+    std::move(special_token)
+) {
 }
 
 caiwei::context::VLMRKNN3Context::~VLMRKNN3Context() {

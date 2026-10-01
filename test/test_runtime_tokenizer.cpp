@@ -1,6 +1,6 @@
 #include "test.hpp"
 
-#include "caiwei/runtime/tokenizer.hpp"
+#include "caiwei/tokenizer.hpp"
 
 int main() {
     caiwei::context::Tokenizer tokenizer("Qwen3-Embedding-0.6B.tokenizer.gguf");

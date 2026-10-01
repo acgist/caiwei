@@ -3,7 +3,7 @@
 
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
-#include "caiwei/runtime/tokenizer.hpp"
+#include "caiwei/tokenizer.hpp"
 
 #include <mutex>
 #include <chrono>

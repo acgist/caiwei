@@ -1,6 +1,6 @@
 #include "caiwei/log.hpp"
+#include "caiwei/tokenizer.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
-#include "caiwei/runtime/tokenizer.hpp"
 
 #include <algorithm>
 
@@ -236,23 +236,6 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     #endif
 }
 
-static void batch_add(
-    struct llama_batch & batch,
-           llama_token   id,
-             llama_pos   pos,
-const std::vector<llama_seq_id> & seq_ids,
-                  bool   logits) {
-
-    batch.token   [batch.n_tokens] = id;
-    batch.pos     [batch.n_tokens] = pos;
-    batch.n_seq_id[batch.n_tokens] = seq_ids.size();
-    for (size_t i = 0; i < seq_ids.size(); ++i) {
-        batch.seq_id[batch.n_tokens][i] = seq_ids[i];
-    }
-    batch.logits  [batch.n_tokens] = logits;
-    batch.n_tokens++;
-}
-
 static std::string common_token_to_piece(const struct llama_vocab * vocab, llama_token token, bool special) {
     std::string piece;
     piece.resize(piece.capacity());  // using string internal cache, 15 bytes + '\n'
@@ -410,7 +393,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
 
         // eval the token
         batch.n_tokens = 0;
-        batch_add(batch, token_id, n_past++, {0}, true);
+        caiwei::context::batch_add(batch, token_id, n_past++, {0}, true);
         if (llama_decode(context.get(), batch)) {
             CW_LOG_E("failed to decode token\n");
             co_return;
@@ -424,4 +407,44 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
 }
 
 void caiwei::context::LlamaCPPContext::build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
+}
+
+void caiwei::context::batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits) {
+    batch.token   [batch.n_tokens] = id;
+    batch.pos     [batch.n_tokens] = pos;
+    batch.n_seq_id[batch.n_tokens] = seq_id.size();
+    for (size_t i = 0; i < seq_id.size(); ++i) {
+        batch.seq_id[batch.n_tokens][i] = seq_id[i];
+    }
+    batch.logits[batch.n_tokens] = logits;
+    batch.n_tokens++;
+}
+
+void caiwei::context::batch_decode(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out) {
+    const enum llama_pooling_type pooling_type = llama_pooling_type(ctx);
+    llama_memory_clear(llama_get_memory(ctx), true);
+    int ret = llama_decode(ctx, batch);
+    if (ret != 0) {
+        CW_LOG_W("解码失败: %d", ret);
+    }
+    for (int i = 0; i < batch.n_tokens; i++) {
+        if (!batch.logits[i]) {
+            continue;
+        }
+        const float* embd = nullptr;
+        int embd_pos = 0;
+        if (pooling_type == LLAMA_POOLING_TYPE_NONE) {
+            embd = llama_get_embeddings_ith(ctx, i);
+            embd_pos = i;
+        } else {
+            embd = llama_get_embeddings_seq(ctx, batch.seq_id[i][0]);
+            embd_pos = batch.seq_id[i][0];
+        }
+        if (embd == nullptr) {
+            CW_LOG_W("获取嵌入失败: %d", i);
+            continue;
+        }
+        float* out = output + embd_pos * n_embd_out;
+        caiwei::context::euclidean(embd, out, n_embd_out);
+    }
 }
