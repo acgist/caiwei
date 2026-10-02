@@ -7,12 +7,12 @@
 void test_reranking() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
-    request.query = "苹果";
-    request.documents = std::vector<std::string>{ "苹果", "橘子", "汽车" };
+    // request.query = "苹果";
+    // request.documents = std::vector<std::string>{ "苹果", "橘子", "汽车" };
     // request.query = "美国首都那座城市";
     // request.documents = std::vector<std::string>{ "华盛顿", "中国首都是北京", "美国首都是广州" };
-    // request.query = "广州今天的天气怎么样";
-    // request.documents = std::vector<std::string>{ "出门可以坐地铁", "广州正在阴天", "广州美食不错", "达州正在下雨" };
+    request.query = "广州今天的天气怎么样";
+    request.documents = std::vector<std::string>{ "出门可以坐地铁", "广州正在下雨", "广州美食不错", "达州正在下雨" };
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext, caiwei::text::RerankingsRequest, caiwei::text::RerankingResult>("qwen3-reranking");
     if (!ptr) {
         return;

@@ -1,4 +1,5 @@
 #include "caiwei/log.hpp"
+#include "caiwei/tokenizer.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
 caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
@@ -25,12 +26,12 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(cai
     std::vector<std::vector<llama_token>> inputs;
     if (std::holds_alternative<std::string>(request.input)) {
         const auto& item = std::get<std::string>(request.input);
-        inputs.push_back(this->tokenize(item, context.get(), false, false));
+        inputs.push_back(caiwei::context::tokenize(this->vocab, item, false, false));
         prompt_tokens += inputs.back().size();
     } else if (std::holds_alternative<std::vector<std::string>>(request.input)) {
         const auto& items = std::get<std::vector<std::string>>(request.input);
         for (const auto& item : items) {
-            inputs.push_back(this->tokenize(item, context.get(), false, false));
+            inputs.push_back(caiwei::context::tokenize(this->vocab, item, false, false));
             prompt_tokens += inputs.back().size();
         }
     } else {

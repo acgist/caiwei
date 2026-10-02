@@ -106,21 +106,6 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
-std::vector<llama_token> caiwei::context::LlamaCPPContext::tokenize(const std::string& prompt, llama_context* context, bool add_special, bool parse_special) {
-    const uint32_t n_ctx = llama_n_ctx(context);
-    const int n_prompt_tokens = -llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), nullptr, 0, add_special, parse_special);
-    if (n_prompt_tokens > n_ctx) {
-        CW_LOG_W("提示词超长: %d > %u", n_prompt_tokens, n_ctx);
-        return {};
-    }
-    std::vector<llama_token> prompt_tokens(n_prompt_tokens);
-    if (llama_tokenize(this->vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), add_special, parse_special) < 0) {
-        CW_LOG_W("提示词分词失败: %s", prompt.c_str());
-        return {};
-    }
-    return prompt_tokens;
-}
-
 std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(caiwei::text::CompletionsRequest& request) {
     llama_context_ptr context{ get_context() };
     llama_sampler_ptr sampler{ get_sampler(request) };
@@ -130,12 +115,17 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     // TODO 多模态输入数据多态实现
     std::string prompt = this->chat_template.apply(this->special_token, request);
     CW_LOG_D("提示词: %s", prompt.c_str());
-    std::vector<llama_token> prompt_tokens = this->tokenize(prompt, context.get());
+    std::vector<llama_token> prompt_tokens = caiwei::context::tokenize(this->vocab, prompt);
     if (prompt_tokens.empty()) {
         co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(0), 0 };
         co_return;
     }
     const int n_prompt_tokens = prompt_tokens.size();
+    const uint32_t n_ctx = llama_n_ctx(context.get());
+    if (n_prompt_tokens > n_ctx) {
+        co_yield caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(0), 0 };
+        co_return;
+    }
     llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
     if (llama_model_has_encoder(this->model)) {
         CW_LOG_W("不支持的编码模型: %s", this->path.c_str());
@@ -153,7 +143,6 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     bool thinking = false;
     bool toolcall = false;
     caiwei::text::ResultToolcall result_toolcall;
-    const uint32_t n_ctx = llama_n_ctx(context.get());
     uint32_t max_completion_tokens = request.max_completion_tokens.value_or(this->max_token_length);
     while (true) {
         llama_pos n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(context.get()), 0);
@@ -236,22 +225,6 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     #endif
 }
 
-static std::string common_token_to_piece(const struct llama_vocab * vocab, llama_token token, bool special) {
-    std::string piece;
-    piece.resize(piece.capacity());  // using string internal cache, 15 bytes + '\n'
-    const int n_chars = llama_token_to_piece(vocab, token, &piece[0], piece.size(), 0, special);
-    if (n_chars < 0) {
-        piece.resize(-n_chars);
-        int check = llama_token_to_piece(vocab, token, &piece[0], piece.size(), 0, special);
-        GGML_ASSERT(check == -n_chars);
-    }
-    else {
-        piece.resize(n_chars);
-    }
-
-    return piece;
-}
-
 std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_mtmd(caiwei::text::CompletionsRequest& request) {
     mtmd::bitmaps bitmaps;
     this->build_bitmaps(request, bitmaps);
@@ -275,11 +248,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
     int n_batch = 2048; // TODO
     mtmd::input_chunks chunks(mtmd_input_chunks_init());
     auto bitmaps_c_ptr = bitmaps.c_ptr();
-    int32_t res = mtmd_tokenize(this->mtmd_context.get(),
-                        chunks.ptr.get(), // output
-                        &text, // text
-                        bitmaps_c_ptr.data(),
-                        bitmaps_c_ptr.size());
+    int32_t res = mtmd_tokenize(this->mtmd_context.get(), chunks.ptr.get(), &text, bitmaps_c_ptr.data(), bitmaps_c_ptr.size());
     // TODO check res
     size_t n_chunks = mtmd_input_chunks_size(chunks.ptr.get());
     if (n_chunks == 0) {
@@ -290,32 +259,22 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
         auto chunk_type = mtmd_input_chunk_get_type(chunk);
         if (chunk_type == MTMD_INPUT_CHUNK_TYPE_TEXT) {
             llama_pos new_n_past = n_past;
-            res = mtmd_helper_eval_chunk_single(this->mtmd_context.get(),
-                        context.get(),
-                        chunk,
-                        n_past,
-                        0, // seq_id
-                        n_batch,
-                        i == n_chunks - 1, // logits_last
-                        &new_n_past);
+            res = mtmd_helper_eval_chunk_single(this->mtmd_context.get(), context.get(), chunk, n_past, 0, n_batch, i == n_chunks - 1, &new_n_past);
             if (res != 0) {
                 CW_LOG_W("Unable to eval text chunk %zu\n", i);
                 co_return;
             }
             n_past = new_n_past;
         } else {
-            // media chunk: try to get embd from existing batch, or create a new batch
-            float * embd = nullptr;
+            float* embd = nullptr;
             if (mbatch) {
                 embd = mtmd_batch_get_output_embd(mbatch.get(), chunk);
-
                 if (embd) {
                     CW_LOG_D("found embd for media chunk %zu in existing batch\n", i);
                 } else {
                     CW_LOG_W("media chunk %zu not found in existing batch, creating new batch\n", i);
                 }
             }
-
             if (!embd) {
                 mbatch.reset(mtmd_batch_init(this->mtmd_context.get()));
                 res = mtmd_batch_add_chunk(mbatch.get(), chunk);
@@ -324,15 +283,14 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
                     auto next_chunk = mtmd_input_chunks_get(chunks.ptr.get(), j);
                     auto next_type = mtmd_input_chunk_get_type(next_chunk);
                     if (next_type == MTMD_INPUT_CHUNK_TYPE_TEXT) {
-                        break; // text chunk splits the batch
+                        break;
                     }
                     res = mtmd_batch_add_chunk(mbatch.get(), next_chunk);
                     if (res != 0) {
-                        break; // batch full or incompatible
+                        break;
                     }
                     n_added++;
                 }
-
                 int64_t time_start = ggml_time_ms();
                 CW_LOG_I("encoding mtmd batch, n_chunks = %d (done = %zu, total = %zu)\n", n_added, i, n_chunks);
                 res = mtmd_batch_encode(mbatch.get());
@@ -344,21 +302,8 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
 
                 embd = mtmd_batch_get_output_embd(mbatch.get(), chunk);
             }
-
-            GGML_ASSERT(embd != nullptr);
-
             llama_pos new_n_past = n_past;
-            res = mtmd_helper_decode_image_chunk(this->mtmd_context.get(),
-                        context.get(),
-                        chunk,
-                        embd,
-                        n_past,
-                        0, // seq_id
-                        n_batch,
-                        &new_n_past,
-                        nullptr, // callback
-                        nullptr  // user_data
-                    );
+            res = mtmd_helper_decode_image_chunk(this->mtmd_context.get(), context.get(), chunk, embd, n_past, 0, n_batch, &new_n_past, nullptr, nullptr);
             if (res != 0) {
                 CW_LOG_W("Unable to decode media chunk %zu\n", i);
                 co_return;
@@ -374,24 +319,15 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
             // TODO
             break;
         }
-
         token_id = llama_sampler_sample(sampler.get(), context.get(), -1);
-        // llama_token token_id = common_sampler_sample(ctx.smpl, ctx.lctx, -1);
-        // generated_tokens.push_back(token_id);
-        // common_sampler_accept(ctx.smpl, token_id, true);
-
         if (llama_vocab_is_eog(this->vocab, token_id)) {
-            break; // end of generation
+            break;
         }
-
-        std::string token = common_token_to_piece(this->vocab, token_id, true);
-
+        std::string token = caiwei::context::token_to_piece(this->vocab, token_id);
         #if CAIWEI_DEBUG
         std::printf("%s", token.c_str());
         std::fflush(stdout);
         #endif
-
-        // eval the token
         batch.n_tokens = 0;
         caiwei::context::batch_add(batch, token_id, n_past++, {0}, true);
         if (llama_decode(context.get(), batch)) {

@@ -26,7 +26,6 @@ protected:
 protected:
     llama_context* get_context(bool embeddings = false);
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
-    std::vector<llama_token> tokenize(const std::string& prompt, llama_context* context, bool add_special = true, bool parse_special = true);
     std::generator<caiwei::text::Result> generate     (caiwei::text::CompletionsRequest& request);
     std::generator<caiwei::text::Result> generate_mtmd(caiwei::text::CompletionsRequest& request);
     virtual void build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps);

@@ -1,4 +1,5 @@
 #include "caiwei/log.hpp"
+#include "caiwei/tokenizer.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
 caiwei::context::RerankingLlamaCPPContext::RerankingLlamaCPPContext(
@@ -77,7 +78,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(cai
             .append(this->special_token.e_thinking)
             .append("\n\n");
         CW_LOG_D("reranking prompt:\n%s", prompt.c_str());
-        inputs.push_back(this->tokenize(prompt, context.get(), false, true));
+        inputs.push_back(caiwei::context::tokenize(this->vocab, prompt, false, true));
         prompt_tokens += inputs.back().size();
     }
     if (inputs.size() > n_batch) {
