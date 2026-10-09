@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
 // 1.0.0不能正常使用

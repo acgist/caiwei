@@ -66,7 +66,7 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_POSE_IOU_THRESHOLD",        "0.6"},
     {"CAIWEI_POSE_CONFIDENCE_THRESHOLD", "0.4"},
     // ASR
-    {"CAIWEI_ASR_MAX_TOKEN_LENGTH", "8092"           },
+    {"CAIWEI_ASR_MAX_TOKEN_LENGTH", "24576"          },
     {"CAIWEI_ASR_TOKEN_BOS",        "<|im_start|>"   },
     {"CAIWEI_ASR_TOKEN_EOS",        "<|im_end|>"     },
     {"CAIWEI_ASR_TOKEN_PAD",        "<|endoftext|>"  },

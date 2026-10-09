@@ -34,6 +34,7 @@ bool caiwei::context::LlamaCPPContext::load_model() {
         return false;
     }
     this->vocab = llama_model_get_vocab(this->model);
+    CW_LOG_I("模型输入最大输入长度: %d/%d", llama_model_n_ctx_train(this->model), this->max_token_length);
     this->max_token_length = std::min(this->max_token_length, llama_model_n_ctx_train(this->model));
     this->special_token.bos = token_to_piece(this->vocab, llama_vocab_bos(this->vocab), this->special_token.bos);
     this->special_token.eos = token_to_piece(this->vocab, llama_vocab_eos(this->vocab), this->special_token.eos);
@@ -312,10 +313,10 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
         }
     }
     llama_batch batch = llama_batch_init(1, 0, 1);
-    uint32_t n_predict = request.max_completion_tokens.value_or(this->max_token_length);
+    uint32_t max_completion_tokens = request.max_completion_tokens.value_or(this->max_token_length);
     llama_token token_id;
-    for (int i = 0; i < n_predict; i++) {
-        if (i > n_predict) {
+    for (int i = 0; i < max_completion_tokens; i++) {
+        if (i > max_completion_tokens) {
             // TODO
             break;
         }

@@ -171,8 +171,6 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
         list(APPEND CAIWEI_RUNTIME_LIBS rknn3_api)
         # list(APPEND CAIWEI_RUNTIME_LIBS
         #     ${CMAKE_SOURCE_DIR}/deps/rknn3/librknn3_api.so
-        #     ${CMAKE_SOURCE_DIR}/deps/rknn3/librknn3_api_rkcp.so
-        #     ${CMAKE_SOURCE_DIR}/deps/rknn3/librknn3_api_native.so
         # )
     elseif(CMAKE_HOST_WIN32)
     # -

@@ -25,13 +25,14 @@ inline auto rknn3_session_deleter = [](rknn3_session* session) {
 
 using rknn3_session_ptr = std::unique_ptr<rknn3_session, decltype(rknn3_session_deleter)>;
 
-struct ContextSession {
+struct alignas(128) ContextSession {
 std::mutex mutex;
 std::condition_variable cv;
 rknn3_context context = 0;
 Tokenizer* tokenizer{ nullptr };
 int      embedding_dim;
 float16* embedding_data{ nullptr };
+std::vector<rknn3_aux_tensor> deepstack_tensors;
 bool first = false;
 bool end   = false;
 bool thinking = false;
@@ -88,7 +89,7 @@ public:
     bool load_model      (bool user_mem_internal = false);
     bool load_media_model(bool user_mem_internal = false);
     bool init_internal_mems(uint32_t core_mask_llm, uint32_t core_mask_media);
-    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request);
     rknn3_session* get_session(rknn3_sampling_params sampling_params, ContextSession* context_session);
     std::generator<caiwei::text::Result> generate(caiwei::text::CompletionsRequest& request);
 public:

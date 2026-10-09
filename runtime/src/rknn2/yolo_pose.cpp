@@ -1,7 +1,7 @@
-#include "caiwei/runtime/rknn2.hpp"
-
+#include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
+#include "caiwei/runtime/rknn2.hpp"
 
 caiwei::context::PoseRKNN2Context::PoseRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
  : PoseContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime),

@@ -6,6 +6,7 @@
 
 #include <bit>
 #include <cmath>
+#include <cstring>
 #include <cstdint>
 #include <algorithm>
 

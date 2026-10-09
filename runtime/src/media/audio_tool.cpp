@@ -1,10 +1,15 @@
 #include "caiwei/audio_tool.hpp"
 
+#if CAIWEI_OS_WIN
 #include <corecrt_math_defines.h>
+#else
+#include <cmath>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 #include <complex>
+#include <cstring>
 #include <algorithm>
 
 #include "pocketfft_hdronly/pocketfft_hdronly.h"

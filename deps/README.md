@@ -42,6 +42,8 @@ PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
   --enable-nonfree
 make -j4
 sudo make install
+# 配置RKMPP支持
+--enable-rkmpp --enable-libdrm --enable-version3
 ```
 
 ## cpp-httplib

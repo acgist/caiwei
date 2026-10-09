@@ -44,19 +44,19 @@ export default {
     }
   },
   mounted() {
-    // setInterval(async () => {
-    //   try {
-    //     const resp = await fetch(`${this.host}/v1/health`);
-    //     const json = await resp.json();
-    //     if(json.header.code === "0000") {
-    //       this.status = "green";
-    //     } else {
-    //       this.status = "red";
-    //     }
-    //   } catch (error) {
-    //     this.status = "red";
-    //   }
-    // }, 5000);
+    setInterval(async () => {
+      try {
+        const resp = await fetch(`${this.host}/v1/health`);
+        const json = await resp.json();
+        if(json.header.code === "0000") {
+          this.status = "green";
+        } else {
+          this.status = "red";
+        }
+      } catch (error) {
+        this.status = "red";
+      }
+    }, 5000);
   },
 };
 </script>

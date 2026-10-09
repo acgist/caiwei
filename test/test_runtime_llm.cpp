@@ -38,8 +38,8 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,/data/model/Qwen3-1.7B/Qwen3-1.7B.rknn|/data/model/Qwen3-1.7B/Qwen3-1.7B.weight|/data/model/Qwen3-1.7B/Qwen3-1.7B.embed.bin|/data/model/Qwen3-1.7B/Qwen3-1.7B.tokenizer.gguf");
     #else
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf");
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf");
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf");
     #endif
     caiwei::test::init_test();
     test_llm();

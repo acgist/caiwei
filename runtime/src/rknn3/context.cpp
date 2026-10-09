@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
 #include <fcntl.h>
@@ -32,9 +33,10 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
         for (int i = 0; i < this->internal_mems.size(); i++) {
             if (this->internal_mems[i]) {
                 rknn3_destroy_mem(this->context, this->internal_mems[i]);
-                this->internal_mems[i] = NULL;
+                this->internal_mems[i] = nullptr;
             }
-            this->internal_mems.clear();
+            // 不要清空后面释放警告
+            // this->internal_mems.clear();
         }
     }
     if (!this->media_input.empty()) {
@@ -123,6 +125,7 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal) {
         return false;
     }
     this->chat_template.set_template(llm_config.chat_template, this->special_token.bos, this->special_token.eos);
+    CW_LOG_I("模型输入最大输入长度: %d/%d", llm_config.max_ctx_len, this->max_token_length);
     this->max_token_length = std::min(this->max_token_length, (int32_t) llm_config.max_ctx_len);
     printf_tensor_info(this->context);
     // TODO 移到 load embedding
@@ -181,7 +184,7 @@ bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal) {
         tensor.attr = new rknn3_tensor_attr;
         tensor.attr->index = i;
         ret = rknn3_query(this->media_context, RKNN3_QUERY_INPUT_ATTR, tensor.attr, sizeof(rknn3_tensor_attr));
-        tensor.mem  = rknn3_create_mem(this->media_context, tensor.attr->aligned_size, tensor.attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+        tensor.mem = rknn3_create_mem(this->media_context, tensor.attr->aligned_size, tensor.attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
         if (tensor.attr->layout != RKNN3_TENSOR_NCHW && tensor.attr->layout != RKNN3_TENSOR_NHWC) {
             // 裁剪模型参考官网自己实现
             CW_LOG_W("media model input layout %d is not supported", tensor.attr->layout);
@@ -193,14 +196,13 @@ bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal) {
         tensor.attr = new rknn3_tensor_attr;
         tensor.attr->index = i;
         ret = rknn3_query(this->media_context, RKNN3_QUERY_OUTPUT_ATTR, tensor.attr, sizeof(rknn3_tensor_attr));
-        tensor.mem  = rknn3_create_mem(this->media_context, tensor.attr->aligned_size, tensor.attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+        tensor.mem = rknn3_create_mem(this->media_context, tensor.attr->aligned_size, tensor.attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
     }
     return true;
 }
 
 bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, uint32_t core_mask_media) {
     int ret = -1;
-
     uint32_t core_num_llm   = 0;
     uint32_t core_num_media = 0;
     ret = rknn3_query(this->context, RKNN3_QUERY_CORE_NUMBER, &core_num_llm, sizeof(core_num_llm));
@@ -258,11 +260,12 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
                 core_mem_sizes_llm[i].core_id,
                 RKNN3_FLAG_MEMORY_CACHEABLE
             );
-            this->internal_mems.push_back(mem);
             if (mem == nullptr) {
                 printf("rknn3_create_mem failed!\n");
                 return false;
             }
+            CW_LOG_D("共享内存: %p", mem);
+            this->internal_mems.push_back(mem);
         } else if (i < core_num_llm) {
             rknn3_tensor_mem* mem = rknn3_create_mem(
                 this->context,
@@ -270,11 +273,12 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
                 core_mem_sizes_llm[i].core_id,
                 RKNN3_FLAG_MEMORY_CACHEABLE
             );
-            this->internal_mems.push_back(mem);
             if (mem == nullptr) {
                 printf("rknn3_create_mem failed!\n");
                 return false;
             }
+            CW_LOG_D("共享内存: %p", mem);
+            this->internal_mems.push_back(mem);
         } else {
             rknn3_tensor_mem* mem = rknn3_create_mem(
                 this->context,
@@ -286,6 +290,7 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
                 printf("rknn3_create_mem failed!\n");
                 return false;
             }
+            CW_LOG_D("共享内存: %p", mem);
             this->internal_mems.push_back(mem);
         }
     }
@@ -320,6 +325,11 @@ bool caiwei::context::ContextSession::init_output_tensors(int n_output_tensors) 
     return true;
 }
 
+
+std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) {
+    return {};
+}
+
 caiwei::context::ContextSession::~ContextSession() {
     for (int i = 0; i < this->output_tensors.size(); ++i) {
         if (this->output_tensors[i].attr) {
@@ -327,8 +337,18 @@ caiwei::context::ContextSession::~ContextSession() {
             this->output_tensors[i].attr = nullptr;
         }
         if (this->output_tensors[i].mem) {
-            rknn3_destroy_mem(context, this->output_tensors[i].mem);
+            rknn3_destroy_mem(this->context, this->output_tensors[i].mem);
             this->output_tensors[i].mem = nullptr;
+        }
+    }
+    for (int i = 0; i < this->deepstack_tensors.size(); ++i) {
+        if (this->deepstack_tensors[i].attr) {
+            delete this->deepstack_tensors[i].attr;
+            this->deepstack_tensors[i].attr = nullptr;
+        }
+        if (this->deepstack_tensors[i].mem) {
+            rknn3_destroy_mem(this->context, this->deepstack_tensors[i].mem);
+            this->deepstack_tensors[i].mem = nullptr;
         }
     }
 }
@@ -336,7 +356,7 @@ caiwei::context::ContextSession::~ContextSession() {
 rknn3_session* caiwei::context::RKNN3Context::get_session(rknn3_sampling_params sampling_params, ContextSession* context_session) {
     int n_params = 1;
     rknn3_llm_param params{};
-    params.logits_name            = "output";
+    params.logits_name            = "logits";
     params.max_context_len        = this->max_token_length;
     params.sampling_param         = sampling_params;
     params.vocab_info.vocab_size  = this->tokenizer->get_size();
@@ -545,6 +565,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
                 session->result_toolcall.finish();
                 session->token.push_back(caiwei::text::Result{ session->thinking, session->toolcall, &session->result_toolcall });
             } else {
+                // TODO asr_text 151704 没有处理
                 std::string piece = tokenizer->token_to_piece(token_id);
                 #if CAIWEI_DEBUG
                 std::printf("%s", piece.c_str());
@@ -563,6 +584,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
 }
 
 int caiwei::context::tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max) {
+    CW_LOG_I("tokenizer_callback: %s", text);
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
     int n_tokens = tokenizer->tokenize(text, text_len, tokens, n_tokens_max);

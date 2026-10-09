@@ -1,3 +1,5 @@
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 

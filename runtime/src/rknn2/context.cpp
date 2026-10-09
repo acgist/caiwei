@@ -1,9 +1,9 @@
+#include "caiwei/log.hpp"
+#include "caiwei/type.hpp"
+#include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
 #include "rga/im2d.hpp"
-
-#include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
 
 #include <fstream>
 #include <filesystem>
