@@ -117,10 +117,13 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "SEG,YOLO,yolo26n-seg,yolo26n-seg-rk3588-f16.rknn");
     #endif
+    #if ENABLE_CAIWEI_YOLO_END2END
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "SEG,YOLO,yolo26n-seg,yolo26n-seg-e2e.onnx");
+    #endif
     caiwei::test::init_test();
-    // seg_draw();
+    seg_draw();
     // seg_image();
-    seg_video();
+    // seg_video();
     caiwei::test::stop_test();
     return 0;
 }

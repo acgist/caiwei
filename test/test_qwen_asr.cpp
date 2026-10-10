@@ -48,9 +48,12 @@ void test_asr() {
 int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "ASR,QWEN,qwen3-asr,/data/model/Qwen3-ASR-0.6B/llm/Qwen3-ASR-0.6B.rknn|/data/model/Qwen3-ASR-0.6B/llm/Qwen3-ASR-0.6B.weight|/data/model/Qwen3-ASR-0.6B/llm/Qwen3-ASR-0.6B.embed.bin|/data/model/Qwen3-ASR-0.6B/llm/Qwen3-ASR-0.6B.tokenizer.gguf|/data/model/Qwen3-ASR-0.6B/asr/Qwen3-ASR-0.6B.rknn|/data/model/Qwen3-ASR-0.6B/asr/Qwen3-ASR-0.6B.weight");
-    #else
+    #elif CAIWEI_OS_UNIX
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "ASR,QWEN,qwen3-asr,/data/caiwei/deps/llama.cpp/Qwen3-ASR-0.6B/Qwen3-ASR-0.6B-Q4_K_M.gguf|/data/caiwei/deps/llama.cpp/Qwen3-ASR-0.6B/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf");
+    #elif CAIWEI_OS_WIN
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", "ASR,QWEN,qwen3-asr,E:/model/llama.cpp/Qwen3-ASR-0.6B-Q8_0.gguf|E:/model/llama.cpp/mmproj-Qwen3-ASR-0.6B-Q8_0.gguf");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "ASR,QWEN,qwen3-asr,D:/tmp/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf|D:/tmp/model/llama.cpp/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf");
+    #else
     #endif
     caiwei::test::init_test();
     test_asr();

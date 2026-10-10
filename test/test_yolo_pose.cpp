@@ -167,10 +167,13 @@ int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "POSE,YOLO,yolo26n-pose,yolo26n-pose-rk3588-f16.rknn");
     #endif
+    #if ENABLE_CAIWEI_YOLO_END2END
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "POSE,YOLO,yolo26n-pose,yolo26n-pose-e2e.onnx");
+    #endif
     caiwei::test::init_test();
-    // pose_draw();
+    pose_draw();
     // pose_image();
-    pose_video();
+    // pose_video();
     caiwei::test::stop_test();
     return 0;
 }

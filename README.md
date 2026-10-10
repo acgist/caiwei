@@ -31,15 +31,15 @@
 
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
-|llama.cpp  |https://github.com/ggml-org/llama.cpp   |○|
-|ONNXRuntime|https://github.com/microsoft/onnxruntime|○|
+|llama.cpp  |https://github.com/ggml-org/llama.cpp   |√|
+|ONNXRuntime|https://github.com/microsoft/onnxruntime|√|
 
 ## 厂商推理SDK
 
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
-|RKNN2|https://github.com/airockchip/rknn-toolkit2|○|
-|RKNN3|https://github.com/airockchip/rknn3-toolkit|○|
+|RKNN2|https://github.com/airockchip/rknn-toolkit2|√|
+|RKNN3|https://github.com/airockchip/rknn3-toolkit|√|
 
 > 其他`CANN`/`OpenVINO`等等可以使用通用推理`SDK`推理
 
@@ -47,15 +47,15 @@
 
 |模型|RKNN|llama.cpp|ONNXRuntime|
 |:--|:--|:--|:--|
-|YOLO-CLS       |○|×|√|
-|YOLO-DET       |○|×|√|
-|YOLO-SEG       |○|×|√|
-|YOLO-POSE      |○|×|√|
-|Qwen3          |○|√|×|
-|Qwen3-ASR      |○|○|×|
-|Qwen3-VL       |○|○|×|
-|Qwen3-Reranker |○|○|×|
-|Qwen3-Embedding|○|○|×|
+|YOLO-CLS       |√|×|√|
+|YOLO-DET       |√|×|√|
+|YOLO-SEG       |√|×|√|
+|YOLO-POSE      |√|×|√|
+|Qwen3          |√|√|×|
+|Qwen3-ASR      |√|√|×|
+|Qwen3-VL       |√|√|×|
+|Qwen3-Reranker |√|√|×|
+|Qwen3-Embedding|√|√|×|
 
 > √=已支持 ○=计划中 ?=未计划 ×=不支持
 

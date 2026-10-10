@@ -12,6 +12,9 @@ caiwei::text::ChatTemplate::~ChatTemplate() {
 
 void caiwei::text::ChatTemplate::set_template(const std::string& template_text, const std::string& bos, const std::string& eos) {
     CW_LOG_I("set_template: %s", template_text.c_str());
+    if (template_text.empty()) {
+        return;
+    }
     chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
 }
 
