@@ -71,7 +71,8 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
     special_token.audio_marker = caiwei::env::get("CAIWEI_ASR_AUDIO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::ASRRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
+    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
+    return std::make_shared<caiwei::context::ASRRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, share, this);
 }
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_llm_context(const caiwei::context::ContextInfo* info) {
@@ -110,7 +111,8 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.e_toolcall = caiwei::env::get("CAIWEI_LLM_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_LLM_ENABLE_THINKING");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::LLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
+    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
+    return std::make_shared<caiwei::context::LLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, share, this);
 }
 
 
@@ -169,7 +171,8 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.image_marker = caiwei::env::get("CAIWEI_VLM_IMAGE_MARKER");
     special_token.video_marker = caiwei::env::get("CAIWEI_VLM_VIDEO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::VLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
+    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
+    return std::make_shared<caiwei::context::VLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, share, this);
 }
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime::get_embedding_context(const caiwei::context::ContextInfo* info) {
@@ -200,7 +203,8 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime
     }
     caiwei::text::SpecialToken special_token;
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
+    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
+    return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, share, this);
 }
 
 std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime::get_reranking_context(const caiwei::context::ContextInfo* info) {
@@ -242,20 +246,22 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime
     special_token.b_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BTHINKING");
     special_token.e_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_ETHINKING");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
+    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
     return std::make_shared<caiwei::context::RerankingRKNN3Context>(
         model_path,
         weight_path,
         embedding_path,
         tokenizer_path,
         max_token_length,
+        special_token,
+        share,
+        this,
         bos_key,
         eos_key,
         system_prompt,
         instruction_prompt,
         instruction_key,
         query_key,
-        document_key,
-        special_token,
-        this
+        document_key
     );
 }

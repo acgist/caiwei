@@ -3,8 +3,8 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
-caiwei::context::DetRKNN2Context::DetRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
- : DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime),
+caiwei::context::DetRKNN2Context::DetRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime)
+ : DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, share, runtime),
    RKNN2Context(std::move(path), c, h, w) {
 }
 

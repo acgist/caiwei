@@ -40,7 +40,7 @@ public:
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    ClsRKNN2Context(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    ClsRKNN2Context(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
     ~ClsRKNN2Context();
 public:
     bool load() override;
@@ -50,7 +50,7 @@ public:
 class DetRKNN2Context : public DetContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    DetRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    DetRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
     ~DetRKNN2Context();
 public:
     bool load() override;
@@ -60,7 +60,7 @@ public:
 class SegRKNN2Context : public SegContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    SegRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    SegRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
     ~SegRKNN2Context();
 public:
     bool load() override;
@@ -70,7 +70,7 @@ public:
 class PoseRKNN2Context : public PoseContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    PoseRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    PoseRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
     ~PoseRKNN2Context();
 public:
     bool load() override;

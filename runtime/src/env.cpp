@@ -21,21 +21,17 @@ static std::map<std::string, std::string> default_config = {
     // 运行配置
     {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
     {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},
-    // TODO
-    {"CAIWEI_CV_SHARE",          "false"},
-    {"CAIWEI_CV_MIN_POOL",       "2"    },
-    {"CAIWEI_CV_MAX_POOL",       "8"    },
-    {"CAIWEI_LM_SHARE",          "true" },
-    {"CAIWEI_LM_MIN_POOL",       "0"    },
-    {"CAIWEI_LM_MAX_POOL",       "1"    },
-    {"CAIWEI_RKNN2_MIN_POOL",       "2"  },
-    {"CAIWEI_RKNN2_MAX_POOL",       "8"  },
-    {"CAIWEI_RKNN3_MIN_POOL",       "0"  },
-    {"CAIWEI_RKNN3_MAX_POOL",       "1"  },
-    {"CAIWEI_LLAMACPP_MIN_POOL",    "0"  },
-    {"CAIWEI_LLAMACPP_MAX_POOL",    "1"  },
-    {"CAIWEI_ONNXRUNTIME_MIN_POOL", "2"  },
-    {"CAIWEI_ONNXRUNTIME_MAX_POOL", "8"  },
+    // 共享配置
+    {"CAIWEI_YOLO_SHARE",           "false"},
+    {"CAIWEI_QWEN_SHARE",           "true" },
+    {"CAIWEI_RKNN2_MIN_POOL",       "2"    },
+    {"CAIWEI_RKNN2_MAX_POOL",       "8"    },
+    {"CAIWEI_RKNN3_MIN_POOL",       "0"    },
+    {"CAIWEI_RKNN3_MAX_POOL",       "1"    },
+    {"CAIWEI_LLAMACPP_MIN_POOL",    "0"    },
+    {"CAIWEI_LLAMACPP_MAX_POOL",    "1"    },
+    {"CAIWEI_ONNXRUNTIME_MIN_POOL", "2"    },
+    {"CAIWEI_ONNXRUNTIME_MAX_POOL", "8"    },
     // CLS
     {"CAIWEI_CLS_C",                    "3"   },
     {"CAIWEI_CLS_H",                    "224" },
@@ -165,7 +161,7 @@ int64_t caiwei::env::get_long(const std::string& name) {
 }
 
 bool caiwei::env::get_bool(const std::string& name) {
-    return caiwei::env::get(name) == "ON";
+    return caiwei::env::get(name) == "ON" || caiwei::env::get(name) == "true";
 }
 
 float caiwei::env::get_float(const std::string& name) {

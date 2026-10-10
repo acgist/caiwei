@@ -38,7 +38,8 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime
         CW_LOG_W("ClsContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    return std::make_shared<caiwei::context::ClsONNXRuntimeContext>(info->path, c, h, w, top_k, class_size, confidence_threshold, this->env, this);
+    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
+    return std::make_shared<caiwei::context::ClsONNXRuntimeContext>(info->path, c, h, w, top_k, class_size, confidence_threshold, share, this->env, this);
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
@@ -52,7 +53,8 @@ std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime
         CW_LOG_W("DetContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    return std::make_shared<caiwei::context::DetONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
+    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
+    return std::make_shared<caiwei::context::DetONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, share, this->env, this);
 }
 
 std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::ONNXRuntimeRuntime::get_seg_context(const caiwei::context::ContextInfo* info) {
@@ -66,7 +68,8 @@ std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::ONNXRuntimeRuntime
         CW_LOG_W("SegContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    return std::make_shared<caiwei::context::SegONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
+    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
+    return std::make_shared<caiwei::context::SegONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, share, this->env, this);
 }
 
 std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::ONNXRuntimeRuntime::get_pose_context(const caiwei::context::ContextInfo* info) {
@@ -80,5 +83,6 @@ std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::ONNXRuntimeRuntim
         CW_LOG_W("PoseContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    return std::make_shared<caiwei::context::PoseONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
+    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
+    return std::make_shared<caiwei::context::PoseONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, share, this->env, this);
 }

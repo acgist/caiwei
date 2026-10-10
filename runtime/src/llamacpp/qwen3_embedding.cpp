@@ -2,8 +2,8 @@
 #include "caiwei/tokenizer.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
-  : EmbeddingContext(runtime),
+caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime)
+  : EmbeddingContext(share, runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {
 }
 
