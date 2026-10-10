@@ -78,6 +78,7 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_ASR_TOKEN_BTOOLCALL",  "<tool_call>"    },
     {"CAIWEI_ASR_TOKEN_ETOOLCALL",  "</tool_call>"   },
     {"CAIWEI_ASR_MEDIA_MARKER",     "<__media__>"    },
+    {"CAIWEI_ASR_AUDIO_MARKER",     "<audio>"        },
     {"CAIWEI_ASR_ENABLE_THINKING",  "enable_thinking"},
     // LLM
     {"CAIWEI_LLM_MAX_TOKEN_LENGTH", "8092"           },
@@ -105,6 +106,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VLM_TOKEN_BTOOLCALL",  "<tool_call>"     },
     {"CAIWEI_VLM_TOKEN_ETOOLCALL",  "</tool_call>"    },
     {"CAIWEI_VLM_MEDIA_MARKER",     "<__media__>"     },
+    {"CAIWEI_VLM_IMAGE_MARKER",     "<image>"         },
+    {"CAIWEI_VLM_VIDEO_MARKER",     "<video>"         },
     {"CAIWEI_VLM_ENABLE_THINKING",  "enable_thinking" },
     // EMBEDDING
     {"CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH", "8092"},

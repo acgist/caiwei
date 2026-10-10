@@ -4,6 +4,8 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
+#include <thread>
+
 #if CAIWEI_DEBUG
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO;
 #else

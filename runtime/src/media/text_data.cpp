@@ -9,11 +9,13 @@ caiwei::text::Result::Result(bool thinking, bool toolcall, std::string token)
   , token(token) {
 }
 
-caiwei::text::Result::Result(bool thinking, bool toolcall, ResultToolcall* result_toolcall)
+caiwei::text::Result::Result(bool thinking, bool toolcall, ResultToolcall& result_toolcall)
   : thinking(thinking)
-  , toolcall(toolcall)
-  , token(token)
-  , result_toolcall(result_toolcall) {
+  , toolcall(toolcall) {
+    this->toolcall_name      = result_toolcall.get_name();
+    this->toolcall_arguments = result_toolcall.get_arguments();
+    this->toolcall_id        = result_toolcall.toolcall_id;
+    this->toolcall_index     = result_toolcall.toolcall_index;
 }
 
 caiwei::text::Result::Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens)

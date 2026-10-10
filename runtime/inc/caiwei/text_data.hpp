@@ -264,6 +264,10 @@ struct SpecialToken {
     std::string e_thinking;
     std::string b_toolcall;
     std::string e_toolcall;
+    std::string media_marker;
+    std::string audio_marker;
+    std::string image_marker;
+    std::string video_marker;
     std::string enable_thinking;
 };
 
@@ -293,10 +297,16 @@ struct Result {
     uint32_t prompt_tokens;
     uint32_t completion_tokens;
     uint32_t total_tokens;
-    ResultToolcall* result_toolcall = nullptr;
+    std::string toolcall_name;
+    std::string toolcall_arguments;
+    std::string toolcall_id;
+    uint32_t    toolcall_index;
 
+    Result(Result&& other) noexcept = default;
+    Result& operator=(Result&& other) noexcept = default;
+    
     Result(bool thinking, bool toolcall, std::string token);
-    Result(bool thinking, bool toolcall, ResultToolcall* result_toolcall);
+    Result(bool thinking, bool toolcall, ResultToolcall& result_toolcall);
     Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 

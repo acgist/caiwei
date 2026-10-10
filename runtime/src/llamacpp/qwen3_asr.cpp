@@ -1,8 +1,8 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
-    : LlamaCPPContext(std::move(path), std::move(mtmd_path), std::move(media_marker), max_token_length, special_token),
+caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
+    : LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token),
     ASRContext(runtime) {
 }
 
@@ -32,7 +32,7 @@ void caiwei::context::ASRLlamaCPPContext::build_bitmaps(caiwei::text::Completion
             std::transform(audio_data_ptr, audio_data_ptr + audio.data.size() * sizeof(uint8_t) / sizeof(int16_t), audio_data.data(), [](int16_t v) {
                 return static_cast<float>(v) / 32768.0F;
             });
-            content += this->media_marker;
+            content += this->special_token.media_marker;
             bitmaps.entries.emplace_back(mtmd_bitmap_init_from_audio(audio_data.size(), audio_data.data()));
         }
         message.content = std::move(content);

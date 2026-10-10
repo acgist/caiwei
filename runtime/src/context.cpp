@@ -125,11 +125,6 @@ caiwei::context::PoseContext::PoseContext(int c, int h, int w, int class_size, f
 caiwei::context::PoseContext::~PoseContext() {
 }
 
-std::vector<float> caiwei::context::ASRContext::get_audio(std::vector<float> audio) {
-    // TODO ans vad agc
-    return audio;
-}
-
 caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime)
  : Context(runtime) {
 }

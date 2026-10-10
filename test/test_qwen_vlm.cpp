@@ -19,11 +19,13 @@ static void read_image(caiwei::media::ImageFrame& frame, const char* path) {
     auto* data = stbi_load(path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
+    std::vector<uint8_t> pad(    w *     h * channels);
     caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
     frame.width    = dst_w;
     frame.height   = dst_h;
     frame.channels = channels;
-    frame.data = std::move(dst);
+    frame.data = std::move(pad);
     stbi_image_free(data);
 }
 
@@ -34,11 +36,13 @@ static void resize_image(caiwei::media::VideoFrame& frame) {
     int dst_w, dst_h, pad_w, pad_h;
     caiwei::image::resize(frame.width, frame.height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * frame.channels);
+    std::vector<uint8_t> pad(    w *     h * frame.channels);
     caiwei::image::resize(frame.data.data(), dst.data(), frame.width, frame.height, dst_w, dst_h);
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
     frame.width    = dst_w;
     frame.height   = dst_h;
     frame.channels = frame.channels;
-    frame.data = std::move(dst);
+    frame.data = std::move(pad);
 }
 
 void test_vlm() {
@@ -46,31 +50,31 @@ void test_vlm() {
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {
         .role = "user",
         .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
-            // caiwei::text::CompletionsRequestMessageContentItem {
-            //     .type = "text",
-            //     .text = "这个人物图片还是风景图片"
-            // },
-            // caiwei::text::CompletionsRequestMessageContentItem {
-            //     .type = "image",
-            // },
-            // caiwei::text::CompletionsRequestMessageContentItem {
-            //     .type = "image",
-            // }
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "text",
+                .text = "描述下面两张图片内容"
+            },
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "image",
+            },
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "image",
+            },
             caiwei::text::CompletionsRequestMessageContentItem {
                 .type = "text",
                 .text = "请简单告诉我视频里面发生了什么。"
             },
             caiwei::text::CompletionsRequestMessageContentItem {
                 .type = "video",
-            }
+            },
         }
     });
-    // caiwei::media::ImageFrame frame1;
-    // caiwei::media::ImageFrame frame2;
-    // read_image(frame1, "./acgist.jpg");
-    // read_image(frame2, "./caiwei.jpg");
-    // request.messages.back().image_data.emplace_back(std::move(frame1));
-    // request.messages.back().image_data.emplace_back(std::move(frame2));
+    caiwei::media::ImageFrame frame1;
+    caiwei::media::ImageFrame frame2;
+    read_image(frame1, "./acgist.jpg");
+    read_image(frame2, "./caiwei.jpg");
+    request.messages.back().image_data.emplace_back(std::move(frame1));
+    request.messages.back().image_data.emplace_back(std::move(frame2));
     std::vector<caiwei::media::VideoFrame> video_frames;
     int frame_index = 0;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp4", [](caiwei::media::AudioFrame& frame) {
@@ -80,7 +84,7 @@ void test_vlm() {
             resize_image(frame);
             video_frames.emplace_back(std::move(frame));
         }
-        return video_frames.size() < 8;
+        return video_frames.size() < 4;
     });
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),

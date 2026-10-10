@@ -50,9 +50,10 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::g
     special_token.b_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_BTOOLCALL");
     special_token.e_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_ASR_ENABLE_THINKING");
-    std::string media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
+    special_token.media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
+    special_token.audio_marker = caiwei::env::get("CAIWEI_ASR_AUDIO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::ASRLlamaCPPContext>(model_path, mmproj_path, media_marker, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::ASRLlamaCPPContext>(model_path, mmproj_path, max_token_length, special_token, this);
 }
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::get_llm_context(const caiwei::context::ContextInfo* info) {
@@ -104,9 +105,11 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::g
     special_token.b_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
     special_token.e_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
-    std::string media_marker = caiwei::env::get("CAIWEI_VLM_MEDIA_MARKER");
+    special_token.media_marker = caiwei::env::get("CAIWEI_VLM_MEDIA_MARKER");
+    special_token.image_marker = caiwei::env::get("CAIWEI_VLM_IMAGE_MARKER");
+    special_token.video_marker = caiwei::env::get("CAIWEI_VLM_VIDEO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::VLMLlamaCPPContext>(model_path, mmproj_path, media_marker, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::VLMLlamaCPPContext>(model_path, mmproj_path, max_token_length, special_token, this);
 }
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::LlamaCPPRuntime::get_embedding_context(const caiwei::context::ContextInfo* info) {

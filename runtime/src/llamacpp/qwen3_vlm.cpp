@@ -1,8 +1,8 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
-    : LlamaCPPContext(std::move(path), std::move(mtmd_path), std::move(media_marker), max_token_length, special_token),
+caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
+    : LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token),
     VLMContext(runtime) {
 }
 
@@ -37,7 +37,7 @@ void caiwei::context::VLMLlamaCPPContext::build_bitmaps(caiwei::text::Completion
                 if (image_index >= message.image_data.size()) {
                     continue;
                 }
-                content += this->media_marker;
+                content += this->special_token.media_marker;
                 const auto& image = message.image_data[image_index];
                 bitmaps.entries.emplace_back(mtmd_bitmap_init(image.width, image.height, image.data.data()));
                 image_index++;
@@ -48,7 +48,7 @@ void caiwei::context::VLMLlamaCPPContext::build_bitmaps(caiwei::text::Completion
                 // TODO 时间戳 <0.5 seconds>
                 const auto& video = message.video_data[video_index];
                 for (const auto& frame : video) {
-                    content += this->media_marker;
+                    content += this->special_token.media_marker;
                     bitmaps.entries.emplace_back(mtmd_bitmap_init(frame.width, frame.height, frame.data.data()));
                     mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
                 }

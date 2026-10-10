@@ -11,10 +11,11 @@ caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_
     CW_LOG_I("创建LlamaCPPContext: %s", this->path.c_str());
 }
 
-caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token)
-  : path(std::move(path)), mtmd_path(std::move(mtmd_path)),
-  media_marker(std::move(media_marker)),
-  max_token_length(max_token_length), special_token(std::move(special_token)) {
+caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token)
+  : path(std::move(path)),
+  mtmd_path(std::move(mtmd_path)),
+  max_token_length(max_token_length),
+  special_token(std::move(special_token)) {
     CW_LOG_I("创建LlamaCPPContext: %s", this->path.c_str());
 }
 
@@ -44,11 +45,11 @@ bool caiwei::context::LlamaCPPContext::load_model() {
 }
 
 bool caiwei::context::LlamaCPPContext::load_mtmd() {
-    if (this->media_marker.empty()) {
-        this->media_marker = mtmd_default_marker();
+    if (this->special_token.media_marker.empty()) {
+        this->special_token.media_marker = mtmd_default_marker();
     }
     mtmd_context_params params = mtmd_context_params_default();
-    params.media_marker = this->media_marker.c_str();
+    params.media_marker = this->special_token.media_marker.c_str();
     this->mtmd_context.reset(mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params));
     return true;
 }
@@ -204,7 +205,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
         } else if (token_id == e_toolcall) {
             // TOOLCALL不要修改状态
             result_toolcall.finish();
-            co_yield caiwei::text::Result{ thinking, toolcall, &result_toolcall };
+            co_yield caiwei::text::Result{ thinking, toolcall, result_toolcall };
         } else {
             std::string token(buffer.begin(), buffer.begin() + buffer_length);
             #if CAIWEI_DEBUG
@@ -213,7 +214,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
             #endif
             if (toolcall) {
                 result_toolcall.put_token(std::move(token));
-                co_yield caiwei::text::Result{ thinking, toolcall, &result_toolcall };
+                co_yield caiwei::text::Result{ thinking, toolcall, result_toolcall };
             } else {
                 co_yield caiwei::text::Result{ thinking, toolcall, token };
             }

@@ -17,7 +17,6 @@ protected:
     int32_t max_token_length;
     std::string path;
     std::string mtmd_path;
-    std::string media_marker;
           llama_model* model{ nullptr };
     const llama_vocab* vocab{ nullptr };
     mtmd::context_ptr mtmd_context{ nullptr };
@@ -30,8 +29,8 @@ protected:
     std::generator<caiwei::text::Result> generate_mtmd(caiwei::text::CompletionsRequest& request);
     virtual void build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps);
 public:
-    LlamaCPPContext(std::string path,                                                  int32_t max_token_length, caiwei::text::SpecialToken special_token);
-    LlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token);
+    LlamaCPPContext(std::string path,                        int32_t max_token_length, caiwei::text::SpecialToken special_token);
+    LlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
     virtual ~LlamaCPPContext();
 public:
     bool load_model();
@@ -40,7 +39,7 @@ public:
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
 public:
-    ASRLlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
+    ASRLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~ASRLlamaCPPContext();
 public:
     bool load() override;
@@ -59,7 +58,7 @@ public:
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {
 public:
-    VLMLlamaCPPContext(std::string path, std::string mtmd_path, std::string media_marker, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
+    VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~VLMLlamaCPPContext();
 public:
     bool load() override;

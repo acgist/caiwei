@@ -68,6 +68,8 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.b_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_BTOOLCALL");
     special_token.e_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_ASR_ENABLE_THINKING");
+    special_token.media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
+    special_token.audio_marker = caiwei::env::get("CAIWEI_ASR_AUDIO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::ASRRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
 }
@@ -163,6 +165,9 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.b_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
     special_token.e_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
+    special_token.media_marker = caiwei::env::get("CAIWEI_VLM_MEDIA_MARKER");
+    special_token.image_marker = caiwei::env::get("CAIWEI_VLM_IMAGE_MARKER");
+    special_token.video_marker = caiwei::env::get("CAIWEI_VLM_VIDEO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::VLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
 }

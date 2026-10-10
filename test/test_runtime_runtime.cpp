@@ -42,7 +42,7 @@ int main() {
     #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
     // detect
     // CUDA: 8~10 ms
-    // CUDA: 8~10 ms e2e
+    // CUDA: 8~10 ms End2End
     test_onnxruntime();
     #endif
     caiwei::test::stop_test();

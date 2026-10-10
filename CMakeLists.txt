@@ -22,19 +22,16 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_CAIWEI_TEST                "Build Test"     OFF) # 是否编译测试
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"   OFF) #           ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"     OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2" OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
-option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # 瑞芯微: RK1820/RK1828
-option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"      ON)  # 跨平台
-option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"    ON)  # 跨平台
-option(ENABLE_CAIWEI_ASR_ANS             "ASR ANS"        ON)  # ASR前置ANS
-option(ENABLE_CAIWEI_ASR_VAD             "ASR VAD"        ON)  # ASR前置VAD
-option(ENABLE_CAIWEI_ASR_AGC             "ASR AGC"        ON)  # ASR前置AGC
-option(ENABLE_CAIWEI_YOLO_E2E            "YOLO end2end"   ON)  # YOLO end2end
-option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"         ON)  # FFmpeg
-option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"    ON)  # cpp-httplib
+option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 是否编译测试
+option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"    OFF) #           ONNXRuntime
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"      OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2"  OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
+option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3"  OFF) # 瑞芯微: RK1820/RK1828
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"       ON)  # 跨平台
+option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # 跨平台
+option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"          ON)  # FFmpeg
+option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"     ON)  # cpp-httplib
+option(ENABLE_CAIWEI_YOLO_END2END        "YOLO End2End"    OFF) # YOLO端到端
 
 if(ANDROID)
     add_definitions(-DCAIWEI_OS_ANDROID=1)
@@ -100,8 +97,8 @@ endif()
 
 if(ENABLE_ASAN)
 	message(STATUS "Enable ASAN")
-	set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-	set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 if (ENABLE_CAIWEI_TEST)
@@ -288,10 +285,10 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
     endif()
 endif()
 
-if (ENABLE_CAIWEI_YOLO_E2E)
-    add_definitions(-DENABLE_CAIWEI_YOLO_E2E=1)
-    message(STATUS "Enable YOLO E2E")
-endif ()
+if (ENABLE_CAIWEI_YOLO_END2END)
+    add_definitions(-DENABLE_CAIWEI_YOLO_END2END=1)
+    message(STATUS "Enable YOLO End2End")
+endif()
 
 add_subdirectory(runtime)
 add_subdirectory(server)

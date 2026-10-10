@@ -20,6 +20,14 @@
 |Diar|Speaker Diarization         |说话人分簇、说话人日志|
 |SID |Speaker Identification      |说话人识别、声纹识别|
 
+### 降噪算法
+
+* https://github.com/xiph/rnnoise
+* https://modelscope.cn/models/iic/speech_frcrn_ans_cirm_16k
+* https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base
+
+> 模型对小音量和噪声音频识别效果较好所以没有添加降噪和增益模块
+
 ## 模型下载
 
 ```

@@ -12,6 +12,8 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j4
 sudo make install
+
+-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME=OFF -DENABLE_CAIWEI_BACKEND_RKNN=ON -DENABLE_CAIWEI_RUNTIME_RKNN2=ON -DENABLE_CAIWEI_RUNTIME_RKNN3=ON
 ```
 
 * `-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc`
@@ -41,10 +43,8 @@ pip install torch torchaudio torchcodec torchvision --index-url https://download
 * https://modelscope.cn/collections/acgist/caiwei
 
 ```
-pip install ms_swift accelerate modelscope transformers --index-url https://download.pytorch.org/whl/cu126
+pip install ms_swift==4.4.2 accelerate modelscope transformers --index-url https://download.pytorch.org/whl/cu126
 ```
-
-> `ms_swift==4.4.2`
 
 ## Linux环境
 
@@ -54,14 +54,11 @@ sudo apt install cmake build-essential
 
 sudo apt install gcc-11 g++-11
 sudo apt install gcc-12 g++-12
-sudo apt install gcc-14 g++-14
 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
 
 sudo update-alternatives --list       gcc
 sudo update-alternatives --config     gcc
@@ -69,25 +66,26 @@ sudo update-alternatives --display    gcc
 sudo update-alternatives --remove-all gcc
 
 # 编译安装
-# wget http://ftp.gnu.org/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.gz
-wget https://mirrors.aliyun.com/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.gz
-tar -zxvf gcc-14.2.0.tar.gz
-cd gcc-14.2.0
+# wget http://ftp.gnu.org/gnu/gcc/gcc-15.3.0/gcc-15.3.0.tar.gz
+wget https://mirrors.aliyun.com/gnu/gcc/gcc-15.3.0/gcc-15.3.0.tar.gz
+tar -zxvf gcc-15.3.0.tar.gz
+cd gcc-15.3.0
 # ./contrib/download_prerequisites
 sudo apt install libgmp-dev libmpc-dev libmpfr-dev
 
 mkdir build
 cd build
-../configure -v --prefix=/usr/local/gcc-14.2.0 --disable-multilib --enable-checking=release --enable-languages=c,c++
+../configure -v --prefix=/usr/local/gcc-15.3.0 --disable-multilib --disable-bootstrap --enable-checking=release --enable-languages=c,c++
 make -j4
 sudo make install
 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-14.2.0/bin/gcc-14.2.0 14
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/local/gcc-14.2.0/bin/g++-14.2.0 14
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-15.3.0/bin/gcc 15
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/local/gcc-15.3.0/bin/g++ 15
 ```
 
-* `export LD_LIBRARY_PATH="/usr/local/gcc-14.2.0/lib64/:$LD_LIBRARY_PATH"`
-* `-DCMAKE_C_COMPILER=/usr/local/gcc-14.2.0/bin/gcc-14.2.0 -DCMAKE_CXX_COMPILER=/usr/local/gcc-14.2.0/bin/g++-14.2.0`
+* `export LD_LIBRARY_PATH="/usr/local/gcc-15.3.0/lib64/:$LD_LIBRARY_PATH"`
+* `-DCMAKE_C_COMPILER=/usr/local/gcc-15.3.0/bin/gcc -DCMAKE_CXX_COMPILER=/usr/local/gcc-15.3.0/bin/g++`
+* 经过多次测试发现`ARM`架构`GCC-14.2.0`/`GCC-14.4.0`这些版本使用`generator`存在`BUG`容易导致`RKNN3`推理失败。
 
 ## Windows环境
 

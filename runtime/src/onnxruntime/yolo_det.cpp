@@ -21,7 +21,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     const int64_t stride_length = output_dims[2];
     // TODO
     std::vector<caiwei::image::Box> ret;
-    #ifdef ENABLE_CAIWEI_YOLO_E2E
+    #ifdef ENABLE_CAIWEI_YOLO_END2END
     float* data = output_data;
     for (int index = 0; index < result_length; ++index) {
         int   max_class = data[5];

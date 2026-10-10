@@ -148,33 +148,13 @@ public:
 };
 
 /**
- * 噪声抑制模型
- */
-class ASNContext : public Context {};
-
-/**
- * 活动检测模型
- */
-class VADContext : public Context {};
-
-/**
- * 自动增益模型
- */
-class AGCContext : public Context {};
-
-/**
  * 语音识别模型
  */
 class ASRContext : public Context {
-private:
-    ASNContext asn_context;
-    VADContext vad_context;
-    AGCContext agc_context;
 public:
     ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
-    std::vector<float> get_audio(std::vector<float> audio);
     virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
 };
 

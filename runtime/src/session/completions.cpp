@@ -487,12 +487,12 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
             choice.delta.reasoning_content = result.token;
         } else if (result.toolcall) {
             caiwei::text::CompletionsChunkChoiceMessageToolCallFunction function;
-            function.name      = result.result_toolcall->get_name();
-            function.arguments = result.result_toolcall->get_arguments();
+            function.name      = result.toolcall_name;
+            function.arguments = result.toolcall_arguments;
             caiwei::text::CompletionsChunkChoiceMessageToolCall tool_call;
-            tool_call.id    = result.result_toolcall->toolcall_id;
+            tool_call.id    = result.toolcall_id;
             tool_call.type  = "function";
-            tool_call.index = result.result_toolcall->toolcall_index;
+            tool_call.index = result.toolcall_index;
             tool_call.function = function;
             if (choice.delta.tool_calls.has_value()) {
                 choice.delta.tool_calls.value().push_back(std::move(tool_call));
@@ -784,6 +784,7 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
         CW_LOG_W("不支持的媒体地址: %s", video_url.c_str());
         return;
     }
+    // TODO resize
     std::vector<caiwei::media::VideoFrame> video_frames;
     caiwei::media::MediaDemuxer media_demuxer(type, video_url, [&](caiwei::media::AudioFrame& frame) {
         return true;

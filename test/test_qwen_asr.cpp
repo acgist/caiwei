@@ -10,7 +10,9 @@ extern "C" {
 
 void test_asr() {
     caiwei::media::AudioFrame audio_frame;
-    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_noise.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_small.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
         audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
         return true;
     }, [](caiwei::media::VideoFrame& frame) {
