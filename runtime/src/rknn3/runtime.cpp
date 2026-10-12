@@ -233,16 +233,14 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime
         CW_LOG_W("RKNN3模型无效: %s", tokenizer_path.c_str());
         return nullptr;
     }
-    std::string system_prompt      = caiwei::env::get("CAIWEI_RERANKING_SYSTEM");
-    std::string instruction_prompt = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION");
-    std::string instruction_key    = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_KEY");
-    std::string query_key          = caiwei::env::get("CAIWEI_RERANKING_QUERY_KEY");
-    std::string document_key       = caiwei::env::get("CAIWEI_RERANKING_DOCUMENT_KEY");
     caiwei::text::SpecialToken special_token;
-    std::string bos_key = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BOS");
-    std::string eos_key = caiwei::env::get("CAIWEI_RERANKING_TOKEN_EOS");
-    special_token.bos = bos_key;
-    special_token.eos = eos_key;
+    special_token.system_prompt      = caiwei::env::get("CAIWEI_RERANKING_SYSTEM");
+    special_token.instruction_prompt = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION");
+    special_token.instruction_key    = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_KEY");
+    special_token.query_key          = caiwei::env::get("CAIWEI_RERANKING_QUERY_KEY");
+    special_token.document_key       = caiwei::env::get("CAIWEI_RERANKING_DOCUMENT_KEY");
+    special_token.bos = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BOS");
+    special_token.eos = caiwei::env::get("CAIWEI_RERANKING_TOKEN_EOS");
     special_token.b_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BTHINKING");
     special_token.e_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_ETHINKING");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
@@ -255,13 +253,6 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime
         max_token_length,
         special_token,
         share,
-        this,
-        bos_key,
-        eos_key,
-        system_prompt,
-        instruction_prompt,
-        instruction_key,
-        query_key,
-        document_key
+        this
     );
 }

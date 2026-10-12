@@ -89,7 +89,6 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
         this->chw.resize   (          w *           h * image.channels);
         this->chw_i8.resize(          w *           h * image.channels);
     }
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) image.data.data(), image.width, image.height, RK_FORMAT_RGB_888);
     rga_buffer_t dst_img = wrapbuffer_virtualaddr(this->pad.data(), w, h, RK_FORMAT_RGB_888);
     rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr, 0, 0, 0);
@@ -97,10 +96,6 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
     im_rect dst_rect = { this->pad_w, this->pad_h, this->dst_w, this->dst_h };
     im_rect pat_rect = { 0, 0, 0, 0 };
     improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
-    #else
-    caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h);
-    caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
-    #endif
     const auto& input_attr = this->input_attrs[0];
     std::vector<rknn_output> output;
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {

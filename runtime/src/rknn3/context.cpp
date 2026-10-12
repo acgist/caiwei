@@ -334,11 +334,11 @@ bool caiwei::context::RKNN3Context::init_output_tensors(int n_output_tensors) {
 }
 
 
-std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
     return {};
 }
 
-rknn3_session* caiwei::context::RKNN3Context::get_session(caiwei::text::CompletionsRequest* request, ContextSession* context_session) {
+rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::CompletionsRequest* request, ContextSession* context_session) {
     int n_params = 1;
     rknn3_sampling_params sampling_params{};
     if (request != nullptr) {
@@ -399,7 +399,7 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(caiwei::text::Completi
     return session;
 }
 
-std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& request) {
     ContextSession context_session;
     context_session.tokenizer = this->tokenizer;
     context_session.embedding_dim  = this->embedding_dim;

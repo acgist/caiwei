@@ -11,38 +11,15 @@ extern "C" {
 }
 
 static void read_image(caiwei::media::ImageFrame& frame, const char* path) {
-    const int w = 384;
-    const int h = 384;
-    float scale;
-    int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
     auto* data = stbi_load(path, &width, &height, &channels, STBI_default);
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
-    std::vector<uint8_t> dst(dst_w * dst_h * channels);
-    std::vector<uint8_t> pad(    w *     h * channels);
-    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
-    frame.width    = dst_w;
-    frame.height   = dst_h;
+    std::vector<uint8_t> vector(width * height * channels);
+    std::copy(data, data + width * height * channels, vector.begin());
+    frame.width    = width;
+    frame.height   = height;
     frame.channels = channels;
-    frame.data = std::move(pad);
+    frame.data = std::move(vector);
     stbi_image_free(data);
-}
-
-static void resize_image(caiwei::media::VideoFrame& frame) {
-    const int w = 384;
-    const int h = 384;
-    float scale;
-    int dst_w, dst_h, pad_w, pad_h;
-    caiwei::image::resize(frame.width, frame.height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
-    std::vector<uint8_t> dst(dst_w * dst_h * frame.channels);
-    std::vector<uint8_t> pad(    w *     h * frame.channels);
-    caiwei::image::resize(frame.data.data(), dst.data(), frame.width, frame.height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
-    frame.width    = dst_w;
-    frame.height   = dst_h;
-    frame.channels = frame.channels;
-    frame.data = std::move(pad);
 }
 
 void test_vlm() {
@@ -62,7 +39,7 @@ void test_vlm() {
             },
             caiwei::text::CompletionsRequestMessageContentItem {
                 .type = "text",
-                .text = "请简单告诉我视频里面发生了什么。"
+                .text = "描述视频内容"
             },
             caiwei::text::CompletionsRequestMessageContentItem {
                 .type = "video",
@@ -81,7 +58,6 @@ void test_vlm() {
         return true;
     }, [&video_frames, &frame_index](caiwei::media::VideoFrame& frame) {
         if (++frame_index % 8 == 0) {
-            resize_image(frame);
             video_frames.emplace_back(std::move(frame));
         }
         return video_frames.size() < 4;

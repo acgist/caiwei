@@ -13,28 +13,29 @@ bool caiwei::context::ASRLlamaCPPContext::load() {
     return this->load_model() && this->load_mtmd();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::ASRLlamaCPPContext::run(caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::ASRLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate_mtmd(request);
 }
 
-void caiwei::context::ASRLlamaCPPContext::build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
-    for (auto& message : request.messages) {
+bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
+    prompt.append(this->special_token.bos).append("user\n");
+    for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {
             continue;
         }
         if (message.audio_data.empty()) {
             continue;
         }
-        std::string content{};
         for (const auto& audio : message.audio_data) {
             std::vector<float> audio_data(audio.data.size() * sizeof(uint8_t) / sizeof(int16_t));
             const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio.data.data());
             std::transform(audio_data_ptr, audio_data_ptr + audio.data.size() * sizeof(uint8_t) / sizeof(int16_t), audio_data.data(), [](int16_t v) {
                 return static_cast<float>(v) / 32768.0F;
             });
-            content += this->special_token.media_marker;
+            prompt.append(this->special_token.media_marker);
             bitmaps.entries.emplace_back(mtmd_bitmap_init_from_audio(audio_data.size(), audio_data.data()));
         }
-        message.content = std::move(content);
     }
+    prompt.append(this->special_token.eos).append("\n").append(this->special_token.bos).append("assistant\n");
+    return true;
 }

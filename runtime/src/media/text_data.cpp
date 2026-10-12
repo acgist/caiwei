@@ -150,18 +150,6 @@ void from_json(const nlohmann::json& json, CompletionsRequestTool& tool) {
     set_opt(json, tool.function, "function");
 }
 
-void from_json(const nlohmann::json& json, CompletionsRequestExtraBody& extra_body) {
-    set_opt(json, extra_body.video_fps, "video_fps");
-    set_opt(json, extra_body.asr_samples, "asr_samples");
-    set_opt(json, extra_body.asr_queue_size, "asr_queue_size");
-    set_opt(json, extra_body.vlm_frames, "vlm_frames");
-    set_opt(json, extra_body.yolo_queue_size, "yolo_queue_size");
-    set_opt(json, extra_body.media_url, "media_url");
-    set_opt(json, extra_body.media_type, "media_type");
-    set_opt(json, extra_body.enable_thinking, "enable_thinking");
-    set_opt(json, extra_body.model_list, "model_list");
-}
-
 }
 }
 
@@ -182,7 +170,16 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     set_opt(data, request.frequency_penalty, "frequency_penalty");
     set_opt(data, request.max_completion_tokens, "max_completion_tokens");
     set_opt(data, request.tools, "tools");
-    set_opt(data, request.extra_body, "extra_body");
+    set_opt(data, request.video_fps, "video_fps");
+    set_opt(data, request.asr_samples, "asr_samples");
+    set_opt(data, request.asr_queue_size, "asr_queue_size");
+    set_opt(data, request.vlm_frames, "vlm_frames");
+    set_opt(data, request.yolo_queue_size, "yolo_queue_size");
+    set_opt(data, request.drop_on_full, "drop_on_full");
+    set_opt(data, request.media_url, "media_url");
+    set_opt(data, request.media_type, "media_type");
+    set_opt(data, request.enable_thinking, "enable_thinking");
+    set_opt(data, request.model_list, "model_list");
     request.id      = caiwei::env::id();
     request.created = caiwei::env::unix_timestamp();
     return request;

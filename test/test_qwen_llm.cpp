@@ -7,9 +7,7 @@
 void test_llm() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
-    request.extra_body = {
-        .enable_thinking = false,
-    };
+    request.enable_thinking = false;
     request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
     // request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
     // request.messages.push_back({.role = "user", .content = "查询北京天气"});

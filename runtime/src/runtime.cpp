@@ -80,10 +80,6 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             });
         });
         for (auto& context : iter->second) {
-            if (context->share) {
-                CW_LOG_D("返回共享context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
-                return context;
-            }
             if (context->usage) {
                 continue;
             }

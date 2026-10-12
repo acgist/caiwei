@@ -85,9 +85,9 @@ public:
     bool load_media_model(bool user_mem_internal = false);
     bool init_internal_mems(uint32_t core_mask_llm, uint32_t core_mask_media);
     bool init_output_tensors(int n_output_tensors);
-    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request);
-    rknn3_session* get_session(caiwei::text::CompletionsRequest* request, ContextSession* context_session);
-    std::generator<caiwei::text::Result> generate(caiwei::text::CompletionsRequest& request);
+    virtual std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
+    rknn3_session* get_session(const caiwei::text::CompletionsRequest* request, ContextSession* context_session);
+    std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
     RKNN3Context(
@@ -109,8 +109,8 @@ private:
     bool load_prompt_token();
 public:
     bool load() override;
-    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) override;
-    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     ASRRKNN3Context(
         std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path,
@@ -128,8 +128,8 @@ public:
     ~LLMRKNN3Context();
 public:
     bool load() override;
-    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) override;
-    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class VLMRKNN3Context : public VLMContext, public RKNN3Context {
@@ -140,13 +140,13 @@ private:
     int deepstack_count = 0;
     std::vector<rknn3_aux_tensor> deepstack_tensors;
 private:
-    bool fill_media(int i, int media_i, std::vector<float16>& embeds, const std::vector<uint8_t>& data, std::vector<rknn3_aux_tensor>& deepstack_tensors);
+    bool fill_media(int i, int media_i, std::vector<float16>& embeds, int width, int height, int channels, const std::vector<uint8_t>& data, std::vector<rknn3_aux_tensor>& deepstack_tensors);
     bool init_deepstack_tensors(int count);
     bool release_deepstack_tensors();
 public:
     bool load() override;
-    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) override;
-    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
+    std::vector<rknn3_llm_input> get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     VLMRKNN3Context(
         std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path,
@@ -166,14 +166,6 @@ public:
 };
 
 class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {
-private:
-    std::string bos_key;
-    std::string eos_key;
-    std::string system_prompt;
-    std::string instruction_prompt;
-    std::string instruction_key;
-    std::string query_key;
-    std::string document_key;
 public:
     bool load() override;
     caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) override;
@@ -186,14 +178,7 @@ public:
         int32_t max_token_length,
         caiwei::text::SpecialToken special_token,
         bool share,
-        caiwei::runtime::Runtime* runtime,
-        std::string bos_key,
-        std::string eos_key,
-        std::string system_prompt,
-        std::string instruction_prompt,
-        std::string instruction_key,
-        std::string query_key,
-        std::string document_key
+        caiwei::runtime::Runtime* runtime
     );
     ~RerankingRKNN3Context();
 };

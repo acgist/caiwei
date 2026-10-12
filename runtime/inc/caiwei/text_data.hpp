@@ -87,18 +87,6 @@ struct CompletionsRequestTool {
     std::optional<CompletionsRequestToolFunction> function;
 };
 
-struct CompletionsRequestExtraBody {
-    std::optional<int> video_fps       = 8;      // 视频识别间隔帧数: VLM/YOLO
-    std::optional<int> asr_samples     = 16000;  // ASR 识别帧数大小: 16000 * 1 * 16 * 0.5 / 8 = 16000
-    std::optional<int> asr_queue_size  = 128000; // ASR 识别队列大小: 16000 * 1 * 16 * 4 / 8 = 128000
-    std::optional<int> vlm_frames      = 8;      // VLM 识别帧数间隔
-    std::optional<int> yolo_queue_size = 8;      // YOLO识别队列大小
-    std::optional<std::string> media_url;  // 持续识别视频文件地址
-    std::optional<std::string> media_type; // 持续识别视频文件类型
-    std::optional<bool> enable_thinking = false;
-    std::optional<std::vector<std::string>> model_list;
-};
-
 struct CompletionsRequest {
     bool stream = false;
     std::string model;
@@ -112,7 +100,18 @@ struct CompletionsRequest {
     std::optional<float> frequency_penalty;
     std::optional<uint32_t> max_completion_tokens;
     std::optional<std::vector<CompletionsRequestTool>> tools;
-    std::optional<CompletionsRequestExtraBody> extra_body;
+    // 扩展字段
+    std::optional<int> video_fps       = 8;      // 视频识别间隔帧数: VLM/YOLO
+    std::optional<int> asr_samples     = 16000;  // ASR 识别帧数大小: 16000 * 1 * 16 * 0.5 / 8 = 16000
+    std::optional<int> asr_queue_size  = 128000; // ASR 识别队列大小: 16000 * 1 * 16 * 4 / 8 = 128000
+    std::optional<int> vlm_frames      = 8;      // VLM 识别帧数间隔
+    std::optional<int> yolo_queue_size = 8;      // YOLO识别队列大小
+    std::optional<std::string> media_url;  // 持续识别视频文件地址
+    std::optional<std::string> media_type; // 持续识别视频文件类型
+    std::optional<bool> drop_on_full = false;
+    std::optional<bool> enable_thinking = false;
+    std::optional<std::vector<std::string>> model_list;
+    // 临时字段
     CW_TRANSIENT std::string id;
     CW_TRANSIENT uint32_t    created;
 };
@@ -269,6 +268,11 @@ struct SpecialToken {
     std::string image_marker;
     std::string video_marker;
     std::string enable_thinking;
+    std::string system_prompt;
+    std::string instruction_prompt;
+    std::string instruction_key;
+    std::string query_key;
+    std::string document_key;
 };
 
 struct ResultToolcall {

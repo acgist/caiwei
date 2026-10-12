@@ -2,7 +2,9 @@
 
 #include "nlohmann/json.hpp"
 
+#include <thread>
 #include <vector>
+#include <iostream>
 
 static void diff(const std::vector<float>& a, const std::vector<float>& z) {
     float sum = 0.0F;
@@ -25,9 +27,6 @@ void test_embedding() {
     if (!ptr) {
         return;
     }
-    // CAIWEI_FOR_EACH(100)
-    // ptr->run(request);
-    // CAIWEI_FOR_EACH_END
     auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
         std::printf("%s\n", nlohmann::json(item).dump().c_str());
@@ -36,6 +35,49 @@ void test_embedding() {
     diff(ret.result[0], ret.result[2]);
     diff(ret.result[0], ret.result[3]);
     std::fflush(stdout);
+}
+
+void test_embedding_for() {
+    caiwei::text::EmbeddingsRequest request;
+    request.model = "qwen3-embedding";
+    request.input = std::vector<std::string>{ "广州今天的天气怎么样", "出门可以坐地铁", "广州正在下雨", "达州正在下雨" };
+    auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext, caiwei::text::EmbeddingsRequest, caiwei::text::EmbeddingResult>("qwen3-embedding");
+    if (!ptr) {
+        return;
+    }
+    std::cin.get();
+    ptr->run(request);
+    std::cin.get();
+    ptr->run(request);
+    std::cin.get();
+    CAIWEI_FOR_EACH(100)
+    ptr->run(request);
+    CAIWEI_FOR_EACH_END
+    std::cin.get();
+}
+
+void test_embedding_thread() {
+    caiwei::text::EmbeddingsRequest request;
+    request.model = "qwen3-embedding";
+    request.input = std::vector<std::string>{ "广州今天的天气怎么样", "出门可以坐地铁", "广州正在下雨", "达州正在下雨" };
+    auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext, caiwei::text::EmbeddingsRequest, caiwei::text::EmbeddingResult>("qwen3-embedding");
+    if (!ptr) {
+        return;
+    }
+    auto true_ret = ptr->run(request);
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 4; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            auto ret = ptr->run(request);
+            assert(ret.result == true_ret.result);
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 int main() {
@@ -50,6 +92,9 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_embedding();
+    // test_embedding_for();
+    // test_embedding_thread();
+    // test_embedding_thread();
     caiwei::test::stop_test();
     return 0;
 }

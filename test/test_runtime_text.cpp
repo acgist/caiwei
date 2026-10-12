@@ -11,9 +11,7 @@ void test_chat_template() {
         // CAIWEI_FOR_EACH_END
     }
     caiwei::text::CompletionsRequest request;
-    request.extra_body = {
-        .enable_thinking = true
-    };
+    request.enable_thinking = false;
     request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
     request.messages.push_back({.role = "user", .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
         caiwei::text::CompletionsRequestMessageContentItem {
@@ -53,10 +51,10 @@ void test_chat_template() {
     const caiwei::text::SpecialToken special_token;
     {
         CAIWEI_FOR_EACH(100)
-        chat_template.apply(special_token, request);
+        chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
         CAIWEI_FOR_EACH_END
     }
-    std::string prompt = chat_template.apply(special_token, request);
+    std::string prompt = chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
     CW_LOG_D("prompt: %s", prompt.c_str());
 }
 
@@ -119,12 +117,10 @@ void test_json_to_completions() {
                 }
             }
         }],
-        "extra_body": {
-            "video_fps": 30,
-            "media_url": "https://www.acgist.com/demo.mp4",
-            "media_type": "http",
-            "model_list": ["qwen3", "qwen3-vlm"]
-        }
+        "video_fps": 30,
+        "media_url": "https://www.acgist.com/demo.mp4",
+        "media_type": "http",
+        "model_list": ["qwen3", "qwen3-vlm"]
     })");
     assert(request2.model == "qwen3");
     assert(request2.messages.size() == 3);
@@ -244,8 +240,8 @@ void test_reranking_response_to_json() {
 
 int main() {
     caiwei::test::init_test();
-    // test_chat_template();
-    test_json_to_completions();
+    test_chat_template();
+    // test_json_to_completions();
     // test_json_to_embeddings();
     // test_json_to_rerankings();
     // test_completions_response_to_json();

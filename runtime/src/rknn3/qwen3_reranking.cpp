@@ -11,23 +11,9 @@ caiwei::context::RerankingRKNN3Context::RerankingRKNN3Context(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     bool share,
-    caiwei::runtime::Runtime* runtime,
-    std::string bos_key,
-    std::string eos_key,
-    std::string system_prompt,
-    std::string instruction_prompt,
-    std::string instruction_key,
-    std::string query_key,
-    std::string document_key,
+    caiwei::runtime::Runtime* runtime
 ) : RerankingContext(share, runtime),
-    RKNN3Context(std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path), max_token_length, std::move(special_token)),
-    bos_key(std::move(bos_key)),
-    eos_key(std::move(eos_key)),
-    system_prompt(std::move(system_prompt)),
-    instruction_prompt(std::move(instruction_prompt)),
-    instruction_key(std::move(instruction_key)),
-    query_key(std::move(query_key)),
-    document_key(std::move(document_key)) {
+    RKNN3Context(std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path), max_token_length, std::move(special_token)) {
 }
 
 caiwei::context::RerankingRKNN3Context::~RerankingRKNN3Context() {
@@ -53,32 +39,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(caiwei
     }
     caiwei::text::RerankingResult result;
     for (const auto& document : request.documents) {
-        std::string prompt;
-        prompt
-            .append(this->bos_key)
-            .append("system\n")
-            .append(this->system_prompt)
-            .append(this->eos_key)
-            .append("\n")
-            .append(this->bos_key)
-            .append("user\n")
-            .append(this->instruction_key)
-            .append(request.instruct.value_or(this->instruction_prompt))
-            .append("\n")
-            .append(this->query_key)
-            .append(request.query)
-            .append("\n")
-            .append(this->document_key)
-            .append(document)
-            .append("\n")
-            .append(this->eos_key)
-            .append("\n")
-            .append(this->bos_key)
-            .append("assistant\n")
-            .append(this->special_token.b_thinking)
-            .append("\n\n")
-            .append(this->special_token.e_thinking)
-            .append("\n\n");
+        std::string prompt = caiwei::text::get_reranking_prompt(document, request, this->special_token);
         CW_LOG_D("reranking prompt:\n%s", prompt.c_str());
         std::vector<rknn3_llm_input> inputs(1);
         rknn3_llm_tensor tensor{};

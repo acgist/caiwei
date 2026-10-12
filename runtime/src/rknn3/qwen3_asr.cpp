@@ -63,7 +63,7 @@ bool caiwei::context::ASRRKNN3Context::load() {
     this->load_prompt_token();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::ASRRKNN3Context::run(caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
@@ -75,16 +75,17 @@ static int get_n_audio(int window_size, int audio_len) {
     return floor(n_frame / window_size) * n_token_per_window + n_left_token;
 }
 
-std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) {
-    bool enable_thinking = false;
-    if (request.extra_body.has_value()) {
-        enable_thinking = request.extra_body.value().enable_thinking.value_or(false);
-    }
+std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    bool enable_thinking = request.enable_thinking.value_or(false);
     int prefix_n_token = this->prefix_token.size();
     int suffix_n_token = this->suffix_token.size();
     std::vector<uint8_t> audio_frame;
-    for (auto& message : request.messages) {
-        for (auto& audio : message.audio_data) {
+    if (request.messages.empty()) {
+        CW_LOG_W("音频数据为空");
+        return {};
+    }
+    for (const auto& message : request.messages) {
+        for (const auto& audio : message.audio_data) {
             audio_frame.insert(audio_frame.end(), audio.data.begin(), audio.data.end());
         }
     }

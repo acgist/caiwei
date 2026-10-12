@@ -19,9 +19,9 @@ extern "C" {
 
 static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback);
 
-static void asr_thread_session (caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer);
-static void vlm_thread_session (caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
-static void yolo_thread_session(caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, caiwei::manager::SegWrapper* seg_wrapper, caiwei::manager::PoseWrapper* pose_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
+static void asr_thread_session (caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer);
+static void vlm_thread_session (caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
+static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, caiwei::manager::SegWrapper* seg_wrapper, caiwei::manager::PoseWrapper* pose_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
 
 static void sync_cls (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
 static void sync_det (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
@@ -101,8 +101,8 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
     if (!request.model.empty()) {
         all_model_list.push_back(request.model);
     }
-    if (request.extra_body.has_value() && request.extra_body.value().model_list.has_value()) {
-        auto& model_list = request.extra_body.value().model_list.value();
+    if (request.model_list.has_value()) {
+        auto& model_list = request.model_list.value();
         all_model_list.insert(all_model_list.end(), model_list.begin(), model_list.end());
     }
     for (const auto& model : all_model_list) {
@@ -130,7 +130,7 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             return false;
         }
     }
-    bool media_stream = request.extra_body.has_value() && request.extra_body.value().media_url.has_value() && request.extra_body.value().media_type.has_value();
+    bool media_stream = request.media_url.has_value() && request.media_type.has_value();
     if (media_stream) {
         std::thread asr_thread;
         std::thread vlm_thread;
@@ -141,25 +141,23 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         std::condition_variable asr_cv;
         std::condition_variable vlm_cv;
         std::condition_variable yolo_cv;
-        std::string url  = request.extra_body.value().media_url.value();
-        std::string type = request.extra_body.value().media_type.value();
-        request.messages.push_back(caiwei::text::CompletionsRequestMessage{
-            .role = caiwei::text::ROLE_USER,
-            .audio_data = {},
-            .image_data = {},
-            .video_data = {},
-        });
-        const int video_fps       = request.extra_body.value().video_fps.value_or(8);
-        const int asr_samples     = request.extra_body.value().asr_samples.value_or(16000);
-        const int asr_queue_size  = request.extra_body.value().asr_queue_size.value_or(128000);
-        const int vlm_frames      = request.extra_body.value().vlm_frames.value_or(8);
-        const int yolo_queue_size = request.extra_body.value().yolo_queue_size.value_or(8);
+        std::string url  = request.media_url.value();
+        std::string type = request.media_type.value();
+        if (request.messages.empty() || request.messages.back().role != caiwei::text::ROLE_USER) {
+            request.messages.push_back(caiwei::text::CompletionsRequestMessage{
+                .role = caiwei::text::ROLE_USER,
+                .audio_data = {},
+                .image_data = {},
+                .video_data = {},
+            });
+        }
         auto& message = request.messages.back();
-        message.audio_data.resize(1);
-        message.image_data.resize(1);
-        message.video_data.resize(1);
-        message.audio_data[0].data.reserve(asr_samples);
-        message.video_data[0].resize(vlm_frames);
+        const int video_fps       = request.video_fps.value_or(8);
+        const int asr_samples     = request.asr_samples.value_or(16000);
+        const int asr_queue_size  = request.asr_queue_size.value_or(128000);
+        const int vlm_frames      = request.vlm_frames.value_or(8);
+        const int yolo_queue_size = request.yolo_queue_size.value_or(8);
+        const bool drop_on_full   = request.drop_on_full.value_or(false);
         size_t frame_count = 0;
         size_t image_frame_size = 0;
         size_t video_frame_size = 0;
@@ -172,18 +170,26 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         const bool enable_asr  = asr_ptr != nullptr;
         const bool enable_vlm  = vlm_ptr != nullptr;
         const bool enable_yolo = cls_ptr != nullptr || det_ptr != nullptr || seg_ptr != nullptr || pose_ptr != nullptr;
+        if (!enable_asr && !enable_vlm && !enable_yolo) {
+            callback("没有可用模型", -1);
+            return false;
+        }
+        bool media_stop = false;
         if (enable_asr) {
-            asr_thread = std::thread(asr_thread_session, std::ref(request), std::ref(callback), std::ref(asr_mutex), std::ref(asr_cv), asr_ptr.get(), std::ref(audio_frame_buffer));
+            asr_thread = std::thread(asr_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(asr_mutex), std::ref(asr_cv), asr_ptr.get(), std::ref(audio_frame_buffer));
         }
         if (enable_vlm) {
-            vlm_thread = std::thread(vlm_thread_session, std::ref(request), std::ref(callback), std::ref(vlm_mutex), std::ref(vlm_cv), vlm_ptr.get(), std::ref(video_frame_buffer), std::ref(video_frame_size));
+            vlm_thread = std::thread(vlm_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(vlm_mutex), std::ref(vlm_cv), vlm_ptr.get(), std::ref(video_frame_buffer), std::ref(video_frame_size));
         }
         if (enable_yolo) {
-            yolo_thread = std::thread(yolo_thread_session, std::ref(request), std::ref(callback), std::ref(yolo_mutex), std::ref(yolo_cv), cls_ptr.get(), det_ptr.get(), seg_ptr.get(), pose_ptr.get(), std::ref(image_frame_buffer), std::ref(image_frame_size));
+            yolo_thread = std::thread(yolo_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(yolo_mutex), std::ref(yolo_cv), cls_ptr.get(), det_ptr.get(), seg_ptr.get(), pose_ptr.get(), std::ref(image_frame_buffer), std::ref(image_frame_size));
         }
         caiwei::media::MediaDemuxer media_demuxer(type, url, [&](caiwei::media::AudioFrame& frame) {
             if (enable_asr) {
-                std::lock_guard<std::mutex> lock(asr_mutex);
+                std::unique_lock<std::mutex> lock(asr_mutex);
+                asr_cv.wait(lock, [&]() {
+                    return drop_on_full || audio_frame_buffer.size() + frame.data.size() <= asr_queue_size || !callback(nullptr, 0);
+                });
                 if (audio_frame_buffer.size() + frame.data.size() <= asr_queue_size) {
                     audio_frame_buffer.insert(
                         audio_frame_buffer.end(),
@@ -204,7 +210,10 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
                 return callback(nullptr, 0);
             }
             if (enable_yolo) {
-                std::lock_guard<std::mutex> lock(yolo_mutex);
+                std::unique_lock<std::mutex> lock(yolo_mutex);
+                yolo_cv.wait(lock, [&]() {
+                    return drop_on_full || image_frame_size + 1 <= yolo_queue_size || !callback(nullptr, 0);
+                });
                 if (image_frame_size + 1 <= yolo_queue_size) {
                     auto& data = image_frame_buffer[image_frame_size];
                     if (
@@ -231,7 +240,10 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
                 }
             }
             if (enable_vlm) {
-                std::lock_guard<std::mutex> lock(vlm_mutex);
+                std::unique_lock<std::mutex> lock(vlm_mutex);
+                vlm_cv.wait(lock, [&]() {
+                    return drop_on_full || video_frame_size + 1 <= vlm_frames || !callback(nullptr, 0);
+                });
                 if (video_frame_size + 1 <= vlm_frames) {
                     auto& data = video_frame_buffer[video_frame_size];
                     if (
@@ -267,6 +279,9 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
         );
         media_demuxer.stop();
+        // TODO 等待队列处理完成
+        std::this_thread::sleep_for(std::chrono::seconds(120));
+        media_stop = true;
         if (asr_thread.joinable()) {
             asr_thread.join();
         }
@@ -319,6 +334,7 @@ inline void sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& 
             auto ret = ptr->run(value);
             caiwei::text::CompletionsResponseChoice choice;
             choice.index = index++;
+            choice.finish_reason = "stop";
             choice.message.role = caiwei::text::ROLE_ASSISTANT;
             choice.message.content = caiwei::image::to_json(ret);
             response.choices.push_back(std::move(choice));
@@ -437,6 +453,7 @@ inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* wrapper, ca
             auto ret = wrapper->run(value);
             caiwei::text::CompletionsChunkChoice choice;
             choice.index = index++;
+            choice.finish_reason = "stop";
             choice.delta.role = caiwei::text::ROLE_ASSISTANT;
             choice.delta.content = caiwei::image::to_json(ret);
             chunk.choices.push_back(std::move(choice));
@@ -521,61 +538,29 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
     return true;
 }
 
-static void fill_media_request(caiwei::text::CompletionsRequest& request) {
-    auto& messages = request.messages;
-    int asr_samples = 16000;
-    int vlm_frames  = 8;
-    if (request.extra_body.has_value()) {
-        asr_samples = request.extra_body.value().asr_samples.value_or(16000);
-        vlm_frames  = request.extra_body.value().vlm_frames.value_or(8);
-    }
-    for (auto& message : messages) {
-        if (!message.content.has_value()) {
-            continue;
-        }
-        if (!std::holds_alternative<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value())) {
-            continue;
-        }
-        auto& content_list = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
-        for (auto& item : content_list) {
-            if (item.type == "audio" && item.audio.has_value()) {
-                fill_audio_message(message, item.audio.value(), asr_samples);
-            } else if (item.type == "image" && item.image.has_value()) {
-                fill_image_message(message, item.image.value());
-            } else if (item.type == "video" && item.video.has_value()) {
-                fill_video_message(message, item.video.value(), vlm_frames);
-            } else if (item.type == "audio_url" && item.audio_url.has_value() && item.audio_url.value().url.has_value()) {
-                fill_audio_message(message, item.audio_url.value().url.value(), asr_samples);
-            } else if (item.type == "image_url" && item.image_url.has_value() && item.image_url.value().url.has_value()) {
-                fill_image_message(message, item.image_url.value().url.value());
-            } else if (item.type == "video_url" && item.video_url.has_value() && item.video_url.value().url.has_value()) {
-                fill_video_message(message, item.video_url.value().url.value(), vlm_frames);
-            } else {
-                // -
-            }
-        }
-    }
-}
-
-static void asr_thread_session(caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer) {
+static void asr_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer) {
     if (asr_wrapper == nullptr) {
         return;
     }
     auto& message = request.messages.back();
+    // TODO 加长
+    const int asr_samples    = request.asr_samples.value_or(16000);
+    const int asr_queue_size = request.asr_queue_size.value_or(128000);
+    message.audio_data.resize(1);
+    message.audio_data[0].data.reserve(asr_samples);
     auto& audio_data = message.audio_data[0];
-    const int asr_samples    = request.extra_body.value().asr_samples.value_or(16000);
-    const int asr_queue_size = request.extra_body.value().asr_queue_size.value_or(128000);
     std::vector<uint8_t> audio_copy;
     std::vector<uint8_t> audio_slice;
     audio_copy.reserve(asr_queue_size);
     audio_slice.reserve(asr_samples);
     bool callable = true;
-    while (callable) {
+    while (callable && !media_stop) {
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
             if (audio_frame_buffer.empty()) {
                 callable = callback(nullptr, 0);
+                cv.notify_one();
                 continue;
             }
             audio_copy.swap(audio_frame_buffer);
@@ -598,49 +583,56 @@ static void asr_thread_session(caiwei::text::CompletionsRequest& request, caiwei
             callable = async_asr(request, asr_wrapper, callback);
         }
         audio_copy.resize(0);
+        cv.notify_one();
     }
 }
 
-static void vlm_thread_session(caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size) {
+static void vlm_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size) {
     if (vlm_wrapper == nullptr) {
         return;
     }
     auto& message = request.messages.back();
+    const int vlm_frames = request.vlm_frames.value_or(8);
+    message.video_data.resize(1);
+    message.video_data[0].resize(vlm_frames);
     auto& video_data = message.video_data[0];
-    const int vlm_frames = request.extra_body.value().vlm_frames.value_or(8);
     bool callable = true;
-    while (callable) {
+    while (callable && !media_stop) {
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
             if (video_frame_size < vlm_frames) {
                 callable = callback(nullptr, 0);
+                cv.notify_one();
                 continue;
             }
             video_data.swap(video_frame_buffer);
             video_frame_size = 0;
         }
         callable = async_vlm(request, vlm_wrapper, callback);
+        cv.notify_one();
     }
 }
 
-static void yolo_thread_session(caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, caiwei::manager::SegWrapper* seg_wrapper, caiwei::manager::PoseWrapper* pose_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
-    if (cls_wrapper == nullptr || det_wrapper == nullptr || seg_wrapper == nullptr || pose_wrapper == nullptr) {
+static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, caiwei::manager::SegWrapper* seg_wrapper, caiwei::manager::PoseWrapper* pose_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
+    if (cls_wrapper == nullptr && det_wrapper == nullptr && seg_wrapper == nullptr && pose_wrapper == nullptr) {
         return;
     }
     auto& message = request.messages.back();
+    message.image_data.resize(1);
     auto& image_data = message.image_data[0];
-    const int yolo_queue_size = request.extra_body.value().yolo_queue_size.value_or(8);
+    const int yolo_queue_size = request.yolo_queue_size.value_or(8);
     std::vector<caiwei::media::ImageFrame> image_copy;
     image_copy.resize(yolo_queue_size);
     size_t image_copy_size = 0;
     bool callable = true;
-    while (callable) {
+    while (callable && !media_stop) {
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
             if (image_frame_size <= 0) {
                 callable = callback(nullptr, 0);
+                cv.notify_one();
                 continue;
             }
             image_copy_size = image_frame_size;
@@ -664,6 +656,39 @@ static void yolo_thread_session(caiwei::text::CompletionsRequest& request, caiwe
             }
             if (callable && pose_wrapper != nullptr) {
                 callable = async_pose(request, pose_wrapper, callback);
+            }
+        }
+        cv.notify_one();
+    }
+}
+
+static void fill_media_request(caiwei::text::CompletionsRequest& request) {
+    auto& messages = request.messages;
+    int asr_samples = request.asr_samples.value_or(16000);
+    int vlm_frames  = request.vlm_frames.value_or(8);
+    for (auto& message : messages) {
+        if (!message.content.has_value()) {
+            continue;
+        }
+        if (!std::holds_alternative<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value())) {
+            continue;
+        }
+        auto& content_list = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+        for (auto& item : content_list) {
+            if (item.type == "audio" && item.audio.has_value()) {
+                fill_audio_message(message, item.audio.value(), asr_samples);
+            } else if (item.type == "image" && item.image.has_value()) {
+                fill_image_message(message, item.image.value());
+            } else if (item.type == "video" && item.video.has_value()) {
+                fill_video_message(message, item.video.value(), vlm_frames);
+            } else if (item.type == "audio_url" && item.audio_url.has_value() && item.audio_url.value().url.has_value()) {
+                fill_audio_message(message, item.audio_url.value().url.value(), asr_samples);
+            } else if (item.type == "image_url" && item.image_url.has_value() && item.image_url.value().url.has_value()) {
+                fill_image_message(message, item.image_url.value().url.value());
+            } else if (item.type == "video_url" && item.video_url.has_value() && item.video_url.value().url.has_value()) {
+                fill_video_message(message, item.video_url.value().url.value(), vlm_frames);
+            } else {
+                // -
             }
         }
     }
@@ -699,7 +724,6 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
 }
 
 static void fill_image_message(caiwei::text::CompletionsRequestMessage& message, const std::string& image_url) {
-    // TODO resize
     caiwei::media::ImageFrame frame;
     if (image_url.starts_with(caiwei::text::CONTENT_TYPE_DATA)) {
         auto pos = image_url.find(',');
@@ -784,7 +808,6 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
         CW_LOG_W("不支持的媒体地址: %s", video_url.c_str());
         return;
     }
-    // TODO resize
     std::vector<caiwei::media::VideoFrame> video_frames;
     caiwei::media::MediaDemuxer media_demuxer(type, video_url, [&](caiwei::media::AudioFrame& frame) {
         return true;

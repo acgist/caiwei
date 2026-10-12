@@ -66,6 +66,7 @@
 * 单个模型参数`model`就是标准`OpenAI`接口
 * 指定多个模型`model_list`输出结果根据`model`字段判断类型
 * 持续识别参数`media_url`/`media_type`支持`ASR`/`VLM`/`YOLO`模型
+* 多模态模型传参时建议使用`audio`/`image`/`video`字段而不是`audio_url`/`image_url`/`video_url`(具体参考`chat_template`配置)
 
 ```
 {
@@ -124,17 +125,15 @@
         },
         ...
     ],
-    "extra_body": {
-        "video_fps"      : 视频识别间隔帧数,
-        "asr_samples"    : ASR 识别帧数大小,
-        "asr_queue_size" : ASR 识别队列大小,
-        "vlm_frames"     : VLM 识别帧数大小,
-        "yolo_queue_size": YOLO识别队列大小,
-        "media_url"      : "持续识别媒体地址",
-        "media_type"     : "持续识别媒体类型",
-        "enable_thinking": 是否开启思考模式,
-        "model_list"     : ["模型列表", ...],
-    },
+    "video_fps"      : 视频识别间隔帧数,
+    "asr_samples"    : ASR 识别帧数大小,
+    "asr_queue_size" : ASR 识别队列大小,
+    "vlm_frames"     : VLM 识别帧数大小,
+    "yolo_queue_size": YOLO识别队列大小,
+    "media_url"      : "持续识别媒体地址",
+    "media_type"     : "持续识别媒体类型",
+    "enable_thinking": 是否开启思考模式,
+    "model_list"     : ["模型列表", ...],
 }
 
 {

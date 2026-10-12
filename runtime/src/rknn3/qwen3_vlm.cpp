@@ -1,7 +1,10 @@
 #include "caiwei/log.hpp"
+#include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
 #include <tuple>
+
+#include "rga/im2d.hpp"
 
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     std::string model_path,
@@ -35,13 +38,28 @@ bool caiwei::context::VLMRKNN3Context::load() {
     return this->load_model(true) && this->load_media_model(true) && this->init_internal_mems(0xFF, 0xFF);
 }
 
-std::generator<caiwei::text::Result> caiwei::context::VLMRKNN3Context::run(caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
-bool caiwei::context::VLMRKNN3Context::fill_media(int media_i, int deepstack_i, std::vector<float16>& embeds, const std::vector<uint8_t>& data, std::vector<rknn3_aux_tensor>& deepstack_tensors) {
+bool caiwei::context::VLMRKNN3Context::fill_media(int media_i, int deepstack_i, std::vector<float16>& embeds, int width, int height, int channels, const std::vector<uint8_t>& data, std::vector<rknn3_aux_tensor>& deepstack_tensors) {
+    const int w = 384;
+    const int h = 384;
+    float scale;
+    int dst_w, dst_h, pad_w, pad_h;
+    // TODO
+    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    std::vector<uint8_t> dst(dst_w * dst_h * channels);
+    std::vector<uint8_t> pad(    w *     h * channels);
+    rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) data.data(), width, height, RK_FORMAT_RGB_888);
+    rga_buffer_t dst_img = wrapbuffer_virtualaddr(pad.data(), w, h, RK_FORMAT_RGB_888);
+    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr, 0, 0, 0);
+    im_rect src_rect = { 0, 0, width, height };
+    im_rect dst_rect = { pad_w, pad_h, dst_w, dst_h };
+    im_rect pat_rect = { 0, 0, 0, 0 };
+    improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
     int ret = 0;
-    memcpy((uint8_t*)this->media_input[0].mem->virt_addr, data.data(), data.size());
+    memcpy((uint8_t*)this->media_input[0].mem->virt_addr, pad.data(), pad.size());
     for (auto& v : this->media_input) {
         ret = rknn3_mem_sync(this->media_context, v.mem, RKNN3_MEMORY_SYNC_TO_DEVICE);
         if (ret != RKNN3_SUCCESS) {
@@ -102,11 +120,8 @@ bool caiwei::context::VLMRKNN3Context::release_deepstack_tensors() {
     return true;
 }
 
-std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) {
-    bool enable_thinking = false;
-    if (request.extra_body.has_value()) {
-        enable_thinking = request.extra_body.value().enable_thinking.value_or(false);
-    }
+std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    bool enable_thinking = request.enable_thinking.value_or(false);
     if (this->media_output[0].attr->n_dims != 2) {
         CW_LOG_W("不支持的输出维度 %d", this->media_output[0].attr->n_dims);
         return {};
@@ -118,40 +133,30 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
     int video_count = 0;
     int frame_count = 0;
     std::vector<std::tuple<const caiwei::media::ImageFrame*, const std::vector<caiwei::media::VideoFrame>*>> data_list;
-    for (auto& message : request.messages) {
+    for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {
             continue;
         }
         if (std::holds_alternative<std::string>(message.content.value())) {
             continue;
         }
-        std::vector<caiwei::text::CompletionsRequestMessageContentItem>& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+        const std::vector<caiwei::text::CompletionsRequestMessageContentItem>& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
         auto iter = items.begin();
         int image_index = 0;
         int video_index = 0;
-        std::string content{};
         while (iter != items.end()) {
             if (iter->type == "text") {
-                content += iter->text.value_or("");
+                // -
             } else if (iter->type == "image" || iter->type == "image_url") {
-                if (image_index >= message.image_data.size()) {
-                    continue;
-                }
-                content += this->special_token.image_marker;
                 const auto& image = message.image_data[image_index];
                 data_list.emplace_back(&image, nullptr);
                 image_index++;
                 image_count++;
             } else if (iter->type == "video" || iter->type == "video_url") {
-                if (video_index >= message.video_data.size()) {
-                    continue;
-                }
-                // TODO 时间戳 <0.5 seconds>
                 const auto& video = message.video_data[video_index];
                 for (const auto& frame : video) {
                     frame_count++;
                 }
-                content += this->special_token.video_marker;
                 data_list.emplace_back(nullptr, &video);
                 video_index++;
                 video_count++;
@@ -160,7 +165,6 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
             }
             iter++;
         }
-        message.content = std::move(content);
     }
     context_session->image_frames = image_count + frame_count;
     CW_LOG_D("图片数量: %d 视频数量: %d 视频帧数: %d", image_count, video_count, frame_count);
@@ -173,7 +177,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
     int deepstack_i = 0;
     for (const auto& [image_ptr, video_ptr] : data_list) {
         if (image_ptr != nullptr) {
-            if (!fill_media(image_i, deepstack_i, this->image_embeds, image_ptr->data, deepstack_tensors)) {
+            if (!fill_media(image_i, deepstack_i, this->image_embeds, image_ptr->width, image_ptr->height, image_ptr->channels, image_ptr->data, deepstack_tensors)) {
                 return {};
             }
             ++image_i;
@@ -181,7 +185,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
         }
         if (video_ptr != nullptr) {
             for (const auto& image_data : *video_ptr) {
-                if (!fill_media(video_i, deepstack_i, this->video_embeds, image_data.data, deepstack_tensors)) {
+                if (!fill_media(video_i, deepstack_i, this->video_embeds, image_data.width, image_data.height, image_data.channels, image_data.data, deepstack_tensors)) {
                     return {};
                 }
                 ++video_i;
@@ -189,7 +193,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
             }
         }
     }
-    this->prompt = this->chat_template.apply(this->special_token, request);
+    this->prompt = this->chat_template.apply(this->special_token, request, this->special_token.audio_marker, this->special_token.image_marker, this->special_token.video_marker);
     CW_LOG_I("prompt: %s", this->prompt.c_str());
     rknn3_llm_multimodal_tensor tensor{};
     tensor.name     = "input_embeds";

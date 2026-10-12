@@ -25,9 +25,9 @@ protected:
 protected:
     llama_context* get_context(bool embeddings = false);
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request);
-    std::generator<caiwei::text::Result> generate     (caiwei::text::CompletionsRequest& request);
-    std::generator<caiwei::text::Result> generate_mtmd(caiwei::text::CompletionsRequest& request);
-    virtual void build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps);
+    std::generator<caiwei::text::Result> generate     (const caiwei::text::CompletionsRequest& request);
+    std::generator<caiwei::text::Result> generate_mtmd(const caiwei::text::CompletionsRequest& request);
+    virtual bool build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps);
 public:
     LlamaCPPContext(std::string path,                        int32_t max_token_length, caiwei::text::SpecialToken special_token);
     LlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
@@ -43,8 +43,8 @@ public:
     ~ASRLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
-    void build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    bool build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) override;
 };
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
@@ -53,7 +53,7 @@ public:
     ~LLMLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {
@@ -62,8 +62,8 @@ public:
     ~VLMLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) override;
-    void build_bitmaps(caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) override;
+    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    bool build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) override;
 };
 
 class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {
@@ -76,24 +76,9 @@ public:
 };
 
 class RerankingLlamaCPPContext : public RerankingContext, public LlamaCPPContext {
-private:
-    std::string bos_key;
-    std::string eos_key;
-    std::string system_prompt;
-    std::string instruction_prompt;
-    std::string instruction_key;
-    std::string query_key;
-    std::string document_key;
 public:
     RerankingLlamaCPPContext(
-        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime,
-        std::string bos_key,
-        std::string eos_key,
-        std::string system_prompt,
-        std::string instruction_prompt,
-        std::string instruction_key,
-        std::string query_key,
-        std::string document_key
+        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime
     );
     ~RerankingLlamaCPPContext();
 public:

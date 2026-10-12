@@ -154,7 +154,7 @@ public:
     ASRContext(bool share, caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -165,7 +165,7 @@ public:
     LLMContext(bool share, caiwei::runtime::Runtime* runtime);
     ~LLMContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**
@@ -176,7 +176,7 @@ public:
     VLMContext(bool share, caiwei::runtime::Runtime* runtime);
     ~VLMContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(caiwei::text::CompletionsRequest& request) = 0;
+    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
 /**

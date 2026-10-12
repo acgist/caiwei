@@ -13,15 +13,12 @@ bool caiwei::context::LLMRKNN3Context::load() {
     return this->load_model();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LLMRKNN3Context::run(caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
-std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, caiwei::text::CompletionsRequest& request) {
-    bool enable_thinking = false;
-    if (request.extra_body.has_value()) {
-        enable_thinking = request.extra_body.value().enable_thinking.value_or(false);
-    }
+std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    bool enable_thinking = request.enable_thinking.value_or(false);
     this->prompt = this->chat_template.apply(this->special_token, request);
     CW_LOG_I("prompt: %s", this->prompt.c_str());
     rknn3_llm_tensor tensor{};
