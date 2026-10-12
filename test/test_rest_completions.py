@@ -169,8 +169,8 @@ def test_media():
     client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
     resp = client.chat.completions.create(
         # model="qwen3-asr",
-        model="qwen3-vlm",
-        # model="yolo26n-det",
+        # model="qwen3-vlm",
+        model="yolo26n-det",
         stream=stream,
         extra_body={
             # "media_url": "./caiwei.mp3",
@@ -179,7 +179,7 @@ def test_media():
             "asr_samples": 16000 * 5,
             "drop_on_full": False,
             # "model_list": ["qwen3-vlm"],
-            # "model_list": ["qwen3-asr", "qwen3-vlm"],
+            "model_list": ["qwen3-asr", "qwen3-vlm"],
         },
         messages=[
             {"role": "system", "content": "这个一个AI识别系统"},

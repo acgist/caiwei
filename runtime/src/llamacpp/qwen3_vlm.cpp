@@ -87,11 +87,17 @@ bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, const 
             if (iter->type == "text") {
                 // -
             } else if (iter->type == "image" || iter->type == "image_url") {
+                if (image_index >= message.image_data.size()) {
+                    continue;
+                }
                 const auto& image = message.image_data[image_index];
                 bitmaps.entries.emplace_back(fill_media(image.width, image.height, image.channels, image.data));
                 image_index++;
                 image_count++;
             } else if (iter->type == "video" || iter->type == "video_url") {
+                if (video_index >= message.video_data.size()) {
+                    continue;
+                }
                 const auto& video = message.video_data[video_index];
                 bitmaps.entries.emplace_back(fill_media(video));
                 mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
@@ -99,6 +105,23 @@ bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, const 
                 video_count++;
             } else {
                 CW_LOG_W("未知类型: %s", iter->type.value_or("-").c_str());
+            }
+            if (image_index < message.image_data.size()) {
+                for (; image_index < message.image_data.size();) {
+                    const auto& image = message.image_data[image_index];
+                    bitmaps.entries.emplace_back(fill_media(image.width, image.height, image.channels, image.data));
+                    image_index++;
+                    image_count++;
+                }
+            }
+            if (video_index < message.video_data.size()) {
+                for (; video_index < message.video_data.size();) {
+                    const auto& video = message.video_data[video_index];
+                    bitmaps.entries.emplace_back(fill_media(video));
+                    mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
+                    video_index++;
+                    video_count++;
+                }
             }
             iter++;
         }

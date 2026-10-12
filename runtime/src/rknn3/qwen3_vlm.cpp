@@ -148,11 +148,17 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
             if (iter->type == "text") {
                 // -
             } else if (iter->type == "image" || iter->type == "image_url") {
+                if (image_index >= message.image_data.size()) {
+                    continue;
+                }
                 const auto& image = message.image_data[image_index];
                 data_list.emplace_back(&image, nullptr);
                 image_index++;
                 image_count++;
             } else if (iter->type == "video" || iter->type == "video_url") {
+                if (video_index >= message.video_data.size()) {
+                    continue;
+                }
                 const auto& video = message.video_data[video_index];
                 for (const auto& frame : video) {
                     frame_count++;
@@ -162,6 +168,25 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
                 video_count++;
             } else {
                 CW_LOG_W("未知类型: %s", iter->type.value_or("-").c_str());
+            }
+            if (image_index < message.image_data.size()) {
+                for (; image_index < message.image_data.size();) {
+                    const auto& image = message.image_data[image_index];
+                    data_list.emplace_back(&image, nullptr);
+                    image_index++;
+                    image_count++;
+                }
+            }
+            if (video_index < message.video_data.size()) {
+                for (; video_index < message.video_data.size();) {
+                    const auto& video = message.video_data[video_index];
+                    for (const auto& frame : video) {
+                        frame_count++;
+                    }
+                    data_list.emplace_back(nullptr, &video);
+                    video_index++;
+                    video_count++;
+                }
             }
             iter++;
         }
