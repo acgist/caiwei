@@ -1,8 +1,8 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
-caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, bool share, Ort::Env* env, caiwei::runtime::Runtime* runtime)
- : ClsContext(c, h, w, top_k, class_size, confidence_threshold, share, runtime),
+caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime)
+ : ClsContext(c, h, w, top_k, class_size, confidence_threshold, runtime),
    ONNXRuntimeContext(path, c, h, w, env) {
 }
 

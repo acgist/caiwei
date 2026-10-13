@@ -15,9 +15,8 @@ caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     std::string media_weight_path,
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
-    bool share,
     caiwei::runtime::Runtime* runtime
-) : VLMContext(share, runtime)
+) : VLMContext(runtime)
   , RKNN3Context(
     std::move(model_path),
     std::move(weight_path),

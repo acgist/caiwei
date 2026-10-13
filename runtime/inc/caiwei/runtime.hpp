@@ -36,10 +36,11 @@ enum class Type {
 
 class Runtime {
 private:
-    int min_pool = 4;
-    int max_pool = 8;
+    int min_pool  = 4;
+    int max_pool  = 8;
     int timeout   = 30;
     int keepalive = 600;
+    bool share    = false;
     std::mutex mutex;
     std::condition_variable cv;
     caiwei::runtime::Type type;
@@ -47,7 +48,7 @@ private:
 public:
     const std::string id;
 public:
-    Runtime(int min_pool, int max_pool, int timeout, int keepalive, caiwei::runtime::Type type);
+    Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type);
     virtual ~Runtime();
 public:
     virtual std::shared_ptr<caiwei::context::Context> get_context(const caiwei::context::ContextInfo* info);
@@ -68,7 +69,7 @@ protected:
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 class RKNN2Runtime : public Runtime {
 public:
-    RKNN2Runtime(int min_pool, int max_pool, int timeout, int keepalive);
+    RKNN2Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~RKNN2Runtime();
 public:
     std::shared_ptr<caiwei::context::ClsContext>  get_cls_context (const caiwei::context::ContextInfo* info) override;
@@ -81,7 +82,7 @@ public:
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 class RKNN3Runtime : public Runtime {
 public:
-    RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive);
+    RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~RKNN3Runtime();
 public:
     std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info) override;
@@ -95,7 +96,7 @@ public:
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 class LlamaCPPRuntime : public Runtime {
 public:
-    LlamaCPPRuntime(int min_pool, int max_pool, int timeout, int keepalive);
+    LlamaCPPRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~LlamaCPPRuntime();
 public:
     std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info) override;
@@ -116,7 +117,7 @@ public:
     std::shared_ptr<caiwei::context::SegContext>  get_seg_context (const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::PoseContext> get_pose_context(const caiwei::context::ContextInfo* info) override;
 public:
-    ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive);
+    ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~ONNXRuntimeRuntime();
 };
 #endif

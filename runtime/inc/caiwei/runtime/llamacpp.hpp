@@ -39,7 +39,7 @@ public:
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
 public:
-    ASRLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime);
+    ASRLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~ASRLlamaCPPContext();
 public:
     bool load() override;
@@ -49,7 +49,7 @@ public:
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
 public:
-    LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime);
+    LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~LLMLlamaCPPContext();
 public:
     bool load() override;
@@ -58,7 +58,7 @@ public:
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {
 public:
-    VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime);
+    VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~VLMLlamaCPPContext();
 public:
     bool load() override;
@@ -68,7 +68,7 @@ public:
 
 class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {
 public:
-    EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime);
+    EmbeddingLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~EmbeddingLlamaCPPContext();
 public:
     bool load() override;
@@ -78,7 +78,7 @@ public:
 class RerankingLlamaCPPContext : public RerankingContext, public LlamaCPPContext {
 public:
     RerankingLlamaCPPContext(
-        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime
+        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
     );
     ~RerankingLlamaCPPContext();
 public:

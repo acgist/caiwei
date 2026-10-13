@@ -10,8 +10,8 @@
 caiwei::context::ASRRKNN3Context::ASRRKNN3Context(
     std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path,
     std::string media_model_path, std::string media_weight_path,
-    int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime
-) : ASRContext(share, runtime),
+    int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
+) : ASRContext(runtime),
     RKNN3Context(
     std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path),
     std::move(media_model_path), std::move(media_weight_path), max_token_length, special_token) {

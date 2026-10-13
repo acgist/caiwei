@@ -6,9 +6,8 @@ caiwei::context::RerankingLlamaCPPContext::RerankingLlamaCPPContext(
     std::string path,
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
-    bool share,
     caiwei::runtime::Runtime* runtime
-) : RerankingContext(share, runtime)
+) : RerankingContext(runtime)
   , LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {
 }
 

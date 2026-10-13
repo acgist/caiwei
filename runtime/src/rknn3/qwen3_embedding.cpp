@@ -1,8 +1,8 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
-caiwei::context::EmbeddingRKNN3Context::EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime)
-    : EmbeddingContext(share, runtime),
+caiwei::context::EmbeddingRKNN3Context::EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
+    : EmbeddingContext(runtime),
       RKNN3Context(std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path), max_token_length, std::move(special_token)) {
 }
 

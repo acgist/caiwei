@@ -10,9 +10,8 @@ caiwei::context::RerankingRKNN3Context::RerankingRKNN3Context(
     std::string tokenizer_path,
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
-    bool share,
     caiwei::runtime::Runtime* runtime
-) : RerankingContext(share, runtime),
+) : RerankingContext(runtime),
     RKNN3Context(std::move(model_path), std::move(weight_path), std::move(embedding_path), std::move(tokenizer_path), max_token_length, std::move(special_token)) {
 }
 

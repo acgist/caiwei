@@ -2,9 +2,9 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime)
+caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
     : LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token),
-    VLMContext(share, runtime) {
+    VLMContext(runtime) {
 }
 
 caiwei::context::VLMLlamaCPPContext::~VLMLlamaCPPContext() {

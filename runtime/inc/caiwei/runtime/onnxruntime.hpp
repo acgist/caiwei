@@ -44,7 +44,7 @@ public:
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, bool share, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~ClsONNXRuntimeContext();
 public:
     bool load() override;
@@ -54,7 +54,7 @@ public:
 class DetONNXRuntimeContext : public DetContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    DetONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    DetONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~DetONNXRuntimeContext();
 public:
     bool load() override;
@@ -64,7 +64,7 @@ public:
 class SegONNXRuntimeContext : public SegContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    SegONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    SegONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~SegONNXRuntimeContext();
 public:
     bool load() override;
@@ -74,7 +74,7 @@ public:
 class PoseONNXRuntimeContext : public PoseContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    PoseONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    PoseONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~PoseONNXRuntimeContext();
 public:
     bool load() override;

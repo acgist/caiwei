@@ -9,10 +9,11 @@ std::shared_ptr<caiwei::runtime::RKNN3Runtime> caiwei::runtime::get_runtime(caiw
     int max_pool  = caiwei::env::get_int("CAIWEI_RKNN3_MAX_POOL");
     int timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
     int keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
-    return std::make_shared<caiwei::runtime::RKNN3Runtime>(min_pool, max_pool, timeout, keepalive);
+    bool share    = caiwei::env::get_bool("CAIWEI_RKNN3_SHARE");
+    return std::make_shared<caiwei::runtime::RKNN3Runtime>(min_pool, max_pool, timeout, keepalive, share);
 }
 
-caiwei::runtime::RKNN3Runtime::RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive) : Runtime(min_pool, max_pool, timeout, keepalive, caiwei::runtime::Type::RKNN3) {
+caiwei::runtime::RKNN3Runtime::RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN3) {
     CW_LOG_I("RKNN3Runtime init");
 }
 
@@ -71,8 +72,7 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
     special_token.audio_marker = caiwei::env::get("CAIWEI_ASR_AUDIO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
-    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
-    return std::make_shared<caiwei::context::ASRRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, share, this);
+    return std::make_shared<caiwei::context::ASRRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
 }
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_llm_context(const caiwei::context::ContextInfo* info) {
@@ -111,8 +111,7 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.e_toolcall = caiwei::env::get("CAIWEI_LLM_TOKEN_ETOOLCALL");
     special_token.enable_thinking = caiwei::env::get("CAIWEI_LLM_ENABLE_THINKING");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
-    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
-    return std::make_shared<caiwei::context::LLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, share, this);
+    return std::make_shared<caiwei::context::LLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
 }
 
 
@@ -171,8 +170,7 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
     special_token.image_marker = caiwei::env::get("CAIWEI_VLM_IMAGE_MARKER");
     special_token.video_marker = caiwei::env::get("CAIWEI_VLM_VIDEO_MARKER");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
-    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
-    return std::make_shared<caiwei::context::VLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, share, this);
+    return std::make_shared<caiwei::context::VLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
 }
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime::get_embedding_context(const caiwei::context::ContextInfo* info) {
@@ -203,8 +201,7 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime
     }
     caiwei::text::SpecialToken special_token;
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
-    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
-    return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, share, this);
+    return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
 }
 
 std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime::get_reranking_context(const caiwei::context::ContextInfo* info) {
@@ -244,15 +241,5 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime
     special_token.b_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BTHINKING");
     special_token.e_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_ETHINKING");
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
-    bool share = caiwei::env::get_bool("CAIWEI_QWEN_SHARE");
-    return std::make_shared<caiwei::context::RerankingRKNN3Context>(
-        model_path,
-        weight_path,
-        embedding_path,
-        tokenizer_path,
-        max_token_length,
-        special_token,
-        share,
-        this
-    );
+    return std::make_shared<caiwei::context::RerankingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
 }

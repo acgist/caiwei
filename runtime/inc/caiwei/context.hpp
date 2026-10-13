@@ -56,9 +56,7 @@ const ContextInfo* get_context_info(const std::string& name);
 
 class Context {
 public:
-    bool share = false; // 是否可以共享
     bool usage = false; // 是否已被使用
-private:
     std::atomic_int32_t ref_count = 0;
 public:
     const std::string id;
@@ -66,12 +64,10 @@ public:
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
 public:
-    Context(bool share, caiwei::runtime::Runtime* runtime);
+    Context(caiwei::runtime::Runtime* runtime);
     virtual ~Context();
 public:
     virtual bool load();
-    uint32_t ref();
-    uint32_t unref();
 };
 
 /**
@@ -86,7 +82,7 @@ protected:
     int class_size;
     float confidence_threshold;
 public:
-    ClsContext(int c, int h, int w, int top_k, int class_size, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
+    ClsContext(int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsContext();
 public:
     virtual std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) = 0;
@@ -104,7 +100,7 @@ protected:
     float iou_threshold;
     float confidence_threshold;
 public:
-    DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
+    DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~DetContext();
 public:
     virtual std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) = 0;
@@ -122,7 +118,7 @@ protected:
     float iou_threshold;
     float confidence_threshold;
 public:
-    SegContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
+    SegContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~SegContext();
 public:
     virtual std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) = 0;
@@ -140,7 +136,7 @@ protected:
     float iou_threshold;
     float confidence_threshold;
 public:
-    PoseContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, bool share, caiwei::runtime::Runtime* runtime);
+    PoseContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~PoseContext();
 public:
     virtual std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) = 0;
@@ -151,7 +147,7 @@ public:
  */
 class ASRContext : public Context {
 public:
-    ASRContext(bool share, caiwei::runtime::Runtime* runtime);
+    ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
     virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
@@ -162,7 +158,7 @@ public:
  */
 class LLMContext : public Context {
 public:
-    LLMContext(bool share, caiwei::runtime::Runtime* runtime);
+    LLMContext(caiwei::runtime::Runtime* runtime);
     ~LLMContext();
 public:
     virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
@@ -173,7 +169,7 @@ public:
  */
 class VLMContext : public Context {
 public:
-    VLMContext(bool share, caiwei::runtime::Runtime* runtime);
+    VLMContext(caiwei::runtime::Runtime* runtime);
     ~VLMContext();
 public:
     virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
@@ -184,7 +180,7 @@ public:
  */
 class EmbeddingContext : public Context {
 public:
-    EmbeddingContext(bool share, caiwei::runtime::Runtime* runtime);
+    EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
 public:
     virtual caiwei::text::EmbeddingResult run(caiwei::text::EmbeddingsRequest& request) = 0;
@@ -195,7 +191,7 @@ public:
  */
 class RerankingContext : public Context {
 public:
-    RerankingContext(bool share, caiwei::runtime::Runtime* runtime);
+    RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
 public:
     virtual caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) = 0;

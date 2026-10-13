@@ -11,10 +11,11 @@ std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtim
     int max_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MAX_POOL");
     int timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
     int keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
-    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>(min_pool, max_pool, timeout, keepalive);
+    bool share    = caiwei::env::get_bool("CAIWEI_ONNXRUNTIME_SHARE");
+    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>(min_pool, max_pool, timeout, keepalive, share);
 }
 
-caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive) : Runtime(min_pool, max_pool, timeout, keepalive, caiwei::runtime::Type::ONNXRUNTIME) {
+caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::ONNXRUNTIME) {
     CW_LOG_I("ONNXRuntimeRuntime init");
     this->env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
 }
@@ -38,8 +39,7 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime
         CW_LOG_W("ClsContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
-    return std::make_shared<caiwei::context::ClsONNXRuntimeContext>(info->path, c, h, w, top_k, class_size, confidence_threshold, share, this->env, this);
+    return std::make_shared<caiwei::context::ClsONNXRuntimeContext>(info->path, c, h, w, top_k, class_size, confidence_threshold, this->env, this);
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
@@ -53,8 +53,7 @@ std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime
         CW_LOG_W("DetContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
-    return std::make_shared<caiwei::context::DetONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, share, this->env, this);
+    return std::make_shared<caiwei::context::DetONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
 }
 
 std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::ONNXRuntimeRuntime::get_seg_context(const caiwei::context::ContextInfo* info) {
@@ -68,8 +67,7 @@ std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::ONNXRuntimeRuntime
         CW_LOG_W("SegContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
-    return std::make_shared<caiwei::context::SegONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, share, this->env, this);
+    return std::make_shared<caiwei::context::SegONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
 }
 
 std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::ONNXRuntimeRuntime::get_pose_context(const caiwei::context::ContextInfo* info) {
@@ -83,6 +81,5 @@ std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::ONNXRuntimeRuntim
         CW_LOG_W("PoseContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    bool share = caiwei::env::get_bool("CAIWEI_YOLO_SHARE");
-    return std::make_shared<caiwei::context::PoseONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, share, this->env, this);
+    return std::make_shared<caiwei::context::PoseONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
 }

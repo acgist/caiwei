@@ -115,7 +115,7 @@ public:
     ASRRKNN3Context(
         std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path,
         std::string media_model_path, std::string media_weight_path,
-        int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime
+        int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
     );
     ~ASRRKNN3Context();
 };
@@ -124,7 +124,7 @@ class LLMRKNN3Context : public LLMContext, public RKNN3Context {
 private:
     std::string prompt;
 public:
-    LLMRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime);
+    LLMRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~LLMRKNN3Context();
 public:
     bool load() override;
@@ -151,7 +151,7 @@ public:
     VLMRKNN3Context(
         std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path,
         std::string media_model_path, std::string media_weight_path,
-        int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime
+        int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
     );
     ~VLMRKNN3Context();
 };
@@ -161,7 +161,7 @@ public:
     bool load() override;
     caiwei::text::EmbeddingResult run(caiwei::text::EmbeddingsRequest& request) override;
 public:
-    EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, bool share, caiwei::runtime::Runtime* runtime);
+    EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~EmbeddingRKNN3Context();
 };
 
@@ -177,7 +177,6 @@ public:
         std::string tokenizer_path,
         int32_t max_token_length,
         caiwei::text::SpecialToken special_token,
-        bool share,
         caiwei::runtime::Runtime* runtime
     );
     ~RerankingRKNN3Context();

@@ -37,12 +37,10 @@ public:
 
 template <typename C, typename I, typename O>
 caiwei::manager::ContextWrapper<C, I, O>::ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime) : context(std::move(context)), runtime(std::move(runtime)) {
-    this->context->ref();
 }
 
 template <typename C, typename I, typename O>
 caiwei::manager::ContextWrapper<C, I, O>::~ContextWrapper() {
-    this->context->unref();
     this->runtime->put_context(this->context);
 }
 

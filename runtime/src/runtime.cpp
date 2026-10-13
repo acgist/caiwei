@@ -15,12 +15,14 @@
 std::mutex caiwei::runtime::runtime_mutex;
 std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> caiwei::runtime::runtime_map;
 
-caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, int timeout, int keepalive, caiwei::runtime::Type type)
+caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type)
   : id(caiwei::env::id()),
     min_pool(min_pool),
     max_pool(max_pool),
     timeout(timeout),
-    keepalive(keepalive), type(type) {
+    keepalive(keepalive),
+    share(share),
+    type(type) {
 }
 
 caiwei::runtime::Runtime::~Runtime() {
@@ -36,15 +38,21 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         iter = context_map.emplace(info->name, std::vector<std::shared_ptr<caiwei::context::Context>>()).first;
     }
     for (auto& context : iter->second) {
-        if (context->share) {
+        if (this->share) {
+            if (context->ref_count >= this->max_pool) {
+                CW_LOG_W("获取共享context失败: %s = %d = %s", info->name.c_str(), context->ref_count.load(), context->id.c_str());
+                return nullptr;
+            }
             CW_LOG_D("返回共享context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
+            context->ref_count++;
             return context;
         }
         if (context->usage) {
             continue;
         }
-        context->usage = true;
         CW_LOG_D("返回独占context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
+        context->usage = true;
+        context->ref_count++;
         return context;
     }
     std::shared_ptr<caiwei::context::Context> ptr{ nullptr };
@@ -62,16 +70,18 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         default: break;
         }
         if (ptr == nullptr) {
+            CW_LOG_W("新建context %s 失败", info->name.c_str());
             return nullptr;
         }
         if (!ptr->load()) {
             CW_LOG_E("加载context %s 失败", info->name.c_str());
             return nullptr;
         }
-        iter->second.push_back(ptr);
         CW_LOG_I("新建context: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());
-        ptr->usage = true;
+        iter->second.push_back(ptr);
         CW_LOG_D("返回独占context: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());
+        ptr->usage = true;
+        ptr->ref_count++;
         return ptr;
     } else {
         this->cv.wait_for(lock, std::chrono::seconds(this->timeout), [&iter]() {
@@ -83,10 +93,12 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             if (context->usage) {
                 continue;
             }
-            context->usage = true;
             CW_LOG_D("返回独占context: %s = %d = %s", info->name.c_str(), iter->second.size(), context->id.c_str());
+            context->usage = true;
+            context->ref_count++;
             return context;
         }
+        CW_LOG_W("获取独占context超时: %s", info->name.c_str());
         return nullptr;
     }
 }
@@ -98,6 +110,7 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
     CW_LOG_D("释放context: %s", context->id.c_str());
     std::lock_guard<std::mutex> lock(mutex);
     context->usage = false;
+    context->ref_count--;
     this->cv.notify_all();
 }
 

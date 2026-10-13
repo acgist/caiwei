@@ -22,14 +22,16 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
     {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},
     // 共享配置
-    {"CAIWEI_YOLO_SHARE",           "false"},
-    {"CAIWEI_QWEN_SHARE",           "true" },
+    {"CAIWEI_RKNN2_SHARE",          "false"},
     {"CAIWEI_RKNN2_MIN_POOL",       "2"    },
     {"CAIWEI_RKNN2_MAX_POOL",       "8"    },
+    {"CAIWEI_RKNN3_SHARE",          "true" },
     {"CAIWEI_RKNN3_MIN_POOL",       "0"    },
     {"CAIWEI_RKNN3_MAX_POOL",       "1"    },
+    {"CAIWEI_LLAMACPP_SHARE",       "true" },
     {"CAIWEI_LLAMACPP_MIN_POOL",    "0"    },
     {"CAIWEI_LLAMACPP_MAX_POOL",    "1"    },
+    {"CAIWEI_ONNXRUNTIME_SHARE",    "false"},
     {"CAIWEI_ONNXRUNTIME_MIN_POOL", "2"    },
     {"CAIWEI_ONNXRUNTIME_MAX_POOL", "8"    },
     // CLS
