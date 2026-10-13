@@ -2,6 +2,9 @@
 
 #include "nlohmann/json.hpp"
 
+#include <thread>
+#include <vector>
+#include <iostream>
 #include <generator>
 
 void test_llm() {
@@ -26,11 +29,60 @@ void test_llm() {
     if (!ptr) {
         return;
     }
-    // CAIWEI_FOR_EACH(100)
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    // CAIWEI_FOR_EACH_END
+}
+
+void test_llm_for() {
+    caiwei::text::CompletionsRequest request;
+    request.stream = true;
+    request.enable_thinking = false;
+    request.messages.push_back({.role = "user", .content = "1+1=?"});
+    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-llm");
+    if (!ptr) {
+        return;
+    }
+    std::cin.get();
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    std::cin.get();
+    CAIWEI_FOR_EACH(100)
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    CAIWEI_FOR_EACH_END
+    std::cin.get();
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    std::cin.get();
+}
+
+void test_llm_thread() {
+    caiwei::text::CompletionsRequest request;
+    request.stream = true;
+    request.enable_thinking = false;
+    request.messages.push_back({.role = "user", .content = "1+1=?"});
+    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-llm");
+    if (!ptr) {
+        return;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 2; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            for (const auto& value : ptr->run(request)) {
+                // -
+            }
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 int main() {
@@ -45,6 +97,9 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_llm();
+    // test_llm_for();
+    // test_llm_thread();
+    // test_llm_thread();
     caiwei::test::stop_test();
     return 0;
 }

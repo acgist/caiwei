@@ -2,6 +2,9 @@
 
 #include "nlohmann/json.hpp"
 
+#include <thread>
+#include <vector>
+#include <iostream>
 #include <generator>
 
 extern "C" {
@@ -15,9 +18,9 @@ extern "C" {
 
 void test_asr() {
     caiwei::media::AudioFrame audio_frame;
-    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
     // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_noise.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
-    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_small.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_small.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
         audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
         return true;
     }, [](caiwei::media::VideoFrame& frame) {
@@ -42,12 +45,96 @@ void test_asr() {
     if (!ptr) {
         return;
     }
-    // CAIWEI_FOR_EACH(100)
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    // CAIWEI_FOR_EACH_END
-    // std::this_thread::sleep_for(std::chrono::minutes(2));
+}
+
+void test_asr_for() {
+    caiwei::media::AudioFrame audio_frame;
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+        audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
+        return true;
+    }, [](caiwei::media::VideoFrame& frame) {
+        return true;
+    });
+    media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+    );
+    media_demuxer.stop();
+    caiwei::text::CompletionsRequest request;
+    request.messages.push_back(caiwei::text::CompletionsRequestMessage {
+        .role = "user",
+        .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "audio",
+            }
+        }
+    });
+    request.messages.back().audio_data.push_back(std::move(audio_frame));
+    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-asr");
+    if (!ptr) {
+        return;
+    }
+    std::cin.get();
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    std::cin.get();
+    CAIWEI_FOR_EACH(100)
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    CAIWEI_FOR_EACH_END
+    std::cin.get();
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    std::cin.get();
+}
+
+void test_asr_thread() {
+    caiwei::media::AudioFrame audio_frame;
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
+        audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
+        return true;
+    }, [](caiwei::media::VideoFrame& frame) {
+        return true;
+    });
+    media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+    );
+    media_demuxer.stop();
+    caiwei::text::CompletionsRequest request;
+    request.messages.push_back(caiwei::text::CompletionsRequestMessage {
+        .role = "user",
+        .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "audio",
+            }
+        }
+    });
+    request.messages.back().audio_data.push_back(std::move(audio_frame));
+    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-asr");
+    if (!ptr) {
+        return;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 2; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            for (const auto& value : ptr->run(request)) {
+                // -
+            }
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 int main() {
@@ -62,6 +149,9 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_asr();
+    // test_asr_for();
+    // test_asr_thread();
+    // test_asr_thread();
     caiwei::test::stop_test();
     return 0;
 }

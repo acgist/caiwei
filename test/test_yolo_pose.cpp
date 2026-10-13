@@ -4,12 +4,17 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
+#include <thread>
+#include <vector>
+#include <iostream>
+
 [[maybe_unused]]
 void pose_draw() {
     int width, height, channels;
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
+    stbi_image_free(data);
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
@@ -65,7 +70,6 @@ void pose_draw() {
         }
     }
     stbi_write_jpg("./acgist_pose.jpg", width, height, channels, data, 80);
-    stbi_image_free(data);
 }
 
 [[maybe_unused]]
@@ -74,6 +78,7 @@ void pose_image() {
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
+    stbi_image_free(data);
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
@@ -81,10 +86,47 @@ void pose_image() {
     if (ptr == nullptr) {
         return;
     }
-    CAIWEI_FOR_EACH(100)
-    auto result = ptr->run(frame);
-    CAIWEI_FOR_EACH_END
+    std::cin.get();
+    {
+        CAIWEI_FOR_EACH(100)
+        auto result = ptr->run(frame);
+        CAIWEI_FOR_EACH_END
+    }
+    std::cin.get();
+    {
+        CAIWEI_FOR_EACH(100)
+        auto result = ptr->run(frame);
+        CAIWEI_FOR_EACH_END
+    }
+    std::cin.get();
+}
+
+[[maybe_unused]]
+void pose_image_thread() {
+    int width, height, channels;
+    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
+    caiwei::media::ImageFrame frame(width * height * channels);
+    std::copy_n(data, width * height * channels, frame.data.data());
     stbi_image_free(data);
+    frame.width = width;
+    frame.height = height;
+    frame.channels = channels;
+    auto ptr = caiwei::manager::get_context<caiwei::context::PoseContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Pose>>("yolo26n-pose");
+    if (ptr == nullptr) {
+        return;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 2; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            ptr->run(frame);
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 [[maybe_unused]]
@@ -171,8 +213,10 @@ int main() {
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "POSE,YOLO,yolo26n-pose,yolo26n-pose-e2e.onnx");
     #endif
     caiwei::test::init_test();
-    pose_draw();
-    // pose_image();
+    // pose_draw();
+    pose_image();
+    // pose_image_thread();
+    // pose_image_thread();
     // pose_video();
     caiwei::test::stop_test();
     return 0;

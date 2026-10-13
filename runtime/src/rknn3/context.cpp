@@ -342,19 +342,12 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::Co
     int n_params = 1;
     rknn3_sampling_params sampling_params{};
     if (request != nullptr) {
-        sampling_params.top_k             = request->top_k.value_or(1);
-        sampling_params.top_p             = request->top_p.value_or(0.9F);
-        sampling_params.temperature       = request->temperature.value_or(1.0F);
-        sampling_params.repeat_penalty    = request->repeat_penalty.value_or(1.2F);
+        sampling_params.top_k             = request->top_k.value_or(10);
+        sampling_params.top_p             = request->top_p.value_or(0.95F);
+        sampling_params.temperature       = request->temperature.value_or(0.8F);
+        sampling_params.repeat_penalty    = request->repeat_penalty.value_or(1.04F);
         sampling_params.frequency_penalty = request->frequency_penalty.value_or(0.0F);
         sampling_params.presence_penalty  = request->presence_penalty.value_or(0.0F);
-    } else {
-        sampling_params.top_k             = 1;
-        sampling_params.top_p             = 0.9F;
-        sampling_params.temperature       = 1.0F;
-        sampling_params.repeat_penalty    = 1.2F;
-        sampling_params.frequency_penalty = 0.0F;
-        sampling_params.presence_penalty  = 0.0F;
     }
     rknn3_llm_param llm_params{};
     llm_params.logits_name            = "logits";

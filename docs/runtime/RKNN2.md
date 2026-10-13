@@ -7,6 +7,11 @@
 * `RKLLM`跑`Qwen`模型(建议使用`RKNN3`)
 
 ## 安装教程
+
+```
+cat /sys/kernel/debug/rknpu/load
+```
+
 ## 模型转换
 
 **默认直接使用`YOLO`官方转换工具，追求极致速度可以使用瑞芯微的模型转换工具。**

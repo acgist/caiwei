@@ -4,12 +4,17 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
+#include <thread>
+#include <vector>
+#include <iostream>
+
 [[maybe_unused]]
 void seg_draw() {
     int width, height, channels;
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
+    stbi_image_free(data);
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
@@ -40,18 +45,15 @@ void seg_draw() {
         caiwei::test::draw_mask(data, frame.width, frame.height, mask_data.data(), box_x, box_y, box_w, box_h, 0.5, color);
     }
     stbi_write_jpg("./acgist_seg.jpg", width, height, channels, data, 80);
-    stbi_image_free(data);
 }
 
 [[maybe_unused]]
 void seg_image() {
-    // CUDA    100 =  1777 ms
-    // Debug   100 = 19169 ms
-    // Release 100 = 10160 ms
     int width, height, channels;
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
+    stbi_image_free(data);
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
@@ -59,10 +61,47 @@ void seg_image() {
     if (ptr == nullptr) {
         return;
     }
-    CAIWEI_FOR_EACH(100)
-    auto result = ptr->run(frame);
-    CAIWEI_FOR_EACH_END
+    std::cin.get();
+    {
+        CAIWEI_FOR_EACH(100)
+        auto result = ptr->run(frame);
+        CAIWEI_FOR_EACH_END
+    }
+    std::cin.get();
+    {
+        CAIWEI_FOR_EACH(100)
+        auto result = ptr->run(frame);
+        CAIWEI_FOR_EACH_END
+    }
+    std::cin.get();
+}
+
+[[maybe_unused]]
+void seg_image_thread() {
+    int width, height, channels;
+    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
+    caiwei::media::ImageFrame frame(width * height * channels);
+    std::copy_n(data, width * height * channels, frame.data.data());
     stbi_image_free(data);
+    frame.width = width;
+    frame.height = height;
+    frame.channels = channels;
+    auto ptr = caiwei::manager::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>("yolo26n-seg");
+    if (ptr == nullptr) {
+        return;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 2; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            ptr->run(frame);
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 [[maybe_unused]]
@@ -121,8 +160,10 @@ int main() {
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "SEG,YOLO,yolo26n-seg,yolo26n-seg-e2e.onnx");
     #endif
     caiwei::test::init_test();
-    seg_draw();
-    // seg_image();
+    // seg_draw();
+    seg_image();
+    // seg_image_thread();
+    // seg_image_thread();
     // seg_video();
     caiwei::test::stop_test();
     return 0;

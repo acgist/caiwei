@@ -4,7 +4,9 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
-#include <filesystem>
+#include <thread>
+#include <vector>
+#include <iostream>
 
 [[maybe_unused]]
 void cls_image() {
@@ -12,6 +14,7 @@ void cls_image() {
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
+    stbi_image_free(data);
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
@@ -19,10 +22,47 @@ void cls_image() {
     if (ptr == nullptr) {
         return;
     }
-    CAIWEI_FOR_EACH(100)
-    auto result = ptr->run(frame);
-    CAIWEI_FOR_EACH_END
+    std::cin.get();
+    {
+        CAIWEI_FOR_EACH(100)
+        auto result = ptr->run(frame);
+        CAIWEI_FOR_EACH_END
+    }
+    std::cin.get();
+    {
+        CAIWEI_FOR_EACH(100)
+        auto result = ptr->run(frame);
+        CAIWEI_FOR_EACH_END
+    }
+    std::cin.get();
+}
+
+[[maybe_unused]]
+void cls_image_thread() {
+    int width, height, channels;
+    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
+    caiwei::media::ImageFrame frame(width * height * channels);
+    std::copy_n(data, width * height * channels, frame.data.data());
     stbi_image_free(data);
+    frame.width = width;
+    frame.height = height;
+    frame.channels = channels;
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
+    if (ptr == nullptr) {
+        return;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 2; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            ptr->run(frame);
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 [[maybe_unused]]
@@ -50,35 +90,15 @@ void cls_video() {
     caiwei::player::stop_player();
 }
 
-[[maybe_unused]]
-void cls_folder() {
-    for (auto& entry : std::filesystem::directory_iterator("./cls/")) {
-        if (!entry.is_regular_file() || (entry.path().extension().string() != ".jpg" && entry.path().extension().string() != ".png")) {
-            continue;
-        }
-        int width, height, channels;
-        auto data = stbi_load(entry.path().string().c_str(), &width, &height, &channels, STBI_default);
-        caiwei::media::ImageFrame frame(width * height * channels);
-        std::copy_n(data, width * height * channels, frame.data.data());
-        frame.width = width;
-        frame.height = height;
-        frame.channels = channels;
-        auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
-        CW_LOG_I("%s", entry.path().string().c_str());
-        for (const auto& index : ptr->run(frame)) {
-            CW_LOG_I("%d = %.2f", index.first, index.second);
-        }
-    }
-}
-
 int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn");
     #endif
     caiwei::test::init_test();
     cls_image();
+    // cls_image_thread();
+    // cls_image_thread();
     // cls_video();
-    // cls_folder();
     caiwei::test::stop_test();
     return 0;
 }

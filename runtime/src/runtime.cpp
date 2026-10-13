@@ -15,6 +15,16 @@
 std::mutex caiwei::runtime::runtime_mutex;
 std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> caiwei::runtime::runtime_map;
 
+static const char* get_type_name(caiwei::runtime::Type type) {
+    switch (type) {
+    case caiwei::runtime::Type::RKNN2:       return "RKNN2";
+    case caiwei::runtime::Type::RKNN3:       return "RKNN3";
+    case caiwei::runtime::Type::LLAMACPP:    return "LLAMACPP";
+    case caiwei::runtime::Type::ONNXRUNTIME: return "ONNXRUNTIME";
+    default: return "UNKNOWN";
+    }
+}
+
 caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type)
   : id(caiwei::env::id()),
     min_pool(min_pool),
@@ -70,11 +80,11 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         default: break;
         }
         if (ptr == nullptr) {
-            CW_LOG_W("新建context %s 失败", info->name.c_str());
+            CW_LOG_D("新建context失败: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
         if (!ptr->load()) {
-            CW_LOG_E("加载context %s 失败", info->name.c_str());
+            CW_LOG_E("加载context失败: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
         CW_LOG_I("新建context: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());
@@ -238,7 +248,9 @@ static void init_llamacpp() {
         }
         n--;
         if (level == GGML_LOG_LEVEL_DEBUG) {
+            #if CAIWEI_DEBUG_GGML
             CW_LOG_D("%.*s", n, text);
+            #endif
         } else if (level == GGML_LOG_LEVEL_INFO) {
             CW_LOG_I("%.*s", n, text);
         } else if (level == GGML_LOG_LEVEL_WARN) {

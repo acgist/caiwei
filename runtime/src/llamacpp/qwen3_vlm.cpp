@@ -44,11 +44,6 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
             mtmd_bitmap ** out_bitmap,
             char ** out_text
         ) {
-            const int w = 384;
-            const int h = 384;
-            float scale;
-            // TODO
-            int dst_w, dst_h, pad_w, pad_h;
             std::vector<caiwei::media::VideoFrame>& video = *(std::vector<caiwei::media::VideoFrame>*)user_data;
             if (chunk_idx >= video.size()) {
                 return -1;
@@ -58,12 +53,18 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
             int height = frame.height;
             int channels = frame.channels;
             const std::vector<uint8_t>& data = frame.data;
+            const int w = 384;
+            const int h = 384;
+            float scale;
+            // TODO
+            int dst_w, dst_h, pad_w, pad_h;
             caiwei::image::resize(frame.width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
             std::vector<uint8_t> dst(dst_w * dst_h * channels);
             std::vector<uint8_t> pad(    w *     h * channels);
             caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h);
             caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
             *out_bitmap = mtmd_bitmap_init(w, h, pad.data());
+            // TODO 判断内存是否释放
             return 0;
        } 
     );

@@ -36,10 +36,10 @@ static bool async_cls (caiwei::text::CompletionsRequest& request, caiwei::manage
 static bool async_det (caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_seg (caiwei::text::CompletionsRequest& request, caiwei::manager::SegWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_pose(caiwei::text::CompletionsRequest& request, caiwei::manager::PoseWrapper* wrapper, caiwei::session::Callback& callback);
-static bool async_asr (caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper * wrapper, caiwei::session::Callback& callback);
+static bool async_asr (caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper * wrapper, caiwei::session::Callback& callback, std::string* ret = nullptr);
 static bool async_llm (caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_vlm (caiwei::text::CompletionsRequest& request, caiwei::manager::VLMWrapper * wrapper, caiwei::session::Callback& callback);
-static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback);
+static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback, std::string* ret = nullptr);
 
 static void fill_media_request(caiwei::text::CompletionsRequest& request);
 static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message, const std::string& audio_url, int samples);
@@ -153,8 +153,8 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         }
         auto& message = request.messages.back();
         const int video_fps       = request.video_fps.value_or(8);
-        const int asr_samples     = request.asr_samples.value_or(16000);
-        const int asr_queue_size  = request.asr_queue_size.value_or(128000);
+        const int asr_samples     = request.asr_samples.value_or(32000);
+        const int asr_queue_size  = request.asr_queue_size.value_or(320000);
         const int vlm_frames      = request.vlm_frames.value_or(8);
         const int yolo_queue_size = request.yolo_queue_size.value_or(8);
         const bool drop_on_full   = request.drop_on_full.value_or(false);
@@ -479,8 +479,8 @@ static bool async_pose(caiwei::text::CompletionsRequest& request, caiwei::manage
     return async_yolo(request, wrapper, callback);
 }
 
-static bool async_asr(caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper* wrapper, caiwei::session::Callback& callback) {
-    return async_generator(request, wrapper->run(request), callback);
+static bool async_asr(caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper* wrapper, caiwei::session::Callback& callback, std::string* ret) {
+    return async_generator(request, wrapper->run(request), callback, ret);
 }
 
 static bool async_llm(caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper* wrapper, caiwei::session::Callback& callback) {
@@ -491,7 +491,7 @@ static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager
     return async_generator(request, wrapper->run(request), callback);
 }
 
-static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback) {
+static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback, std::string* ret) {
     for (const auto& result : generator) {
         caiwei::text::CompletionsChunk chunk;
         chunk.id      = request.id;
@@ -517,6 +517,9 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
                 choice.delta.tool_calls = { tool_call };
             }
         } else {
+            if (ret != nullptr) {
+                ret->append(result.token);
+            }
             choice.delta.content = result.token;
         }
         if (!result.finish_reason.empty()) {
@@ -543,17 +546,13 @@ static void asr_thread_session(caiwei::text::CompletionsRequest request, caiwei:
         return;
     }
     auto& message = request.messages.back();
-    // TODO 加长
-    const int asr_samples    = request.asr_samples.value_or(16000);
-    const int asr_queue_size = request.asr_queue_size.value_or(128000);
+    const int asr_queue_size = request.asr_queue_size.value_or(320000);
     message.audio_data.resize(1);
-    message.audio_data[0].data.reserve(asr_samples);
+    message.audio_data[0].data.reserve(asr_queue_size);
     auto& audio_data = message.audio_data[0];
-    std::vector<uint8_t> audio_copy;
-    std::vector<uint8_t> audio_slice;
-    audio_copy.reserve(asr_queue_size);
-    audio_slice.reserve(asr_samples);
     bool callable = true;
+    std::string ret;
+    std::string old;
     while (callable && !media_stop) {
         {
             std::unique_lock<std::mutex> lock(mutex);
@@ -563,26 +562,17 @@ static void asr_thread_session(caiwei::text::CompletionsRequest request, caiwei:
                 cv.notify_one();
                 continue;
             }
-            audio_copy.swap(audio_frame_buffer);
+            audio_data.data.insert(audio_data.data.end(), audio_frame_buffer.begin(), audio_frame_buffer.end());
+            audio_frame_buffer.resize(0);
         }
-        int index = 0;
-        while (callable && index < audio_copy.size()) {
-            if (index + asr_samples > audio_copy.size()) {
-                audio_slice.assign(audio_copy.begin() + index, audio_copy.end());
-                break;
-            }
-            if (audio_slice.empty()) {
-                audio_slice.assign(audio_copy.begin() + index, audio_copy.begin() + index + asr_samples);
-                index += asr_samples;
-            } else {
-                audio_slice.insert(audio_slice.end(), audio_copy.begin() + index, audio_copy.begin() + index + asr_samples - audio_slice.size());
-                index += asr_samples - audio_slice.size();
-            }
-            audio_data.data.swap(audio_slice);
-            audio_slice.resize(0);
-            callable = async_asr(request, asr_wrapper, callback);
+        old.swap(ret);
+        callable = async_asr(request, asr_wrapper, callback, &ret);
+        if (old == ret || audio_data.data.size() >= asr_queue_size) {
+            CW_LOG_D("old = %s | ret = %s", old.data(), ret.data());
+            ret.clear();
+            audio_data.data.resize(0);
         }
-        audio_copy.resize(0);
+        old.clear();
         cv.notify_one();
     }
 }
@@ -664,7 +654,7 @@ static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei
 
 static void fill_media_request(caiwei::text::CompletionsRequest& request) {
     auto& messages = request.messages;
-    int asr_samples = request.asr_samples.value_or(16000);
+    int asr_samples = request.asr_samples.value_or(32000);
     int vlm_frames  = request.vlm_frames.value_or(8);
     for (auto& message : messages) {
         if (!message.content.has_value()) {

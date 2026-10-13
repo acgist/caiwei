@@ -4,6 +4,9 @@
 
 #include "caiwei/image_tool.hpp"
 
+#include <thread>
+#include <vector>
+#include <iostream>
 #include <generator>
 
 extern "C" {
@@ -72,12 +75,96 @@ void test_vlm() {
     if (!ptr) {
         return;
     }
-    // CAIWEI_FOR_EACH(100)
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    // CAIWEI_FOR_EACH_END
-    // std::this_thread::sleep_for(std::chrono::minutes(2));
+}
+
+void test_vlm_for() {
+    caiwei::text::CompletionsRequest request;
+    request.messages.push_back(caiwei::text::CompletionsRequestMessage {
+        .role = "user",
+        .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "text",
+                .text = "描述下面两张图片内容"
+            },
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "image",
+            },
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "image",
+            },
+        }
+    });
+    caiwei::media::ImageFrame frame1;
+    caiwei::media::ImageFrame frame2;
+    read_image(frame1, "./acgist.jpg");
+    read_image(frame2, "./caiwei.jpg");
+    request.messages.back().image_data.emplace_back(std::move(frame1));
+    request.messages.back().image_data.emplace_back(std::move(frame2));
+    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-vlm");
+    if (!ptr) {
+        return;
+    }
+    std::cin.get();
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    std::cin.get();
+    CAIWEI_FOR_EACH(100)
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    CAIWEI_FOR_EACH_END
+    std::cin.get();
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    std::cin.get();
+}
+
+void test_vlm_thread() {
+    caiwei::text::CompletionsRequest request;
+    request.messages.push_back(caiwei::text::CompletionsRequestMessage {
+        .role = "user",
+        .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "text",
+                .text = "描述下面两张图片内容"
+            },
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "image",
+            },
+            caiwei::text::CompletionsRequestMessageContentItem {
+                .type = "image",
+            },
+        }
+    });
+    caiwei::media::ImageFrame frame1;
+    caiwei::media::ImageFrame frame2;
+    read_image(frame1, "./acgist.jpg");
+    read_image(frame2, "./caiwei.jpg");
+    request.messages.back().image_data.emplace_back(std::move(frame1));
+    request.messages.back().image_data.emplace_back(std::move(frame2));
+    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-vlm");
+    if (!ptr) {
+        return;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 2; ++i) {
+        threads.push_back(std::thread([&]() {
+            CAIWEI_FOR_EACH(100)
+            for (const auto& value : ptr->run(request)) {
+                // -
+            }
+            CAIWEI_FOR_EACH_END
+        }));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::cin.get();
 }
 
 int main() {
@@ -92,6 +179,9 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_vlm();
+    // test_vlm_for();
+    // test_vlm_thread();
+    // test_vlm_thread();
     caiwei::test::stop_test();
     return 0;
 }

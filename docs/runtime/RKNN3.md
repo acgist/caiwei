@@ -11,6 +11,8 @@
 ```
 pip install -r requirements_cp312-1.1.0.txt
 pip install rknn3_toolkit-1.1.0-cp312-cp312-manylinux2014_x86_64.whl
+
+rknn-smi info
 ```
 
 * 不要随便修改依赖🤡🤡🤡(遇到依赖问题重新安装环境)

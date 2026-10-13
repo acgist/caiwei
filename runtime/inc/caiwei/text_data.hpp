@@ -92,18 +92,18 @@ struct CompletionsRequest {
     std::string model;
     std::vector<CompletionsRequestMessage> messages;
     std::optional<int>   seed;
-    std::optional<int>   top_k;
-    std::optional<float> top_p;
-    std::optional<float> temperature;
-    std::optional<float> repeat_penalty;
-    std::optional<float> presence_penalty;
-    std::optional<float> frequency_penalty;
+    std::optional<int>   top_k          = 10; // 设置20瑞芯微就开始乱说
+    std::optional<float> top_p          = 0.95F;
+    std::optional<float> temperature    = 0.8F;
+    std::optional<float> repeat_penalty = 1.04F;
+    std::optional<float> presence_penalty  = 0.0F;
+    std::optional<float> frequency_penalty = 0.0F;
     std::optional<uint32_t> max_completion_tokens;
     std::optional<std::vector<CompletionsRequestTool>> tools;
     // 扩展字段
     std::optional<int> video_fps       = 8;      // 视频识别间隔帧数: VLM/YOLO
-    std::optional<int> asr_samples     = 16000;  // ASR 识别帧数大小: 16000 * 1 * 16 * 0.5 / 8 = 16000
-    std::optional<int> asr_queue_size  = 128000; // ASR 识别队列大小: 16000 * 1 * 16 * 4 / 8 = 128000
+    std::optional<int> asr_samples     = 32000;  // ASR 识别帧数大小: 16000 * 1 * 16 *  1 / 8 = 32000
+    std::optional<int> asr_queue_size  = 320000; // ASR 识别队列大小: 16000 * 1 * 16 * 10 / 8 = 320000
     std::optional<int> vlm_frames      = 8;      // VLM 识别帧数间隔
     std::optional<int> yolo_queue_size = 8;      // YOLO识别队列大小
     std::optional<std::string> media_url;  // 持续识别视频文件地址

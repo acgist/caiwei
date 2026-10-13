@@ -83,21 +83,23 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
         llama_sampler_chain_add(sampler, llama_sampler_init_dist(request.seed.value()));
     }
     if (request.presence_penalty.has_value() || request.frequency_penalty.has_value()) {
-        float pres = std::clamp(request.presence_penalty.value_or(0.0F), -2.0F, 2.0F);
-        float freq = std::clamp(request.frequency_penalty.value_or(0.0F), -2.0F, 2.0F);
-        if (std::abs(pres) > 1e-6F || std::abs(freq) > 1e-6F) {
+        float presence_penalty  = std::clamp(request.presence_penalty .value_or(0.0F), -2.0F, 2.0F);
+        float frequency_penalty = std::clamp(request.frequency_penalty.value_or(0.0F), -2.0F, 2.0F);
+        float repeat_penalty    = std::clamp(request.repeat_penalty   .value_or(1.04F), 0.0F, 1.2F);    
+        if (std::abs(presence_penalty) > 1e-6F || std::abs(frequency_penalty) > 1e-6F) {
             int n_vocab = llama_vocab_n_tokens(this->vocab);
-            llama_sampler_chain_add(sampler, llama_sampler_init_penalties(n_vocab, -1, 1.0F, pres, freq));
+            llama_sampler_chain_add(sampler, llama_sampler_init_penalties(n_vocab, -1, repeat_penalty, presence_penalty, frequency_penalty));
         }
     }
     if (request.temperature.has_value() && request.temperature.value() <= 1e-6F) {
         llama_sampler_chain_add(sampler, llama_sampler_init_greedy());
     } else {
-        float temp  = std::clamp(request.temperature.value_or(1.0F), 1e-6F, 10.0F);
-        float top_p = std::clamp(request.top_p.value_or(0.95F), 0.0F, 1.0F);
-        llama_sampler_chain_add(sampler, llama_sampler_init_temp(temp));
+        int   top_k       = std::clamp(request.top_k.value_or(10), 0, 100);
+        float top_p       = std::clamp(request.top_p.value_or(0.95F), 0.0F, 1.0F);
+        float temperature = std::clamp(request.temperature.value_or(1.0F), 1e-6F, 1.0F);
+        llama_sampler_chain_add(sampler, llama_sampler_init_top_k(top_k));
         llama_sampler_chain_add(sampler, llama_sampler_init_top_p(top_p, 1));
-        // llama_sampler_init_top_k
+        llama_sampler_chain_add(sampler, llama_sampler_init_temp(temperature));
         if (!request.seed.has_value()) {
             llama_sampler_chain_add(sampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
         }

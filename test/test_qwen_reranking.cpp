@@ -38,11 +38,11 @@ void test_reranking_for() {
     std::cin.get();
     ptr->run(request);
     std::cin.get();
-    ptr->run(request);
-    std::cin.get();
     CAIWEI_FOR_EACH(100)
     ptr->run(request);
     CAIWEI_FOR_EACH_END
+    std::cin.get();
+    ptr->run(request);
     std::cin.get();
 }
 
