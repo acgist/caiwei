@@ -10,7 +10,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
 )
 model = PeftModel.from_pretrained(
-    model, "Qwen/Qwen3-1.7B-lora/v0-20260907-205115/checkpoint-1"
+    model, "Qwen3-1.7B-lora/v0-20261015-092128/checkpoint-1"
 )
 tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-1.7B")
 messages = [

@@ -4,7 +4,8 @@
 * 设备: `RK3566/RK3568/RK3576/RK3588`
 
 * `RKNN2`跑`YOLO`模型
-* `RKLLM`跑`Qwen`模型(建议使用`RKNN3`)
+* `RKNN3`跑`Qwen`模型
+* ~~`RKLLM`跑`Qwen`模型~~
 
 ## 安装教程
 

@@ -5,7 +5,8 @@
 **编译测试时才需要安装**
 
 * 版本: 2.32.10
-* 官网: https://www.libsdl.org/
+* 官网: https://www.libsdl.org
+* 官网: https://github.com/libsdl-org/SDL
 
 ```
 # APT安装
@@ -19,7 +20,8 @@ vcpkg export  sdl2:x64-windows --zip
 ## FFmpeg
 
 * 版本: 6.1.1
-* 官网: https://ffmpeg.org/
+* 官网: https://ffmpeg.org
+* 官网: https://github.com/FFmpeg/FFmpeg
 
 ```
 # APT安装
@@ -35,15 +37,11 @@ wget http://www.ffmpeg.org/releases/ffmpeg-6.1.1.tar.xz
 tar -Jxvf ffmpeg-6.1.1.tar.xz
 cd ffmpeg-6.1.1
 PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
-./configure        \
-  --enable-gpl     \
-  --enable-shared  \
-  --enable-libx264 \
-  --enable-nonfree
+./configure --enable-gpl --enable-shared --enable-libx264 --enable-nonfree
 make -j4
 sudo make install
 # 配置RKMPP支持
---enable-rkmpp --enable-libdrm --enable-version3
+--enable-libdrm --enable-rkmpp --enable-version3
 ```
 
 ## cpp-httplib

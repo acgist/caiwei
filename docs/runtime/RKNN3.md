@@ -20,7 +20,8 @@ rknn-smi info
 
 ## 模型转换
 
-如果开启量化使用参考官方文档。
+* 量化参考官方文档
+* 配置上下文的长度: `rknn.config(max_ctx_len=4096)`
 
 ### Qwen3
 

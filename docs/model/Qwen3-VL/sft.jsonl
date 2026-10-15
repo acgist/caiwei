@@ -1,1 +1,1 @@
-{"messages":[{"role":"user","content":"碧螺萧萧是谁"},{"role":"assistant","content":"碧螺萧萧是个好人"}]}
+{"messages":[{"role":"user","content":[{"type":"text","text":"描述视频"},{"type":"video","video":"/data/caiwei/test/caiwei.mp4"}]},{"role":"assistant","content":[{"type":"text","text":"这是在爱丁堡拍摄的百岁山广告视频"}]}]}

@@ -6,6 +6,9 @@
 ## 模型导出
 
 ```
+# ONNX
+python export_onnx.py
+# RKNN
 python export_onnx.py
 ```
 
@@ -13,21 +16,21 @@ python export_onnx.py
 
 ```
 python run_image.py
-python run.py
+python run_video.py
 ```
 
 ## 性能评估
 
-* 图片大小: 1280*720
+* 图片大小: `1280*720`
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)   |||||
-|RKNN(RK1828)     |||||
-|RKNN(RK3588)     |||||
-|CUDA(Tesla L40S) |||||
-|CUDA(Tesla V100) |||||
-|CUDA(RTX 4060)   |||||
+|CPU(i5-1135G7)  |||||
+|RKNN(RK1828)    |||||
+|RKNN(RK3588)    |||||
+|CUDA(RTX 4060)  |||||
+|CUDA(Tesla L40S)|||||
+|CUDA(Tesla V100)|||||
 
 ## 文档资料
 

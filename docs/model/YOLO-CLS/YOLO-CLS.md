@@ -18,28 +18,31 @@ python train.py
 ## 模型导出
 
 ```
+# ONNX
 python export_onnx.py
+# RKNN
+python export_rknn.py
 ```
 
 ## 模型推理
 
 ```
 python run_image.py
-python run.py
+python run_video.py
 ```
 
 ## 性能评估
 
-* 图片大小: 1280*720
+* 图片大小: `1280*720`
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
 |CPU(i5-1135G7)   |-   |-|18ms|22ms|
 |RKNN(RK1828)     |-   |-|-   |-   |
-|RKNN(RK3588)-fp16|12ms|-|-   |-   |
+|RKNN(RK3588)     |12ms|-|-   |-   |
+|CUDA(RTX 4060)   |-   |-|-   |-   |
 |CUDA(Tesla L40S) |-   |-|-   |-   |
 |CUDA(Tesla V100) |-   |-|7ms |-   |
-|CUDA(RTX 4060)   |-   |-|-   |-   |
 
 ## 文档资料
 

@@ -19,16 +19,20 @@ python run.py
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)   |||||
-|RKNN(RK1828)     |||||
-|RKNN(RK3588)     |||||
-|CUDA(Tesla L40S) |||||
-|CUDA(Tesla V100) |||||
-|CUDA(RTX 4060)   |||||
+|CPU(i5-1135G7)  |||||
+|RKNN(RK1828)    |||||
+|RKNN(RK3588)    |||||
+|CUDA(RTX 4060)  |||||
+|CUDA(Tesla L40S)|||||
+|CUDA(Tesla V100)|||||
 
 ## 文档资料
 
-* https://github.com/QwenLM/Qwen3-Embedding
+* https://github.com/modelscope/ms-swift/
+* https://swift.readthedocs.io/zh-cn/latest/index.html
+* https://www.modelscope.cn/docs/llm-training-and-inference/intro/swift-installation
+* https://www.modelscope.cn/docs/llm-training-and-inference/user-guide/command-line-parameters
+* https://github.com/QwenLM/Qwen3-Reranker
 * https://modelscope.cn/models/Qwen/Qwen3-Reranker-0.6B
 * https://modelscope.cn/models/Qwen/Qwen3-Reranker-8B
 * https://modelscope.cn/models/Qwen/Qwen3-Reranker-4B

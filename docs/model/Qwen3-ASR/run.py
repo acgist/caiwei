@@ -13,5 +13,5 @@ results = model.transcribe(
     audio="../../../test/caiwei.mp3",
     language=None,
 )
-print(f"language:\n{results[0].language}")
+print(f"language: {results[0].language}")
 print(f"text:\n{results[0].text}")

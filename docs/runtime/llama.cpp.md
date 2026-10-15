@@ -1,6 +1,7 @@
 # llama.cpp
 
 * 版本: v0.6.0
+* 官网: https://github.com/ggml-org/llama.cpp
 
 ## 安装教程
 

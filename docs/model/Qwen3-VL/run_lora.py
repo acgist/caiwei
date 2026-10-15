@@ -9,7 +9,7 @@ model = Qwen3VLForConditionalGeneration.from_pretrained(
     device_map="auto",
 )
 model = PeftModel.from_pretrained(
-    model, "Qwen3-VL-2B-Instruct-lora/v0-20260907-170906/checkpoint-1"
+    model, "Qwen3-VL-2B-Instruct-lora/v0-20261015-100745/checkpoint-1"
 )
 processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-2B-Instruct")
 messages = [

@@ -1,1 +1,3 @@
 {"messages":[{"role":"user","content":"碧螺萧萧是谁"},{"role":"assistant","content":"碧螺萧萧是个好人"}]}
+{"messages":[{"role":"user","content":"海螺是谁"},{"role":"assistant","content":"<think>\n\n</think>\n\n海螺是神奇的海螺"}]}
+{"messages":[{"role":"user","content":"圣黛是谁"},{"role":"assistant","content":"<think>\n圣是大圣，黛是林黛玉，所以这是一个缩写。\n</think>\n\n圣黛是指齐天大圣孙悟空和林黛玉。"}]}
