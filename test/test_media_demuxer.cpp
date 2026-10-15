@@ -18,8 +18,7 @@ static std::string base64_file(const std::string& type, const std::string& path)
     return type + base64_encode(data);
 }
 
-int main() {
-    caiwei::test::init_test();
+void test_demuxer() {
     // rtp|sdp|data|file|http|rtmp|rtsp|device
     auto type = "file";
     // 注意端口必须分开
@@ -65,6 +64,11 @@ int main() {
     );
     media_demuxer.stop();
     caiwei::player::stop_player();
+}
+
+int main() {
+    caiwei::test::init_test();
+    test_demuxer();
     caiwei::test::stop_test();
     return 0;
 }

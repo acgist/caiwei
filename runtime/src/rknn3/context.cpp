@@ -405,9 +405,9 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
     if (!session) {
         co_return;
     }
-    auto begin_time = std::chrono::system_clock::now();
+    auto begin_time = std::chrono::steady_clock::now();
     std::vector<rknn3_llm_input> inputs = this->get_inputs(session.get(), &context_session, request);
-    auto end_time = std::chrono::system_clock::now();
+    auto end_time = std::chrono::steady_clock::now();
     context_session.media_latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
     if (inputs.empty()) {
         CW_LOG_W("获取输入数据失败");
@@ -416,16 +416,16 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
     rknn3_llm_infer_param llm_infer_param;
     llm_infer_param.keep_history   = 0;
     llm_infer_param.max_new_tokens = request.max_completion_tokens.value_or(this->max_token_length);
-    begin_time = std::chrono::system_clock::now();
+    begin_time = std::chrono::steady_clock::now();
     // int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     int ret = rknn3_session_run_async(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     while (true) {
         std::unique_lock<std::mutex> lock(context_session.mutex);
         if (!context_session.token.empty()) {
             if (context_session.prefill_ms == 0) {
-                end_time = std::chrono::system_clock::now();
+                end_time = std::chrono::steady_clock::now();
                 context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
-                begin_time = std::chrono::system_clock::now();
+                begin_time = std::chrono::steady_clock::now();
             }
             for (auto& result : context_session.token) {
                 co_yield std::move(result);
@@ -437,7 +437,7 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
         }
         context_session.cv.wait_for(lock, std::chrono::seconds(8));
     }
-    end_time = std::chrono::system_clock::now();
+    end_time = std::chrono::steady_clock::now();
     context_session.decode_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
     if (ret < 0) {
         CW_LOG_W("RKNN3会话运行失败: %d", ret);

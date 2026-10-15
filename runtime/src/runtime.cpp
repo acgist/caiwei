@@ -136,7 +136,7 @@ size_t caiwei::runtime::Runtime::optimize() {
                 ++iter;
                 continue;
             }
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - (*iter)->last_run_time);
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - (*iter)->last_run_time);
             if (duration.count() > this->keepalive) {
                 iter = map_iter->second.erase(iter);
                 CW_LOG_I("优化释放context: %s = %s", map_iter->first.c_str(), (*iter)->id.c_str());

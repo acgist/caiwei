@@ -60,7 +60,7 @@ public:
     std::atomic_int32_t ref_count = 0;
 public:
     const std::string id;
-    std::chrono::system_clock::time_point last_run_time;
+    std::chrono::steady_clock::time_point last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
 public:

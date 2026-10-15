@@ -9,16 +9,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Install deps
+      - name: Install dev
         run: |
           sudo apt -y update
-          sudo apt -y install wget cmake unzip gcc-14 g++-14
+          sudo apt -y install wget cmake unzip ffmpeg gcc-14 g++-14
+      - name: Install deps
+        run: |
           sudo apt -y install libsdl2-dev
-          sudo apt -y install ffmpeg libavutil-dev libavcodec-dev libavdevice-dev libavformat-dev libswscale-dev libswresample-dev
+          sudo apt -y install libavutil-dev libavcodec-dev libavdevice-dev libavformat-dev libswscale-dev libswresample-dev
       - name: Install llama.cpp
         working-directory: ./deps
         run: |
-          git clone --depth=1 https://github.com/ggml-org/llama.cpp
+          git clone -b v0.6.0 --depth=1 https://github.com/ggml-org/llama.cpp
       - name: Install cpp-httplib
         working-directory: ./deps
         run: |
@@ -37,6 +39,6 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_CAIWEI_TEST=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-14 -DCMAKE_CXX_COMPILER=/usr/bin/g++-14
-          make
+          make -j2
           sudo make install
           

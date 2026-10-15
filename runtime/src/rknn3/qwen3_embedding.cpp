@@ -56,9 +56,9 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(caiwei
         rknn3_llm_infer_param llm_infer_param;
         llm_infer_param.keep_history = 0;
         llm_infer_param.max_new_tokens = this->max_token_length;
-        auto begin_time = std::chrono::system_clock::now();
+        auto begin_time = std::chrono::steady_clock::now();
         int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
-        auto end_time = std::chrono::system_clock::now();
+        auto end_time = std::chrono::steady_clock::now();
         context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
         if (ret < 0) {
             CW_LOG_W("RKNN3会话运行失败: %d", ret);

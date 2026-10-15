@@ -51,7 +51,7 @@ C* caiwei::manager::ContextWrapper<C, I, O>::ptr() {
 
 template <typename C, typename I, typename O>
 O caiwei::manager::ContextWrapper<C, I, O>::run(I& input) {
-    this->context->last_run_time = std::chrono::system_clock::now();
+    this->context->last_run_time = std::chrono::steady_clock::now();
     return this->context->run(input);
 }
 

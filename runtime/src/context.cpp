@@ -10,7 +10,7 @@ std::vector<caiwei::context::ContextInfo> caiwei::context::context_info_list;
 caiwei::context::Context::Context(caiwei::runtime::Runtime* runtime)
   : id(caiwei::env::id()),
     runtime(runtime),
-    last_run_time(std::chrono::system_clock::now()) {
+    last_run_time(std::chrono::steady_clock::now()) {
 }
 
 caiwei::context::Context::~Context() {

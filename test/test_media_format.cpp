@@ -7,8 +7,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
-int main() {
-    caiwei::test::init_test();
+void test_format() {
     // rtp|sdp|file|http|rtmp|rtsp|device
     auto type = "file";
     // 注意端口必须分开
@@ -76,6 +75,11 @@ int main() {
     media_format.stop();
     media_muxer.stop();
     output.close();
+}
+
+int main() {
+    caiwei::test::init_test();
+    test_format();
     caiwei::test::stop_test();
     return 0;
 }
