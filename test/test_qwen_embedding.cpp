@@ -4,7 +4,6 @@
 
 #include <thread>
 #include <vector>
-#include <iostream>
 
 static void diff(const std::vector<float>& a, const std::vector<float>& z) {
     float sum = 0.0F;
@@ -45,15 +44,15 @@ void test_embedding_for() {
     if (!ptr) {
         return;
     }
-    std::cin.get();
+    caiwei_wait_enter();
     ptr->run(request);
-    std::cin.get();
+    caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
     ptr->run(request);
     CAIWEI_FOR_EACH_END
-    std::cin.get();
+    caiwei_wait_enter();
     ptr->run(request);
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 void test_embedding_thread() {
@@ -77,7 +76,7 @@ void test_embedding_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 int main() {

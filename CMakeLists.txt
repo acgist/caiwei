@@ -31,7 +31,6 @@ option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"       ON)  # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # 跨平台
 option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"          ON)  # FFmpeg
 option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"     ON)  # cpp-httplib
-option(ENABLE_CAIWEI_YOLO_END2END        "YOLO End2End"    OFF) # YOLO端到端
 
 if(ANDROID)
     add_definitions(-DCAIWEI_OS_ANDROID=1)
@@ -283,11 +282,6 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
     else()
     # -
     endif()
-endif()
-
-if (ENABLE_CAIWEI_YOLO_END2END)
-    add_definitions(-DENABLE_CAIWEI_YOLO_END2END=1)
-    message(STATUS "Enable YOLO End2End")
 endif()
 
 add_subdirectory(runtime)

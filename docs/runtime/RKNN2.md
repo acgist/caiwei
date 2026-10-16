@@ -15,13 +15,12 @@ cat /sys/kernel/debug/rknpu/load
 
 ## 模型转换
 
-**默认直接使用`YOLO`官方转换工具，追求极致速度可以使用瑞芯微的模型转换工具。**
-
 ```
 pip install rknn-toolkit2
 ```
 
-> `rknn-toolkit2`版本: `2.3.2`
+* `YOLO`官方工具需要`rknn-toolkit2`版本: `2.3.2`
+* 最求速度建议使用瑞芯微官方定制的`YOLO`导出工具然后量化
 
 ### 生成数据
 
@@ -32,13 +31,23 @@ find ./dataset/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
 ### YOLO-CLS
 
 ```
+# YOLO官方导出
 python export_rknn.py
+# 瑞芯微官方导出
+python export_rknn_toolkit.py
 ```
 
 ### YOLO-DET
 
 ```
+# YOLO官方导出
 python export_rknn.py
+# 瑞芯微官方导出: 坐标没有归一化和分数差距太大量化效果很差
+python export_rknn_toolkit.py
+# 官网参考
+/ultralytics/nn/backends/rknn.py
+/ultralytics/utils/export/rknn.py
+/ultralytics/utils/export/engine.py
 ```
 
 ## 相关链接

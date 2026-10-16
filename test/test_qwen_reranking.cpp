@@ -4,7 +4,6 @@
 
 #include <thread>
 #include <vector>
-#include <iostream>
 
 void test_reranking() {
     caiwei::text::RerankingsRequest request;
@@ -35,15 +34,15 @@ void test_reranking_for() {
     if (!ptr) {
         return;
     }
-    std::cin.get();
+    caiwei_wait_enter();
     ptr->run(request);
-    std::cin.get();
+    caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
     ptr->run(request);
     CAIWEI_FOR_EACH_END
-    std::cin.get();
+    caiwei_wait_enter();
     ptr->run(request);
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 void test_reranking_thread() {
@@ -68,7 +67,7 @@ void test_reranking_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 int main() {

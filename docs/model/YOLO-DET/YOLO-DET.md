@@ -47,7 +47,7 @@ python run_video.py
 |CUDA(Tesla L40S) |-       |-|-    |-   |
 |CUDA(Tesla V100) |-       |-|18ms |-   |
 
-> `RK3588`两组数据表示`i8/f16`精度
+> `RK3588`数据表示`i8/f16/i8-toolkit`精度下的性能
 
 ## 文档资料
 

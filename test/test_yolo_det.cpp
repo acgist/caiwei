@@ -6,7 +6,6 @@ extern "C" {
 
 #include <thread>
 #include <vector>
-#include <iostream>
 
 [[maybe_unused]]
 void det_draw() {
@@ -14,7 +13,6 @@ void det_draw() {
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
-    stbi_image_free(data);
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
@@ -36,6 +34,7 @@ void det_draw() {
         );
     }
     stbi_write_jpg("./acgist_det.jpg", width, height, channels, data, 80);
+    stbi_image_free(data);
 }
 
 [[maybe_unused]]
@@ -52,19 +51,19 @@ void det_image() {
     if (ptr == nullptr) {
         return;
     }
-    std::cin.get();
+    caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(100)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    std::cin.get();
+    caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(100)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -92,7 +91,7 @@ void det_image_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -133,15 +132,18 @@ void det_video() {
     caiwei::player::stop_player();
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn");
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-i8.rknn");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-i8-toolkit.rknn");
     #endif
-    #if ENABLE_CAIWEI_YOLO_END2END
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
-    #endif
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
+    if (argc > 1) {
+        caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);
+    }
     caiwei::test::init_test();
-    // det_draw();
+    det_draw();
     det_image();
     // det_image_thread();
     // det_image_thread();

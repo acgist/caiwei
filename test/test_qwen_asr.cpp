@@ -4,7 +4,6 @@
 
 #include <thread>
 #include <vector>
-#include <iostream>
 #include <generator>
 
 extern "C" {
@@ -77,21 +76,21 @@ void test_asr_for() {
     if (!ptr) {
         return;
     }
-    std::cin.get();
+    caiwei_wait_enter();
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    std::cin.get();
+    caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
     for (const auto& value : ptr->run(request)) {
         // -
     }
     CAIWEI_FOR_EACH_END
-    std::cin.get();
+    caiwei_wait_enter();
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 void test_asr_thread() {
@@ -134,7 +133,7 @@ void test_asr_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 int main() {

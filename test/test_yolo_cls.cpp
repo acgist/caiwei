@@ -6,12 +6,11 @@ extern "C" {
 
 #include <thread>
 #include <vector>
-#include <iostream>
 
 [[maybe_unused]]
 void cls_image() {
     int width, height, channels;
-    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
+    auto data = stbi_load("./samoyed.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
     stbi_image_free(data);
@@ -22,25 +21,32 @@ void cls_image() {
     if (ptr == nullptr) {
         return;
     }
-    std::cin.get();
+    auto result = ptr->run(frame);
+    for (const auto& cls : result) {
+        std::printf("cls = %d, confidence = %f\n", cls.first, cls.second);
+    }
+    // 258 == samoyed
+    assert(!result.empty());
+    assert(result[0].first == 258);
+    caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(100)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    std::cin.get();
+    caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(100)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 [[maybe_unused]]
 void cls_image_thread() {
     int width, height, channels;
-    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
+    auto data = stbi_load("./samoyed.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
     stbi_image_free(data);
@@ -62,7 +68,7 @@ void cls_image_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    std::cin.get();
+    caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -90,10 +96,14 @@ void cls_video() {
     caiwei::player::stop_player();
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-i8-toolkit.rknn");
     #endif
+    if (argc > 1) {
+        caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);
+    }
     caiwei::test::init_test();
     cls_image();
     // cls_image_thread();

@@ -44,6 +44,8 @@ python run_video.py
 |CUDA(Tesla L40S) |-   |-|-   |-   |
 |CUDA(Tesla V100) |-   |-|7ms |-   |
 
+> `RK3588`数据表示`f16/i8-toolkit`精度下的性能
+
 ## 文档资料
 
 * https://docs.ultralytics.com/zh
