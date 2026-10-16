@@ -48,21 +48,6 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_DET_CLASS_SIZE",           "80" },
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"},
     {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"},
-    // SEG
-    {"CAIWEI_SEG_C",                    "3"  },
-    {"CAIWEI_SEG_H",                    "640"},
-    {"CAIWEI_SEG_W",                    "640"},
-    {"CAIWEI_SEG_CLASS_SIZE",           "80" },
-    {"CAIWEI_SEG_IOU_THRESHOLD",        "0.6"},
-    {"CAIWEI_SEG_CONFIDENCE_THRESHOLD", "0.4"},
-    // POSE
-    {"CAIWEI_POSE_C",                    "3"  },
-    {"CAIWEI_POSE_H",                    "640"},
-    {"CAIWEI_POSE_H",                    "640"},
-    {"CAIWEI_POSE_W",                    "640"},
-    {"CAIWEI_POSE_CLASS_SIZE",           "1"  },
-    {"CAIWEI_POSE_IOU_THRESHOLD",        "0.6"},
-    {"CAIWEI_POSE_CONFIDENCE_THRESHOLD", "0.4"},
     // ASR
     {"CAIWEI_ASR_MAX_TOKEN_LENGTH", "24576"          },
     {"CAIWEI_ASR_TOKEN_BOS",        "<|im_start|>"   },
@@ -130,8 +115,6 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
-SEG,YOLO,yolo26n-seg,yolo26n-seg.onnx
-POSE,YOLO,yolo26n-pose,yolo26n-pose.onnx
 ASR,QWEN,qwen3-asr,Qwen3-ASR/Qwen3-ASR-0.6B-Q8_0.gguf|Qwen3-ASR/mmproj-Qwen3-ASR-0.6B-Q8_0.gguf
 LLM,QWEN,qwen3-llm,Qwen3/Qwen3-0.6B-Q8_0.gguf
 VLM,QWEN,qwen3-vlm,Qwen3-VL/Qwen3-VL-4B-Instruct-Q8_0.gguf|Qwen3-VL/mmproj-Qwen3-VL-4B-Instruct-Q8_0.gguf

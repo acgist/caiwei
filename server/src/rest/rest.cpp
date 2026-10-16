@@ -127,8 +127,7 @@ static void get_index() {
   <p><a href="https://gitee.com/acgist/caiwei">https://gitee.com/acgist/caiwei</a></p>
   <p><a href="https://github.com/acgist/caiwei">https://github.com/acgist/caiwei</a></p>
   <p>运行环境: RKNN2/RKNN3/llama.cpp/ONNXRuntime</p>
-  <p>支持模型: YOLO-CLS/YOLO-DET/YOLO-SEG/YOLO-POSE</p>
-  <p>支持模型: Qwen3/Qwen3-ASR/Qwen3-VL/Qwen3-Reranker/Qwen3-Embedding</p>
+  <p>支持模型: YOLO-CLS/YOLO-DET/Qwen3/Qwen3-ASR/Qwen3-VL/Qwen3-Reranker/Qwen3-Embedding</p>
 </body>
 
 </html>)", caiwei::rest::content::type::HTML);

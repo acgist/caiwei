@@ -25,34 +25,8 @@ struct Box {
     float score;    // 置信度
 };
 
-struct Mask {
-    int h;
-    int w;
-    std::vector<float> mask;
-};
-
-struct Seg {
-    Box  box;
-    Mask mask;
-};
-
-struct Point {
-    float x; // x百分比
-    float y; // y百分比
-    float score; // 置信度
-};
-
-using PosePoint = std::vector<Point>;
-
-struct Pose {
-    Box box;
-    PosePoint point;
-};
-
-std::string to_json(const Cls & cls);
-std::string to_json(const Box & box);
-std::string to_json(const Seg & seg);
-std::string to_json(const Pose& pose);
+std::string to_json(const Cls& cls);
+std::string to_json(const Box& box);
 
 template <typename T>
 inline std::string to_json(const std::vector<T>& v) {

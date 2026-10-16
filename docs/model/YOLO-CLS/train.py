@@ -1,9 +1,9 @@
 from ultralytics import YOLO
 
+# 参数列表: https://docs.ultralytics.com/zh/modes/train
+# 数据增强: https://docs.ultralytics.com/zh/guides/yolo-data-augmentation
 model = YOLO("yolo26n-cls.pt", task="classify")
 model.train(
-    # 参数列表: https://docs.ultralytics.com/zh/modes/train
-    # 数据增强: https://docs.ultralytics.com/zh/guides/yolo-data-augmentation
     # fmt: off
     data    = "./dataset",
     imgsz   = 224,

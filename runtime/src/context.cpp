@@ -86,32 +86,6 @@ caiwei::context::DetContext::DetContext(int c, int h, int w, int class_size, flo
 caiwei::context::DetContext::~DetContext() {
 }
 
-caiwei::context::SegContext::SegContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
-  : c(c),
-    h(h),
-    w(w),
-    class_size(class_size),
-    iou_threshold(iou_threshold),
-    confidence_threshold(confidence_threshold),
-    Context(runtime) {
-}
-
-caiwei::context::SegContext::~SegContext() {
-}
-
-caiwei::context::PoseContext::PoseContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
-  : c(c),
-    h(h),
-    w(w),
-    class_size(class_size),
-    iou_threshold(iou_threshold),
-    confidence_threshold(confidence_threshold),
-    Context(runtime) {
-}
-
-caiwei::context::PoseContext::~PoseContext() {
-}
-
 caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime)
  : Context(runtime) {
 }
@@ -173,10 +147,6 @@ static void init_context_info_list() {
             list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::CLS, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "DET") {
             list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::DET, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
-        } else if (type == "SEG") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::SEG, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
-        } else if (type == "POSE") {
-            list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::POSE, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "ASR") {
             list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::ASR, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else if (type == "LLM") {

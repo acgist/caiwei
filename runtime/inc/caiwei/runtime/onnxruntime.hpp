@@ -61,25 +61,6 @@ public:
     std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
-class SegONNXRuntimeContext : public SegContext, public ONNXRuntimeContext {
-using ONNXRuntimeContext::run;
-public:
-    SegONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
-    ~SegONNXRuntimeContext();
-public:
-    bool load() override;
-    std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) override;
-};
-
-class PoseONNXRuntimeContext : public PoseContext, public ONNXRuntimeContext {
-using ONNXRuntimeContext::run;
-public:
-    PoseONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
-    ~PoseONNXRuntimeContext();
-public:
-    bool load() override;
-    std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) override;
-};
 
 }
 }

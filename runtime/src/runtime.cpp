@@ -68,13 +68,11 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
     std::shared_ptr<caiwei::context::Context> ptr{ nullptr };
     if (iter->second.size() < this->max_pool) {
         switch (info->type) {
-        case caiwei::context::Type::CLS : ptr = this->get_cls_context (info); break;
-        case caiwei::context::Type::DET : ptr = this->get_det_context (info); break;
-        case caiwei::context::Type::SEG : ptr = this->get_seg_context (info); break;
-        case caiwei::context::Type::POSE: ptr = this->get_pose_context(info); break;
-        case caiwei::context::Type::ASR : ptr = this->get_asr_context (info); break;
-        case caiwei::context::Type::LLM : ptr = this->get_llm_context (info); break;
-        case caiwei::context::Type::VLM : ptr = this->get_vlm_context (info); break;
+        case caiwei::context::Type::CLS: ptr = this->get_cls_context(info); break;
+        case caiwei::context::Type::DET: ptr = this->get_det_context(info); break;
+        case caiwei::context::Type::ASR: ptr = this->get_asr_context(info); break;
+        case caiwei::context::Type::LLM: ptr = this->get_llm_context(info); break;
+        case caiwei::context::Type::VLM: ptr = this->get_vlm_context(info); break;
         case caiwei::context::Type::EMBEDDING: ptr = this->get_embedding_context(info); break;
         case caiwei::context::Type::RERANKING: ptr = this->get_reranking_context(info); break;
         default: break;
@@ -158,14 +156,6 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::Runtime::get_cls_c
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::Runtime::get_det_context(const caiwei::context::ContextInfo* info) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::Runtime::get_seg_context(const caiwei::context::ContextInfo* info) {
-    return nullptr;
-}
-
-std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::Runtime::get_pose_context(const caiwei::context::ContextInfo* info) {
     return nullptr;
 }
 

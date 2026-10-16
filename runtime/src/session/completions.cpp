@@ -21,24 +21,20 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
 
 static void asr_thread_session (caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer);
 static void vlm_thread_session (caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
-static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, caiwei::manager::SegWrapper* seg_wrapper, caiwei::manager::PoseWrapper* pose_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
+static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
 
-static void sync_cls (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_det (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_seg (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_pose(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_asr (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_llm (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_vlm (caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
+static void sync_cls(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
+static void sync_det(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
+static void sync_asr(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
+static void sync_llm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
+static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
 static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::Result> generator);
 
-static bool async_cls (caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper * wrapper, caiwei::session::Callback& callback);
-static bool async_det (caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper * wrapper, caiwei::session::Callback& callback);
-static bool async_seg (caiwei::text::CompletionsRequest& request, caiwei::manager::SegWrapper * wrapper, caiwei::session::Callback& callback);
-static bool async_pose(caiwei::text::CompletionsRequest& request, caiwei::manager::PoseWrapper* wrapper, caiwei::session::Callback& callback);
-static bool async_asr (caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper * wrapper, caiwei::session::Callback& callback, std::string* ret = nullptr);
-static bool async_llm (caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper * wrapper, caiwei::session::Callback& callback);
-static bool async_vlm (caiwei::text::CompletionsRequest& request, caiwei::manager::VLMWrapper * wrapper, caiwei::session::Callback& callback);
+static bool async_cls(caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper * wrapper, caiwei::session::Callback& callback);
+static bool async_det(caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper * wrapper, caiwei::session::Callback& callback);
+static bool async_asr(caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper * wrapper, caiwei::session::Callback& callback, std::string* ret = nullptr);
+static bool async_llm(caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper * wrapper, caiwei::session::Callback& callback);
+static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager::VLMWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback, std::string* ret = nullptr);
 
 static void fill_media_request(caiwei::text::CompletionsRequest& request);
@@ -63,10 +59,6 @@ std::string caiwei::session::CompletionsSession::get_sync() {
         sync_cls(request, response);
     } else if (context_info->type == caiwei::context::Type::DET) {
         sync_det(request, response);
-    } else if (context_info->type == caiwei::context::Type::SEG) {
-        sync_seg(request, response);
-    } else if (context_info->type == caiwei::context::Type::POSE) {
-        sync_pose(request, response);
     } else if (context_info->type == caiwei::context::Type::ASR) {
         sync_asr(request, response);
     } else if (context_info->type == caiwei::context::Type::LLM) {
@@ -90,13 +82,11 @@ std::future<bool> caiwei::session::CompletionsSession::get() {
 }
 
 static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::session::Callback callback) {
-    std::unique_ptr<caiwei::manager::ClsWrapper>  cls_ptr { nullptr };
-    std::unique_ptr<caiwei::manager::DetWrapper>  det_ptr { nullptr };
-    std::unique_ptr<caiwei::manager::SegWrapper>  seg_ptr { nullptr };
-    std::unique_ptr<caiwei::manager::PoseWrapper> pose_ptr{ nullptr };
-    std::unique_ptr<caiwei::manager::ASRWrapper>  asr_ptr { nullptr };
-    std::unique_ptr<caiwei::manager::LLMWrapper>  llm_ptr { nullptr };
-    std::unique_ptr<caiwei::manager::VLMWrapper>  vlm_ptr { nullptr };
+    std::unique_ptr<caiwei::manager::ClsWrapper> cls_ptr{ nullptr };
+    std::unique_ptr<caiwei::manager::DetWrapper> det_ptr{ nullptr };
+    std::unique_ptr<caiwei::manager::ASRWrapper> asr_ptr{ nullptr };
+    std::unique_ptr<caiwei::manager::LLMWrapper> llm_ptr{ nullptr };
+    std::unique_ptr<caiwei::manager::VLMWrapper> vlm_ptr{ nullptr };
     std::vector<std::string> all_model_list;
     if (!request.model.empty()) {
         all_model_list.push_back(request.model);
@@ -115,10 +105,6 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             cls_ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>(model);
         } else if (context_info->type == caiwei::context::Type::DET) {
             det_ptr = caiwei::manager::get_context<caiwei::context::DetContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Box>>(model);
-        } else if (context_info->type == caiwei::context::Type::SEG) {
-            seg_ptr = caiwei::manager::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>(model);
-        } else if (context_info->type == caiwei::context::Type::POSE) {
-            pose_ptr = caiwei::manager::get_context<caiwei::context::PoseContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Pose>>(model);
         } else if (context_info->type == caiwei::context::Type::ASR) {
             asr_ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(model);
         } else if (context_info->type == caiwei::context::Type::LLM) {
@@ -169,7 +155,7 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         video_frame_buffer.resize(vlm_frames);
         const bool enable_asr  = asr_ptr != nullptr;
         const bool enable_vlm  = vlm_ptr != nullptr;
-        const bool enable_yolo = cls_ptr != nullptr || det_ptr != nullptr || seg_ptr != nullptr || pose_ptr != nullptr;
+        const bool enable_yolo = cls_ptr != nullptr || det_ptr != nullptr;
         if (!enable_asr && !enable_vlm && !enable_yolo) {
             callback("没有可用模型", -1);
             return false;
@@ -182,7 +168,7 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             vlm_thread = std::thread(vlm_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(vlm_mutex), std::ref(vlm_cv), vlm_ptr.get(), std::ref(video_frame_buffer), std::ref(video_frame_size));
         }
         if (enable_yolo) {
-            yolo_thread = std::thread(yolo_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(yolo_mutex), std::ref(yolo_cv), cls_ptr.get(), det_ptr.get(), seg_ptr.get(), pose_ptr.get(), std::ref(image_frame_buffer), std::ref(image_frame_size));
+            yolo_thread = std::thread(yolo_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(yolo_mutex), std::ref(yolo_cv), cls_ptr.get(), det_ptr.get(), std::ref(image_frame_buffer), std::ref(image_frame_size));
         }
         caiwei::media::MediaDemuxer media_demuxer(type, url, [&](caiwei::media::AudioFrame& frame) {
             if (enable_asr) {
@@ -299,12 +285,6 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         if (det_ptr != nullptr) {
             async_det(request, det_ptr.get(), callback);
         }
-        if (seg_ptr != nullptr) {
-            async_seg(request, seg_ptr.get(), callback);
-        }
-        if (pose_ptr != nullptr) {
-            async_pose(request, pose_ptr.get(), callback);
-        }
         if (asr_ptr != nullptr) {
             async_asr(request, asr_ptr.get(), callback);
         }
@@ -350,18 +330,6 @@ static void sync_cls(caiwei::text::CompletionsRequest& request, caiwei::text::Co
 
 static void sync_det(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Box>>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
-    sync_yolo(std::move(ptr), request, response);
-}
-
-static void sync_seg(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::SegContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Seg>>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
-    sync_yolo(std::move(ptr), request, response);
-}
-
-static void sync_pose(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::PoseContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Pose>>(request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     sync_yolo(std::move(ptr), request, response);
 }
@@ -468,14 +436,6 @@ static bool async_cls(caiwei::text::CompletionsRequest& request, caiwei::manager
 }
 
 static bool async_det(caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper* wrapper, caiwei::session::Callback& callback) {
-    return async_yolo(request, wrapper, callback);
-}
-
-static bool async_seg(caiwei::text::CompletionsRequest& request, caiwei::manager::SegWrapper* wrapper, caiwei::session::Callback& callback) {
-    return async_yolo(request, wrapper, callback);
-}
-
-static bool async_pose(caiwei::text::CompletionsRequest& request, caiwei::manager::PoseWrapper* wrapper, caiwei::session::Callback& callback) {
     return async_yolo(request, wrapper, callback);
 }
 
@@ -604,8 +564,8 @@ static void vlm_thread_session(caiwei::text::CompletionsRequest request, caiwei:
     }
 }
 
-static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, caiwei::manager::SegWrapper* seg_wrapper, caiwei::manager::PoseWrapper* pose_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
-    if (cls_wrapper == nullptr && det_wrapper == nullptr && seg_wrapper == nullptr && pose_wrapper == nullptr) {
+static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback callback, bool& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
+    if (cls_wrapper == nullptr && det_wrapper == nullptr) {
         return;
     }
     auto& message = request.messages.back();
@@ -640,12 +600,6 @@ static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei
             }
             if (callable && det_wrapper != nullptr) {
                 callable = async_det(request, det_wrapper, callback);
-            }
-            if (callable && seg_wrapper != nullptr) {
-                callable = async_seg(request, seg_wrapper, callback);
-            }
-            if (callable && pose_wrapper != nullptr) {
-                callable = async_pose(request, pose_wrapper, callback);
             }
         }
         cv.notify_one();

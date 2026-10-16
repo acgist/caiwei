@@ -48,8 +48,6 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN2)
         src/rknn2/runtime.cpp
         src/rknn2/yolo_cls.cpp
         src/rknn2/yolo_det.cpp
-        src/rknn2/yolo_seg.cpp
-        src/rknn2/yolo_pose.cpp
     )
 endif()
 
@@ -86,8 +84,6 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
         src/onnxruntime/runtime.cpp
         src/onnxruntime/yolo_cls.cpp
         src/onnxruntime/yolo_det.cpp
-        src/onnxruntime/yolo_seg.cpp
-        src/onnxruntime/yolo_pose.cpp
     )
 endif()
 

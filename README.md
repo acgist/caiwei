@@ -49,8 +49,6 @@
 |:--|:--|:--|:--|
 |YOLO-CLS       |√|×|√|
 |YOLO-DET       |√|×|√|
-|YOLO-SEG       |√|×|√|
-|YOLO-POSE      |√|×|√|
 |Qwen3          |√|√|×|
 |Qwen3-ASR      |√|√|×|
 |Qwen3-VL       |√|√|×|

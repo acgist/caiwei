@@ -57,26 +57,6 @@ public:
     std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
-class SegRKNN2Context : public SegContext, public RKNN2Context {
-using RKNN2Context::run;
-public:
-    SegRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
-    ~SegRKNN2Context();
-public:
-    bool load() override;
-    std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) override;
-};
-
-class PoseRKNN2Context : public PoseContext, public RKNN2Context {
-using RKNN2Context::run;
-public:
-    PoseRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
-    ~PoseRKNN2Context();
-public:
-    bool load() override;
-    std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) override;
-};
-
 } // context
 } // caiwei
 

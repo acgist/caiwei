@@ -31,8 +31,6 @@ namespace context {
 enum class Type {
     CLS,
     DET,
-    SEG,
-    POSE,
     ASR,
     LLM,
     VLM,
@@ -104,42 +102,6 @@ public:
     ~DetContext();
 public:
     virtual std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) = 0;
-};
-
-/**
- * 实例分割模型
- */
-class SegContext : public Context {
-protected:
-    int c;
-    int h;
-    int w;
-    int class_size;
-    float iou_threshold;
-    float confidence_threshold;
-public:
-    SegContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
-    ~SegContext();
-public:
-    virtual std::vector<caiwei::image::Seg> run(const caiwei::media::ImageFrame& image) = 0;
-};
-
-/**
- * 姿态估计模型
- */
-class PoseContext : public Context {
-protected:
-    int c;
-    int h;
-    int w;
-    int class_size;
-    float iou_threshold;
-    float confidence_threshold;
-public:
-    PoseContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
-    ~PoseContext();
-public:
-    virtual std::vector<caiwei::image::Pose> run(const caiwei::media::ImageFrame& image) = 0;
 };
 
 /**

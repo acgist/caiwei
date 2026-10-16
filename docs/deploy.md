@@ -43,8 +43,10 @@ pip install torch torchaudio torchcodec torchvision --index-url https://download
 * https://modelscope.cn/collections/acgist/caiwei
 
 ```
-pip install ms_swift==4.4.2 accelerate modelscope transformers --index-url https://download.pytorch.org/whl/cu126
+pip install ms_swift accelerate modelscope transformers --index-url https://download.pytorch.org/whl/cu126
 ```
+
+> `ms_swift`版本: `4.4.2`
 
 ## Linux环境
 

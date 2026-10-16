@@ -48,31 +48,3 @@ std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::RKNN2Runtime::get_
     }
     return std::make_shared<caiwei::context::DetRKNN2Context>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this);
 }
-
-std::shared_ptr<caiwei::context::SegContext> caiwei::runtime::RKNN2Runtime::get_seg_context(const caiwei::context::ContextInfo* info) {
-    int c = caiwei::env::get_int("CAIWEI_SEG_C");
-    int h = caiwei::env::get_int("CAIWEI_SEG_H");
-    int w = caiwei::env::get_int("CAIWEI_SEG_W");
-    int class_size = caiwei::env::get_int("CAIWEI_SEG_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_SEG_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_SEG_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("SegContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<caiwei::context::SegRKNN2Context>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this);
-}
-
-std::shared_ptr<caiwei::context::PoseContext> caiwei::runtime::RKNN2Runtime::get_pose_context(const caiwei::context::ContextInfo* info) {
-    int c = caiwei::env::get_int("CAIWEI_POSE_C");
-    int h = caiwei::env::get_int("CAIWEI_POSE_H");
-    int w = caiwei::env::get_int("CAIWEI_POSE_W");
-    int class_size = caiwei::env::get_int("CAIWEI_POSE_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_POSE_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_POSE_CONFIDENCE_THRESHOLD");
-    if (!std::filesystem::exists(info->path)) {
-        CW_LOG_W("PoseContext模型无效: %s", info->path.c_str());
-        return nullptr;
-    }
-    return std::make_shared<caiwei::context::PoseRKNN2Context>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this);
-}

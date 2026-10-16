@@ -158,28 +158,6 @@ target_link_libraries(
 )
 
 add_executable(
-    test_yolo_seg
-    test_yolo_seg.cpp
-)
-add_test(NAME test_yolo_seg COMMAND test_yolo_seg)
-set_target_properties(test_yolo_seg PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_yolo_seg
-    caiwei-test
-)
-
-add_executable(
-    test_yolo_pose
-    test_yolo_pose.cpp
-)
-add_test(NAME test_yolo_pose COMMAND test_yolo_pose)
-set_target_properties(test_yolo_pose PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_yolo_pose
-    caiwei-test
-)
-
-add_executable(
     test_runtime_text
     test_runtime_text.cpp
 )
@@ -209,17 +187,6 @@ add_test(NAME test_runtime_runtime COMMAND test_runtime_runtime)
 set_target_properties(test_runtime_runtime PROPERTIES FOLDER "test")
 target_link_libraries(
     test_runtime_runtime
-    caiwei-test
-)
-
-add_executable(
-    test_runtime_tokenizer
-    test_runtime_tokenizer.cpp
-)
-add_test(NAME test_runtime_tokenizer COMMAND test_runtime_tokenizer)
-set_target_properties(test_runtime_tokenizer PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_runtime_tokenizer
     caiwei-test
 )
 

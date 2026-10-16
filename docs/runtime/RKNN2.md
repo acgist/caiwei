@@ -21,6 +21,14 @@ cat /sys/kernel/debug/rknpu/load
 pip install rknn-toolkit2
 ```
 
+> `rknn-toolkit2`版本: `2.3.2`
+
+### 生成数据
+
+```
+find ./dataset/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) > dataset.txt
+```
+
 ### YOLO-CLS
 
 ```
@@ -28,18 +36,6 @@ python export_rknn.py
 ```
 
 ### YOLO-DET
-
-```
-python export_rknn.py
-```
-
-### YOLO-SEG
-
-```
-python export_rknn.py
-```
-
-### YOLO-POSE
 
 ```
 python export_rknn.py

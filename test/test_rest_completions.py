@@ -67,48 +67,6 @@ def test_det():
     print_resp(stream, resp)
 
 
-def test_seg():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
-    resp = client.chat.completions.create(
-        model="yolo26n-seg",
-        stream=stream,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": "./acgist.jpg"},
-                    },
-                ],
-            },
-        ],
-    )
-    print_resp(stream, resp)
-
-
-def test_pose():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
-    resp = client.chat.completions.create(
-        model="yolo26n-pose",
-        stream=stream,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": "./acgist.jpg"},
-                    },
-                ],
-            },
-        ],
-    )
-    print_resp(stream, resp)
-
-
 def test_asr():
     stream = True
     client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
@@ -193,12 +151,11 @@ def test_media():
     )
     print_resp(stream, resp)
 
+
 """
 $env:CAIWEI_CONTEXT_INFO=@"
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
-SEG,YOLO,yolo26n-seg,yolo26n-seg.onnx
-POSE,YOLO,yolo26n-pose,yolo26n-pose.onnx
 ASR,QWEN,qwen3-asr,D:/tmp/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf|D:/tmp/model/llama.cpp/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf
 LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf
 VLM,QWEN,qwen3-vlm,D:/tmp/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|D:/tmp/model/llama.cpp/mmproj-Qwen3-VL-2B-Instruct-Q4_K_M.gguf
@@ -209,8 +166,6 @@ RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M
 export CAIWEI_CONTEXT_INFO="
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
-SEG,YOLO,yolo26n-seg,yolo26n-seg.onnx
-POSE,YOLO,yolo26n-pose,yolo26n-pose.onnx
 ASR,QWEN,qwen3-asr,D:/tmp/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf|D:/tmp/model/llama.cpp/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf
 LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf
 VLM,QWEN,qwen3-vlm,D:/tmp/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|D:/tmp/model/llama.cpp/mmproj-Qwen3-VL-2B-Instruct-Q4_K_M.gguf
@@ -221,8 +176,6 @@ RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M
 
 # test_cls()
 # test_det()
-# test_seg()
-# test_pose()
 # test_asr()
 # test_llm()
 # test_vlm()
