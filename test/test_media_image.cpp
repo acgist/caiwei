@@ -248,23 +248,45 @@ void test_hwc_to_chw() {
     stbi_image_free(data);
 }
 
+void test_image() {
+    const int w = resize_w;
+    const int h = resize_h;
+    float scale;
+    int dst_w, dst_h, pad_w, pad_h;
+    int width, height, channels;
+    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    std::vector<uint8_t> dst(width * height * channels);
+    std::vector<uint8_t> pad(w * h * channels);
+    std::vector<float>   hwc(w * h * channels);
+    std::vector<float>   chw(w * h * channels);
+    CAIWEI_FOR_EACH(1000)
+    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
+    caiwei::type::i8_to_f32(pad.data(), w * h * channels, hwc.data(), 255.0F);
+    caiwei::image::hwc_to_chw(hwc.data(), chw.data(), h, w, channels);
+    CAIWEI_FOR_EACH_END
+    stbi_image_free(data);
+}
+
 int main() {
     caiwei::test::init_test();
-    test_load();
-    test_crop();
-    test_resize();
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
-    test_resize_rga();
-    #endif
-    test_resize_ffmpeg();
-    test_resize_pad();
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
-    test_resize_pad_rga();
-    #endif
-    test_nms_boxes();
-    test_min_max_loc();
-    test_transpose();
-    test_hwc_to_chw();
+    // test_load();
+    // test_crop();
+    // test_resize();
+    // #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+    // test_resize_rga();
+    // #endif
+    // test_resize_ffmpeg();
+    // test_resize_pad();
+    // #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+    // test_resize_pad_rga();
+    // #endif
+    // test_nms_boxes();
+    // test_min_max_loc();
+    // test_transpose();
+    // test_hwc_to_chw();
+    test_image();
     caiwei::test::stop_test();
     return 0;
 }

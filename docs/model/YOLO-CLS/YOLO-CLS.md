@@ -33,18 +33,18 @@ python run_video.py
 
 ## 性能评估
 
-* 图片大小: `1280*720`
+* 图片大小: `512x512`
+* 括号内容表示模型消耗时间
+* `RK3588`数据表示`f16/i8-toolkit`精度下的性能
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)   |-   |-|18ms|22ms|
-|RKNN(RK1828)     |-   |-|-   |-   |
-|RKNN(RK3588)     |12ms|-|-   |-   |
-|CUDA(RTX 4060)   |-   |-|-   |-   |
-|CUDA(Tesla L40S) |-   |-|-   |-   |
-|CUDA(Tesla V100) |-   |-|7ms |-   |
-
-> `RK3588`数据表示`f16/i8-toolkit`精度下的性能
+|CPU(i5-1135G7)   |-           |-|16ms(15ms)|22ms|
+|RKNN(RK1828)     |-           |-|-         |-   |
+|RKNN(RK3588)     |6/4ms(6/4ms)|-|-         |-   |
+|CUDA(RTX 4060)   |-           |-|-         |-   |
+|CUDA(Tesla L40S) |-           |-|-         |-   |
+|CUDA(Tesla V100) |-           |-|10ms(4ms) |-   |
 
 ## 文档资料
 

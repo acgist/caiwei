@@ -2,48 +2,64 @@
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 #include "caiwei/runtime/rknn2.hpp"
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
+#include "caiwei/runtime/onnxruntime.hpp"
+#endif
 
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 [[maybe_unused]]
-void test_rknn2() {
-    caiwei::context::RKNN2Context context("yolo26n-det.rknn", 3, 640, 640);
+void test_rknn2(int size, const std::string& path, const std::string& type) {
+    size = size == 0 ? 640 : size;
+    caiwei::context::RKNN2Context context(path.empty() ? "yolo26n-det.rknn" : path, 3, size, size);
     context.load_model();
-    std::vector<uint8_t> data(3 * 640 * 640);
-    CAIWEI_FOR_EACH(100)
-    context.run(data.data(), data.size());
-    CAIWEI_FOR_EACH_END
+    if (type == "i8") {
+        std::vector<uint8_t> data(3 * size * size);
+        CAIWEI_FOR_EACH(100)
+        context.run(data.data(), data.size());
+        CAIWEI_FOR_EACH_END
+    } else {
+        std::vector<float> data(3 * size * size);
+        CAIWEI_FOR_EACH(100)
+        context.run(data.data(), data.size());
+        CAIWEI_FOR_EACH_END
+    }
 }
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
-#include "caiwei/runtime/onnxruntime.hpp"
-
 [[maybe_unused]]
-void test_onnxruntime() {
+void test_onnxruntime(int size, const std::string& path) {
+    size = size == 0 ? 640 : size;
     auto* env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
-    caiwei::context::ONNXRuntimeContext context("yolo26n-det.onnx", 3, 640, 640, env);
+    caiwei::context::ONNXRuntimeContext context(path.empty() ? "yolo26n-det.onnx" : path, 3, size, size, env);
     context.load_model();
-    std::vector<float> data(3 * 640 * 640);
+    std::vector<float> data(3 * size * size);
     CAIWEI_FOR_EACH(100)
     auto result = context.run(data.data(), data.size());
     CAIWEI_FOR_EACH_END
 }
 #endif
 
-int main() {
+int main(int argc, char* argv[]) {
     caiwei::test::init_test();
+    int size = 0;
+    std::string path;
+    std::string type;
+    if (argc > 1) {
+        size = std::stoi(argv[1]);
+    }
+    if (argc > 2) {
+        path = argv[2];
+    }
+    if (argc > 3) {
+        type = argv[3];
+    }
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
-    // detect
-    // RK3588 24~28 ms yolo11n-i8(瑞芯微导出版本)
-    // RK3588 36~42 ms yolo11n-i8(YOLO官网导出版本)
-    // RK3588 38~44 ms yolo26n-i8(YOLO官网导出版本)
-    // RK3588 94~100 ms yolo26n-f16(YOLO官网导出版本)
-    test_rknn2();
+    test_rknn2(size, path, type);
     #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
-    // detect
-    // CUDA: 8~10 ms
-    // CUDA: 8~10 ms End2End
-    test_onnxruntime();
+    test_onnxruntime(size, path);
     #endif
     caiwei::test::stop_test();
     return 0;

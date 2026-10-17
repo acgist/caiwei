@@ -3,7 +3,7 @@ import cv2
 from ultralytics import YOLO
 
 model = YOLO("yolo26n-cls.pt")
-image = cv2.imread("../../../test/acgist.jpg")
+image = cv2.imread("../../../test/samoyed.jpg")
 results = model(image)
 results[0].show()
 
