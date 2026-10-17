@@ -110,6 +110,9 @@ target_include_directories(
 if(ANDROID)
 # -
 elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        target_compile_options(${PROJECT_NAME} PRIVATE -mavx2)
+    endif()
     install(
         TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION lib

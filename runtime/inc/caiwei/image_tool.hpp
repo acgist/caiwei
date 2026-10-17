@@ -69,35 +69,6 @@ inline void padding(const uint8_t* src, uint8_t* pad, const int src_w, const int
     }
 }
 
-inline float sigmoid(float x) {
-    if (x > 88.0F) {
-        return 1.0F;
-    };
-    if (x < -88.0F) {
-        return 0.0F;
-    };
-    return 1.0F / (1.0F + std::exp(-x));
-}
-
-inline void coeff_to_mask(const float* coeff, const int box_x, const int box_y, const int box_w, const int box_h, const float* proto_data, const int proto_c, const int proto_h, const int proto_w, const int proto_pad_h, const int proto_pad_w, float* mask) {
-    const int length = proto_h * proto_w;
-    const int box_x2 = box_x + box_w;
-    const int box_y2 = box_y + box_h;
-    int j = 0;
-    for (int i = 0; i < length; ++i) {
-        const int y = i / proto_w;
-        const int x = i % proto_w;
-        if (y < box_y || y >= box_y2 || x < box_x || x >= box_x2) {
-            continue;
-        }
-        float sum = 0.0F;
-        for (int c = 0; c < proto_c; ++c) {
-            sum += coeff[c] * proto_data[c * length + i];
-        }
-        mask[j++] = sigmoid(sum);
-    }
-}
-
 template<typename T>
 inline std::vector<size_t> nms_boxes(const std::vector<T>& boxes, const float iou_threshold) {
     if (boxes.empty()) {
@@ -212,6 +183,23 @@ void hwc_to_chw(const T* hwc, T* chw, const int H, const int W, const int C) {
             for (int c = 0; c < C; ++c) {
                 chw[c * plane_size + pixel_idx] = hwc_pixel[c];
             }
+        }
+    }
+}
+
+inline void hwc_to_chw_i8_f32(const uint8_t* hwc, float* chw, const int H, const int W, const int C,const float scale) {
+    const float inv_scale = 1.0F / scale;
+    const size_t plane_size = static_cast<size_t>(H) * W;
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            const size_t   pixel_idx = static_cast<size_t>(y) * W + x;
+            const uint8_t* hwc_pixel = hwc + pixel_idx * C;
+            // for (int c = 0; c < C; ++c) {
+            //     chw[c * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[c]) * inv_scale;
+            // }
+            chw[0 * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[0]) * inv_scale;
+            chw[1 * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[1]) * inv_scale;
+            chw[2 * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[2]) * inv_scale;
         }
     }
 }
