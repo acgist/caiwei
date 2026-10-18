@@ -39,12 +39,12 @@ python run_video.py
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)   |-           |-|16ms(15ms)|22ms|
-|RKNN(RK1828)     |-           |-|-         |-   |
-|RKNN(RK3588)     |6/4ms(6/4ms)|-|-         |-   |
-|CUDA(RTX 4060)   |-           |-|-         |-   |
-|CUDA(Tesla L40S) |-           |-|-         |-   |
-|CUDA(Tesla V100) |-           |-|10ms(4ms) |-   |
+|CPU(i5-1135G7)   |-           |-|3ms(2ms) |10ms|
+|RKNN(RK1828)     |-           |-|-        |-   |
+|RKNN(RK3588)     |6/4ms(6/4ms)|-|-        |-   |
+|CUDA(RTX 4060)   |-           |-|-        |-   |
+|CUDA(Tesla L40S) |-           |-|-        |-   |
+|CUDA(Tesla V100) |-           |-|10ms(4ms)|-   |
 
 ## 文档资料
 

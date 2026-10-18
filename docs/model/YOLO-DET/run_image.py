@@ -7,9 +7,11 @@ image = cv2.imread("../../../test/acgist.jpg")
 results = model(image)
 results[0].show()
 
-# import time
-# a = time.time()
-# for i in range(100):
-#     results = model(image, verbose=False)
-# z = time.time()
-# print((z - a) * 1000 / 100)
+import time
+
+model = YOLO("yolo26n.onnx", task="detect")
+a = time.time()
+for i in range(1000):
+    results = model(image, verbose=False)
+z = time.time()
+print((z - a) * 1000 / 1000)

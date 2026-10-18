@@ -103,8 +103,9 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
             caiwei::image::hwc_to_chw(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
             return this->run(this->chw_i8.data(), this->chw_i8.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
-            caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
-            caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
+            // caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
+            // caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
+            caiwei::image::hwc_to_chw(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
             return this->run(this->chw.data(), this->chw.size());
         } else {
             CW_LOG_E("不支持的输入类型: %s", get_type_string(input_attr.type));

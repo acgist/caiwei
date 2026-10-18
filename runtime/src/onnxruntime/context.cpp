@@ -63,10 +63,16 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     options.AppendExecutionProvider_CUDA_V2(*cudaOptions);
     CW_LOG_I("ONNXRuntimeContext使用CUDA推理: %d", caiwei::env::get_int("CAIWEI_CUDA_ID"));
     #else
+    int cpu_core = std::thread::hardware_concurrency();
+    if (cpu_core <= 0) {
+        cpu_core = 4;
+    } else {
+        cpu_core /= 2;
+    }
     options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
     options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
-    options.SetIntraOpNumThreads(std::thread::hardware_concurrency());
-    options.SetInterOpNumThreads(std::thread::hardware_concurrency());
+    options.SetIntraOpNumThreads(cpu_core);
+    options.SetInterOpNumThreads(1);
     options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
     CW_LOG_I("ONNXRuntimeContext使用CPU推理");
     #endif
@@ -129,8 +135,9 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, c
     }
     caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h);
     caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
-    caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
-    caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
+    // caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
+    // caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
+    caiwei::image::hwc_to_chw_i8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
     return this->run(this->chw.data(), this->chw.size());
 }
 

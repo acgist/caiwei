@@ -53,13 +53,13 @@ void det_image() {
     }
     caiwei_wait_enter();
     {
-        CAIWEI_FOR_EACH(100)
+        CAIWEI_FOR_EACH(1000)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
     caiwei_wait_enter();
     {
-        CAIWEI_FOR_EACH(100)
+        CAIWEI_FOR_EACH(1000)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
