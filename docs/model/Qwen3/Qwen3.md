@@ -35,7 +35,7 @@ swift sft                            \
 
 ### sft.jsonl
 
-* 末尾不能含有空格
+* 末尾不能含有空行
 * 没有思考内容自动填充思考内容`<think>\n\n</think>\n\n`
 * 如果带有思考内容数据格式如下`<think>\n思考内容\n</think>\n\n`
 

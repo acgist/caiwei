@@ -1,6 +1,7 @@
 # CUDA
 
 * 版本: 12.6
+* 版本: 13.4
 * 官网: https://www.nvidia.cn
 
 ## 安装教程

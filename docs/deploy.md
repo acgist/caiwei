@@ -38,9 +38,9 @@ pip install torch torchaudio torchcodec torchvision --index-url https://download
 ## ModelScope
 
 * https://www.modelscope.cn/docs/home
-* https://modelscope.cn/organization/Qwen
-* https://modelscope.cn/organization/ggml-org
-* https://modelscope.cn/collections/acgist/caiwei
+* https://www.modelscope.cn/organization/Qwen
+* https://www.modelscope.cn/organization/ggml-org
+* https://www.modelscope.cn/collections/acgist/caiwei
 
 ```
 pip install ms_swift accelerate modelscope transformers --index-url https://download.pytorch.org/whl/cu126
@@ -87,7 +87,7 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/local/gcc-15.3.0/bin/g+
 
 * `export LD_LIBRARY_PATH="/usr/local/gcc-15.3.0/lib64/:$LD_LIBRARY_PATH"`
 * `-DCMAKE_C_COMPILER=/usr/local/gcc-15.3.0/bin/gcc -DCMAKE_CXX_COMPILER=/usr/local/gcc-15.3.0/bin/g++`
-* 经过多次测试发现`ARM`架构`GCC-14.2.0`/`GCC-14.4.0`这些版本使用`generator`存在`BUG`容易导致`RKNN3`推理失败。
+* 经过多次测试发现`ARM`架构`GCC-14.2.0`/`GCC-14.4.0`这些版本使用`generator`存在`BUG`容易导致`RKNN3`推理失败
 
 ## Windows环境
 

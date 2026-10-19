@@ -11,7 +11,7 @@ git clone https://github.com/ggml-org/llama.cpp.git --depth=1
 
 ## 模型转换
 
-数据类型`f32/f16/bf16/q8_0`
+数据类型`bf16/f16/q8_0/q4_0`
 
 ### Qwen3
 

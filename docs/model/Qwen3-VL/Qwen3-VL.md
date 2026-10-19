@@ -37,7 +37,7 @@ swift sft                             \
 
 ### sft.jsonl
 
-* 末尾不能含有空格
+* 末尾不能含有空行
 * 指定微调的线性层`--target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj`
 
 ## 模型导出

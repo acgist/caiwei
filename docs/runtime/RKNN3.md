@@ -9,9 +9,13 @@
 ## 安装教程
 
 ```
+# 安装rknn3-toolkit
+git clone https://github.com/airockchip/rknn3-toolkit.git
+cd rknn3-toolkit/packages
 pip install -r requirements_cp312-1.1.0.txt
 pip install rknn3_toolkit-1.1.0-cp312-cp312-manylinux2014_x86_64.whl
 
+# 性能查看
 rknn-smi info
 ```
 

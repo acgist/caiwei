@@ -10,6 +10,7 @@
 ## 安装教程
 
 ```
+# 性能查看
 cat /sys/kernel/debug/rknpu/load
 ```
 
@@ -19,13 +20,12 @@ cat /sys/kernel/debug/rknpu/load
 pip install rknn-toolkit2
 ```
 
-* `YOLO`官方工具需要`rknn-toolkit2`版本: `2.3.2`
-* 追求速度建议使用瑞芯微官方定制的`YOLO`导出工具然后量化
+* `YOLO`官方工具需要`rknn-toolkit2`版本`2.3.2`
 
-### 生成数据
+### 量化数据
 
 ```
-find ./dataset/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) > dataset.txt
+find ./dataset/ -type f -iregex '.*\.\(jpg\|jpeg\|png\)$' > dataset.txt
 ```
 
 ### YOLO-CLS
@@ -33,7 +33,7 @@ find ./dataset/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
 ```
 # YOLO官方导出
 python export_rknn.py
-# 瑞芯微官方导出
+# rknn-toolkit2导出
 python export_rknn_i8.py
 ```
 
@@ -42,15 +42,11 @@ python export_rknn_i8.py
 ```
 # YOLO官方导出
 python export_rknn.py
-# 官网参考
-/ultralytics/nn/backends/rknn.py
-/ultralytics/utils/export/rknn.py
-/ultralytics/utils/export/engine.py
+# 位置输出没有归一化不能直接使用rknn-toolkit2量化导出，建议使用瑞芯微定制`YOLO`模型工具导出模型然后量化。
 ```
 
 ## 相关链接
 
-* https://github.com/airockchip/rknn-llm
 * https://github.com/airockchip/rknn-toolkit2
 * https://github.com/airockchip/rknn_model_zoo
 * https://docs.ultralytics.com/datasets

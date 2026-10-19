@@ -7,7 +7,7 @@
 * `url` : 视频地址
 * `type`: 媒体类型(`rtp|sdp|file|http|rtmp|rtsp|device`)
 
-## POST /v1/rerankings
+## POST /v1/embeddings
 
 ```
 {
@@ -33,7 +33,7 @@
 }
 ```
 
-## POST /v1/embeddings
+## POST /v1/rerankings
 
 ```
 {
@@ -126,7 +126,7 @@
         ...
     ],
     "video_fps"      : 视频识别间隔帧数,
-    "asr_samples"    : ASR 识别帧数大小,
+    "asr_samples"    : ASR 识别采样数量,
     "asr_queue_size" : ASR 识别队列大小,
     "vlm_frames"     : VLM 识别帧数大小,
     "yolo_queue_size": YOLO识别队列大小,

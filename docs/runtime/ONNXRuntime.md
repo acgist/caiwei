@@ -1,7 +1,7 @@
 # ONNXRuntime
 
-* 版本: 1.28.1(CUDA-13)
 * 版本: 1.26.0(CUDA-12)
+* 版本: 1.28.1(CUDA-13)
 
 ## 安装教程
 
@@ -13,13 +13,16 @@ mv onnxruntime-linux-x64-1.28.1 onnxruntime
 
 ## 模型转换
 
-### YOLO
+### YOLO-CLS
 
 ```
-from ultralytics import YOLO
+python export_onnx.py
+```
 
-model = YOLO("yolo26n.pt")
-model.export(format="onnx")
+### YOLO-DET
+
+```
+python export_onnx.py
 ```
 
 ## 相关链接
