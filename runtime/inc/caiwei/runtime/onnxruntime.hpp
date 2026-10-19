@@ -12,7 +12,7 @@ extern OrtLoggingLevel onnxruntime_log_level;
 
 class ONNXRuntimeContext {
 protected:
-    std::string path;
+    const std::string path;
     const Ort::Env * env        { nullptr };
     Ort::Session   * session    { nullptr };
     Ort::RunOptions* run_options{ nullptr };
@@ -44,7 +44,7 @@ public:
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    ClsONNXRuntimeContext(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    ClsONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, int top_k, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
     ~ClsONNXRuntimeContext();
 public:
     bool load() override;
@@ -61,8 +61,7 @@ public:
     std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
+} // context
+} // caiwei
 
-}
-}
-
-#endif //CAIWEI_RUNTIME_ONNXRUNTIME_HPP
+#endif // CAIWEI_RUNTIME_ONNXRUNTIME_HPP

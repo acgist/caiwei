@@ -50,7 +50,7 @@ public:
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    ClsRKNN2Context(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    ClsRKNN2Context(std::string path, int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsRKNN2Context();
 public:
     bool load() override;
@@ -70,4 +70,4 @@ public:
 } // context
 } // caiwei
 
-#endif //CAIWEI_RUNTIME_RKNN2_HPP
+#endif // CAIWEI_RUNTIME_RKNN2_HPP

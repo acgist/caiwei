@@ -60,12 +60,12 @@ const caiwei::context::ContextInfo* caiwei::context::get_context_info(const std:
     return nullptr;
 }
 
-caiwei::context::ClsContext::ClsContext(int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime)
+caiwei::context::ClsContext::ClsContext(int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime)
  : c(c),
    h(h),
    w(w),
-   top_k(top_k),
    class_size(class_size),
+   top_k(top_k),
    confidence_threshold(confidence_threshold),
    Context(runtime) {
 }

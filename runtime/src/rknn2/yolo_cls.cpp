@@ -3,8 +3,8 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
-caiwei::context::ClsRKNN2Context::ClsRKNN2Context(std::string path, int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime)
- : ClsContext(c, h, w, top_k, class_size, confidence_threshold, runtime),
+caiwei::context::ClsRKNN2Context::ClsRKNN2Context(std::string path, int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime)
+ : ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime),
    RKNN2Context(std::move(path), c, h, w) {
 }
 

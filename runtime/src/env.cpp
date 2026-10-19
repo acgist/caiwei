@@ -38,8 +38,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_CLS_C",                    "3"   },
     {"CAIWEI_CLS_H",                    "224" },
     {"CAIWEI_CLS_W",                    "224" },
-    {"CAIWEI_CLS_TOP_K",                "5"   },
     {"CAIWEI_CLS_CLASS_SIZE",           "1000"},
+    {"CAIWEI_CLS_TOP_K",                "5"   },
     {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.2" },
     // DET
     {"CAIWEI_DET_C",                    "3"  },

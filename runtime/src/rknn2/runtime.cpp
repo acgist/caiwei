@@ -25,14 +25,14 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::RKNN2Runtime::get_
     int c = caiwei::env::get_int("CAIWEI_CLS_C");
     int h = caiwei::env::get_int("CAIWEI_CLS_H");
     int w = caiwei::env::get_int("CAIWEI_CLS_W");
-    int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
     int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
+    int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
     float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
     if (!std::filesystem::exists(info->path)) {
         CW_LOG_W("ClsContext模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    return std::make_shared<caiwei::context::ClsRKNN2Context>(info->path, c, h, w, top_k, class_size, confidence_threshold, this);
+    return std::make_shared<caiwei::context::ClsRKNN2Context>(info->path, c, h, w, class_size, top_k, confidence_threshold, this);
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::RKNN2Runtime::get_det_context(const caiwei::context::ContextInfo* info) {

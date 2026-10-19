@@ -76,11 +76,11 @@ protected:
     int c;
     int h;
     int w;
-    int top_k;
     int class_size;
+    int top_k;
     float confidence_threshold;
 public:
-    ClsContext(int c, int h, int w, int top_k, int class_size, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    ClsContext(int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsContext();
 public:
     virtual std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) = 0;

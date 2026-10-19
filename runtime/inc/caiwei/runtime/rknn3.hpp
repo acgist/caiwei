@@ -182,7 +182,7 @@ public:
     ~RerankingRKNN3Context();
 };
 
-}
-}
+} // context
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_RKNN3_HPP

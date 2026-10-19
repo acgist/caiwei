@@ -105,4 +105,4 @@ void batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output,
 } // context
 } // caiwei
 
-#endif //CAIWEI_RUNTIME_LLAMACPP_HPP
+#endif // CAIWEI_RUNTIME_LLAMACPP_HPP

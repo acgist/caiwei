@@ -80,14 +80,18 @@ swift infer               \
 
 ## 性能评估
 
+* 模型`Qwen3-VL-2B-Instruct`
+* `llama.cpp`量化格式`Q4_K_M`
+* `Prefill/Generate`每秒`token`数量
+
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)  |||||
-|RKNN(RK1828)    |||||
-|RKNN(RK3588)    |||||
-|CUDA(RTX 4060)  |||||
-|CUDA(Tesla L40S)|||||
-|CUDA(Tesla V100)|||||
+|CPU(i5-1135G7)  |-       |40/20   |-|-|
+|RKNN(RK1828)    |1300/100|-       |-|-|
+|RKNN(RK3588)    |-       |-       |-|-|
+|CUDA(RTX 4060)  |-       |-       |-|-|
+|CUDA(Tesla L40S)|-       |-       |-|-|
+|CUDA(Tesla V100)|-       |1600/220|-|-|
 
 ## 文档资料
 

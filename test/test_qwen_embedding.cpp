@@ -28,7 +28,7 @@ void test_embedding() {
     }
     auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
-        std::printf("%s\n", nlohmann::json(item).dump().c_str());
+        // std::printf("%s\n", nlohmann::json(item).dump().c_str());
     }
     diff(ret.result[0], ret.result[1]);
     diff(ret.result[0], ret.result[2]);

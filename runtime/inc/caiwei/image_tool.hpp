@@ -194,6 +194,7 @@ inline void hwc_to_chw_i8_f32(const uint8_t* hwc, float* chw, const int H, const
         for (int x = 0; x < W; ++x) {
             const size_t   pixel_idx = static_cast<size_t>(y) * W + x;
             const uint8_t* hwc_pixel = hwc + pixel_idx * C;
+            // #pragma GCC unroll 3
             // for (int c = 0; c < C; ++c) {
             //     chw[c * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[c]) * inv_scale;
             // }
