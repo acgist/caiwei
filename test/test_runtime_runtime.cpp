@@ -15,13 +15,13 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
     context.load_model();
     if (type == "i8") {
         std::vector<uint8_t> data(3 * size * size);
-        CAIWEI_FOR_EACH(100)
-        context.run(data.data(), data.size());
+        CAIWEI_FOR_EACH(1000)
+        auto result = context.run(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else {
         std::vector<float> data(3 * size * size);
-        CAIWEI_FOR_EACH(100)
-        context.run(data.data(), data.size());
+        CAIWEI_FOR_EACH(1000)
+        auto result = context.run(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     }
 }
@@ -35,7 +35,7 @@ void test_onnxruntime(int size, const std::string& path) {
     caiwei::context::ONNXRuntimeContext context(path.empty() ? "yolo26n-det.onnx" : path, 3, size, size, env);
     context.load_model();
     std::vector<float> data(3 * size * size);
-    CAIWEI_FOR_EACH(100)
+    CAIWEI_FOR_EACH(1000)
     auto result = context.run(data.data(), data.size());
     CAIWEI_FOR_EACH_END
 }

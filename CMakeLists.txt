@@ -50,6 +50,10 @@ elseif(CMAKE_HOST_UNIX)
     set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CMAKE_COMMAND} -E time")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 elseif(CMAKE_HOST_WIN32)
@@ -138,6 +142,7 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     # -
     elseif(CMAKE_HOST_UNIX)
         set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90)
+        set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16")
     elseif(CMAKE_HOST_WIN32)
         set(CMAKE_CUDA_ARCHITECTURES 89)
         set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0")
@@ -231,15 +236,18 @@ if(ENABLE_CAIWEI_FFMPEG)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
-        # list(APPEND CAIWEI_RUNTIME_LIBS
-        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
-        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
-        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
-        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
-        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
-        #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
-        # )
-        list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+            list(APPEND CAIWEI_RUNTIME_LIBS
+                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
+                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
+                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
+                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
+                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
+                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
+            )
+        else()
+            list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
+        endif()
     elseif(CMAKE_HOST_WIN32)
         set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
         set(

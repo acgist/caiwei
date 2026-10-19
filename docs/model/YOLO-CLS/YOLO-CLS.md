@@ -35,16 +35,18 @@ python run_video.py
 
 * 图片大小: `512x512`
 * 括号内容表示模型消耗时间
-* `RK3588`数据表示`f16/i8-toolkit`精度下的性能
+* `RK3588`数据表示`i8/f16`精度下的性能
+* `RK3588`设置大核`taskset -c 4-7 ./test_yolo_cls`(性能更好)
+* `RK3588`设置大核`taskset -c 4-7 ./test_yolo_runtime`(性能更好)
 
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)   |-           |-|3ms(2ms) |10ms|
-|RKNN(RK1828)     |-           |-|-        |-   |
-|RKNN(RK3588)     |6/4ms(6/4ms)|-|-        |-   |
-|CUDA(RTX 4060)   |-           |-|-        |-   |
-|CUDA(Tesla L40S) |-           |-|-        |-   |
-|CUDA(Tesla V100) |-           |-|10ms(4ms)|-   |
+|CPU(i5-1135G7)  |-           |-|3ms(2ms)|10ms|
+|RKNN(RK1828)    |-           |-|-       |-   |
+|RKNN(RK3588)    |4/5ms(3/5ms)|-|-       |-   |
+|CUDA(RTX 4060)  |-           |-|-       |-   |
+|CUDA(Tesla L40S)|-           |-|-       |-   |
+|CUDA(Tesla V100)|-           |-|1ms(1ms)|-   |
 
 ## 文档资料
 

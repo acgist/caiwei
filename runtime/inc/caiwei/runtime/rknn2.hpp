@@ -8,6 +8,16 @@
 namespace caiwei  {
 namespace context {
 
+struct RKNN2Result {
+    rknn_context context = 0;
+    std::vector<rknn_output> outputs;
+    RKNN2Result() = default;
+    RKNN2Result(rknn_context context, std::vector<rknn_output> outputs);
+    ~RKNN2Result();
+    RKNN2Result(RKNN2Result&& other) noexcept = default;
+    RKNN2Result& operator=(RKNN2Result&& other) noexcept = default;
+};
+
 class RKNN2Context {
 protected:
     std::string path;
@@ -32,9 +42,9 @@ public:
     virtual ~RKNN2Context();
 public:
     bool load_model();
-    std::vector<rknn_output> run(int h, int w, const caiwei::media::ImageFrame& image);
-    std::vector<rknn_output> run(uint8_t* blob, size_t size, int batch = 1);
-    std::vector<rknn_output> run(float  * blob, size_t size, int batch = 1);
+    RKNN2Result run(int h, int w, const caiwei::media::ImageFrame& image);
+    RKNN2Result run(uint8_t* blob, size_t size, int batch = 1);
+    RKNN2Result run(float  * blob, size_t size, int batch = 1);
 };
 
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {

@@ -26,16 +26,13 @@ struct Box {
 static int resize_w = 640;
 static int resize_h = 640;
 
-#define IMAGE_PATH "./acgist.jpg"
-// #define IMAGE_PATH "./caiwei.jpg"
-// #define IMAGE_PATH "./caiwei_h.jpg"
-// #define IMAGE_PATH "./caiwei_w.jpg"
+static const char* image_path = "./acgist.jpg";
 
 [[maybe_unused]]
 void test_load() {
     CAIWEI_FOR_EACH(100)
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     stbi_image_free(data);
     CAIWEI_FOR_EACH_END
 }
@@ -43,7 +40,7 @@ void test_load() {
 [[maybe_unused]]
 void test_crop() {
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     std::vector<uint8_t> dst(256 * 256 * channels);
     caiwei::image::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
     stbi_write_jpg("./image_crop.jpg", 256, 256, channels, dst.data(), 80);
@@ -61,7 +58,7 @@ void test_resize() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
@@ -80,7 +77,7 @@ void test_resize_rga() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     rga_buffer_t src_img = wrapbuffer_virtualaddr(data, width, height, RK_FORMAT_RGB_888);
@@ -101,7 +98,7 @@ void test_resize_ffmpeg() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     SwsContext* sws = sws_getContext(
         width, height, AV_PIX_FMT_RGB24,
@@ -131,7 +128,7 @@ void test_resize_pad() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(    w *     h * channels, caiwei::image::DEFAULT_PADDING);
@@ -153,7 +150,7 @@ void test_resize_pad_rga() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> pad(w * h * channels, caiwei::image::DEFAULT_PADDING);
     rga_buffer_t src_img = wrapbuffer_virtualaddr(data, width, height, RK_FORMAT_RGB_888);
@@ -235,7 +232,7 @@ void test_transpose() {
 void test_hwc_to_chw() {
     // TODO: < 2 ms
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     std::vector<float> hwc(width * height * channels);
     std::vector<float> chw(width * height * channels);
     caiwei::type::i8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
@@ -254,7 +251,7 @@ void test_image() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(IMAGE_PATH, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(width * height * channels);
     std::vector<uint8_t> pad(w * h * channels);
@@ -283,8 +280,13 @@ void test_image() {
     stbi_image_free(data);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     caiwei::test::init_test();
+    if (argc > 1) {
+        image_path = argv[1];
+    } else {
+        image_path = "./acgist.jpg";
+    }
     // test_load();
     // test_crop();
     // test_resize();

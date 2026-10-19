@@ -10,7 +10,7 @@ rknn.config(
     target_platform="rk3588",
     disable_rules=["fuse_exmatmul_add_mul_exsoftmax13_exmatmul_to_sdpa"],
 )
-rknn.load_onnx("./yolo26n-det.onnx")
+rknn.load_onnx("./yolo26n-cls.onnx")
 rknn.build(do_quantization=True, dataset="./dataset.txt")
-rknn.export_rknn("./rknn/yolo26n-det-rk3588-i8-toolkit.rknn")
+rknn.export_rknn("./rknn/yolo26n-cls-rk3588-i8.rknn")
 rknn.release()

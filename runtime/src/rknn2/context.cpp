@@ -10,6 +10,15 @@
 
 static void print_tensor_info(const char* title, const rknn_tensor_attr& attr);
 
+caiwei::context::RKNN2Result::RKNN2Result(rknn_context context, std::vector<rknn_output> outputs) : context(context), outputs(std::move(outputs)) {
+}
+
+caiwei::context::RKNN2Result::~RKNN2Result() {
+    if (this->context != 0 && !this->outputs.empty()) {
+        rknn_outputs_release(this->context, this->outputs.size(), this->outputs.data());
+    }
+}
+
 caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)) {
 }
 
@@ -78,7 +87,7 @@ bool caiwei::context::RKNN2Context::load_model() {
     return true;
 }
 
-std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const caiwei::media::ImageFrame& image) {
+caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(int h, int w, const caiwei::media::ImageFrame& image) {
     if (this->image_width != image.width || this->image_height != image.height) {
         this->image_width  = image.width;
         this->image_height = image.height;
@@ -97,7 +106,6 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
     im_rect pat_rect = { 0, 0, 0, 0 };
     improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
     const auto& input_attr = this->input_attrs[0];
-    std::vector<rknn_output> output;
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
             caiwei::image::hwc_to_chw(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
@@ -105,7 +113,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
             // caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
             // caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
-            caiwei::image::hwc_to_chw(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
+            caiwei::image::hwc_to_chw_i8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
             return this->run(this->chw.data(), this->chw.size());
         } else {
             CW_LOG_E("不支持的输入类型: %s", get_type_string(input_attr.type));
@@ -127,7 +135,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(int h, int w, const 
     }
 }
 
-std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_t size, int batch) {
+caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(uint8_t* blob, size_t size, int batch) {
     std::vector<rknn_input>  inputs (this->input_attrs.size());
     std::vector<rknn_output> outputs(this->output_attrs.size());
     for (int i = 0; i < inputs.size(); ++i) {
@@ -156,10 +164,10 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(uint8_t* blob, size_
     if (ret < 0) {
         CW_LOG_W("RKNN2读取输出失败: %d", ret);
     }
-    return outputs;
+    return {this->context, std::move(outputs)};
 }
 
-std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, size_t size, int batch) {
+caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(float* blob, size_t size, int batch) {
     std::vector<uint16_t> data(size);
     caiwei::type::f32_to_fp16(data.data(), blob, size);
     std::vector<rknn_input>  inputs (this->input_attrs.size());
@@ -190,7 +198,7 @@ std::vector<rknn_output> caiwei::context::RKNN2Context::run(float* blob, size_t 
     if (ret < 0) {
         CW_LOG_W("RKNN2读取输出失败: %d", ret);
     }
-    return outputs;
+    return {this->context, std::move(outputs)};
 }
 
 static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {

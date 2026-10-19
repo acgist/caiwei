@@ -20,7 +20,7 @@ pip install rknn-toolkit2
 ```
 
 * `YOLO`官方工具需要`rknn-toolkit2`版本: `2.3.2`
-* 最求速度建议使用瑞芯微官方定制的`YOLO`导出工具然后量化
+* 追求速度建议使用瑞芯微官方定制的`YOLO`导出工具然后量化
 
 ### 生成数据
 
@@ -34,7 +34,7 @@ find ./dataset/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
 # YOLO官方导出
 python export_rknn.py
 # 瑞芯微官方导出
-python export_rknn_toolkit.py
+python export_rknn_i8.py
 ```
 
 ### YOLO-DET
@@ -42,8 +42,6 @@ python export_rknn_toolkit.py
 ```
 # YOLO官方导出
 python export_rknn.py
-# 瑞芯微官方导出: 坐标没有归一化和分数差距太大量化效果很差
-python export_rknn_toolkit.py
 # 官网参考
 /ultralytics/nn/backends/rknn.py
 /ultralytics/utils/export/rknn.py

@@ -22,7 +22,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
     const int64_t stride_length = output_attr.dims[2];
     std::vector<caiwei::image::Box> ret;
     if (output_attr.type == RKNN_TENSOR_INT8) {
-        auto* buf_i8 = reinterpret_cast<int8_t*>(output[0].buf);
+        auto* buf_i8 = reinterpret_cast<int8_t*>(output.outputs[0].buf);
         int8_t qnt_confidence_threshold = caiwei::type::qnt_affine_to_i8(this->confidence_threshold, output_attr.zp, output_attr.scale);
         // TODO
         std::vector<int8_t> out_dst;
@@ -52,12 +52,10 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
             }
             data += result_length;
         }
-        rknn_outputs_release(this->context, output.size(), output.data());
     } else if (output_attr.type == RKNN_TENSOR_FLOAT16) {
-        auto* buf_f16 = reinterpret_cast<uint16_t*>(output[0].buf);
+        auto* buf_f16 = reinterpret_cast<uint16_t*>(output.outputs[0].buf);
         std::vector<float> buf_f32(result_length * stride_length);
         caiwei::type::fp16_to_f32(buf_f32.data(), buf_f16, result_length * stride_length);
-        rknn_outputs_release(this->context, output.size(), output.data());
         float* output_data = buf_f32.data();
         // TODO
         std::vector<float> out_dst;
@@ -89,7 +87,6 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         }
     } else {
         CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
-        rknn_outputs_release(this->context, output.size(), output.data());
         return {};
     }
     auto index = caiwei::image::nms_boxes(ret, this->iou_threshold);

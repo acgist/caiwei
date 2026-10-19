@@ -21,12 +21,10 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
     const int64_t output_data_length = output_attr.dims[1];
     if (output_attr.type != RKNN_TENSOR_FLOAT16) {
         CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
-        rknn_outputs_release(this->context, output.size(), output.data());
         return {};
     }
     std::vector<float> output_data(output_data_length);
-    auto* output_buf = reinterpret_cast<uint16_t*>(output[0].buf);
+    auto* output_buf = reinterpret_cast<uint16_t*>(output.outputs[0].buf);
     caiwei::type::fp16_to_f32(output_data.data(), output_buf, output_data_length);
-    rknn_outputs_release(this->context, output.size(), output.data());
     return caiwei::image::top_k(output_data.data(), output_data_length, this->top_k, this->confidence_threshold);
 }

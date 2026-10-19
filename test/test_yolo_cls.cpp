@@ -98,8 +98,8 @@ void cls_video() {
 
 int main(int argc, char* argv[]) {
     #if ENABLE_CAIWEI_RUNTIME_RKNN2
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-i8.rknn");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn");
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-i8-toolkit.rknn");
     #endif
     if (argc > 1) {
         caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);

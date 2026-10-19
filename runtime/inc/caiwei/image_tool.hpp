@@ -9,12 +9,12 @@
 #include <cstdint>
 #include <algorithm>
 
-#include "stb/stb_image.h"
-#include "stb/stb_image_resize2.h"
-
 #ifdef ENABLE_CAIWEI_TEST
+#include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 #endif
+
+#include "stb/stb_image_resize2.h"
 
 namespace caiwei {
 namespace image  {
@@ -41,9 +41,9 @@ inline void resize(const int src_w, const int src_h, const int w, const int h, i
     pad_h = (h - dst_h) / 2;
 }
 
-inline void resize(const uint8_t* src, uint8_t* dst, const int src_w, const int src_h, const int dst_w, const int dst_h) {
+inline void resize(const uint8_t* src, uint8_t* dst, const int src_w, const int src_h, const int dst_w, const int dst_h, const int channels = 3) {
     if (src_h == dst_h && src_w == dst_w) {
-        std::copy_n(src, static_cast<size_t>(src_w) * src_h * 3, dst);
+        std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, dst);
     } else {
         stbir_resize_uint8_linear(src, src_w, src_h, 0, dst, dst_w, dst_h, 0, STBIR_RGB);
     }
