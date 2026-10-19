@@ -68,7 +68,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(con
     }
     float* out = emb + emb_pos * n_embd_out;
     caiwei::context::batch_decode_pooling(context.get(), batch, out, seq_pos, n_embd_out);
-#if CAIWEI_DEBUG
+#if ENABLE_CAIWEI_PERF
     llama_perf_context_print(context.get());
 #endif
     llama_batch_free(batch);

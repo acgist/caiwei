@@ -443,7 +443,7 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
         CW_LOG_W("RKNN3会话运行失败: %d", ret);
     } else {
         CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
-        #ifdef CAIWEI_DEBUG
+        #if ENABLE_CAIWEI_PERF
         RKLLMRunState state{};
         ret = rknn3_session_query_state(session.get(), &state);
         if (ret < 0) {
@@ -557,7 +557,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
             } else {
                 // TODO asr_text 151704 没有处理
                 std::string piece = tokenizer->token_to_piece(token_id);
-                #if CAIWEI_DEBUG
+                #if ENABLE_CAIWEI_PERF
                 std::printf("%s", piece.c_str());
                 std::fflush(stdout);
                 #endif

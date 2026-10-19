@@ -72,7 +72,7 @@ llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) co
         params.kv_unified = true;
         params.n_seq_max  = llama_max_parallel_sequences();
     }
-    #if CAIWEI_DEBUG
+    #if ENABLE_CAIWEI_PERF
     params.no_perf = false;
     #else
     params.no_perf = true;
@@ -82,7 +82,7 @@ llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) co
 
 llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text::CompletionsRequest& request) const {
     llama_sampler_chain_params params = llama_sampler_chain_default_params();
-    #if CAIWEI_DEBUG
+    #if ENABLE_CAIWEI_PERF
     params.no_perf = false;
     #else
     params.no_perf = true;
@@ -218,7 +218,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
             co_yield caiwei::text::Result{ thinking, toolcall, result_toolcall };
         } else {
             std::string token(buffer.begin(), buffer.begin() + buffer_length);
-            #if CAIWEI_DEBUG
+            #if ENABLE_CAIWEI_PERF
             std::printf("%s", token.c_str());
             std::fflush(stdout);
             #endif
@@ -231,7 +231,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
         }
         batch = llama_batch_get_one(&token_id, 1);
     }
-    #if CAIWEI_DEBUG
+    #if ENABLE_CAIWEI_PERF
     llama_perf_sampler_print(sampler.get());
     llama_perf_context_print(context.get());
     #endif
@@ -375,7 +375,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
             co_yield caiwei::text::Result{ thinking, toolcall, result_toolcall };
         } else {
             std::string token(buffer.begin(), buffer.begin() + buffer_length);
-            #if CAIWEI_DEBUG
+            #if ENABLE_CAIWEI_PERF
             std::printf("%s", token.c_str());
             std::fflush(stdout);
             #endif
@@ -395,7 +395,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
         }
     }
     llama_batch_free(batch);
-    #if CAIWEI_DEBUG
+    #if ENABLE_CAIWEI_PERF
     llama_perf_sampler_print(sampler.get());
     llama_perf_context_print(context.get());
     #endif

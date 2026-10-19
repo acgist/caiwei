@@ -238,9 +238,7 @@ static void init_llamacpp() {
         }
         n--;
         if (level == GGML_LOG_LEVEL_DEBUG) {
-            #if CAIWEI_DEBUG_GGML
-            CW_LOG_D("%.*s", n, text);
-            #endif
+            // CW_LOG_D("%.*s", n, text);
         } else if (level == GGML_LOG_LEVEL_INFO) {
             CW_LOG_I("%.*s", n, text);
         } else if (level == GGML_LOG_LEVEL_WARN) {

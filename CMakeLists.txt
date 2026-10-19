@@ -23,6 +23,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 是否编译测试
+option(ENABLE_CAIWEI_PERF                "Performance"     ON)  # 性能测试
 option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"    OFF) #           ONNXRuntime
 option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"      OFF) # llama.cpp ONNXRuntime
 option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2"  OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
@@ -110,6 +111,10 @@ endif()
 
 if (ENABLE_CAIWEI_TEST)
 add_definitions(-DENABLE_CAIWEI_TEST=1)
+endif()
+
+if (ENABLE_CAIWEI_PERF)
+add_definitions(-DENABLE_CAIWEI_PERF=1)
 endif()
 
 if(ENABLE_CAIWEI_BACKEND_RKNN)

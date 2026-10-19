@@ -64,7 +64,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const 
             caiwei::context::euclidean(context_session.model_output[0].data(), context_session.model_output[0].data(), context_session.model_output[0].size());
             result.result.push_back(std::move(context_session.model_output[0]));
             CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
-            #ifdef CAIWEI_DEBUG
+            #if ENABLE_CAIWEI_PERF
             RKLLMRunState state{};
             ret = rknn3_session_query_state(session.get(), &state);
             if (ret < 0) {
