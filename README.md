@@ -50,8 +50,8 @@
 |YOLO-CLS       |√|×|√|
 |YOLO-DET       |√|×|√|
 |Qwen3          |√|√|×|
-|Qwen3-ASR      |√|√|×|
 |Qwen3-VL       |√|√|×|
+|Qwen3-ASR      |√|√|×|
 |Qwen3-Reranker |√|√|×|
 |Qwen3-Embedding|√|√|×|
 
@@ -72,10 +72,3 @@ $ = 配置更新
 & = 依赖升级
 ? = 其他修改
 ```
-
-## TODO
-
-* 优化docs/model文档
-* 优化docs/runtime文档
-* 瑞芯微MPP解码
-* 内存直通static auto mem = rknn_create_mem(this->context, this->input_attrs[0].size_with_stride);

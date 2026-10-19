@@ -159,7 +159,7 @@ public:
 class EmbeddingRKNN3Context : public EmbeddingContext, public RKNN3Context {
 public:
     bool load() override;
-    caiwei::text::EmbeddingResult run(caiwei::text::EmbeddingsRequest& request) override;
+    caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) override;
 public:
     EmbeddingRKNN3Context(std::string model_path, std::string weight_path, std::string embedding_path, std::string tokenizer_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime);
     ~EmbeddingRKNN3Context();
@@ -168,7 +168,7 @@ public:
 class RerankingRKNN3Context : public RerankingContext, public RKNN3Context {
 public:
     bool load() override;
-    caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) override;
+    caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
 public:
     RerankingRKNN3Context(
         std::string model_path,

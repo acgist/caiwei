@@ -7,6 +7,10 @@
 
 #include "llama-cpp.h"
 
+typedef int32_t llama_pos;
+typedef int32_t llama_token;
+typedef int32_t llama_seq_id;
+
 namespace caiwei  {
 namespace context {
 

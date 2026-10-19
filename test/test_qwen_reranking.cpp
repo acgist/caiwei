@@ -76,7 +76,7 @@ int main() {
     #elif CAIWEI_OS_UNIX
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "RERANKING,QWEN,qwen3-reranking,/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
     #elif CAIWEI_OS_WIN
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q8_0.gguf");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
     #else
     #endif

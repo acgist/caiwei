@@ -4,6 +4,9 @@
 
 #include <algorithm>
 
+#include "llama-cpp.h"
+
+#include "mtmd.h"
 #include "mtmd-helper.h"
 
 caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token)
@@ -21,9 +24,14 @@ caiwei::context::LlamaCPPContext::LlamaCPPContext(std::string path, std::string 
 
 caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
     if (this->model) {
-        CW_LOG_D("释放LlamaCPPRuntime: %s", this->path.c_str());
+        CW_LOG_D("释放LlamaCPPContext: %s", this->path.c_str());
         llama_free_model(this->model);
         this->model = nullptr;
+    }
+    if (this->mtmd_model) {
+        CW_LOG_D("释放LlamaCPPContext: %s", this->mtmd_path.c_str());
+        mtmd_free(this->mtmd_model);
+        this->mtmd_model = nullptr;
     }
 }
 
@@ -47,11 +55,15 @@ bool caiwei::context::LlamaCPPContext::load_mtmd() {
     }
     mtmd_context_params params = mtmd_context_params_default();
     params.media_marker = this->special_token.media_marker.c_str();
-    this->mtmd_context.reset(mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params));
+    this->mtmd_model = mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params);
+    if (this->mtmd_model == nullptr) {
+        CW_LOG_W("加载LlamaCPPContext模型失败: %s", this->mtmd_path.c_str());
+        return false;
+    }
     return true;
 }
 
-llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) {
+llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) const {
     llama_context_params params = llama_context_default_params();
     params.n_ctx      = this->max_token_length;
     params.n_batch    = this->max_token_length;
@@ -68,7 +80,7 @@ llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) {
     return llama_init_from_model(this->model, params);
 }
 
-llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text::CompletionsRequest& request) {
+llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text::CompletionsRequest& request) const {
     llama_sampler_chain_params params = llama_sampler_chain_default_params();
     #if CAIWEI_DEBUG
     params.no_perf = false;
@@ -107,7 +119,7 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) const {
     llama_context_ptr context{ get_context() };
     llama_sampler_ptr sampler{ get_sampler(request) };
     if (!context || !sampler) {
@@ -225,7 +237,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate(
     #endif
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_mtmd(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_mtmd(const caiwei::text::CompletionsRequest& request) const {
     llama_context_ptr context{ get_context() };
     llama_sampler_ptr sampler{ get_sampler(request) };
     if (!context || !sampler) {
@@ -248,7 +260,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
     int n_batch = this->max_token_length; // TODO
     mtmd::input_chunks chunks(mtmd_input_chunks_init());
     auto bitmaps_c_ptr = bitmaps.c_ptr();
-    int32_t res = mtmd_tokenize(this->mtmd_context.get(), chunks.ptr.get(), &text, bitmaps_c_ptr.data(), bitmaps_c_ptr.size());
+    int32_t res = mtmd_tokenize(this->mtmd_model, chunks.ptr.get(), &text, bitmaps_c_ptr.data(), bitmaps_c_ptr.size());
     // TODO check res
     size_t n_chunks = mtmd_input_chunks_size(chunks.ptr.get());
     if (n_chunks == 0) {
@@ -259,7 +271,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
         auto chunk_type = mtmd_input_chunk_get_type(chunk);
         if (chunk_type == MTMD_INPUT_CHUNK_TYPE_TEXT) {
             llama_pos new_n_past = n_past;
-            res = mtmd_helper_eval_chunk_single(this->mtmd_context.get(), context.get(), chunk, n_past, 0, n_batch, i == n_chunks - 1, &new_n_past);
+            res = mtmd_helper_eval_chunk_single(this->mtmd_model, context.get(), chunk, n_past, 0, n_batch, i == n_chunks - 1, &new_n_past);
             if (res != 0) {
                 CW_LOG_W("Unable to eval text chunk %zu\n", i);
                 co_return;
@@ -276,7 +288,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
                 }
             }
             if (!embd) {
-                mbatch.reset(mtmd_batch_init(this->mtmd_context.get()));
+                mbatch.reset(mtmd_batch_init(this->mtmd_model));
                 res = mtmd_batch_add_chunk(mbatch.get(), chunk);
                 int n_added = 1;
                 for (size_t j = i + 1; j < n_chunks; j++) {
@@ -303,7 +315,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
                 embd = mtmd_batch_get_output_embd(mbatch.get(), chunk);
             }
             llama_pos new_n_past = n_past;
-            res = mtmd_helper_decode_image_chunk(this->mtmd_context.get(), context.get(), chunk, embd, n_past, 0, n_batch, &new_n_past, nullptr, nullptr);
+            res = mtmd_helper_decode_image_chunk(this->mtmd_model, context.get(), chunk, embd, n_past, 0, n_batch, &new_n_past, nullptr, nullptr);
             if (res != 0) {
                 CW_LOG_W("Unable to decode media chunk %zu\n", i);
                 co_return;
@@ -389,7 +401,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
     #endif
 }
 
-bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
+bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) const {
     return false;
 }
 
@@ -404,12 +416,13 @@ void caiwei::context::batch_add(llama_batch& batch, llama_token id, llama_pos po
     batch.n_tokens++;
 }
 
-void caiwei::context::batch_decode(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out) {
+void caiwei::context::batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out) {
     const enum llama_pooling_type pooling_type = llama_pooling_type(ctx);
     llama_memory_clear(llama_get_memory(ctx), true);
     int ret = llama_decode(ctx, batch);
     if (ret != 0) {
         CW_LOG_W("解码失败: %d", ret);
+        return;
     }
     for (int i = 0; i < batch.n_tokens; i++) {
         if (!batch.logits[i]) {

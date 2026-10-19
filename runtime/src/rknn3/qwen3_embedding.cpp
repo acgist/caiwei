@@ -13,7 +13,7 @@ bool caiwei::context::EmbeddingRKNN3Context::load() {
     return this->load_model() && this->init_output_tensors(1);
 }
 
-caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(caiwei::text::EmbeddingsRequest& request) {
+caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const caiwei::text::EmbeddingsRequest& request) {
     ContextSession context_session;
     context_session.tokenizer = this->tokenizer;
     context_session.embedding_dim = this->embedding_dim;

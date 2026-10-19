@@ -45,7 +45,7 @@ void caiwei::text::ChatTemplate::set_template(const std::string& template_text, 
     if (template_text.empty()) {
         return;
     }
-    chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
+    this->chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
 }
 
 std::string caiwei::text::ChatTemplate::apply(
@@ -55,7 +55,7 @@ std::string caiwei::text::ChatTemplate::apply(
     const std::string& image_marker,
     const std::string& video_marker,
     bool add_vision_id
-) {
+) const {
     nlohmann::json messages;
     nlohmann::json tools;
     nlohmann::json extra_context;

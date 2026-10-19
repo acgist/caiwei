@@ -18,7 +18,7 @@ bool caiwei::context::RerankingLlamaCPPContext::load() {
     return this->load_model();
 }
 
-caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(caiwei::text::RerankingsRequest& request) {
+caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(const caiwei::text::RerankingsRequest& request) {
     llama_context_ptr context{ get_context(true) };
     const enum llama_pooling_type pooling_type = llama_pooling_type(context.get());
     if (llama_model_has_encoder(this->model)) {
@@ -56,7 +56,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(cai
         const size_t n_tokens = input.size();
         if (batch.n_tokens + n_tokens > n_batch || seq_pos >= n_seq_max) {
             float* out = emb + emb_pos * n_embd_out;
-            caiwei::context::batch_decode(context.get(), batch, out, seq_pos, n_embd_out);
+            caiwei::context::batch_decode_pooling(context.get(), batch, out, seq_pos, n_embd_out);
             emb_pos += seq_pos;
             seq_pos = 0;
             batch.n_tokens = 0;
@@ -67,7 +67,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(cai
         seq_pos += 1;
     }
     float* out = emb + emb_pos * n_embd_out;
-    caiwei::context::batch_decode(context.get(), batch, out, seq_pos, n_embd_out);
+    caiwei::context::batch_decode_pooling(context.get(), batch, out, seq_pos, n_embd_out);
 #if CAIWEI_DEBUG
     llama_perf_context_print(context.get());
 #endif

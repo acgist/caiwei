@@ -22,7 +22,7 @@ bool caiwei::context::RerankingRKNN3Context::load() {
     return this->load_model() && this->init_output_tensors(1);
 }
 
-caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(caiwei::text::RerankingsRequest& request) {
+caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const caiwei::text::RerankingsRequest& request) {
     ContextSession context_session;
     context_session.tokenizer = this->tokenizer;
     context_session.embedding_dim = this->embedding_dim;

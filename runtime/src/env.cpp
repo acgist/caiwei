@@ -115,11 +115,11 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
-ASR,QWEN,qwen3-asr,Qwen3-ASR/Qwen3-ASR-0.6B-Q8_0.gguf|Qwen3-ASR/mmproj-Qwen3-ASR-0.6B-Q8_0.gguf
-LLM,QWEN,qwen3-llm,Qwen3/Qwen3-0.6B-Q8_0.gguf
-VLM,QWEN,qwen3-vlm,Qwen3-VL/Qwen3-VL-4B-Instruct-Q8_0.gguf|Qwen3-VL/mmproj-Qwen3-VL-4B-Instruct-Q8_0.gguf
-EMBEDDING,QWEN,qwen3-embedding,Qwen3-Embedding/Qwen3-Embedding-0.6B-Q8_0.gguf
-RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B-Q8_0.gguf
+ASR,QWEN,qwen3-asr,Qwen3-ASR/Qwen3-ASR-0.6B-Q4_K_M.gguf|Qwen3-ASR/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf
+LLM,QWEN,qwen3-llm,Qwen3/Qwen3-1.7B-Q4_K_M.gguf
+VLM,QWEN,qwen3-vlm,Qwen3-VL/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|Qwen3-VL/mmproj-Qwen3-VL-2b-Instruct-Q4_K_M.gguf
+EMBEDDING,QWEN,qwen3-embedding,Qwen3-Embedding/Qwen3-Embedding-0.6B-Q4_K_M.gguf
+RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )"},
 };
 

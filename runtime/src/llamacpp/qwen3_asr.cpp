@@ -1,6 +1,8 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
+#include "mtmd.h"
+
 caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
     : LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token),
     ASRContext(runtime) {
@@ -17,7 +19,7 @@ std::generator<caiwei::text::Result> caiwei::context::ASRLlamaCPPContext::run(co
     return this->generate_mtmd(request);
 }
 
-bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
+bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) const {
     prompt.append(this->special_token.bos).append("user\n");
     for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {

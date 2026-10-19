@@ -136,6 +136,7 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(int h, int w, co
 }
 
 caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(uint8_t* blob, size_t size, int batch) {
+    // TODO 研究 MPP rknn_create_mem 零拷贝
     std::vector<rknn_input>  inputs (this->input_attrs.size());
     std::vector<rknn_output> outputs(this->output_attrs.size());
     for (int i = 0; i < inputs.size(); ++i) {

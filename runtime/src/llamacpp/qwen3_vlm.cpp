@@ -2,6 +2,8 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
+#include "mtmd.h"
+
 caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
     : LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token),
     VLMContext(runtime) {
@@ -70,7 +72,7 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
     );
 }
 
-bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) {
+bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) const {
     int image_count = 0;
     int video_count = 0;
     for (const auto& message : request.messages) {

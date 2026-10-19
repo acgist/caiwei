@@ -32,7 +32,7 @@ public:
         const std::string& image_marker = "",
         const std::string& video_marker = "",
         bool add_vision_id = true
-    );
+    ) const;
 };
 
 } // namespace text

@@ -85,7 +85,7 @@ int main() {
     #elif CAIWEI_OS_UNIX
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,/data/caiwei/deps/llama.cpp/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B-Q4_K_M.gguf");
     #elif CAIWEI_OS_WIN
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q8_0.gguf");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf");
     #else
     #endif

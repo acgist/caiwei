@@ -9,7 +9,7 @@ void test_tokenizer() {
     #elif CAIWEI_OS_UNIX
     caiwei::context::Tokenizer tokenizer("/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
     #else
-    // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-0.6B-Q8_0.gguf");
+    // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
     // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf");
     // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf");
     // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf");

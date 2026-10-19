@@ -145,7 +145,7 @@ public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
 public:
-    virtual caiwei::text::EmbeddingResult run(caiwei::text::EmbeddingsRequest& request) = 0;
+    virtual caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) = 0;
 };
 
 /**
@@ -156,7 +156,7 @@ public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
 public:
-    virtual caiwei::text::RerankingResult run(caiwei::text::RerankingsRequest& request) = 0;
+    virtual caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) = 0;
 };
 
 void init();
