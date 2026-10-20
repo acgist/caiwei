@@ -17,17 +17,17 @@ protected:
     Ort::Session   * session    { nullptr };
     Ort::RunOptions* run_options{ nullptr };
     Ort::MemoryInfo  memory_info{ nullptr };
-    std::vector<std::vector<int64_t>> input_node_dims;
-    std::vector<const char*>          input_node_names;
-    std::vector<const char*>          output_node_names;
+    std::vector<std::vector<int64_t>>    input_node_dims;
+    std::vector<Ort::AllocatedStringPtr> input_node_names;
+    std::vector<Ort::AllocatedStringPtr> output_node_names;
     int   dst_w; // 缩放目标宽度
     int   dst_h; // 缩放目标高度
     int   pad_w; // 缩放填充宽度
     int   pad_h; // 缩放填充高度
     float scale; // 缩放比例: 输入图片 / 原始图片
 private:
-    uint32_t image_width;  // 输入图片宽度
-    uint32_t image_height; // 输入图片高度
+    uint32_t src_w; // 输入图片宽度
+    uint32_t src_h; // 输入图片高度
     std::vector<uint8_t> dst; // 缩放图片
     std::vector<uint8_t> pad; // 填充图片
     std::vector<float>   hwc; // HWC填充图片
@@ -44,7 +44,17 @@ public:
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    ClsONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, int top_k, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    ClsONNXRuntimeContext(
+        std::string path,
+        int c,
+        int h,
+        int w,
+        int class_size,
+        int top_k,
+        float confidence_threshold,
+        Ort::Env* env,
+        caiwei::runtime::Runtime* runtime
+    );
     ~ClsONNXRuntimeContext();
 public:
     bool load() override;
@@ -54,7 +64,17 @@ public:
 class DetONNXRuntimeContext : public DetContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
 public:
-    DetONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime);
+    DetONNXRuntimeContext(
+        std::string path,
+        int c,
+        int h,
+        int w,
+        int class_size,
+        float iou_threshold,
+        float confidence_threshold,
+        Ort::Env* env,
+        caiwei::runtime::Runtime* runtime
+    );
     ~DetONNXRuntimeContext();
 public:
     bool load() override;

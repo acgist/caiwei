@@ -30,11 +30,21 @@ caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
 }
 
 caiwei::context::VLMRKNN3Context::~VLMRKNN3Context() {
-    this->release_deepstack_tensors();
+    for (int i = 0; i < this->deepstack_tensors.size(); ++i) {
+        if (this->deepstack_tensors[i].attr) {
+            delete this->deepstack_tensors[i].attr;
+            this->deepstack_tensors[i].attr = nullptr;
+        }
+        if (this->deepstack_tensors[i].mem) {
+            rknn3_destroy_mem(this->context, this->deepstack_tensors[i].mem);
+            this->deepstack_tensors[i].mem = nullptr;
+        }
+    }
+    this->deepstack_tensors.clear();
 }
 
 bool caiwei::context::VLMRKNN3Context::load() {
-    return this->load_model(true) && this->load_media_model(true) && this->init_internal_mems(0xFF, 0xFF);
+    return this->load_model(true) && this->load_media_model(true) && this->init_internal_tensor_mems();
 }
 
 std::generator<caiwei::text::Result> caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
@@ -86,40 +96,37 @@ bool caiwei::context::VLMRKNN3Context::fill_media(int media_i, int deepstack_i, 
     return true;
 }
 
-bool caiwei::context::VLMRKNN3Context::init_deepstack_tensors(int count) {
-    if (count == this->deepstack_count) {
-        return true;
-    }
-    this->deepstack_count = count;
-    this->release_deepstack_tensors();
-    this->deepstack_tensors.resize(3);
+bool caiwei::context::VLMRKNN3Context::init_deepstack_tensors(int length, int size) {
+    this->deepstack_tensors.resize(size);
     for (int i = 0; i < this->deepstack_tensors.size(); ++i) {
-        this->deepstack_tensors[i].attr = new rknn3_tensor_attr;
-        this->deepstack_tensors[i].attr->index = i + 2;
-        int ret = rknn3_query(this->context, RKNN3_QUERY_INPUT_ATTR, this->deepstack_tensors[i].attr, sizeof(rknn3_tensor_attr));
-        this->deepstack_tensors[i].mem = rknn3_create_mem(this->context, this->media_output[i + 1].attr->aligned_size * count, this->deepstack_tensors[i].attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
-        CW_LOG_D("deepstack_tensors[%d].mem=%p", i, this->deepstack_tensors[i].mem);
-        // TODO check mem nullptr
-    }
-    return true;
-}
-
-bool caiwei::context::VLMRKNN3Context::release_deepstack_tensors() {
-    for (int i = 0; i < this->deepstack_tensors.size(); ++i) {
-        if (this->deepstack_tensors[i].attr) {
-            delete this->deepstack_tensors[i].attr;
-            this->deepstack_tensors[i].attr = nullptr;
+        if (this->deepstack_tensors[i].attr == nullptr) {
+            this->deepstack_tensors[i].attr = new rknn3_tensor_attr;
+            this->deepstack_tensors[i].attr->index = i + 2;
+            int ret = rknn3_query(this->context, RKNN3_QUERY_INPUT_ATTR, this->deepstack_tensors[i].attr, sizeof(rknn3_tensor_attr));
         }
-        if (this->deepstack_tensors[i].mem) {
+        auto mem_size = this->media_output[i + 1].attr->aligned_size * length;
+        if (this->deepstack_tensors[i].mem == nullptr) {
+            this->deepstack_tensors[i].mem = rknn3_create_mem(this->context, mem_size, this->deepstack_tensors[i].attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+            if (this->deepstack_tensors[i].mem == nullptr) {
+                return false;
+            }
+            CW_LOG_D("deepstack_tensors[%d].mem=%p = %d/%d", i, this->deepstack_tensors[i].mem, this->deepstack_tensors[i].mem->size, mem_size);
+        } else if (this->deepstack_tensors[i].mem->size != mem_size) {
             rknn3_destroy_mem(this->context, this->deepstack_tensors[i].mem);
-            this->deepstack_tensors[i].mem = nullptr;
+            this->deepstack_tensors[i].mem = rknn3_create_mem(this->context, mem_size, this->deepstack_tensors[i].attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+            if (this->deepstack_tensors[i].mem == nullptr) {
+                return false;
+            }
+            CW_LOG_D("deepstack_tensors[%d].mem=%p = %d/%d", i, this->deepstack_tensors[i].mem, this->deepstack_tensors[i].mem->size, mem_size);
+        } else {
+            // -
         }
     }
-    this->deepstack_tensors.clear();
     return true;
 }
 
-std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    // TODO 线程安全
     bool enable_thinking = request.enable_thinking.value_or(false);
     if (this->media_output[0].attr->n_dims != 2) {
         CW_LOG_W("不支持的输出维度 %d", this->media_output[0].attr->n_dims);
@@ -215,11 +222,11 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(rknn3_
             }
         }
     }
-    this->prompt = this->chat_template.apply(this->special_token, request, this->special_token.audio_marker, this->special_token.image_marker, this->special_token.video_marker);
-    CW_LOG_I("prompt: %s", this->prompt.c_str());
+    prompt = this->chat_template.apply(this->special_token, request, this->special_token.audio_marker, this->special_token.image_marker, this->special_token.video_marker);
+    CW_LOG_I("prompt: %s", prompt.c_str());
     rknn3_llm_multimodal_tensor tensor{};
     tensor.name     = "input_embeds";
-    tensor.prompt   = this->prompt.c_str();
+    tensor.prompt   = prompt.c_str();
     tensor.tokens   = nullptr;
     tensor.n_tokens = 0;
     tensor.enable_thinking = enable_thinking;

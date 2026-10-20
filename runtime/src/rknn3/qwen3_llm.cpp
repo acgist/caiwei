@@ -17,13 +17,13 @@ std::generator<caiwei::text::Result> caiwei::context::LLMRKNN3Context::run(const
     return this->generate(request);
 }
 
-std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
     bool enable_thinking = request.enable_thinking.value_or(false);
-    this->prompt = this->chat_template.apply(this->special_token, request);
-    CW_LOG_I("prompt: %s", this->prompt.c_str());
+    prompt = this->chat_template.apply(this->special_token, request);
+    CW_LOG_I("prompt: %s", prompt.c_str());
     rknn3_llm_tensor tensor{};
     tensor.name     = "input_embeds";
-    tensor.prompt   = this->prompt.c_str();
+    tensor.prompt   = prompt.c_str();
     tensor.embed    = nullptr;
     tensor.tokens   = nullptr;
     tensor.n_tokens = 0;

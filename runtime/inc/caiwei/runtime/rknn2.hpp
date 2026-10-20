@@ -11,16 +11,17 @@ namespace context {
 struct RKNN2Result {
     rknn_context context = 0;
     std::vector<rknn_output> outputs;
-    RKNN2Result() = default;
+    
     RKNN2Result(rknn_context context, std::vector<rknn_output> outputs);
     ~RKNN2Result();
-    RKNN2Result(RKNN2Result&& other) noexcept = default;
-    RKNN2Result& operator=(RKNN2Result&& other) noexcept = default;
+    RKNN2Result() noexcept = default;
+    RKNN2Result(RKNN2Result&& result) noexcept = default;
+    RKNN2Result& operator=(RKNN2Result&& result) noexcept = default;
 };
 
 class RKNN2Context {
 protected:
-    std::string path;
+    const std::string path;
     rknn_context context = 0;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
@@ -30,8 +31,8 @@ protected:
     int pad_h;   // 缩放填充高度
     float scale; // 缩放比例: 输入图片 / 原始图片
 private:
-    uint32_t image_width;  // 输入图片宽度
-    uint32_t image_height; // 输入图片高度
+    uint32_t src_w; // 输入图片宽度
+    uint32_t src_h; // 输入图片高度
     std::vector<uint8_t> dst; // 缩放图片
     std::vector<uint8_t> pad; // 填充图片
     std::vector<float>   hwc; // HWC填充图片
@@ -50,7 +51,16 @@ public:
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    ClsRKNN2Context(std::string path, int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    ClsRKNN2Context(
+        std::string path,
+        int c,
+        int h,
+        int w,
+        int class_size,
+        int top_k,
+        float confidence_threshold,
+        caiwei::runtime::Runtime* runtime
+    );
     ~ClsRKNN2Context();
 public:
     bool load() override;
@@ -60,7 +70,16 @@ public:
 class DetRKNN2Context : public DetContext, public RKNN2Context {
 using RKNN2Context::run;
 public:
-    DetRKNN2Context(std::string path, int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    DetRKNN2Context(
+        std::string path,
+        int c,
+        int h,
+        int w,
+        int class_size,
+        float iou_threshold,
+        float confidence_threshold,
+        caiwei::runtime::Runtime* runtime
+    );
     ~DetRKNN2Context();
 public:
     bool load() override;

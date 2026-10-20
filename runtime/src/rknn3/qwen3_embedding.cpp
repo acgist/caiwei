@@ -18,11 +18,11 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
     context_session.tokenizer = this->tokenizer;
     context_session.embedding_dim = this->embedding_dim;
     context_session.embedding_data = this->embedding_data;
-    context_session.model_output.resize(this->output_tensors.size());
+    context_session.pool_result.resize(this->output_tensors.size());
     for (int i = 0; i < this->output_tensors.size(); ++i) {
-        context_session.model_output[i].resize(this->output_tensors[i].attr->n_elems);
+        context_session.pool_result[i].resize(this->output_tensors[i].attr->n_elems);
     }
-    rknn3_session_ptr session{ this->get_session(nullptr, &context_session) };
+    rknn3_session_ptr session{ this->get_session(&context_session, nullptr) };
     if (!session) {
         CW_LOG_W("获取RKNN3会话失败");
         return {};
@@ -63,20 +63,10 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
         if (ret < 0) {
             CW_LOG_W("RKNN3会话运行失败: %d", ret);
         } else {
-            caiwei::context::euclidean(context_session.model_output[0].data(), context_session.model_output[0].data(), context_session.model_output[0].size());
-            result.result.push_back(std::move(context_session.model_output[0]));
-            CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
+            caiwei::context::euclidean(context_session.pool_result[0].data(), context_session.pool_result[0].data(), context_session.pool_result[0].size());
+            result.result.push_back(std::move(context_session.pool_result[0]));
             #if ENABLE_CAIWEI_PERF
-            RKLLMRunState state{};
-            ret = rknn3_session_query_state(session.get(), &state);
-            if (ret < 0) {
-                CW_LOG_W("RKNN3会话查询状态失败: %d", ret);
-            } else {
-                CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, state.n_decode_tokens, state.n_prefill_tokens);
-                context_session.n_decode_tokens  = state.n_decode_tokens;
-                context_session.n_prefill_tokens = state.n_prefill_tokens;
-                printf_session_perf(&context_session);
-            }
+            rknn3_perf_session_print(session.get(), &context_session);
             #endif
         }
     }

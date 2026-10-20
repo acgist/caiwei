@@ -19,7 +19,7 @@ std::generator<caiwei::text::Result> caiwei::context::ASRLlamaCPPContext::run(co
     return this->generate_mtmd(request);
 }
 
-bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) const {
+bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const {
     prompt.append(this->special_token.bos).append("user\n");
     for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {

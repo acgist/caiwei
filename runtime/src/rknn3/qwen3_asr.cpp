@@ -34,7 +34,7 @@ bool caiwei::context::ASRRKNN3Context::load_mel_filters() {
     return true;
 }
 
-bool caiwei::context::ASRRKNN3Context::load_prompt_token() {
+bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
     std::string prefix;
     std::string suffix;
     prefix.append(this->special_token.bos).append("user\n").append(this->special_token.b_audio);
@@ -58,9 +58,9 @@ bool caiwei::context::ASRRKNN3Context::load_prompt_token() {
 bool caiwei::context::ASRRKNN3Context::load() {
     return this->load_model(true) &&
     this->load_media_model(true) &&
-    this->init_internal_mems(0xFF, 0xFF) &&
+    this->init_internal_tensor_mems() &&
     this->load_mel_filters() &&
-    this->load_prompt_token();
+    this->init_prompt_token();
 }
 
 std::generator<caiwei::text::Result> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
@@ -75,7 +75,8 @@ static int get_n_audio(int window_size, int audio_len) {
     return floor(n_frame / window_size) * n_token_per_window + n_left_token;
 }
 
-std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    // TODO 线程安全
     bool enable_thinking = request.enable_thinking.value_or(false);
     int prefix_n_token = this->prefix_token.size();
     int suffix_n_token = this->suffix_token.size();
@@ -99,7 +100,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(rknn3_
     int n_mels = this->media_input[0].attr->shape[2];
     int window_size = this->media_input[0].attr->shape[3];
     int n_audio = get_n_audio(window_size, num_frames);
-    this->embed.resize(this->media_output[0].attr->shape[1] * (n_audio + prefix_n_token + suffix_n_token));
+    this->audio_embeds.resize(this->media_output[0].attr->shape[1] * (n_audio + prefix_n_token + suffix_n_token));
     int n_frame = floor((num_frames - N_FFT) / HOP_LENGTH ) + 1;
     std::vector<float> padded_feature(n_mels * n_frame, 0.0f);
     int actual_len;
@@ -148,21 +149,21 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(rknn3_
             }
         }
         memcpy(
-            this->embed.data() + ((chunk * this->media_output[0].attr->shape[0] + prefix_n_token) * this->media_output[0].attr->shape[1]),
+            this->audio_embeds.data() + ((chunk * this->media_output[0].attr->shape[0] + prefix_n_token) * this->media_output[0].attr->shape[1]),
             this->media_output[0].mem->virt_addr,
             n_chunk_token * this->media_output[0].attr->shape[1] * sizeof(float16)
         );
     }
     for (int i = 0; i < this->prefix_token.size(); ++i) {
         memcpy(
-            this->embed.data() + i * this->media_output[0].attr->shape[1],
+            this->audio_embeds.data() + i * this->media_output[0].attr->shape[1],
             this->embedding_data + this->prefix_token[i] * this->embedding_dim,
             this->embedding_dim * sizeof(float16)
         );
     }
     for (int i = 0; i < this->suffix_token.size(); ++i) {
         memcpy(
-            this->embed.data() + this->media_output[0].attr->shape[1] * (n_audio + prefix_n_token + i),
+            this->audio_embeds.data() + this->media_output[0].attr->shape[1] * (n_audio + prefix_n_token + i),
             this->embedding_data + this->suffix_token[i] * this->embedding_dim,
             this->embedding_dim * sizeof(float16)
         );
@@ -170,7 +171,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(rknn3_
     rknn3_llm_tensor tensor = {
         .name     = nullptr,
         .prompt   = nullptr,
-        .embed    = this->embed.data(),
+        .embed    = this->audio_embeds.data(),
         .tokens   = nullptr,
         .n_tokens = n_audio + prefix_n_token + suffix_n_token,
         .enable_thinking = enable_thinking

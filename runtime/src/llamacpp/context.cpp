@@ -245,7 +245,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
     }
     std::string prompt;
     mtmd::bitmaps bitmaps;
-    if (!this->build_mtmd(prompt, request, bitmaps)) {
+    if (!this->build_mtmd(prompt, bitmaps, request)) {
         CW_LOG_W("构建MTMD失败");
         co_return;
     }
@@ -401,7 +401,7 @@ std::generator<caiwei::text::Result> caiwei::context::LlamaCPPContext::generate_
     #endif
 }
 
-bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) const {
+bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const {
     return false;
 }
 

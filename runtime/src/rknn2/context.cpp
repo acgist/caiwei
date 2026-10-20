@@ -88,9 +88,9 @@ bool caiwei::context::RKNN2Context::load_model() {
 }
 
 caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(int h, int w, const caiwei::media::ImageFrame& image) {
-    if (this->image_width != image.width || this->image_height != image.height) {
-        this->image_width  = image.width;
-        this->image_height = image.height;
+    if (this->src_w != image.width || this->src_h != image.height) {
+        this->src_w = image.width;
+        this->src_h = image.height;
         caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale);
         this->dst.resize   (this->dst_w * this->dst_h * image.channels);
         this->pad.resize   (          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);

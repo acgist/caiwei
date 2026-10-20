@@ -72,7 +72,7 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
     );
 }
 
-bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, const caiwei::text::CompletionsRequest& request, mtmd::bitmaps& bitmaps) const {
+bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const {
     int image_count = 0;
     int video_count = 0;
     for (const auto& message : request.messages) {

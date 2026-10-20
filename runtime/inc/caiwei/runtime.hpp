@@ -1,5 +1,6 @@
 /**
  * 运行环境
+ * 负责管理模型上下文
  * 
  * session -> context -> runtime
  */

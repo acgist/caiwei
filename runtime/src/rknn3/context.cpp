@@ -1,12 +1,19 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
+#include <chrono>
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/mman.h>
 
 #include "llama-cpp.h"
+
+static int embed_callback    (void* userdata, int32_t* tokens, uint64_t num_tokens, void* embed, uint64_t len);
+static int output_callback   (void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state);
+static int result_callback   (void* userdata, RKLLMResult* result, LLMCallState state);
+static int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max);
 
 static void printf_tensor_info(rknn3_context context);
 
@@ -39,14 +46,14 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
             this->output_tensors[i].mem = nullptr;
         }
     }
-    if (!this->internal_mems.empty()) {
-        for (int i = 0; i < this->internal_mems.size(); i++) {
-            if (this->internal_mems[i]) {
-                rknn3_destroy_mem(this->context, this->internal_mems[i]);
-                this->internal_mems[i] = nullptr;
+    if (!this->internal_tensor_mems.empty()) {
+        for (int i = 0; i < this->internal_tensor_mems.size(); i++) {
+            if (this->internal_tensor_mems[i]) {
+                rknn3_destroy_mem(this->context, this->internal_tensor_mems[i]);
+                this->internal_tensor_mems[i] = nullptr;
             }
             // 不要清空后面释放警告
-            // this->internal_mems.clear();
+            // this->internal_tensor_mems.clear();
         }
     }
     if (!this->media_input.empty()) {
@@ -89,7 +96,7 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
     }
     if (this->embedding_fd != -1) {
         if (this->embedding_data != MAP_FAILED && this->embedding_data != NULL) {
-            munmap((void*) this->embedding_data, this->emb_st.st_size);
+            munmap((void*) this->embedding_data, this->embedding_stat.st_size);
             this->embedding_data = NULL;
         }
         close(this->embedding_fd);
@@ -97,9 +104,9 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
     }
 }
 
-bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal) {
+bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t core_mask) {
     rknn3_config config;
-    config.run_core_mask = 0xFF;
+    config.run_core_mask = core_mask;
     if (user_mem_internal) {
         config.user_mem_internal = 1;
     }
@@ -149,23 +156,23 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal) {
         CW_LOG_W("打开嵌入文件失败: %s", this->embedding_path.c_str());
         return false;
     }
-    if (fstat(this->embedding_fd, &emb_st) == -1) {
+    if (fstat(this->embedding_fd, &this->embedding_stat) == -1) {
         CW_LOG_W("获取嵌入文件信息失败: %s", this->embedding_path.c_str());
         return false;
     }
-    this->embedding_data = (float16*) mmap(NULL, emb_st.st_size, PROT_READ, MAP_PRIVATE, this->embedding_fd, 0);
+    this->embedding_data = (float16*) mmap(NULL, this->embedding_stat.st_size, PROT_READ, MAP_PRIVATE, this->embedding_fd, 0);
     if (this->embedding_data == MAP_FAILED) {
         CW_LOG_W("映射嵌入文件失败: %s", this->embedding_path.c_str());
         return false;
     }
     this->vocab_size = this->tokenizer->get_size();
-    this->embedding_dim = (emb_st.st_size / this->vocab_size) / sizeof(float16);
+    this->embedding_dim = (this->embedding_stat.st_size / this->vocab_size) / sizeof(float16);
     return true;
 }
 
-bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal) {
+bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal, uint32_t core_mask) {
     rknn3_config config{};
-    config.run_core_mask = 0xFF;
+    config.run_core_mask = core_mask;
     if (user_mem_internal) {
         config.user_mem_internal = 1;
     }
@@ -211,7 +218,23 @@ bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal) {
     return true;
 }
 
-bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, uint32_t core_mask_media) {
+bool caiwei::context::RKNN3Context::init_output_tensors(int n_output_tensors) {
+    this->output_tensors.resize(n_output_tensors);
+    for (int i = 0; i < n_output_tensors; ++i) {
+        this->output_tensors[i].attr = new rknn3_tensor_attr;
+        this->output_tensors[i].attr->index = i;
+        int ret = rknn3_query(context, RKNN3_QUERY_OUTPUT_ATTR, this->output_tensors[i].attr, sizeof(rknn3_tensor_attr));
+        if (ret < 0) {
+            printf("rknn3_query fail! ret=%d\n", ret);
+            return false;
+        }
+        this->output_tensors[i].mem = rknn3_create_mem(context, this->output_tensors[i].attr->aligned_size, this->output_tensors[i].attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
+        CW_LOG_I("输出结果: %s = %d", this->output_tensors[i].attr->name, this->output_tensors[i].attr->n_elems);
+    }
+    return true;
+}
+
+bool caiwei::context::RKNN3Context::init_internal_tensor_mems(uint32_t core_mask_llm, uint32_t core_mask_media) {
     int ret = -1;
     uint32_t core_num_llm   = 0;
     uint32_t core_num_media = 0;
@@ -275,7 +298,7 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
                 return false;
             }
             CW_LOG_D("共享内存: %p", mem);
-            this->internal_mems.push_back(mem);
+            this->internal_tensor_mems.push_back(mem);
         } else if (i < core_num_llm) {
             rknn3_tensor_mem* mem = rknn3_create_mem(
                 this->context,
@@ -288,7 +311,7 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
                 return false;
             }
             CW_LOG_D("共享内存: %p", mem);
-            this->internal_mems.push_back(mem);
+            this->internal_tensor_mems.push_back(mem);
         } else {
             rknn3_tensor_mem* mem = rknn3_create_mem(
                 this->context,
@@ -301,15 +324,15 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
                 return false;
             }
             CW_LOG_D("共享内存: %p", mem);
-            this->internal_mems.push_back(mem);
+            this->internal_tensor_mems.push_back(mem);
         }
     }
-    ret = rknn3_set_internal_mem(this->context, this->internal_mems.data(), core_num_llm);
+    ret = rknn3_set_internal_mem(this->context, this->internal_tensor_mems.data(), core_num_llm);
     if (ret < 0) {
         printf("rknn3_set_internal_mem failed! ret=%d\n", ret);
         return false;
     }
-    ret = rknn3_set_internal_mem(this->media_context, this->internal_mems.data(), core_num_media);
+    ret = rknn3_set_internal_mem(this->media_context, this->internal_tensor_mems.data(), core_num_media);
     if (ret < 0) {
         printf("rknn3_set_internal_mem failed! ret=%d\n", ret);
         return false;
@@ -317,28 +340,7 @@ bool caiwei::context::RKNN3Context::init_internal_mems(uint32_t core_mask_llm, u
     return true;
 }
 
-bool caiwei::context::RKNN3Context::init_output_tensors(int n_output_tensors) {
-    this->output_tensors.resize(n_output_tensors);
-    for (int i = 0; i < n_output_tensors; ++i) {
-        this->output_tensors[i].attr = new rknn3_tensor_attr;
-        this->output_tensors[i].attr->index = i;
-        int ret = rknn3_query(context, RKNN3_QUERY_OUTPUT_ATTR, this->output_tensors[i].attr, sizeof(rknn3_tensor_attr));
-        if (ret < 0) {
-            printf("rknn3_query fail! ret=%d\n", ret);
-            return false;
-        }
-        this->output_tensors[i].mem = rknn3_create_mem(context, this->output_tensors[i].attr->aligned_size, this->output_tensors[i].attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
-        CW_LOG_I("输出结果: %s = %d", this->output_tensors[i].attr->name, this->output_tensors[i].attr->n_elems);
-    }
-    return true;
-}
-
-
-std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(rknn3_session* session, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
-    return {};
-}
-
-rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::CompletionsRequest* request, ContextSession* context_session) {
+rknn3_session* caiwei::context::RKNN3Context::get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request) {
     int n_params = 1;
     rknn3_sampling_params sampling_params{};
     if (request != nullptr) {
@@ -392,6 +394,10 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(const caiwei::text::Co
     return session;
 }
 
+std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    return {};
+}
+
 std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& request) {
     ContextSession context_session;
     context_session.tokenizer = this->tokenizer;
@@ -401,14 +407,15 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
     context_session.e_thinking = this->tokenizer->piece_to_token(this->special_token.e_thinking);
     context_session.b_toolcall = this->tokenizer->piece_to_token(this->special_token.b_toolcall);
     context_session.e_toolcall = this->tokenizer->piece_to_token(this->special_token.e_toolcall);
-    rknn3_session_ptr session{ this->get_session(&request, &context_session) };
+    rknn3_session_ptr session{ this->get_session(&context_session, &request) };
     if (!session) {
         co_return;
     }
+    std::string prompt;
     auto begin_time = std::chrono::steady_clock::now();
-    std::vector<rknn3_llm_input> inputs = this->get_inputs(session.get(), &context_session, request);
+    std::vector<rknn3_llm_input> inputs = this->get_inputs(prompt, &context_session, request);
     auto end_time = std::chrono::steady_clock::now();
-    context_session.media_latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
+    context_session.feature_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
     if (inputs.empty()) {
         CW_LOG_W("获取输入数据失败");
         co_return;
@@ -421,16 +428,16 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
     int ret = rknn3_session_run_async(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     while (true) {
         std::unique_lock<std::mutex> lock(context_session.mutex);
-        if (!context_session.token.empty()) {
+        if (!context_session.token_result.empty()) {
             if (context_session.prefill_ms == 0) {
                 end_time = std::chrono::steady_clock::now();
                 context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
                 begin_time = std::chrono::steady_clock::now();
             }
-            for (auto& result : context_session.token) {
+            for (auto& result : context_session.token_result) {
                 co_yield std::move(result);
             }
-            context_session.token.clear();
+            context_session.token_result.clear();
         }
         if (context_session.stop) {
             break;
@@ -438,27 +445,17 @@ std::generator<caiwei::text::Result> caiwei::context::RKNN3Context::generate(con
         context_session.cv.wait_for(lock, std::chrono::seconds(8));
     }
     end_time = std::chrono::steady_clock::now();
-    context_session.decode_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
+    context_session.generate_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
     if (ret < 0) {
         CW_LOG_W("RKNN3会话运行失败: %d", ret);
     } else {
-        CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, context_session.n_decode_tokens, context_session.n_prefill_tokens);
         #if ENABLE_CAIWEI_PERF
-        RKLLMRunState state{};
-        ret = rknn3_session_query_state(session.get(), &state);
-        if (ret < 0) {
-            CW_LOG_W("RKNN3会话查询状态失败: %d", ret);
-        } else {
-            CW_LOG_I("RKNN3会话完成: %d = %d = %d", ret, state.n_decode_tokens, state.n_prefill_tokens);
-            context_session.n_decode_tokens  = state.n_decode_tokens;
-            context_session.n_prefill_tokens = state.n_prefill_tokens;
-            printf_session_perf(&context_session);
-        }
+        rknn3_perf_session_print(session.get(), &context_session);
         #endif
     }
 }
 
-int caiwei::context::embed_callback(void* userdata, int32_t* tokens, uint64_t n_tokens, void* embed, uint64_t len) {
+static int embed_callback(void* userdata, int32_t* tokens, uint64_t n_tokens, void* embed, uint64_t len) {
     caiwei::context::ContextSession* session = (caiwei::context::ContextSession*) userdata;
     if (len != n_tokens * session->embedding_dim * sizeof(float16)) {
         CW_LOG_W("嵌入数据长度错误");
@@ -475,12 +472,12 @@ int caiwei::context::embed_callback(void* userdata, int32_t* tokens, uint64_t n_
     return 0;
 }
 
-int caiwei::context::output_callback(void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state) {
+static int output_callback(void* userdata, rknn3_tensor* output_tensors, uint32_t n_output_tensors, LLMOutputCallbackState state) {
     caiwei::context::ContextSession* session = (caiwei::context::ContextSession*) userdata;
     if (state == RKLLM_OUTPUT_CALLBACK_PREFILL_FINISHED) {
-        std::vector<std::vector<float>>& model_output = session->model_output;
+        std::vector<std::vector<float>>& pool_result = session->pool_result;
         for (int i = 0; i < n_output_tensors; i++) {
-            auto& output = model_output[i];
+            auto& output = pool_result[i];
             output.resize(output_tensors[i].attr->n_elems);
             for (int j = 0; j < output_tensors[i].attr->n_elems; j++) {
                 output[j] = fp16_to_fp32(((float16 *) output_tensors[i].mem->virt_addr)[j]);
@@ -490,13 +487,13 @@ int caiwei::context::output_callback(void* userdata, rknn3_tensor* output_tensor
     return 0;
 }
 
-int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCallState state) {
+static int result_callback(void* userdata, RKLLMResult* result, LLMCallState state) {
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
     if (state == RKLLM_RUN_ERROR) {
         CW_LOG_W("RKNN3会话运行错误");
         std::lock_guard<std::mutex> lock(session->mutex);
-        session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+        session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         session->stop = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_WAITING) {
@@ -505,38 +502,38 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
         CW_LOG_I("RKNN3会话运行完成");
         std::lock_guard<std::mutex> lock(session->mutex);
         if (session->toolcall) {
-            session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+            session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         } else {
-            session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+            session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         }
         session->stop = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_MAX_NEW_TOKEN_REACHED) {
         CW_LOG_W("RKNN3会话词元超量");
         std::lock_guard<std::mutex> lock(session->mutex);
-        session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+        session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         session->stop = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_STOP) {
         CW_LOG_I("RKNN3会话运行停止");
         std::lock_guard<std::mutex> lock(session->mutex);
         if (session->toolcall) {
-            session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+            session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         } else {
-            session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+            session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         }
         session->stop = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_NORMAL) {
         std::lock_guard<std::mutex> lock(session->mutex);
-        session->n_decode_tokens += result->num_tokens;
+        session->n_generate_tokens += result->num_tokens;
         for (int i = 0; i < result->num_tokens; ++i) {
             int32_t token_id = result->token_ids[i];
             if (tokenizer->is_eog(token_id)) {
                 if (session->toolcall) {
-                    session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+                    session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
                 } else {
-                    session->token.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(session->n_prefill_tokens), session->n_decode_tokens });
+                    session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
                 }
                 session->stop = true;
                 session->cv.notify_one();
@@ -552,7 +549,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
             } else if (token_id == session->e_toolcall) {
                 // TOOLCALL不要修改状态
                 session->result_toolcall.finish();
-                session->token.push_back(caiwei::text::Result{ session->thinking, session->toolcall, session->result_toolcall });
+                session->token_result.push_back(caiwei::text::Result{ session->thinking, session->toolcall, session->result_toolcall });
                 session->cv.notify_one();
             } else {
                 // TODO asr_text 151704 没有处理
@@ -563,9 +560,9 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
                 #endif
                 if (session->toolcall) {
                     session->result_toolcall.put_token(std::move(piece));
-                    session->token.push_back(caiwei::text::Result{ session->thinking, session->toolcall, session->result_toolcall });
+                    session->token_result.push_back(caiwei::text::Result{ session->thinking, session->toolcall, session->result_toolcall });
                 } else {
-                    session->token.push_back(caiwei::text::Result{ session->thinking, session->toolcall, piece });
+                    session->token_result.push_back(caiwei::text::Result{ session->thinking, session->toolcall, piece });
                 }
                 session->cv.notify_one();
             }
@@ -574,7 +571,7 @@ int caiwei::context::result_callback(void* userdata, RKLLMResult* result, LLMCal
     return 0;
 }
 
-int caiwei::context::tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max) {
+static int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max) {
     CW_LOG_I("tokenizer_callback: %s", text);
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
@@ -587,29 +584,39 @@ int caiwei::context::tokenizer_callback(void* userdata, const char* text, int32_
     return n_tokens;
 }
 
-void caiwei::context::printf_session_perf(caiwei::context::ContextSession* session) {
+void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::context::ContextSession* context_session) {
+    RKLLMRunState state{};
+    int ret = rknn3_session_query_state(session, &state);
+    if (ret < 0) {
+        CW_LOG_W("RKNN3会话查询状态失败: %d", ret);
+        return;
+    } else {
+        CW_LOG_I("RKNN3会话完成: %d = %d/%d = %d/%d", ret, state.n_prefill_tokens, context_session->n_prefill_tokens, state.n_decode_tokens, context_session->n_generate_tokens);
+        context_session->n_prefill_tokens  = state.n_prefill_tokens;
+        context_session->n_generate_tokens = state.n_decode_tokens;
+    }
     std::printf("\n--------------------------------------------------------------------------------------\n");
     std::printf(" %-12s  %-15s  %-8s  %-23s  %-23s\n",  "Stage", "Total Time (ms)", "Tokens", "Time per Token (ms)", "Tokens per Second");
     std::printf("--------------------------------------------------------------------------------------\n");
-    int prefill_n_tokens = session->n_prefill_tokens;
+    int prefill_n_tokens = context_session->n_prefill_tokens;
     if (prefill_n_tokens > 0) {
-        float prefill_tpt = prefill_n_tokens == 0 ? 0.0F : session->prefill_ms / prefill_n_tokens;
-        float prefill_tps = prefill_n_tokens == 0 ? 0.0F : 1e3F / session->prefill_ms * prefill_n_tokens;
-        printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Prefill", session->prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
+        float prefill_tpt = prefill_n_tokens == 0 ? 0.0F : context_session->prefill_ms / prefill_n_tokens;
+        float prefill_tps = prefill_n_tokens == 0 ? 0.0F : 1e3F / context_session->prefill_ms * prefill_n_tokens;
+        printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Prefill", context_session->prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
     }
-    int decode_n_tokens = session->n_decode_tokens;
-    if (decode_n_tokens > 0) {
-        float decode_tpt = decode_n_tokens == 0 ? 0.0F : session->decode_ms / decode_n_tokens;
-        float decode_tps = decode_n_tokens == 0 ? 0.0F : 1e3F / session->decode_ms * decode_n_tokens;
-        printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", session->decode_ms, decode_n_tokens, decode_tpt, decode_tps);
+    int generate_n_tokens = context_session->n_generate_tokens;
+    if (generate_n_tokens > 0) {
+        float decode_tpt = generate_n_tokens == 0 ? 0.0F : context_session->generate_ms / generate_n_tokens;
+        float decode_tps = generate_n_tokens == 0 ? 0.0F : 1e3F / context_session->generate_ms * generate_n_tokens;
+        printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", context_session->generate_ms, generate_n_tokens, decode_tpt, decode_tps);
     }
-    if (session->audio_frames > 0) {
+    if (context_session->audio_frames > 0) {
         printf("--------------------------------------------------------------------------------------\n");
-        printf(" Audio latency = %.2f ms, FPS = %.2f\n", session->media_latency * 1.0F, session->audio_frames * 1000.0F / session->media_latency);
+        printf(" Audio latency = %.2f ms, FPS = %.2f\n", context_session->feature_ms, context_session->audio_frames * 1000.0F / context_session->feature_ms);
     }
-    if (session->image_frames > 0) {
+    if (context_session->image_frames > 0) {
         printf("--------------------------------------------------------------------------------------\n");
-        printf(" Image latency = %.2f ms, FPS = %.2f\n", session->media_latency * 1.0F, session->image_frames * 1000.0F / session->media_latency);
+        printf(" Image latency = %.2f ms, FPS = %.2f\n", context_session->feature_ms, context_session->image_frames * 1000.0F / context_session->feature_ms);
     }
     printf("--------------------------------------------------------------------------------------\n");
 }
