@@ -29,9 +29,10 @@ bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::
             continue;
         }
         for (const auto& audio : message.audio_data) {
-            std::vector<float> audio_data(audio.data.size() * sizeof(uint8_t) / sizeof(int16_t));
+            const int num_frames = audio.data.size() * sizeof(uint8_t) / sizeof(int16_t);
+            std::vector<float> audio_data(num_frames);
             const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio.data.data());
-            std::transform(audio_data_ptr, audio_data_ptr + audio.data.size() * sizeof(uint8_t) / sizeof(int16_t), audio_data.data(), [](int16_t v) {
+            std::transform(audio_data_ptr, audio_data_ptr + num_frames, audio_data.data(), [](int16_t v) {
                 return static_cast<float>(v) / 32768.0F;
             });
             prompt.append(this->special_token.media_marker);

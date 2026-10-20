@@ -1,46 +1,22 @@
 #include "caiwei/audio_tool.hpp"
 
-#if CAIWEI_OS_WIN
-#include <corecrt_math_defines.h>
-#else
 #include <cmath>
-#endif
-#include <stdio.h>
-#include <stdlib.h>
 #include <vector>
 #include <complex>
 #include <cstring>
 #include <algorithm>
 
-#include "pocketfft_hdronly/pocketfft_hdronly.h"
-
 #if defined(__aarch64__)
 #include "arm_neon.h"
 #endif
 
-int caiwei::audio::read_mel_filters(const char *fileName, float *data, int max_lines)
-{
-    FILE *file;
-    int line_count = 0;
+#if CAIWEI_OS_WIN
+#include <corecrt_math_defines.h>
+#endif
 
-    file = fopen(fileName, "r");
-    if (file == NULL)
-    {
-        perror("Error opening file");
-        return -1;
-    }
+#include "pocketfft_hdronly/pocketfft_hdronly.h"
 
-    while (line_count < max_lines && fscanf(file, "%f", &data[line_count]) == 1)
-    {
-        line_count++;
-    }
-
-    fclose(file);
-
-    return 0;
-}
-
-static void pad_x_mel(const std::vector<float> input, int rows_input, int cols_input, std::vector<float> &output, int cols_output)
+static void pad_mel_spec(const std::vector<float> input, int rows_input, int cols_input, std::vector<float> &output, int cols_output)
 {
     for (int i = 0; i < rows_input; ++i)
     {
@@ -64,7 +40,7 @@ static void reflect_pad(const std::vector<float> &audio, std::vector<float> &pad
 }
 
 #if defined(__aarch64__)
-static void stfts_neon(const std::vector<float> &audio, int audio_length, int window_length, int hop_length, const std::vector<float> &window, std::complex<float> *stft_result, int num_frames)
+static void stfts(const std::vector<float> &audio, int audio_length, int window_length, int hop_length, const std::vector<float> &window, std::complex<float> *stft_result, int num_frames)
 {
     std::vector<float> input(window_length, 0.0f);
     std::vector<std::complex<float>> output(window_length / 2 + 1);
@@ -195,7 +171,7 @@ void transpose(std::complex<float> *input, int input_rows, int input_cols, std::
 }
 
 #if defined(__aarch64__)
-void matmul_by_neon(float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B)
+void matmul(const float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B)
 {
     int k_start = COLS_A, k_end = 0;
     for (auto i = 0; i < ROWS_A; i++)
@@ -243,7 +219,7 @@ void matmul_by_neon(float *A, float *B, std::vector<float> &C, int ROWS_A, int C
     }
 }
 #else
-void matmul_by_cpu(float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B) 
+void matmul(const float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B)
 {
     std::fill(C.begin(), C.end(), 0.0f);
 
@@ -260,7 +236,7 @@ void matmul_by_cpu(float *A, float *B, std::vector<float> &C, int ROWS_A, int CO
 }
 #endif
 
-static void log_mel_spectrogram(float *audio_data, int audio_length, int cur_num_frames_of_stfts, float *filters, int n_fft, int hop_length, int n_mels, std::vector<float> &mel_spec)
+static void log_mel_spectrogram(const float *audio_data, int audio_length, int cur_num_frames_of_stfts, const float *filters, int n_fft, int hop_length, int n_mels, std::vector<float> &mel_spec)
 {
     int mels_filters_size = n_fft / 2 + 1;
 
@@ -273,11 +249,7 @@ static void log_mel_spectrogram(float *audio_data, int audio_length, int cur_num
     reflect_pad(audio, padded_audio, n_fft / 2);
 
     std::vector<std::complex<float>> stfts_result(mels_filters_size * cur_num_frames_of_stfts);
-#if defined(__aarch64__)
-    stfts_neon(padded_audio, audio_length + n_fft, n_fft, hop_length, window, stfts_result.data(), cur_num_frames_of_stfts);
-#else
     stfts(padded_audio, audio_length + n_fft, n_fft, hop_length, window, stfts_result.data(), cur_num_frames_of_stfts);
-#endif
 
     std::vector<std::complex<float>> stfts_result_t(mels_filters_size * cur_num_frames_of_stfts);
     transpose(stfts_result.data(), cur_num_frames_of_stfts, mels_filters_size, stfts_result_t.data());
@@ -288,38 +260,31 @@ static void log_mel_spectrogram(float *audio_data, int audio_length, int cur_num
     int ROWS_A = n_mels;
     int COLS_A = mels_filters_size;
     int COLS_B = cur_num_frames_of_stfts - 1;
-#if defined(__aarch64__)
-    matmul_by_neon(filters, magnitudes.data(), mel_spec, ROWS_A, COLS_A, COLS_B);
-#else
-    matmul_by_cpu(filters, magnitudes.data(), mel_spec, ROWS_A, COLS_A, COLS_B);
-#endif
+    matmul(filters, magnitudes.data(), mel_spec, ROWS_A, COLS_A, COLS_B);
 
     clamp_and_log_max(mel_spec, ROWS_A, COLS_B);
 
 }
 
-void caiwei::audio::audio_preprocess(const float *audio, int audio_length, float *mel_filters, int n_fft, int hop_length, int n_mels, int max_audio_length, std::vector<float> &x_mel, int *actual_len)
+void caiwei::audio::log_mel_spectrogram(const float *audio, int audio_length, const float *mel_filters, int n_fft, int hop_length, int n_mels, int max_audio_length, std::vector<float> &mel_spec, int *actual_length)
 {
-    int ret;
-    std::vector<float> ori_audio_data(audio, audio + audio_length);
-
     if (audio_length >= max_audio_length)
     {
-        std::vector<float> trim_audio_data(max_audio_length);
-        std::copy(ori_audio_data.begin(), ori_audio_data.begin() + max_audio_length, trim_audio_data.begin());
+        std::vector<float> audio_data(max_audio_length);
+        std::copy(audio, audio + max_audio_length, audio_data.begin());
         int cur_num_frames_of_stfts = max_audio_length / hop_length + 1;
-        log_mel_spectrogram(trim_audio_data.data(), max_audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, x_mel);
-        *actual_len = max_audio_length / hop_length;
+        ::log_mel_spectrogram(audio_data.data(), max_audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, mel_spec);
+        *actual_length = max_audio_length / hop_length;
     }
     else
     {
         int cur_num_frames_of_stfts = audio_length / hop_length + 1;
-        int x_mel_rows = n_mels;
-        int x_mel_cols = cur_num_frames_of_stfts - 1;
-        int x_mel_cols_pad = max_audio_length / hop_length;
-        std::vector<float> cur_x_mel(x_mel_rows * x_mel_cols, 0.0f);
-        log_mel_spectrogram(ori_audio_data.data(), audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, cur_x_mel);
-        pad_x_mel(cur_x_mel, x_mel_rows, x_mel_cols, x_mel, x_mel_cols_pad);
-        *actual_len = x_mel_cols;
+        int mel_spec_rows = n_mels;
+        int mel_spec_cols = cur_num_frames_of_stfts - 1;
+        int mel_spec_cols_pad = max_audio_length / hop_length;
+        std::vector<float> cur_mel_spec(mel_spec_rows * mel_spec_cols, 0.0F);
+        ::log_mel_spectrogram(audio, audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, cur_mel_spec);
+        pad_mel_spec(cur_mel_spec, mel_spec_rows, mel_spec_cols, mel_spec, mel_spec_cols_pad);
+        *actual_length = mel_spec_cols;
     }
 }

@@ -9,11 +9,19 @@
 namespace caiwei {
 namespace audio  {
 
-int read_mel_filters(const char *fileName, float *data, int max_lines);
+void log_mel_spectrogram(
+    const float* audio,
+    int audio_length,
+    const float* mel_filters,
+    int n_fft,
+    int hop_length,
+    int n_mels,
+    int max_audio_length,
+    std::vector<float>& mel_spec,
+    int* actual_length
+);
 
-void audio_preprocess(const float *audio, int audio_length, float *mel_filters, int n_fft, int hop_length, int n_mels, int max_audio_length, std::vector<float> &x_mel, int *actual_len);
-
-}
-}
+} // audio
+} // caiwei
 
 # endif // CAIWEI_RUNTIME_AUDIO_TOOL_HPP

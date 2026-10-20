@@ -491,6 +491,9 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
     if (state == RKLLM_RUN_ERROR) {
+        #if ENABLE_CAIWEI_PERF
+        std::printf("\n");
+        #endif
         CW_LOG_W("RKNN3会话运行错误");
         std::lock_guard<std::mutex> lock(session->mutex);
         session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
@@ -499,6 +502,9 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
     } else if (state == RKLLM_RUN_WAITING) {
         CW_LOG_W("RKNN3会话运行告警");
     } else if (state == RKLLM_RUN_FINISH) {
+        #if ENABLE_CAIWEI_PERF
+        std::printf("\n");
+        #endif
         CW_LOG_I("RKNN3会话运行完成");
         std::lock_guard<std::mutex> lock(session->mutex);
         if (session->toolcall) {
@@ -509,12 +515,18 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
         session->stop = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_MAX_NEW_TOKEN_REACHED) {
+        #if ENABLE_CAIWEI_PERF
+        std::printf("\n");
+        #endif
         CW_LOG_W("RKNN3会话词元超量");
         std::lock_guard<std::mutex> lock(session->mutex);
         session->token_result.push_back(caiwei::text::Result{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(session->n_prefill_tokens), session->n_generate_tokens });
         session->stop = true;
         session->cv.notify_one();
     } else if (state == RKLLM_RUN_STOP) {
+        #if ENABLE_CAIWEI_PERF
+        std::printf("\n");
+        #endif
         CW_LOG_I("RKNN3会话运行停止");
         std::lock_guard<std::mutex> lock(session->mutex);
         if (session->toolcall) {

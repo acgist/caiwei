@@ -23,14 +23,20 @@ caiwei::context::ASRRKNN3Context::~ASRRKNN3Context() {
 bool caiwei::context::ASRRKNN3Context::load_mel_filters() {
     int n_mels = this->media_input[0].attr->shape[2];
     int mels_filters_size = N_FFT / 2 + 1;
-    this->mel_filters.resize(n_mels * mels_filters_size);
-    int ret = caiwei::audio::read_mel_filters(MEL_FILTERS_PATH, this->mel_filters.data(), n_mels * mels_filters_size);
-    if (ret != 0) {
+    int max_lines = n_mels * mels_filters_size;
+    this->mel_filters.resize(max_lines);
+    int line_count = 0;
+    FILE* file = fopen(MEL_FILTERS_PATH, "r");
+    auto* data = this->mel_filters.data();
+    if (file == NULL) {
         printf("read mel_filters fail! Please check if the file \"%s\" exists.\n", MEL_FILTERS_PATH);
         return false;
-    } else {
-        CW_LOG_I("n_mels = %d, mels_filters_size = %d", n_mels, mels_filters_size);
     }
+    while (line_count < max_lines && fscanf(file, "%f", &data[line_count]) == 1) {
+        line_count++;
+    }
+    fclose(file);
+    CW_LOG_I("n_mels = %d, mels_filters_size = %d", n_mels, mels_filters_size);
     return true;
 }
 
@@ -94,7 +100,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
         CW_LOG_W("音频数据为空");
         return {};
     }
-    int num_frames = audio_frame.size() * sizeof(uint8_t) / sizeof(int16_t);
+    const int num_frames = audio_frame.size() * sizeof(uint8_t) / sizeof(int16_t);
     context_session->audio_frames = num_frames;
     int batch_size = this->media_input[0].attr->shape[0];
     int n_mels = this->media_input[0].attr->shape[2];
@@ -102,16 +108,16 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
     int n_audio = get_n_audio(window_size, num_frames);
     this->audio_embeds.resize(this->media_output[0].attr->shape[1] * (n_audio + prefix_n_token + suffix_n_token));
     int n_frame = floor((num_frames - N_FFT) / HOP_LENGTH ) + 1;
-    std::vector<float> padded_feature(n_mels * n_frame, 0.0f);
+    std::vector<float> padding_feature(n_mels * n_frame, 0.0F);
     int actual_len;
-    std::vector<float> audio_data(audio_frame.size() * sizeof(uint8_t) / sizeof(int16_t));
+    std::vector<float> audio_data(num_frames);
     const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio_frame.data());
-    std::transform(audio_data_ptr, audio_data_ptr + audio_frame.size() * sizeof(uint8_t) / sizeof(int16_t), audio_data.data(), [](int16_t v) {
+    std::transform(audio_data_ptr, audio_data_ptr + num_frames, audio_data.data(), [](int16_t v) {
         return static_cast<float>(v) / 32768.0F;
     });
     int ret = 0;
-    caiwei::audio::audio_preprocess(audio_data.data(), audio_data.size(), this->mel_filters.data(), N_FFT, HOP_LENGTH, n_mels, n_frame * HOP_LENGTH, padded_feature, &actual_len);
-    float* audio_input_feat = padded_feature.data();
+    caiwei::audio::log_mel_spectrogram(audio_data.data(), audio_data.size(), this->mel_filters.data(), N_FFT, HOP_LENGTH, n_mels, n_frame * HOP_LENGTH, padding_feature, &actual_len);
+    float* audio_input_feature = padding_feature.data();
     for(int chunk = 0; chunk * batch_size * window_size < n_frame; chunk++) {
         int real_data_len = std::min(batch_size * window_size, n_frame - chunk * batch_size * window_size);
         int n_chunk_token = this->media_output[0].attr->shape[0];
@@ -127,7 +133,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
             if (batch_real_len > 0) {
                 for (int i = 0; i < n_mels; i++) {
                     float* dst = dst_base + batch_offset + i * window_size;
-                    float* src = audio_input_feat + i * n_frame + src_frame_start;
+                    float* src = audio_input_feature + i * n_frame + src_frame_start;
                     memcpy(dst, src, batch_real_len * sizeof(float));
                 }
             }
