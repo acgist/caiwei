@@ -330,7 +330,7 @@ std::string to_json(const CompletionsChunk   & chunk);
 std::string to_json(const EmbeddingResponse  & response);
 std::string to_json(const RerankingResponse  & response);
 
-} // namespace text
-} // namespace caiwei
+} // text
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_TEXT_DATA_HPP

@@ -36,7 +36,7 @@ static void get_models() {
         nlohmann::json ret;
         for (const auto& value : list) {
             ret.push_back({
-                {"type", value.type_},
+                {"type", value.type_name},
                 {"name", value.name },
                 {"path", value.path }
             });

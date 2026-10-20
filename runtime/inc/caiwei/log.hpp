@@ -21,8 +21,8 @@ void log(Level level, const std::source_location& loc, const char* fmt, ...);
 
 void set_log_level(Level level);
 
-} // namespace log
-} // namespace caiwei
+} // log
+} // caiwei
 
 #if CAIWEI_DEBUG
 #define CW_LOG_D(fmt, ...) caiwei::log::log(caiwei::log::Level::D, std::source_location::current(), fmt, ##__VA_ARGS__)

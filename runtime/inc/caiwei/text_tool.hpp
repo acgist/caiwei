@@ -35,7 +35,7 @@ public:
     ) const;
 };
 
-} // namespace text
-} // namespace caiwei
+} // text
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_TEXT_TOOL_HPP

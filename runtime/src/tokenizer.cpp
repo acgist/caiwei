@@ -1,6 +1,8 @@
 #include "caiwei/log.hpp"
 #include "caiwei/tokenizer.hpp"
 
+#include <cmath>
+
 caiwei::context::Tokenizer::Tokenizer(const std::string& path) {
     llama_model_params params = llama_model_default_params();
     params.vocab_only = true;
@@ -117,4 +119,26 @@ std::string caiwei::context::detokenize(const llama_vocab* vocab, llama_token* t
         text.resize(length);
     }
     return text;
+}
+
+void caiwei::context::euclidean(const float* embd, float* out, int size) {
+    if (size < 0) {
+        return;
+    }
+    if (size == 1) {
+        if (embd == out) {
+            return;
+        }
+        out[0] = embd[0];
+        return;
+    }
+    double sum = 0.0;
+    for (int i = 0; i < size; i++) {
+        sum += embd[i] * embd[i];
+    }
+    sum = std::sqrt(sum);
+    const float norm = sum > 0.0 ? 1.0 / sum : 0.0F;
+    for (int i = 0; i < size; i++) {
+        out[i] = embd[i] * norm;
+    }
 }

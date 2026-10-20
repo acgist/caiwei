@@ -10,6 +10,7 @@
 #define CAIWEI_RUNTIME_CONTEXT_HPP
 
 #include "caiwei/text_data.hpp"
+#include "caiwei/audio_data.hpp"
 #include "caiwei/image_data.hpp"
 #include "caiwei/media_data.hpp"
 
@@ -25,8 +26,8 @@ namespace runtime {
 
 class Runtime;
 
-}
-};
+} // runtime
+} // caiwei
 
 namespace caiwei  {
 namespace context {
@@ -44,7 +45,7 @@ enum class Type {
 
 struct ContextInfo {
     Type type;
-    std::string type_;
+    std::string type_name;
     std::string name;
     std::string path;
     std::string vendor;
@@ -57,10 +58,9 @@ const ContextInfo* get_context_info(const std::string& name);
 
 class Context {
 public:
-    bool usage = false; // 是否已被使用
-    std::atomic_int32_t ref_count = 0;
-public:
     const std::string id;
+    bool usage = false;
+    std::atomic_int32_t ref_count = 0;
     std::chrono::steady_clock::time_point last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
@@ -71,9 +71,6 @@ public:
     virtual bool load();
 };
 
-/**
- * 图像分类模型
- */
 class ClsContext : public Context {
 protected:
     int c;
@@ -89,9 +86,6 @@ public:
     virtual std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) = 0;
 };
 
-/**
- * 目标检测模型
- */
 class DetContext : public Context {
 protected:
     int c;
@@ -107,9 +101,6 @@ public:
     virtual std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) = 0;
 };
 
-/**
- * 语音识别模型
- */
 class ASRContext : public Context {
 public:
     ASRContext(caiwei::runtime::Runtime* runtime);
@@ -118,9 +109,6 @@ public:
     virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
-/**
- * 语言大模型
- */
 class LLMContext : public Context {
 public:
     LLMContext(caiwei::runtime::Runtime* runtime);
@@ -129,9 +117,6 @@ public:
     virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
-/**
- * 视觉大模型
- */
 class VLMContext : public Context {
 public:
     VLMContext(caiwei::runtime::Runtime* runtime);
@@ -140,9 +125,6 @@ public:
     virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
 };
 
-/**
- * 文本嵌入模型
- */
 class EmbeddingContext : public Context {
 public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
@@ -151,9 +133,6 @@ public:
     virtual caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) = 0;
 };
 
-/**
- * 文本重排序模型
- */
 class RerankingContext : public Context {
 public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
@@ -165,9 +144,7 @@ public:
 void init();
 void stop();
 
-void euclidean(const float* embd, float* out, int size);
-
-} // namespace context
-} // namespace caiwei
+} // context
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_CONTEXT_HPP

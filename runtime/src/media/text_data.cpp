@@ -160,7 +160,7 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     request.model  = data.value("model", "");
     caiwei::env::check_empty(request.model, "模型不能为空");
     request.messages = data.value("messages", std::vector<CompletionsRequestMessage>());
-    caiwei::env::check_bool(request.messages.empty(), "消息不能为空");
+    caiwei::env::check_empty(request.messages, "消息不能为空");
     set_opt(data, request.seed, "seed");
     set_opt(data, request.top_k, "top_k");
     set_opt(data, request.top_p, "top_p");
@@ -197,7 +197,7 @@ caiwei::text::EmbeddingsRequest caiwei::text::json_to_embeddings(const std::stri
         request.input = std::move(input);
     } else if (input_json.is_array()) {
         std::vector<std::string> input = input_json.get<std::vector<std::string>>();
-        caiwei::env::check_bool(input.empty(), "输入不能为空");
+        caiwei::env::check_empty(input, "输入不能为空");
         request.input = std::move(input);
     } else {
         throw caiwei::env::MessageCodeException("输入格式错误");
@@ -215,7 +215,7 @@ caiwei::text::RerankingsRequest caiwei::text::json_to_rerankings(const std::stri
     nlohmann::json documents_json = data.value("documents", nlohmann::json());
     if (documents_json.is_array()) {
         request.documents = documents_json.get<std::vector<std::string>>();
-        caiwei::env::check_bool(request.documents.empty(), "文档不能为空");
+        caiwei::env::check_empty(request.documents, "文档不能为空");
     } else {
         throw caiwei::env::MessageCodeException("文档格式错误");
     }

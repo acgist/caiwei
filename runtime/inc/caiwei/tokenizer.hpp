@@ -40,6 +40,8 @@ public:
     std::string detokenize(int32_t* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
 };
 
+void euclidean(const float* embd, float* out, int size);
+
 } // context
 } // caiwei
 

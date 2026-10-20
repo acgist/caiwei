@@ -140,7 +140,7 @@ public:
     bool stop();
 };
 
-} // namespace media
-} // namespace caiwei
+} // media
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_MEDIA_HPP

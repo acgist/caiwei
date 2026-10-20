@@ -220,7 +220,7 @@ void chw_to_hwc(const T* chw, T* hwc, const int H, const int W, const int C) {
     }
 }
 
-} // namespace image
-} // namespace caiwei
+} // image
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_IMAGE_TOOL_HPP

@@ -55,7 +55,7 @@ public:
     VideoFrame(uint32_t size);
 };
 
-} // namespace media
-} // namespace caiwei
+} // media
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_MEDIA_DATA_HPP

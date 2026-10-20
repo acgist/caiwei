@@ -9,6 +9,6 @@ namespace caiwei {
 void init();
 void stop();
 
-} // namespace caiwei
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_CAIWEI_HPP

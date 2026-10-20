@@ -37,7 +37,7 @@ inline std::string to_json(const std::vector<T>& v) {
     return ret.dump();
 }
 
-} // namespace image
-} // namespace caiwei
+} // image
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_IMAGE_DATA_HPP

@@ -7,7 +7,6 @@
 #ifndef CAIWEI_RUNTIME_ENV_HPP
 #define CAIWEI_RUNTIME_ENV_HPP
 
-#include <ctime>
 #include <atomic>
 #include <chrono>
 #include <string>
@@ -21,28 +20,23 @@ public:
     const std::string code;
     const std::string message;
 public:
-    MessageCodeException(const std::string message) : code("9999"), message(), std::runtime_error("") {}
-    MessageCodeException(const std::string code, const std::string message) : code(std::move(code)), message(std::move(message)), std::runtime_error("") {}
-    virtual ~MessageCodeException() = default;
-public:
-    const char* what() const noexcept override {
-        return this->message.c_str();
-    }
+    MessageCodeException(std::string message) : std::runtime_error(message), code("9999"), message(std::move(message)) {}
+    MessageCodeException(std::string code, std::string message) : std::runtime_error(message), code(std::move(code)), message(std::move(message)) {}
 };
 
-inline void check_bool(bool value, const std::string& message, const std::string& code = "9999") {
-    if (value) {
-        throw MessageCodeException(code, message);
-    }
-}
-
-inline void check_empty(const std::string& value, const std::string& message = "字符串不能为空", const std::string& code = "9999") {
+template<typename T>
+inline void check_empty(const T& value, const std::string& message = "容器不能为空", const std::string& code = "9999") {
     if (value.empty()) {
         throw MessageCodeException(code, message);
     }
 }
 
 template<typename T>
+concept Comparable = requires(T a, T z) {
+    { a < z } -> std::convertible_to<bool>;
+    { a > z } -> std::convertible_to<bool>;
+};
+template<Comparable T>
 inline void check_range(T val, T min, T max, const std::string& message = "数据范围错误", const std::string& code = "9999") {
     if (val < min || val > max) {
         throw MessageCodeException(code, message);
@@ -84,15 +78,7 @@ inline std::string id() {
     return std::to_string(caiwei::env::timestamp() * max_id_index + val);
 }
 
-inline std::string yyyyMMdd_HHmmss() {
-    std::string buffer;
-    buffer.resize(20); // yyyy-MM-dd HH:mm:ss
-    auto  tt { std::time(0)        };
-    auto* tm { std::localtime(&tt) };
-    std::strftime(buffer.data(), buffer.size(), "%Y-%m-%d %H:%M:%S", tm);
-    return buffer;
-}
+} // env
+} // caiwei
 
-} // namespace env
-} // namespace caiwei
 #endif // CAIWEI_RUNTIME_ENV_HPP

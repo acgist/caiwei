@@ -126,7 +126,7 @@ extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>
 template <typename R>
 std::shared_ptr<R> get_runtime(caiwei::runtime::Type type);
 
-} // namespace runtime
-} // namespace caiwei
+} // runtime
+} // caiwei
 
 #endif // CAIWEI_RUNTIME_RUNTIME_HPP
