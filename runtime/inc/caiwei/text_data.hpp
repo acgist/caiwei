@@ -1,6 +1,3 @@
-/**
- * 文本结构
- */
 #ifndef CAIWEI_RUNTIME_TEXT_DATA_HPP
 #define CAIWEI_RUNTIME_TEXT_DATA_HPP
 
@@ -20,22 +17,22 @@
 namespace caiwei {
 namespace text   {
     
-const std::string ROLE_USER      = "user";
-const std::string ROLE_TOOL      = "tool";
-const std::string ROLE_SYSTEM    = "system";
-const std::string ROLE_FUNCTION  = "function";
-const std::string ROLE_ASSISTANT = "assistant";
-const std::string ROLE_DEVELOPER = "developer";
+inline constexpr const char* ROLE_TOOL      = "tool";
+inline constexpr const char* ROLE_USER      = "user";
+inline constexpr const char* ROLE_SYSTEM    = "system";
+inline constexpr const char* ROLE_FUNCTION  = "function";
+inline constexpr const char* ROLE_ASSISTANT = "assistant";
+inline constexpr const char* ROLE_DEVELOPER = "developer";
 
-const std::string FINISH_REASON_STOP           = "stop";
-const std::string FINISH_REASON_LENGTH         = "length";
-const std::string FINISH_REASON_TOOL_CALLS     = "tool_calls";
-const std::string FINISH_REASON_CONTENT_FILTER = "content_filter";
+inline constexpr const char* FINISH_REASON_STOP           = "stop";
+inline constexpr const char* FINISH_REASON_LENGTH         = "length";
+inline constexpr const char* FINISH_REASON_TOOL_CALLS     = "tool_calls";
+inline constexpr const char* FINISH_REASON_CONTENT_FILTER = "content_filter";
 
-const std::string CONTENT_TYPE_DATA  = "data:";
-const std::string CONTENT_TYPE_FILE  = "file:";
-const std::string CONTENT_TYPE_HTTP  = "http:";
-const std::string CONTENT_TYPE_HTTPS = "https:";
+inline constexpr const char* CONTENT_TYPE_DATA  = "data:";
+inline constexpr const char* CONTENT_TYPE_FILE  = "file:";
+inline constexpr const char* CONTENT_TYPE_HTTP  = "http:";
+inline constexpr const char* CONTENT_TYPE_HTTPS = "https:";
 
 struct CompletionsRequestMessageContentItemUrl {
     std::optional<std::string> url;
@@ -92,7 +89,7 @@ struct CompletionsRequest {
     std::string model;
     std::vector<CompletionsRequestMessage> messages;
     std::optional<int>   seed;
-    std::optional<int>   top_k          = 10; // 设置20瑞芯微就开始乱说
+    std::optional<int>   top_k          = 10; // 设置20时RKNN3开始胡说
     std::optional<float> top_p          = 0.95F;
     std::optional<float> temperature    = 0.8F;
     std::optional<float> repeat_penalty = 1.04F;
@@ -108,10 +105,9 @@ struct CompletionsRequest {
     std::optional<int> yolo_queue_size = 8;      // YOLO识别队列大小
     std::optional<std::string> media_url;  // 持续识别视频文件地址
     std::optional<std::string> media_type; // 持续识别视频文件类型
-    std::optional<bool> drop_on_full = false;
+    std::optional<bool> drop_on_full    = false;
     std::optional<bool> enable_thinking = false;
     std::optional<std::vector<std::string>> model_list;
-    // 临时字段
     CW_TRANSIENT std::string id;
     CW_TRANSIENT uint32_t    created;
 };
@@ -203,22 +199,22 @@ struct EmbeddingsRequest {
     std::variant<std::string, std::vector<std::string>> input;
 };
 
-struct EmbeddingResponseData {
+struct EmbeddingsResponseData {
     uint32_t    index;
     std::string object = "embedding";
     std::vector<float> embedding;
 };
 
-struct EmbeddingResponseUsage {
+struct EmbeddingsResponseUsage {
     std::optional<uint32_t> prompt_tokens;
     std::optional<uint32_t> total_tokens;
 };
 
-struct EmbeddingResponse {
+struct EmbeddingsResponse {
     std::string object = "list";
     std::string model;
-    std::vector<EmbeddingResponseData> data;
-    std::optional<EmbeddingResponseUsage> usage;
+    std::vector<EmbeddingsResponseData> data;
+    std::optional<EmbeddingsResponseUsage> usage;
 };
 
 struct RerankingsRequest {
@@ -228,22 +224,22 @@ struct RerankingsRequest {
     std::optional<std::string> instruct;
 };
 
-struct RerankingResponseData {
+struct RerankingsResponseData {
     uint32_t    index;
     std::string object = "reranking";
     float       score;
 };
 
-struct RerankingResponseUsage {
+struct RerankingsResponseUsage {
     std::optional<uint32_t> prompt_tokens;
     std::optional<uint32_t> total_tokens;
 };
 
-struct RerankingResponse {
+struct RerankingsResponse {
     std::string object = "list";
     std::string model;
-    std::vector<RerankingResponseData> data;
-    std::optional<RerankingResponseUsage> usage;
+    std::vector<RerankingsResponseData> data;
+    std::optional<RerankingsResponseUsage> usage;
 };
 
 struct SpecialToken {
@@ -275,7 +271,7 @@ struct SpecialToken {
     std::string document_key;
 };
 
-struct ResultToolcall {
+struct ToolcallSession {
     bool name_return      = false;
     bool arguments_return = false;
     std::string toolcall_id;
@@ -284,7 +280,7 @@ struct ResultToolcall {
     std::string content;
     std::string arguments;
     
-    ResultToolcall();
+    ToolcallSession();
 
     void reset();
     void finish();
@@ -293,9 +289,9 @@ struct ResultToolcall {
     std::string get_arguments();
 };
 
-struct Result {
-    bool thinking = false;
-    bool toolcall = false;
+struct CompletionResult {
+    bool thinking;
+    bool toolcall;
     std::string token;
     std::string finish_reason;
     uint32_t prompt_tokens;
@@ -306,12 +302,9 @@ struct Result {
     std::string toolcall_id;
     uint32_t    toolcall_index;
 
-    Result(Result&& other) noexcept = default;
-    Result& operator=(Result&& other) noexcept = default;
-    
-    Result(bool thinking, bool toolcall, std::string token);
-    Result(bool thinking, bool toolcall, ResultToolcall& result_toolcall);
-    Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
+    CompletionResult(bool thinking, bool toolcall, std::string token);
+    CompletionResult(bool thinking, bool toolcall, ToolcallSession& toolcall_session);
+    CompletionResult(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 
 struct EmbeddingResult {
@@ -327,8 +320,8 @@ EmbeddingsRequest  json_to_embeddings (const std::string& json);
 RerankingsRequest  json_to_rerankings (const std::string& json);
 std::string to_json(const CompletionsResponse& response);
 std::string to_json(const CompletionsChunk   & chunk);
-std::string to_json(const EmbeddingResponse  & response);
-std::string to_json(const RerankingResponse  & response);
+std::string to_json(const EmbeddingsResponse & response);
+std::string to_json(const RerankingsResponse & response);
 
 } // text
 } // caiwei

@@ -47,7 +47,7 @@ bool caiwei::context::VLMRKNN3Context::load() {
     return this->load_model(true) && this->load_media_model(true) && this->init_internal_tensor_mems();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::CompletionResult> caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 

@@ -17,17 +17,17 @@ void cls_image() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
     auto result = ptr->run(frame);
     for (const auto& cls : result) {
-        std::printf("cls = %d, confidence = %f\n", cls.first, cls.second);
+        std::printf("cls = %d, score = %f\n", cls.class_id, cls.score);
     }
     // 258 == samoyed
     assert(!result.empty());
-    assert(result[0].first == 258);
+    assert(result[0].class_id== 258);
     caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
@@ -53,7 +53,7 @@ void cls_image_thread() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
@@ -77,7 +77,7 @@ void cls_video() {
     auto type = "file";
     auto url  = "./caiwei.mp4";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
-    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>("yolo26n-cls");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
@@ -87,7 +87,7 @@ void cls_video() {
     }, [&ptr](caiwei::media::VideoFrame& frame) {
         auto ret = ptr->run(frame);
         for (const auto& index : ret) {
-            CW_LOG_D("%d = %.2f", index.first, index.second);
+            CW_LOG_D("%d = %.2f", index.class_id, index.score);
         }
         return caiwei::player::play_video(frame.data.data(), frame.width * 3);
     });

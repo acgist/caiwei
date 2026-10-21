@@ -92,7 +92,7 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         ptr->ref_count++;
         return ptr;
     } else {
-        this->cv.wait_for(lock, std::chrono::seconds(this->timeout), [&iter]() {
+        this->condition.wait_for(lock, std::chrono::seconds(this->timeout), [&iter]() {
             return std::any_of(iter->second.begin(), iter->second.end(), [](auto& context) {
                 return !context->usage;
             });
@@ -115,11 +115,11 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
     if (context == nullptr) {
         return;
     }
-    CW_LOG_D("释放context: %s", context->id.c_str());
+    CW_LOG_D("回收context: %s", context->id.c_str());
     std::lock_guard<std::mutex> lock(mutex);
     context->usage = false;
     context->ref_count--;
-    this->cv.notify_all();
+    this->condition.notify_all();
 }
 
 size_t caiwei::runtime::Runtime::optimize() {

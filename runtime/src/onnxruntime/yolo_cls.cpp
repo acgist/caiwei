@@ -18,5 +18,5 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsONNXRuntimeContext::run(cons
     float* output_data = output.front().GetTensorMutableData<float>();
     const auto& output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     const int64_t data_length = output_dims[1];
-    return caiwei::image::top_k(output_data, data_length, this->top_k, this->confidence_threshold);
+    return caiwei::image::top_k<float, caiwei::image::Cls>(output_data, data_length, this->top_k, this->confidence_threshold);
 }

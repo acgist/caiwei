@@ -6,13 +6,13 @@ caiwei::session::RerankingsSession::RerankingsSession(caiwei::text::RerankingsRe
 }
 
 std::string caiwei::session::RerankingsSession::get() {
-    auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext, caiwei::text::RerankingsRequest, caiwei::text::RerankingResult>(this->request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>(this->request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     auto result = ptr->run(this->request);
-    caiwei::text::RerankingResponse response;
+    caiwei::text::RerankingsResponse response;
     response.model = request.model;
     for (int i = 0; i < result.result.size(); ++i) {
-        caiwei::text::RerankingResponseData data;
+        caiwei::text::RerankingsResponseData data;
         data.index = i;
         data.score = result.result[i][0];
         response.data.push_back(std::move(data));

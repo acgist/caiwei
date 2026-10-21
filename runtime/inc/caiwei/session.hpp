@@ -30,12 +30,10 @@ public:
     virtual std::string get() = 0;
 };
 
-// 返回连接是否断开标识是否需要继续处理
 using Callback = std::function<bool(const char* data, int length)>;
 
 class StatefulSession : public Session {
 protected:
-    bool running = false;
     Callback callback;
 public:
     StatefulSession(Callback callback);
@@ -45,12 +43,16 @@ public:
 
 class VideoPlaySession : public StatefulSession {
 private:
-    std::string type;
-    std::string url;
+    const bool copy;
+    const std::string type;
+    const std::string url;
 public:
-    VideoPlaySession(const std::string type, std::string url, Callback callback);
+    VideoPlaySession(bool copy, std::string type, std::string url, Callback callback);
 public:
     std::future<bool> get() override;
+protected:
+    bool media_copy();
+    bool media_codec();
 };
 
 class EmbeddingsSession : public StatelessSession {

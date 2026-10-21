@@ -1,6 +1,3 @@
-/**
- * 媒体结构
- */
 #ifndef CAIWEI_RUNTIME_MEDIA_DATA_HPP
 #define CAIWEI_RUNTIME_MEDIA_DATA_HPP
 
@@ -21,9 +18,13 @@ class Frame {
 public:
     std::vector<uint8_t> data;
 public:
-    Frame() = default;
     Frame(uint32_t size);
-    virtual ~Frame();
+    Frame() noexcept = default;
+    virtual ~Frame() = default;
+    Frame(const Frame& result) noexcept = default;
+    Frame& operator=(const Frame& result) noexcept = default;
+    Frame(Frame&& result) noexcept = default;
+    Frame& operator=(Frame&& result) noexcept = default;
 };
 
 class AudioFrame : public Frame {
@@ -32,8 +33,8 @@ public:
     uint64_t frames;
     uint32_t samples;
 public:
-    AudioFrame() = default;
     AudioFrame(uint32_t size);
+    AudioFrame() noexcept = default;
 };
 
 class ImageFrame : public Frame {
@@ -42,8 +43,8 @@ public:
     uint32_t height;
     uint32_t channels;
 public:
-    ImageFrame() = default;
     ImageFrame(uint32_t size);
+    ImageFrame() noexcept = default;
 };
 
 class VideoFrame : public ImageFrame {
@@ -51,8 +52,8 @@ public:
     uint64_t msec;
     uint64_t frames;
 public:
-    VideoFrame() = default;
     VideoFrame(uint32_t size);
+    VideoFrame() noexcept = default;
 };
 
 } // media

@@ -7,15 +7,19 @@
     <el-button @click="stopMedia" type="danger" >关闭媒体</el-button>
   </div>
   <div style="display:flex;align-items:center;justify-content:center;padding:1rem;">
+    <el-select v-model="copy" style="width:6rem;margin-right:1rem;" @change="changeType">
+      <el-option :value="true"  label="复制"></el-option>
+      <el-option :value="false" label="解码"></el-option>
+    </el-select>
     <el-select v-model="type" style="width:6rem;margin-right:1rem;" @change="changeType">
-          <el-option value="rtp"    label="rtp"   ></el-option>
-          <el-option value="sdp"    label="sdp"   ></el-option>
-          <el-option value="file"   label="file"  ></el-option>
-          <el-option value="http"   label="http"  ></el-option>
-          <el-option value="rtmp"   label="rtmp"  ></el-option>
-          <el-option value="rtsp"   label="rtsp"  ></el-option>
-          <el-option value="device" label="device"></el-option>
-        </el-select>
+      <el-option value="rtp"    label="rtp"   ></el-option>
+      <el-option value="sdp"    label="sdp"   ></el-option>
+      <el-option value="file"   label="file"  ></el-option>
+      <el-option value="http"   label="http"  ></el-option>
+      <el-option value="rtmp"   label="rtmp"  ></el-option>
+      <el-option value="rtsp"   label="rtsp"  ></el-option>
+      <el-option value="device" label="device"></el-option>
+    </el-select>
     <el-input style="width:16rem;" v-model="url" placeholder="媒体地址"></el-input>
   </div>
 </template>
@@ -31,9 +35,10 @@ export default {
   },
   data() {
     return {
-      type  : "file",
-      url   : null,
-      urls  : {
+      copy: true,
+      type: "file",
+      url : null,
+      urls: {
         // ffmpeg -re -i caiwei.mp4 -c:a pcm_alaw -ar 8000 -ac 1 -vn -f rtp -payload_type  8 -ssrc 1000 rtp://127.0.0.1:44444 > audio.sdp
         // ffmpeg -re -i caiwei.mp4 -c:v libx264                 -an -f rtp -payload_type 96 -ssrc 2000 rtp://127.0.0.1:44446 > video.sdp
         rtp   : `v=0
@@ -91,7 +96,7 @@ a=recvonly`,
         this.$message.error("媒体已经打开");
         return;
       }
-      this.event = new EventSource(`${this.host}/v1/video/play?type=${this.type}&url=${encodeURIComponent(this.url)}`);
+      this.event = new EventSource(`${this.host}/v1/video/play?copy=${this.copy}&type=${this.type}&url=${encodeURIComponent(this.url)}`);
       this.event.onopen = async e => {
         this.media = new MediaSource();
         const localVideo = this.$refs.localVideo;
@@ -137,7 +142,7 @@ a=recvonly`,
         console.error("事件异常", e);
         this.stopMedia();
       };
-      this.event.addEventListener("data", e => {
+      this.event.addEventListener("message", e => {
         if(!this.buffer) {
           console.warn("媒体没有准备就绪");
           return;

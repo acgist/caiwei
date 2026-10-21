@@ -13,7 +13,7 @@ bool caiwei::context::LLMRKNN3Context::load() {
     return this->load_model();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::CompletionResult> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 

@@ -1,10 +1,5 @@
-/**
- * 媒体
- * 
- * TODO 如果输出和输入格式一样不要编码
- */
-#ifndef CAIWEI_RUNTIME_MEDIA_HPP
-#define CAIWEI_RUNTIME_MEDIA_HPP
+#ifndef CAIWEI_RUNTIME_MEDIA_TOOL_HPP
+#define CAIWEI_RUNTIME_MEDIA_TOOL_HPP
 
 #include <string>
 #include <functional>
@@ -15,6 +10,7 @@ struct AVCodec;
 struct AVFrame;
 struct AVPacket;
 struct AVStream;
+struct AVRational;
 struct SwrContext;
 struct SwsContext;
 struct AVAudioFifo;
@@ -29,20 +25,20 @@ void init();
 void stop();
 
 struct AudioInfo {
-    int channels;         // 通道数
-    int sample_rate;      // 采样率
-    int format;           // 格式
-    int bytes_per_sample; // 每个采样字节数
+    int channels;
+    int sample_rate;
+    int bytes_per_sample;
+    int format;
 
     AudioInfo() = default;
     AudioInfo(int channels, int sample_rate, int format);
 };
 
 struct VideoInfo {
-    int fps;    // 帧率
-    int width;  // 宽度
-    int height; // 高度
-    int format; // 格式
+    int fps;
+    int width;
+    int height;
+    int format;
 
     VideoInfo() = default;
     VideoInfo(         int width, int height, int format);
@@ -55,9 +51,38 @@ using VideoCallback = std::function<bool(VideoFrame&)>;
 using PacketCallback = std::function<bool(MediaType, AVPacket*)>;
 using FormatCallback = std::function<bool(uint32_t, const uint8_t*)>;
 
+class MediaMuxer;
+
+class MediaFormat {
+private:
+    std::vector<uint8_t> buffer;
+    AVStream* audio_stream{ nullptr }; // 音频流
+    AVStream* video_stream{ nullptr }; // 视频流
+    AVRational* audio_time_base{ nullptr }; // 原始音频时间基准
+    AVRational* video_time_base{ nullptr }; // 原始视频时间基准
+    AVFormatContext* format_ctx{ nullptr }; // 格式化上下文
+public:
+    bool callable = true;
+    FormatCallback format_callback;
+public:
+    MediaFormat(FormatCallback format_callback);
+    ~MediaFormat();
+public:
+    bool open(
+        const AVCodecContext* audio_codec_ctx,
+        const AVCodecContext* video_codec_ctx,
+        AVRational* audio_time_base = nullptr,
+        AVRational* video_time_base = nullptr
+    );
+    bool stop();
+    bool send(MediaType, AVPacket* packet);
+private:
+    void send_header ();
+    void send_trailer();
+};
+
 class MediaMuxer {
 private:
-    PacketCallback packet_callback; // 编码数据回调
     size_t audio_pts = 0; // 音频累计编码采样点数
     size_t video_pts = 0; // 视频累计编码采样点数
     AVFrame * audio_frame { nullptr }; // 音频帧
@@ -68,8 +93,9 @@ private:
     SwsContext* sws_ctx{ nullptr }; // 视频重采样上下文
     const AVCodec * audio_codec{ nullptr }; // 音频编码器
     const AVCodec * video_codec{ nullptr }; // 视频编码器
-    uint8_t    * audio_ch_buffer[8] { nullptr }; // 音频通道缓存
-    AVAudioFifo* audio_fifo         { nullptr }; // 音频编码缓存
+    uint8_t    * audio_buffer[8] { nullptr }; // 音频通道缓存
+    AVAudioFifo* audio_fifo      { nullptr }; // 音频编码缓存
+    PacketCallback packet_callback; // 编码数据回调
 public:
     AudioInfo in_audio_info;  // 输入音频
     VideoInfo in_video_info;  // 输入视频
@@ -100,31 +126,6 @@ private:
     bool stop_video();
 };
 
-class MediaFormat {
-public:
-    bool callable = true;
-private:
-    bool need_header = true;
-    AudioInfo audio_info; // 音频
-    VideoInfo video_info; // 视频
-    std::vector<uint8_t> buffer;
-    AVStream       * audio_stream{ nullptr }; // 音频流
-    AVStream       * video_stream{ nullptr }; // 视频流
-    AVFormatContext* format_ctx  { nullptr }; // 格式化上下文
-public:
-    FormatCallback format_callback;
-public:
-    MediaFormat(FormatCallback format_callback);
-    ~MediaFormat();
-public:
-    bool open(const MediaMuxer& muxer);
-    bool stop();
-    bool send(MediaType, AVPacket* packet);
-private:
-    void send_header ();
-    void send_trailer();
-};
-
 class MediaDemuxer {
 private:
     volatile bool running; // 是否运行
@@ -136,11 +137,11 @@ public:
     MediaDemuxer(const std::string& type, const std::string& url, AudioCallback audio_callback, VideoCallback video_callback);
     ~MediaDemuxer();
 public:
-    bool open(AudioInfo audio_info, VideoInfo video_info);
+    bool open(AudioInfo audio_info, VideoInfo video_info, MediaFormat* media_format = nullptr);
     bool stop();
 };
 
 } // media
 } // caiwei
 
-#endif // CAIWEI_RUNTIME_MEDIA_HPP
+#endif // CAIWEI_RUNTIME_MEDIA_TOOL_HPP

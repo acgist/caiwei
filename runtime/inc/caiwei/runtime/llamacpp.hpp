@@ -1,10 +1,10 @@
 #ifndef CAIWEI_RUNTIME_LLAMACPP_HPP
 #define CAIWEI_RUNTIME_LLAMACPP_HPP
 
+#include <generator>
+
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
-
-#include <generator>
 
 struct llama_batch;
 struct llama_model;
@@ -40,8 +40,8 @@ protected:
 protected:
     llama_context* get_context(bool embeddings = false) const;
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request) const;
-    std::generator<caiwei::text::Result> generate     (const caiwei::text::CompletionsRequest& request) const;
-    std::generator<caiwei::text::Result> generate_mtmd(const caiwei::text::CompletionsRequest& request) const;
+    std::generator<caiwei::text::CompletionResult> generate     (const caiwei::text::CompletionsRequest& request) const;
+    std::generator<caiwei::text::CompletionResult> generate_mtmd(const caiwei::text::CompletionsRequest& request) const;
     virtual bool build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const;
 public:
     LlamaCPPContext(std::string path,                        int32_t max_token_length, caiwei::text::SpecialToken special_token);
@@ -64,7 +64,7 @@ public:
     ~ASRLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
     bool build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const override;
 };
 
@@ -79,7 +79,7 @@ public:
     ~LLMLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
 };
 
 class VLMLlamaCPPContext : public VLMContext, public LlamaCPPContext {
@@ -94,7 +94,7 @@ public:
     ~VLMLlamaCPPContext();
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
     bool build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const override;
 };
 
@@ -126,6 +126,7 @@ public:
     caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
 };
 
+std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = true, bool parse_special = true);
 void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits);
 void batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out);
 

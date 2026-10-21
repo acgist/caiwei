@@ -29,30 +29,7 @@ static int resize_h = 640;
 static const char* image_path = "./acgist.jpg";
 
 [[maybe_unused]]
-void test_load() {
-    CAIWEI_FOR_EACH(100)
-    int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
-    stbi_image_free(data);
-    CAIWEI_FOR_EACH_END
-}
-
-[[maybe_unused]]
-void test_crop() {
-    int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
-    std::vector<uint8_t> dst(256 * 256 * channels);
-    caiwei::image::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
-    stbi_write_jpg("./image_crop.jpg", 256, 256, channels, dst.data(), 80);
-    CAIWEI_FOR_EACH(1000)
-    caiwei::image::crop(data, width, height, dst.data(), 256, 256, 256, 256, channels);
-    CAIWEI_FOR_EACH_END
-    stbi_image_free(data);
-}
-
-[[maybe_unused]]
 void test_resize() {
-    // TODO: < 1 ms
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -113,7 +90,7 @@ void test_resize_ffmpeg() {
     auto dst_data = dst.data();
     {
         int ret = sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
-        stbi_write_jpg("./image_ffmpeg_resize.jpg", dst_w, dst_h, channels, dst.data(), 80);
+        stbi_write_jpg("./image_resize_ffmpeg.jpg", dst_w, dst_h, channels, dst.data(), 80);
     }
     CAIWEI_FOR_EACH(1000)
     int ret = sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
@@ -122,7 +99,6 @@ void test_resize_ffmpeg() {
 
 [[maybe_unused]]
 void test_resize_pad() {
-    // TODO: < 1 ms
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -230,7 +206,6 @@ void test_transpose() {
 
 [[maybe_unused]]
 void test_hwc_to_chw() {
-    // TODO: < 2 ms
     int width, height, channels;
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     std::vector<float> hwc(width * height * channels);
@@ -238,10 +213,17 @@ void test_hwc_to_chw() {
     caiwei::type::i8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
     caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
     caiwei::image::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
-    stbi_write_hdr("./image_blob_from_image.hdr", width, height, channels, hwc.data());
-    CAIWEI_FOR_EACH(1000)
-    caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
-    CAIWEI_FOR_EACH_END
+    stbi_write_hdr("./image_hwc_to_chw.hdr", width, height, channels, hwc.data());
+    {
+        CAIWEI_FOR_EACH(1000)
+        caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
+        CAIWEI_FOR_EACH_END
+    }
+    {
+        CAIWEI_FOR_EACH(1000)
+        caiwei::image::hwc_to_chw_i8_f32(data, chw.data(), height, width, channels, 255.0F);
+        CAIWEI_FOR_EACH_END
+    }
     stbi_image_free(data);
 }
 
@@ -258,7 +240,7 @@ void test_image() {
     std::vector<float>   hwc(w * h * channels);
     std::vector<float>   chw(w * h * channels);
     {
-        CAIWEI_FOR_EACH(100)
+        CAIWEI_FOR_EACH(1000)
         caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
         caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
         caiwei::type::i8_to_f32(pad.data(), w * h * channels, hwc.data(), 255.0F);
@@ -266,15 +248,10 @@ void test_image() {
         CAIWEI_FOR_EACH_END
     }
     {
-        CAIWEI_FOR_EACH(100)
+        CAIWEI_FOR_EACH(1000)
         caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
         caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
         caiwei::image::hwc_to_chw_i8_f32(pad.data(), chw.data(), h, w, channels, 255.0F);
-        CAIWEI_FOR_EACH_END
-    }
-    {
-        CAIWEI_FOR_EACH(100)
-        caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
         CAIWEI_FOR_EACH_END
     }
     stbi_image_free(data);
@@ -287,21 +264,19 @@ int main(int argc, char* argv[]) {
     } else {
         image_path = "./acgist.jpg";
     }
-    // test_load();
-    // test_crop();
-    // test_resize();
-    // #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
-    // test_resize_rga();
-    // #endif
-    // test_resize_ffmpeg();
-    // test_resize_pad();
-    // #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
-    // test_resize_pad_rga();
-    // #endif
-    // test_nms_boxes();
-    // test_min_max_loc();
-    // test_transpose();
-    // test_hwc_to_chw();
+    test_resize();
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+    test_resize_rga();
+    #endif
+    test_resize_ffmpeg();
+    test_resize_pad();
+    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+    test_resize_pad_rga();
+    #endif
+    test_nms_boxes();
+    test_min_max_loc();
+    test_transpose();
+    test_hwc_to_chw();
     test_image();
     caiwei::test::stop_test();
     return 0;

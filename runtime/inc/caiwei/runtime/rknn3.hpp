@@ -1,17 +1,19 @@
 #ifndef CAIWEI_RUNTIME_RKNN3_HPP
 #define CAIWEI_RUNTIME_RKNN3_HPP
 
-#include "caiwei/context.hpp"
-#include "caiwei/text_tool.hpp"
-#include "caiwei/tokenizer.hpp"
-
 #include <mutex>
 #include <generator>
 #include <condition_variable>
 
+#include "llama.h"
+
 #include <sys/stat.h>
 
 #include "rknn3/rknn3_api.h"
+
+#include "caiwei/context.hpp"
+#include "caiwei/text_tool.hpp"
+#include "caiwei/tokenizer.hpp"
 
 namespace caiwei  {
 namespace context {
@@ -40,13 +42,13 @@ struct ContextSession {
     float prefill_ms      = 0;
     float generate_ms     = 0;
     std::mutex mutex;
-    std::condition_variable cv;
+    std::condition_variable condition;
     int        embedding_dim;
     float16  * embedding_data{ nullptr };
     Tokenizer* tokenizer     { nullptr };
-    caiwei::text::ResultToolcall result_toolcall;
-    std::vector<std::vector<float>>   pool_result {};
-    std::vector<caiwei::text::Result> token_result{};
+    caiwei::text::ToolcallSession toolcall_session;
+    std::vector<std::vector<float>> pool_result{};
+    std::vector<caiwei::text::CompletionResult> token_result{};
 };
 
 class RKNN3Context {
@@ -80,7 +82,7 @@ protected:
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
     virtual std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
 public:
-    std::generator<caiwei::text::Result> generate(const caiwei::text::CompletionsRequest& request);
+    std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(
         std::string model_path,
@@ -116,7 +118,7 @@ protected:
     std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     ASRRKNN3Context(
         std::string model_path,
@@ -137,7 +139,7 @@ protected:
     std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     LLMRKNN3Context(
         std::string model_path,
@@ -163,7 +165,7 @@ protected:
     std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:
     bool load() override;
-    std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) override;
+    std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
 public:
     VLMRKNN3Context(
         std::string model_path,

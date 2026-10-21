@@ -1,6 +1,3 @@
-/**
- * 采薇
- */
 #ifndef CAIWEI_RUNTIME_CAIWEI_HPP
 #define CAIWEI_RUNTIME_CAIWEI_HPP
 

@@ -26,5 +26,5 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
     std::vector<float> output_data(output_data_length);
     auto* output_buf = reinterpret_cast<uint16_t*>(output.outputs[0].buf);
     caiwei::type::fp16_to_f32(output_data.data(), output_buf, output_data_length);
-    return caiwei::image::top_k(output_data.data(), output_data_length, this->top_k, this->confidence_threshold);
+    return caiwei::image::top_k<float, caiwei::image::Cls>(output_data.data(), output_data_length, this->top_k, this->confidence_threshold);
 }

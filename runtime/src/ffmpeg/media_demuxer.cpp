@@ -72,7 +72,7 @@ inline bool recv_video_frame(size_t msec, size_t video_frames, SwsContext* sws_c
     return true;
 }
 
-bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_info) {
+bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_info, MediaFormat* media_format) {
     // TODO 快速开关内存泄漏
     int ret = -1;
     std::string sdp_file; // RTP|SDP协议使用
@@ -210,6 +210,9 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
         CW_LOG_W("媒体接收失败: %s - %s", this->type.c_str(), this->url.c_str());
         goto close_all;
     }
+    if (media_format != nullptr) {
+        media_format->open(audio_decoder_ctx, video_decoder_ctx, &audio_time_base, &video_time_base);
+    }
     audio_info.bytes_per_sample = av_get_bytes_per_sample((AVSampleFormat) audio_info.format);
     this->running = true;
     while(this->running) {
@@ -217,6 +220,9 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
         if(ret == 0) {
             last_recv_time = std::chrono::steady_clock::now();
             if (decoder_packet->stream_index == audio_stream_idx) {
+                if (media_format != nullptr) {
+                    media_format->send(MediaType::AUDIO, decoder_packet);
+                }
                 int64_t msec = av_rescale_q(decoder_packet->pts, audio_time_base, msec_base);
                 // CW_LOG_D("解码音频数据: %" PRId64 "ms - %" PRId64, msec, audio_frames);
                 ret = avcodec_send_packet(audio_decoder_ctx, decoder_packet);
@@ -255,6 +261,9 @@ bool caiwei::media::MediaDemuxer::open(AudioInfo audio_info, VideoInfo video_inf
                     av_frame_unref(decoder_frame);
                 }
             } else if(decoder_packet->stream_index == video_stream_idx) {
+                if (media_format != nullptr) {
+                    media_format->send(MediaType::VIDEO, decoder_packet);
+                }
                 int64_t msec = av_rescale_q(decoder_packet->pts, video_time_base, msec_base);
                 // CW_LOG_D("解码视频数据: %" PRId64 "ms - %" PRId64, msec, video_frames);
                 ret = avcodec_send_packet(video_decoder_ctx, decoder_packet);

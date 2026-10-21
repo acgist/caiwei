@@ -69,7 +69,7 @@ bool caiwei::context::ASRRKNN3Context::load() {
     this->init_prompt_token();
 }
 
-std::generator<caiwei::text::Result> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::CompletionResult> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 

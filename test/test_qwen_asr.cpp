@@ -40,7 +40,7 @@ void test_asr() {
         }
     });
     request.messages.back().audio_data.push_back(std::move(audio_frame));
-    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-asr");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
         return;
     }
@@ -72,7 +72,7 @@ void test_asr_for() {
         }
     });
     request.messages.back().audio_data.push_back(std::move(audio_frame));
-    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-asr");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
         return;
     }
@@ -116,7 +116,7 @@ void test_asr_thread() {
         }
     });
     request.messages.back().audio_data.push_back(std::move(audio_frame));
-    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-asr");
+    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
         return;
     }

@@ -1,6 +1,3 @@
-/**
- * 日志
- */
 #ifndef CAIWEI_RUNTIME_LOG_HPP
 #define CAIWEI_RUNTIME_LOG_HPP
 

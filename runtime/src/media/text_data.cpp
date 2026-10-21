@@ -3,22 +3,22 @@
 
 #include "nlohmann/json.hpp"
 
-caiwei::text::Result::Result(bool thinking, bool toolcall, std::string token)
+caiwei::text::CompletionResult::CompletionResult(bool thinking, bool toolcall, std::string token)
   : thinking(thinking)
   , toolcall(toolcall)
   , token(token) {
 }
 
-caiwei::text::Result::Result(bool thinking, bool toolcall, ResultToolcall& result_toolcall)
+caiwei::text::CompletionResult::CompletionResult(bool thinking, bool toolcall, ToolcallSession& toolcall_session)
   : thinking(thinking)
   , toolcall(toolcall) {
-    this->toolcall_name      = result_toolcall.get_name();
-    this->toolcall_arguments = result_toolcall.get_arguments();
-    this->toolcall_id        = result_toolcall.toolcall_id;
-    this->toolcall_index     = result_toolcall.toolcall_index;
+    this->toolcall_name      = toolcall_session.get_name();
+    this->toolcall_arguments = toolcall_session.get_arguments();
+    this->toolcall_id        = toolcall_session.toolcall_id;
+    this->toolcall_index     = toolcall_session.toolcall_index;
 }
 
-caiwei::text::Result::Result(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens)
+caiwei::text::CompletionResult::CompletionResult(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens)
   : thinking(thinking)
   , toolcall(toolcall)
   , finish_reason(finish_reason)
@@ -27,16 +27,16 @@ caiwei::text::Result::Result(bool thinking, bool toolcall, std::string finish_re
     this->total_tokens = this->prompt_tokens + this->completion_tokens;
 }
 
-caiwei::text::ResultToolcall::ResultToolcall() : toolcall_id(caiwei::env::id()), toolcall_index(0) {
+caiwei::text::ToolcallSession::ToolcallSession() : toolcall_id(caiwei::env::id()), toolcall_index(0) {
     this->content.reserve(1024);
 }
 
-void caiwei::text::ResultToolcall::reset() {
+void caiwei::text::ToolcallSession::reset() {
     this->toolcall_id    =  caiwei::env::id();
     this->toolcall_index += 1;
 }
 
-void caiwei::text::ResultToolcall::finish() {
+void caiwei::text::ToolcallSession::finish() {
     this->arguments += this->token;
     auto pos = this->arguments.rfind("}");
     if (pos != std::string::npos) {
@@ -47,7 +47,7 @@ void caiwei::text::ResultToolcall::finish() {
     this->token.clear();
 }
 
-void caiwei::text::ResultToolcall::put_token(std::string token) {
+void caiwei::text::ToolcallSession::put_token(std::string token) {
     this->token = token;
     if (this->name_return && this->arguments_return) {
         return;
@@ -55,7 +55,7 @@ void caiwei::text::ResultToolcall::put_token(std::string token) {
     this->content += token;
 }
 
-std::string caiwei::text::ResultToolcall::get_name() {
+std::string caiwei::text::ToolcallSession::get_name() {
     if (this->name_return) {
         return "";
     }
@@ -68,7 +68,7 @@ std::string caiwei::text::ResultToolcall::get_name() {
     return "";
 }
 
-std::string caiwei::text::ResultToolcall::get_arguments() {
+std::string caiwei::text::ToolcallSession::get_arguments() {
     if (!this->name_return) {
         return "";
     }
@@ -302,24 +302,24 @@ void to_json(nlohmann::json& json, const CompletionsChunkUsage& usage) {
     field_to_json(json, "total_tokens",      usage.total_tokens);
 }
 
-void to_json(nlohmann::json& json, const EmbeddingResponseData& data) {
+void to_json(nlohmann::json& json, const EmbeddingsResponseData& data) {
     field_to_json(json, "index",     data.index);
     field_to_json(json, "object",    data.object);
     field_to_json(json, "embedding", data.embedding);
 }
 
-void to_json(nlohmann::json& json, const EmbeddingResponseUsage& usage) {
+void to_json(nlohmann::json& json, const EmbeddingsResponseUsage& usage) {
     field_to_json(json, "prompt_tokens", usage.prompt_tokens);
     field_to_json(json, "total_tokens",  usage.total_tokens);
 }
 
-void to_json(nlohmann::json& json, const RerankingResponseData& data) {
+void to_json(nlohmann::json& json, const RerankingsResponseData& data) {
     field_to_json(json, "index",  data.index);
     field_to_json(json, "object", data.object);
     field_to_json(json, "score",  data.score);
 }
 
-void to_json(nlohmann::json& json, const RerankingResponseUsage& usage) {
+void to_json(nlohmann::json& json, const RerankingsResponseUsage& usage) {
     field_to_json(json, "prompt_tokens", usage.prompt_tokens);
     field_to_json(json, "total_tokens",  usage.total_tokens);
 }
@@ -353,7 +353,7 @@ std::string caiwei::text::to_json(const CompletionsChunk& chunk) {
     return json.dump();
 }
 
-std::string caiwei::text::to_json(const EmbeddingResponse& response) {
+std::string caiwei::text::to_json(const EmbeddingsResponse& response) {
     nlohmann::json json;
     json["object"] = response.object;
     json["model"]  = response.model;
@@ -364,7 +364,7 @@ std::string caiwei::text::to_json(const EmbeddingResponse& response) {
     return json.dump();
 }
 
-std::string caiwei::text::to_json(const RerankingResponse& response) {
+std::string caiwei::text::to_json(const RerankingsResponse& response) {
     nlohmann::json json;
     json["object"] = response.object;
     json["model"]  = response.model;

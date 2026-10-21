@@ -6,13 +6,13 @@ caiwei::session::EmbeddingsSession::EmbeddingsSession(caiwei::text::EmbeddingsRe
 }
 
 std::string caiwei::session::EmbeddingsSession::get() {
-    auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext, caiwei::text::EmbeddingsRequest, caiwei::text::EmbeddingResult>(this->request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>(this->request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     auto result = ptr->run(this->request);
-    caiwei::text::EmbeddingResponse response;
+    caiwei::text::EmbeddingsResponse response;
     response.model = request.model;
     for (int i = 0; i < result.result.size(); ++i) {
-        caiwei::text::EmbeddingResponseData data;
+        caiwei::text::EmbeddingsResponseData data;
         data.index = i;
         data.embedding = std::move(result.result[i]);
         response.data.push_back(std::move(data));

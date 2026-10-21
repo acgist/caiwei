@@ -1,6 +1,3 @@
-/**
- * 音频工具
- */
 #ifndef CAIWEI_RUNTIME_AUDIO_TOOL_HPP
 #define CAIWEI_RUNTIME_AUDIO_TOOL_HPP
 

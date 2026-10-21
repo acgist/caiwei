@@ -9,17 +9,17 @@
 #ifndef CAIWEI_RUNTIME_CONTEXT_HPP
 #define CAIWEI_RUNTIME_CONTEXT_HPP
 
-#include "caiwei/text_data.hpp"
-#include "caiwei/audio_data.hpp"
-#include "caiwei/image_data.hpp"
-#include "caiwei/media_data.hpp"
-
 #include <map>
 #include <mutex>
 #include <atomic>
 #include <chrono>
 #include <vector>
 #include <generator>
+
+#include "caiwei/text_data.hpp"
+#include "caiwei/audio_data.hpp"
+#include "caiwei/image_data.hpp"
+#include "caiwei/media_data.hpp"
 
 namespace caiwei  {
 namespace runtime {
@@ -83,7 +83,9 @@ public:
     ClsContext(int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsContext();
 public:
-    virtual std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) = 0;
+    using I = caiwei::media::ImageFrame;
+    using O = std::vector<caiwei::image::Cls>;
+    virtual O run(const I& image) = 0;
 };
 
 class DetContext : public Context {
@@ -98,7 +100,9 @@ public:
     DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~DetContext();
 public:
-    virtual std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) = 0;
+    using I = caiwei::media::ImageFrame;
+    using O = std::vector<caiwei::image::Box>;
+    virtual O run(const I& image) = 0;
 };
 
 class ASRContext : public Context {
@@ -106,7 +110,9 @@ public:
     ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
+    using I = caiwei::text::CompletionsRequest;
+    using O = std::generator<caiwei::text::CompletionResult>;
+    virtual O run(const I& request) = 0;
 };
 
 class LLMContext : public Context {
@@ -114,7 +120,9 @@ public:
     LLMContext(caiwei::runtime::Runtime* runtime);
     ~LLMContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
+    using I = caiwei::text::CompletionsRequest;
+    using O = std::generator<caiwei::text::CompletionResult>;
+    virtual O run(const I& request) = 0;
 };
 
 class VLMContext : public Context {
@@ -122,7 +130,9 @@ public:
     VLMContext(caiwei::runtime::Runtime* runtime);
     ~VLMContext();
 public:
-    virtual std::generator<caiwei::text::Result> run(const caiwei::text::CompletionsRequest& request) = 0;
+    using I = caiwei::text::CompletionsRequest;
+    using O = std::generator<caiwei::text::CompletionResult>;
+    virtual O run(const I& request) = 0;
 };
 
 class EmbeddingContext : public Context {
@@ -130,7 +140,9 @@ public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
 public:
-    virtual caiwei::text::EmbeddingResult run(const caiwei::text::EmbeddingsRequest& request) = 0;
+    using I = caiwei::text::EmbeddingsRequest;
+    using O = caiwei::text::EmbeddingResult;
+    virtual O run(const I& request) = 0;
 };
 
 class RerankingContext : public Context {
@@ -138,7 +150,9 @@ public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
 public:
-    virtual caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) = 0;
+    using I = caiwei::text::RerankingsRequest;
+    using O = caiwei::text::RerankingResult;
+    virtual O run(const I& request) = 0;
 };
 
 void init();

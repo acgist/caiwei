@@ -1,9 +1,9 @@
 #ifndef CAIWEI_RUNTIME_RKNN2_HPP
 #define CAIWEI_RUNTIME_RKNN2_HPP
 
-#include "caiwei/context.hpp"
-
 #include "rknn2/rknn_api.h"
+
+#include "caiwei/context.hpp"
 
 namespace caiwei  {
 namespace context {
@@ -15,6 +15,8 @@ struct RKNN2Result {
     RKNN2Result(rknn_context context, std::vector<rknn_output> outputs);
     ~RKNN2Result();
     RKNN2Result() noexcept = default;
+    RKNN2Result(const RKNN2Result& result) noexcept = delete;
+    RKNN2Result& operator=(const RKNN2Result& result) noexcept = delete;
     RKNN2Result(RKNN2Result&& result) noexcept = default;
     RKNN2Result& operator=(RKNN2Result&& result) noexcept = default;
 };

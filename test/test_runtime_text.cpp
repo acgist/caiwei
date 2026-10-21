@@ -1,5 +1,7 @@
 #include "test.hpp"
 
+#include "llama.h"
+
 #include "caiwei/text_tool.hpp"
 #include "caiwei/tokenizer.hpp"
 
@@ -9,11 +11,7 @@ void test_tokenizer() {
     #elif CAIWEI_OS_UNIX
     caiwei::context::Tokenizer tokenizer("/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
     #else
-    // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
-    // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf");
-    // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf");
-    // caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf");
-    caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
+    caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
     #endif
     int32_t bos = tokenizer.get_bos();
     int32_t eos = tokenizer.get_eos();
@@ -167,7 +165,7 @@ void test_json_to_completions() {
     assert(request2.messages[0].role == "system");
     assert(request2.messages[1].role == "user");
     assert(request2.seed == 12345);
-    assert(!request2.repeat_penalty.has_value());
+    assert(request2.repeat_penalty.has_value());
 }
 
 [[maybe_unused]]
@@ -252,7 +250,7 @@ void test_completions_chunk_to_json() {
 
 [[maybe_unused]]
 void test_embedding_response_to_json() {
-    caiwei::text::EmbeddingResponse response;
+    caiwei::text::EmbeddingsResponse response;
     response.model = "qwen3-embedding";
     response.data.push_back({.index = 0, .embedding = {0.5, 1.0}});
     response.data.push_back({.index = 1, .embedding = {0.5, 0.5}});
@@ -266,7 +264,7 @@ void test_embedding_response_to_json() {
 
 [[maybe_unused]]
 void test_reranking_response_to_json() {
-    caiwei::text::RerankingResponse response;
+    caiwei::text::RerankingsResponse response;
     response.model = "qwen3-reranking";
     response.data.push_back({.index = 0, .score = 0.5});
     response.data.push_back({.index = 1, .score = 0.5});
@@ -278,17 +276,31 @@ void test_reranking_response_to_json() {
     CW_LOG_D("test_reranking_response_to_json: %s", json.c_str());
 }
 
+void test_image_data_json() {
+    std::vector<caiwei::image::Cls> cls = {
+        {1, 0.8},
+        {2, 0.5}
+    };
+    std::vector<caiwei::image::Box> box = {
+        {0.1, 0.2, 0.3, 0.4, 1, 0.8},
+        {0.5, 0.6, 0.7, 0.8, 2, 0.5}
+    };
+    CW_LOG_I("cls: %s", caiwei::image::to_json(cls).c_str());
+    CW_LOG_I("box: %s", caiwei::image::to_json(box).c_str());
+}
+
 int main() {
     caiwei::test::init_test();
     test_tokenizer();
-    // test_chat_template();
-    // test_json_to_completions();
-    // test_json_to_embeddings();
-    // test_json_to_rerankings();
-    // test_completions_response_to_json();
-    // test_completions_chunk_to_json();
-    // test_embedding_response_to_json();
-    // test_reranking_response_to_json();
+    test_chat_template();
+    test_json_to_completions();
+    test_json_to_embeddings();
+    test_json_to_rerankings();
+    test_completions_response_to_json();
+    test_completions_chunk_to_json();
+    test_embedding_response_to_json();
+    test_reranking_response_to_json();
+    test_image_data_json();
     caiwei::test::stop_test();
     return 0;
 }

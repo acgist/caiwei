@@ -1,25 +1,28 @@
-/**
- * 文本工具
- */
 #ifndef CAIWEI_RUNTIME_TEXT_TOOL_HPP
 #define CAIWEI_RUNTIME_TEXT_TOOL_HPP
 
-#include "caiwei/text_data.hpp"
-
 #include <memory>
 
+#include "caiwei/text_data.hpp"
+
 namespace minja {
+
 class chat_template;
-};
+
+} // minja
 
 namespace caiwei {
 namespace text   {
 
-std::string get_reranking_prompt(const std::string& document, const caiwei::text::RerankingsRequest& request, const caiwei::text::SpecialToken& special_token);
+std::string get_reranking_prompt(
+    const std::string& document,
+    const caiwei::text::RerankingsRequest& request,
+    const caiwei::text::SpecialToken& special_token
+);
 
 class ChatTemplate {
 private:
-    std::unique_ptr<minja::chat_template> chat_template { nullptr };
+    std::unique_ptr<minja::chat_template> chat_template{ nullptr };
 public:
     ChatTemplate();
     ~ChatTemplate();

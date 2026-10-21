@@ -43,7 +43,7 @@ private:
     int keepalive = 600;
     bool share    = false;
     std::mutex mutex;
-    std::condition_variable cv;
+    std::condition_variable condition;
     caiwei::runtime::Type type;
     std::map<std::string, std::vector<std::shared_ptr<caiwei::context::Context>>> context_map;
 public:
@@ -52,9 +52,9 @@ public:
     Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type);
     virtual ~Runtime();
 public:
-    virtual std::shared_ptr<caiwei::context::Context> get_context(const caiwei::context::ContextInfo* info);
-    virtual void put_context(std::shared_ptr<caiwei::context::Context> context);
-    virtual size_t optimize();
+    std::shared_ptr<caiwei::context::Context> get_context(const caiwei::context::ContextInfo* info);
+    void put_context(std::shared_ptr<caiwei::context::Context> context);
+    size_t optimize();
 protected:
     virtual std::shared_ptr<caiwei::context::ClsContext> get_cls_context(const caiwei::context::ContextInfo* info);
     virtual std::shared_ptr<caiwei::context::DetContext> get_det_context(const caiwei::context::ContextInfo* info);

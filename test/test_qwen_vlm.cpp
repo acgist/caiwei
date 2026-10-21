@@ -70,7 +70,7 @@ void test_vlm() {
     );
     media_demuxer.stop();
     request.messages.back().video_data.emplace_back(std::move(video_frames));
-    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-vlm");
+    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
         return;
     }
@@ -102,7 +102,7 @@ void test_vlm_for() {
     read_image(frame2, "./caiwei.jpg");
     request.messages.back().image_data.emplace_back(std::move(frame1));
     request.messages.back().image_data.emplace_back(std::move(frame2));
-    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-vlm");
+    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
         return;
     }
@@ -146,7 +146,7 @@ void test_vlm_thread() {
     read_image(frame2, "./caiwei.jpg");
     request.messages.back().image_data.emplace_back(std::move(frame1));
     request.messages.back().image_data.emplace_back(std::move(frame2));
-    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>("qwen3-vlm");
+    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
         return;
     }

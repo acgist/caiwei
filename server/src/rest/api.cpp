@@ -50,7 +50,8 @@ static void get_video_play() {
         response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [&](size_t /*offset*/, httplib::DataSink& sink) {
             auto url  = request.get_param_value("url");
             auto type = request.get_param_value("type");
-            caiwei::session::VideoPlaySession session(type, url, [&sink](const char* data, int length) {
+            auto copy = request.get_param_value("copy");
+            caiwei::session::VideoPlaySession session(copy == "true", type, url, [&sink](const char* data, int length) {
                 if (length == 0) {
                     return sink.is_writable();
                 }

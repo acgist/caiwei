@@ -10,8 +10,8 @@
 #include <condition_variable>
 
 #include "httplib.h"
-#include "base64/base64.h"
 #include "stb/stb_image.h"
+#include "base64/base64.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -28,14 +28,14 @@ static void sync_det(caiwei::text::CompletionsRequest& request, caiwei::text::Co
 static void sync_asr(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
 static void sync_llm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
 static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
-static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::Result> generator);
+static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::CompletionResult> generator);
 
 static bool async_cls(caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_det(caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_asr(caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper * wrapper, caiwei::session::Callback& callback, std::string* ret = nullptr);
 static bool async_llm(caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper * wrapper, caiwei::session::Callback& callback);
 static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager::VLMWrapper * wrapper, caiwei::session::Callback& callback);
-static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback, std::string* ret = nullptr);
+static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::CompletionResult> generator, caiwei::session::Callback& callback, std::string* ret = nullptr);
 
 static void fill_media_request(caiwei::text::CompletionsRequest& request);
 static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message, const std::string& audio_url, int samples);
@@ -102,15 +102,15 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             return false;
         }
         if (context_info->type == caiwei::context::Type::CLS) {
-            cls_ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>(model);
+            cls_ptr = caiwei::manager::get_context<caiwei::context::ClsContext>(model);
         } else if (context_info->type == caiwei::context::Type::DET) {
-            det_ptr = caiwei::manager::get_context<caiwei::context::DetContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Box>>(model);
+            det_ptr = caiwei::manager::get_context<caiwei::context::DetContext>(model);
         } else if (context_info->type == caiwei::context::Type::ASR) {
-            asr_ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(model);
+            asr_ptr = caiwei::manager::get_context<caiwei::context::ASRContext>(model);
         } else if (context_info->type == caiwei::context::Type::LLM) {
-            llm_ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(model);
+            llm_ptr = caiwei::manager::get_context<caiwei::context::LLMContext>(model);
         } else if (context_info->type == caiwei::context::Type::VLM) {
-            vlm_ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(model);
+            vlm_ptr = caiwei::manager::get_context<caiwei::context::VLMContext>(model);
         } else {
             callback("模型无效", -1);
             return false;
@@ -323,36 +323,36 @@ inline void sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& 
 }
 
 static void sync_cls(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Cls>>(request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>(request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     sync_yolo(std::move(ptr), request, response);
 }
 
 static void sync_det(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::DetContext, caiwei::media::ImageFrame, std::vector<caiwei::image::Box>>(request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>(request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     sync_yolo(std::move(ptr), request, response);
 }
 
 static void sync_asr(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>(request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     sync_generator(request, response, ptr->run(request));
 }
 
 static void sync_llm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>(request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     sync_generator(request, response, ptr->run(request));
 }
 
 static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
-    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext, caiwei::text::CompletionsRequest, std::generator<caiwei::text::Result>>(request.model);
+    auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>(request.model);
     caiwei::env::check_nullptr(ptr.get(), "模型无效");
     sync_generator(request, response, ptr->run(request));
 }
 
-static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::Result> generator) {
+static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::CompletionResult> generator) {
     std::string content;
     std::string thinking;
     std::string toolcall;
@@ -451,7 +451,7 @@ static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager
     return async_generator(request, wrapper->run(request), callback);
 }
 
-static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::Result> generator, caiwei::session::Callback& callback, std::string* ret) {
+static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::CompletionResult> generator, caiwei::session::Callback& callback, std::string* ret) {
     for (const auto& result : generator) {
         caiwei::text::CompletionsChunk chunk;
         chunk.id      = request.id;

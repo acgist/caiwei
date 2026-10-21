@@ -92,7 +92,7 @@ bool caiwei::media::MediaMuxer::open_audio() {
         return false;
     }
     ret = av_samples_alloc(
-        this->audio_ch_buffer,
+        this->audio_buffer,
         nullptr,
         this->audio_codec_ctx->ch_layout.nb_channels,
         // TODO 测试
@@ -191,9 +191,9 @@ bool caiwei::media::MediaMuxer::stop_audio() {
         av_audio_fifo_free(this->audio_fifo);
         this->audio_fifo = nullptr;
     }
-    if (this->audio_ch_buffer[0]) {
+    if (this->audio_buffer[0]) {
         CW_LOG_I("释放音频通道缓存");
-        av_freep(&this->audio_ch_buffer[0]);
+        av_freep(&this->audio_buffer[0]);
         // TODO 验证
     }
     if (this->swr_ctx) {
@@ -261,12 +261,12 @@ bool caiwei::media::MediaMuxer::on_audio(const int nb_samples, const size_t msec
     }
     int ret = -1;
     int out_samples = swr_get_out_samples(this->swr_ctx, nb_samples);
-        out_samples = swr_convert(this->swr_ctx, this->audio_ch_buffer, out_samples, (const uint8_t**) &data, nb_samples);
+        out_samples = swr_convert(this->swr_ctx, this->audio_buffer, out_samples, (const uint8_t**) &data, nb_samples);
     if(out_samples < 0) {
         CW_LOG_W("音频重采样失败: %d", out_samples);
         return false;
     }
-    av_audio_fifo_write(this->audio_fifo, (void**) this->audio_ch_buffer, out_samples);
+    av_audio_fifo_write(this->audio_fifo, (void**) this->audio_buffer, out_samples);
     int frame_size = this->audio_codec_ctx->frame_size;
     bool callable = true;
     while (av_audio_fifo_size(this->audio_fifo) >= frame_size && callable) {
