@@ -35,7 +35,7 @@ caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
     CW_LOG_I("释放LlamaCPPContext: %s", this->path.c_str());
     if (this->model) {
         CW_LOG_D("释放LlamaCPPContext模型: %s", this->path.c_str());
-        llama_free_model(this->model);
+        llama_model_free(this->model);
         this->model = nullptr;
     }
     if (this->mtmd_model) {
@@ -112,11 +112,11 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     if (request.presence_penalty.has_value() || request.frequency_penalty.has_value() || request.repeat_penalty.has_value()) {
         const float presence_penalty  = std::clamp(request.presence_penalty .value_or(0.0F), -2.0F, 2.0F);
         const float frequency_penalty = std::clamp(request.frequency_penalty.value_or(0.0F), -2.0F, 2.0F);
-        const float repeat_penalty    = std::clamp(request.repeat_penalty   .value_or(1.04F), 0.0F, 1.2F);    
-        if (std::abs(presence_penalty) > 1e-6F || std::abs(frequency_penalty) > 1e-6F || std::abs(repeat_penalty) > 1e-6F) {
+        const float repeat_penalty    = std::clamp(request.repeat_penalty   .value_or(1.04F), 0.1F, 2.0F);    
+        if (std::abs(presence_penalty) > 1e-6F || std::abs(frequency_penalty) > 1e-6F || std::abs(repeat_penalty - 1.0F) > 1e-6F) {
             llama_sampler_chain_add(sampler, llama_sampler_init_penalties(
                 llama_vocab_n_tokens(this->vocab),
-                -1,
+                std::clamp<int32_t>(this->max_token_length, 1, 256),
                 repeat_penalty,
                 frequency_penalty,
                 presence_penalty
@@ -159,7 +159,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     std::vector<llama_token> prompt_tokens = caiwei::context::tokenize(this->vocab, prompt);
     if (prompt_tokens.empty()) {
         CW_LOG_W("提示词为空");
-        co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, 0, 0 };
+        co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, 0, 0 };
         co_return;
     }
     const uint32_t n_ctx = llama_n_ctx(context.get());
@@ -200,10 +200,16 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             break;
         }
         int32_t ret = llama_decode(context.get(), batch);
-        if (ret != 0) {
+        if (ret == 1) {
+            CW_LOG_W("解码失败: %d", ret);
+            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
+            break;
+        } else if (ret != 0) {
             CW_LOG_W("解码失败: %d", ret);
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
             break;
+        } else {
+            // -
         }
         token_id = llama_sampler_sample(sampler.get(), context.get(), -1);
         if (token_id == LLAMA_TOKEN_NULL) {
@@ -279,7 +285,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     std::string prompt;
     mtmd::bitmaps bitmaps;
     if (!this->build_mtmd(prompt, bitmaps, request)) {
-        CW_LOG_W("多模态输入内容失败");
+        CW_LOG_W("媒体解析失败");
         co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, 0, 0 };
         co_return;
     }
@@ -456,10 +462,16 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         batch.n_tokens = 0;
         caiwei::context::batch_add(batch, token_id, n_pos++, { 0 }, true);
         ret = llama_decode(context.get(), batch);
-        if (ret != 0) {
+        if (ret == 1) {
+            CW_LOG_W("解码失败: %d", ret);
+            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
+            break;
+        } else if (ret != 0) {
             CW_LOG_W("解码失败: %d", ret);
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
             break;
+        } else {
+            // -
         }
     }
     llama_batch_free(batch);
@@ -474,6 +486,9 @@ bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bit
 }
 
 std::vector<llama_token> caiwei::context::tokenize(const llama_vocab* vocab, const std::string& text, bool add_special, bool parse_special) {
+    if (text.empty()) {
+        return {};
+    }
     const int n_tokens = -llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, parse_special);
     std::vector<llama_token> tokens(n_tokens);
     if (llama_tokenize(vocab, text.c_str(), text.size(), tokens.data(), tokens.size(), add_special, parse_special) < 0) {

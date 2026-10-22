@@ -24,10 +24,9 @@ inline constexpr const char* ROLE_FUNCTION  = "function";
 inline constexpr const char* ROLE_ASSISTANT = "assistant";
 inline constexpr const char* ROLE_DEVELOPER = "developer";
 
-inline constexpr const char* FINISH_REASON_STOP           = "stop";
-inline constexpr const char* FINISH_REASON_LENGTH         = "length";
-inline constexpr const char* FINISH_REASON_TOOL_CALLS     = "tool_calls";
-inline constexpr const char* FINISH_REASON_CONTENT_FILTER = "content_filter";
+inline constexpr const char* FINISH_REASON_STOP       = "stop";
+inline constexpr const char* FINISH_REASON_LENGTH     = "length";
+inline constexpr const char* FINISH_REASON_TOOL_CALLS = "tool_calls";
 
 inline constexpr const char* CONTENT_TYPE_DATA  = "data:";
 inline constexpr const char* CONTENT_TYPE_FILE  = "file:";

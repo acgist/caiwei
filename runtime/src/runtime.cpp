@@ -7,6 +7,9 @@
 #endif
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
 #include "llama.h"
+
+#include "mtmd.h"
+#include "mtmd-helper.h"
 #endif
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 #include "onnxruntime_cxx_api.h"
@@ -230,25 +233,29 @@ static void init_rknn3() {
 #endif
 
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
+static void caiwei_llama_log(enum ggml_log_level level, const char* text, void* /* user_data */) {
+    size_t n = std::strlen(text);
+    if (n == 0) {
+        return;
+    }
+    n--;
+    if (level == GGML_LOG_LEVEL_DEBUG) {
+        // CW_LOG_D("%.*s", n, text);
+    } else if (level == GGML_LOG_LEVEL_INFO) {
+        CW_LOG_I("%.*s", n, text);
+    } else if (level == GGML_LOG_LEVEL_WARN) {
+        CW_LOG_W("%.*s", n, text);
+    } else if (level == GGML_LOG_LEVEL_ERROR) {
+        CW_LOG_E("%.*s", n, text);
+    } else {
+        // -
+    }
+}
+
 static void init_llamacpp() {
-    llama_log_set([](enum ggml_log_level level, const char* text, void* /* user_data */) {
-        size_t n = std::strlen(text);
-        if (n == 0) {
-            return;
-        }
-        n--;
-        if (level == GGML_LOG_LEVEL_DEBUG) {
-            // CW_LOG_D("%.*s", n, text);
-        } else if (level == GGML_LOG_LEVEL_INFO) {
-            CW_LOG_I("%.*s", n, text);
-        } else if (level == GGML_LOG_LEVEL_WARN) {
-            CW_LOG_W("%.*s", n, text);
-        } else if (level == GGML_LOG_LEVEL_ERROR) {
-            CW_LOG_E("%.*s", n, text);
-        } else {
-            // -
-        }
-    }, nullptr);
+    llama_log_set(caiwei_llama_log, nullptr);
+    mtmd_log_set(caiwei_llama_log, nullptr);
+    mtmd_helper_log_set(caiwei_llama_log, nullptr);
     ggml_backend_load_all();
     CW_LOG_I("llama.cpp version: %s", ggml_version());
     const int backend_count = ggml_backend_reg_count();
