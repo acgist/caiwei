@@ -46,7 +46,9 @@ void caiwei::rest::open() {
 
 void caiwei::rest::stop() {
     CW_LOG_I("关闭REST服务");
-    caiwei::rest::server->stop();
+    if (caiwei::rest::server) {
+        caiwei::rest::server->stop();
+    }
 }
 
 static void register_handler() {
@@ -137,6 +139,11 @@ static void get_index() {
 static void get_favicon() {
     caiwei::rest::server->Get("/favicon.ico", [](const httplib::Request&, httplib::Response& response) {
         std::filesystem::path path("./favicon.ico");
+        if (!std::filesystem::exists(path)) {
+            response.status = httplib::StatusCode::NotFound_404;
+            response.set_content(caiwei::json::buildResponse("1404", "文件无效"), caiwei::rest::content::type::JSON);
+            return;
+        }
         auto file_size = std::filesystem::file_size(path);
         if(file_size <= 0) {
             response.status = httplib::StatusCode::NotFound_404;

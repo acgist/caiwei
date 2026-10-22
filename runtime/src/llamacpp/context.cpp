@@ -340,10 +340,11 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     bool toolcall = false;
     caiwei::text::ToolcallSession toolcall_session;
     int n_prompt_tokens = n_past;
-    for (int i = 0; i < max_completion_tokens; i++) {
-        if (i > max_completion_tokens) {
+    uint32_t generated_tokens = 0;
+    while(true) {
+        if (generated_tokens > max_completion_tokens) {
             CW_LOG_W("上下文长度超过最大长度: %d", max_completion_tokens);
-            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(n_prompt_tokens), static_cast<uint32_t>(i) };
+            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             break;
         }
         token_id = llama_sampler_sample(sampler.get(), context.get(), -1);
@@ -352,17 +353,18 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             std::printf("\n");
             #endif
             if (toolcall) {
-                co_yield caiwei::text::CompletionResult{ false, true, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(n_prompt_tokens), static_cast<uint32_t>(i) };
+                co_yield caiwei::text::CompletionResult{ false, true, caiwei::text::FINISH_REASON_TOOL_CALLS, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             } else {
-                co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), static_cast<uint32_t>(i) };
+                co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             }
             break;
         }
+        ++generated_tokens;
         decode:
         int32_t buffer_length = llama_token_to_piece(this->vocab, token_id, buffer.data(), buffer.size(), 0, true);
         if (buffer_length < 0) {
             CW_LOG_W("解码失败: %d", token_id);
-            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), static_cast<uint32_t>(i) };
+            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             break;
         }
         if (buffer_length > buffer.size()) {
@@ -397,7 +399,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         caiwei::context::batch_add(batch, token_id, n_past++, {0}, true);
         if (llama_decode(context.get(), batch) != 0) {
             CW_LOG_E("failed to decode token\n");
-            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), static_cast<uint32_t>(i) };
+            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, static_cast<uint32_t>(n_prompt_tokens), generated_tokens };
             break;
         }
     }

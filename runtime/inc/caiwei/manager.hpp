@@ -39,9 +39,10 @@ public:
 };
 
 template <typename C>
-caiwei::manager::ContextWrapper<C>::ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime)
- : context(std::move(context))
- , runtime(std::move(runtime)) {
+caiwei::manager::ContextWrapper<C>::ContextWrapper(
+    std::shared_ptr<C> context,
+    std::shared_ptr<caiwei::runtime::Runtime> runtime
+) : context(std::move(context)), runtime(std::move(runtime)) {
 }
 
 template <typename C>

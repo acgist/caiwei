@@ -82,16 +82,21 @@ void cls_video() {
         return;
     }
     caiwei::player::open_player(1, 16000, 640, 360);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [](caiwei::media::AudioFrame& frame) {
-        return caiwei::player::play_audio(frame.data.data(), frame.data.size());
-    }, [&ptr](caiwei::media::VideoFrame& frame) {
-        auto ret = ptr->run(frame);
-        for (const auto& index : ret) {
-            CW_LOG_D("%d = %.2f", index.class_id, index.score);
+    caiwei::media::MediaDemuxer media_demuxer(type, url);
+    media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [](caiwei::media::AudioFrame& frame) {
+            return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+        },
+        [&ptr](caiwei::media::VideoFrame& frame) {
+            auto ret = ptr->run(frame);
+            for (const auto& index : ret) {
+                CW_LOG_D("%d = %.2f", index.class_id, index.score);
+            }
+            return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }
-        return caiwei::player::play_video(frame.data.data(), frame.width * 3);
-    });
-    media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
+    );
     media_demuxer.stop();
     caiwei::player::stop_player();
 }

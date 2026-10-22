@@ -17,17 +17,19 @@ extern "C" {
 
 void test_asr() {
     caiwei::media::AudioFrame audio_frame;
-    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
-    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_noise.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
-    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_small.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
-        audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
-        return true;
-    }, [](caiwei::media::VideoFrame& frame) {
-        return true;
-    });
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
+    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_noise.mp3");
+    // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_small.mp3");
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [&audio_frame](caiwei::media::AudioFrame& frame) {
+            audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
+            return true;
+        },
+        [](caiwei::media::VideoFrame& frame) {
+            return true;
+        }
     );
     media_demuxer.stop();
     caiwei::text::CompletionsRequest request;
@@ -51,15 +53,17 @@ void test_asr() {
 
 void test_asr_for() {
     caiwei::media::AudioFrame audio_frame;
-    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
-        audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
-        return true;
-    }, [](caiwei::media::VideoFrame& frame) {
-        return true;
-    });
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [&audio_frame](caiwei::media::AudioFrame& frame) {
+            audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
+            return true;
+        },
+        [](caiwei::media::VideoFrame& frame) {
+            return true;
+        }
     );
     media_demuxer.stop();
     caiwei::text::CompletionsRequest request;
@@ -95,15 +99,17 @@ void test_asr_for() {
 
 void test_asr_thread() {
     caiwei::media::AudioFrame audio_frame;
-    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3", [&audio_frame](caiwei::media::AudioFrame& frame) {
-        audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
-        return true;
-    }, [](caiwei::media::VideoFrame& frame) {
-        return true;
-    });
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [&audio_frame](caiwei::media::AudioFrame& frame) {
+            audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
+            return true;
+        },
+        [](caiwei::media::VideoFrame& frame) {
+            return true;
+        }
     );
     media_demuxer.stop();
     caiwei::text::CompletionsRequest request;

@@ -54,22 +54,24 @@ void test_format() {
         media_format.send(type, packet);
         return true;
     });
+    caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_muxer.open();
     media_format.open(media_muxer.audio_codec_ctx, media_muxer.video_codec_ctx);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [&media_muxer](caiwei::media::AudioFrame& frame) {
-        // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
-        // std::fflush(stdout);
-        media_muxer.on_audio(frame);
-        return true;
-    }, [&media_muxer](caiwei::media::VideoFrame& frame) {
-        // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
-        // std::fflush(stdout);
-        media_muxer.on_video(frame);
-        return true;
-    });
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [&media_muxer](caiwei::media::AudioFrame& frame) {
+            // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
+            // std::fflush(stdout);
+            media_muxer.on_audio(frame);
+            return true;
+        },
+        [&media_muxer](caiwei::media::VideoFrame& frame) {
+            // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+            // std::fflush(stdout);
+            media_muxer.on_video(frame);
+            return true;
+        }
     );
     media_demuxer.stop();
     media_format.stop();
@@ -108,18 +110,20 @@ void test_format_fwd() {
         CW_LOG_D("write %d bytes", length);
         return true;
     });
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [](caiwei::media::AudioFrame& frame) {
-        // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
-        // std::fflush(stdout);
-        return true;
-    }, [](caiwei::media::VideoFrame& frame) {
-        // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
-        // std::fflush(stdout);
-        return true;
-    });
+    caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
         caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [](caiwei::media::AudioFrame& frame) {
+            // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
+            // std::fflush(stdout);
+            return true;
+        },
+        [](caiwei::media::VideoFrame& frame) {
+            // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+            // std::fflush(stdout);
+            return true;
+        },
         &media_format
     );
     media_demuxer.stop();

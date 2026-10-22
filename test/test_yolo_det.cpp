@@ -107,27 +107,32 @@ void det_video() {
     int frame_count = 0;
     std::vector<caiwei::image::Box> ret;
     caiwei::player::open_player(1, 16000, 640, 360);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [](caiwei::media::AudioFrame& frame) {
-        return caiwei::player::play_audio(frame.data.data(), frame.data.size());
-    }, [&ptr, &ret, &frame_count](caiwei::media::VideoFrame& frame) {
-        auto data = frame.data;
-        if (frame_count++ % 4 == 0) {
-            ret = ptr->run(frame);
+    caiwei::media::MediaDemuxer media_demuxer(type, url);
+    media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [](caiwei::media::AudioFrame& frame) {
+            return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+        },
+        [&ptr, &ret, &frame_count](caiwei::media::VideoFrame& frame) {
+            auto data = frame.data;
+            if (frame_count++ % 4 == 0) {
+                ret = ptr->run(frame);
+            }
+            for (const auto& box : ret) {
+                caiwei::test::draw_rect(
+                    data.data(),
+                    frame.width,
+                    frame.height,
+                    box.x1 * frame.width,
+                    box.y1 * frame.height,
+                    (box.x2 - box.x1) * frame.width,
+                    (box.y2 - box.y1) * frame.height
+                );
+            }
+            return caiwei::player::play_video(data.data(), frame.width * 3);
         }
-        for (const auto& box : ret) {
-            caiwei::test::draw_rect(
-                data.data(),
-                frame.width,
-                frame.height,
-                box.x1 * frame.width,
-                box.y1 * frame.height,
-                (box.x2 - box.x1) * frame.width,
-                (box.y2 - box.y1) * frame.height
-            );
-        }
-        return caiwei::player::play_video(data.data(), frame.width * 3);
-    });
-    media_demuxer.open(caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16), caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24));
+    );
     media_demuxer.stop();
     caiwei::player::stop_player();
 }

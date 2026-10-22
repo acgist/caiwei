@@ -35,6 +35,7 @@ caiwei::media::MediaMuxer::~MediaMuxer() {
 }
 
 bool caiwei::media::MediaMuxer::open() {
+    // TODO 检查是否已经open
     return this->open_audio() && this->open_video();
 }
 
@@ -196,6 +197,9 @@ bool caiwei::media::MediaMuxer::stop_audio() {
         av_freep(&this->audio_buffer[0]);
         // TODO 验证
     }
+    for (auto& plane : this->audio_buffer) {
+        plane = nullptr;
+    }
     if (this->swr_ctx) {
         CW_LOG_I("释放音频重采样上下文");
         swr_free(&this->swr_ctx);
@@ -356,7 +360,7 @@ static SwrContext* init_audio_swr(caiwei::media::AudioInfo& in_audio_info, caiwe
     AVChannelLayout in_ch_layout;
     AVChannelLayout out_ch_layout;
     av_channel_layout_default(&in_ch_layout,  in_audio_info.channels);
-    av_channel_layout_default(&out_ch_layout, in_audio_info.channels);
+    av_channel_layout_default(&out_ch_layout, out_audio_info.channels);
     int ret = swr_alloc_set_opts2(
         &swr,
         &out_ch_layout, (AVSampleFormat) out_audio_info.format, out_audio_info.sample_rate,

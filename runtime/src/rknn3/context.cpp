@@ -146,8 +146,8 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
     this->max_token_length = std::min(this->max_token_length, (int32_t) llm_config.max_ctx_len);
     printf_tensor_info(this->context);
     // TODO 移到 load embedding
-    this->tokenizer = new Tokenizer(this->tokenizer_path);
-    if (!this->tokenizer) {
+    this->tokenizer = new Tokenizer();
+    if (!this->tokenizer->load(this->tokenizer_path)) {
         CW_LOG_W("加载分词器失败: %s", this->tokenizer_path.c_str());
         return false;
     }

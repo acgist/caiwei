@@ -56,6 +56,10 @@ std::string caiwei::text::ChatTemplate::apply(
     const std::string& video_marker,
     bool add_vision_id
 ) const {
+    if (!this->chat_template) {
+        CW_LOG_W("没有设置模板");
+        return "";
+    }
     nlohmann::json messages;
     nlohmann::json tools;
     nlohmann::json extra_context;

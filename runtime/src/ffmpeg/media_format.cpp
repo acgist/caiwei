@@ -32,6 +32,7 @@ bool caiwei::media::MediaFormat::open(
     AVRational* audio_time_base,
     AVRational* video_time_base
 ) {
+    // TODO 检查是否已经open
     if (!audio_codec_ctx || !video_codec_ctx) {
         CW_LOG_W("缺少音视频编码器参数");
         return false;
@@ -96,7 +97,9 @@ bool caiwei::media::MediaFormat::open(
     //     CW_LOG_W("输出句柄创建失败");
     //     return false;
     // }
-    this->send_header();
+    if (!this->send_header()) {
+        return false;
+    }
     return true;
 }
 
@@ -105,7 +108,6 @@ bool caiwei::media::MediaFormat::stop() {
     if(this->format_ctx) {
         CW_LOG_I("释放格式化上下文");
         avformat_close_input(&this->format_ctx);
-        this->format_ctx = nullptr;
     }
     return true;
 }
@@ -130,9 +132,9 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
     return this->callable;
 }
 
-void caiwei::media::MediaFormat::send_header() {
+bool caiwei::media::MediaFormat::send_header() {
     if(!this->format_ctx) {
-        return;
+        return false;
     }
     AVDictionary* options = nullptr;
     // frag_keyframe+empty_moov
@@ -146,20 +148,33 @@ void caiwei::media::MediaFormat::send_header() {
     // TODO 测试 linux 不要 empty_moov
     av_dict_set(&options, "movflags", "frag_keyframe+empty_moov+delay_moov+default_base_moof", 0);
     if(avformat_write_header(this->format_ctx, &options) < 0) {
+        this->write_header = false;
         CW_LOG_W("视频写出头部失败");
+        av_dict_free(&options);
+        return false;
+    } else {
+        this->write_header = true;
+        av_dict_free(&options);
+        return true;
     }
-    av_dict_free(&options);
 }
 
-void caiwei::media::MediaFormat::send_trailer() {
+bool caiwei::media::MediaFormat::send_trailer() {
     if(!this->format_ctx) {
-        return;
+        return false;
     }
     // TODO 发送过数据才能关闭
     av_interleaved_write_frame(this->format_ctx, nullptr);
     // 写出文件尾部
-    if(av_write_trailer(this->format_ctx) < 0) {
-        CW_LOG_W("视频写出尾部失败");
+    if (this->write_header) {
+        if(av_write_trailer(this->format_ctx) < 0) {
+            CW_LOG_W("视频写出尾部失败");
+            return false;
+        } else {
+            return true;
+        }
+    } else {
+        return true;
     }
 }
 

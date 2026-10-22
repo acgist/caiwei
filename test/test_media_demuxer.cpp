@@ -46,21 +46,27 @@ void test_demuxer() {
     // auto url = "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid";
     // auto url = "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream";
     // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
+    // 设备测试
+    // ffmpeg -list_devices true -f dshow -i dummy
+    // ffmpeg -list_options true -f dshow -i video="deviceName"
+    // url: audio=deviceName:video=deviceName
     caiwei::player::open_player(1, 16000, 640, 360);
-    caiwei::media::MediaDemuxer media_demuxer(type, url, [](caiwei::media::AudioFrame& frame) {
-        // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
-        // std::fflush(stdout);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        return caiwei::player::play_audio(frame.data.data(), frame.data.size());
-    }, [](caiwei::media::VideoFrame& frame) {
-        // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
-        // std::fflush(stdout);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        return caiwei::player::play_video(frame.data.data(), frame.width * 3);
-    });
+    caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [](caiwei::media::AudioFrame& frame) {
+            // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
+            // std::fflush(stdout);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+        },
+        [](caiwei::media::VideoFrame& frame) {
+            // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+            // std::fflush(stdout);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            return caiwei::player::play_video(frame.data.data(), frame.width * 3);
+        }
     );
     media_demuxer.stop();
     caiwei::player::stop_player();

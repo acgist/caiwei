@@ -170,103 +170,105 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         if (enable_yolo) {
             yolo_thread = std::thread(yolo_thread_session, request, std::ref(callback), std::ref(media_stop), std::ref(yolo_mutex), std::ref(yolo_cv), cls_ptr.get(), det_ptr.get(), std::ref(image_frame_buffer), std::ref(image_frame_size));
         }
-        caiwei::media::MediaDemuxer media_demuxer(type, url, [&](caiwei::media::AudioFrame& frame) {
-            if (enable_asr) {
-                std::unique_lock<std::mutex> lock(asr_mutex);
-                asr_cv.wait(lock, [&]() {
-                    return drop_on_full || audio_frame_buffer.size() + frame.data.size() <= asr_queue_size || !callback(nullptr, 0);
-                });
-                if (audio_frame_buffer.size() + frame.data.size() <= asr_queue_size) {
-                    audio_frame_buffer.insert(
-                        audio_frame_buffer.end(),
-                        frame.data.begin(),
-                        frame.data.end()
-                    );
-                    if (audio_frame_buffer.size() >= asr_samples) {
-                        asr_cv.notify_one();
-                    }
-                } else {
-                    CW_LOG_W("音频数据队列已满无法添加数据");
-                    asr_cv.notify_one();
-                }
-            }
-            return callback(nullptr, 0);
-        }, [&](caiwei::media::VideoFrame& frame) {
-            if (++frame_count % video_fps != 0) {
-                return callback(nullptr, 0);
-            }
-            if (enable_yolo) {
-                std::unique_lock<std::mutex> lock(yolo_mutex);
-                yolo_cv.wait(lock, [&]() {
-                    return drop_on_full || image_frame_size + 1 <= yolo_queue_size || !callback(nullptr, 0);
-                });
-                if (image_frame_size + 1 <= yolo_queue_size) {
-                    auto& data = image_frame_buffer[image_frame_size];
-                    if (
-                        data.width       != frame.width    ||
-                        data.height      != frame.height   ||
-                        data.channels    != frame.channels ||
-                        data.data.size() != frame.data.size()
-                    ) {
-                        data.width    = frame.width;
-                        data.height   = frame.height;
-                        data.channels = frame.channels;
-                        data.data.resize(frame.data.size());
-                    }
-                    if (enable_vlm) {
-                        std::copy(frame.data.begin(), frame.data.end(), data.data.begin());
-                    } else {
-                        frame.data.swap(data.data);
-                    }
-                    ++image_frame_size;
-                    yolo_cv.notify_one();
-                } else {
-                    CW_LOG_W("图片数据队列已满无法添加数据");
-                    yolo_cv.notify_one();
-                }
-            }
-            if (enable_vlm) {
-                std::unique_lock<std::mutex> lock(vlm_mutex);
-                vlm_cv.wait(lock, [&]() {
-                    return drop_on_full || video_frame_size + 1 <= vlm_frames || !callback(nullptr, 0);
-                });
-                if (video_frame_size + 1 <= vlm_frames) {
-                    auto& data = video_frame_buffer[video_frame_size];
-                    if (
-                        data.width       != frame.width    ||
-                        data.height      != frame.height   ||
-                        data.channels    != frame.channels ||
-                        data.data.size() != frame.data.size()
-                    ) {
-                        data.width    = frame.width;
-                        data.height   = frame.height;
-                        data.channels = frame.channels;
-                        data.data.resize(frame.data.size());
-                    }
-                    if (enable_yolo) {
-                        std::copy(frame.data.begin(), frame.data.end(), data.data.begin());
-                    } else {
-                        frame.data.swap(data.data);
-                    }
-                    ++video_frame_size;
-                    if (video_frame_size == vlm_frames) {
-                        vlm_cv.notify_one();
-                    }
-                } else {
-                    CW_LOG_W("视频数据队列已满无法添加数据");
-                    vlm_cv.notify_one();
-                }
-            }
-            return callback(nullptr, 0);
-        });
+        caiwei::media::MediaDemuxer media_demuxer(type, url);
         CW_LOG_I("开始解析视频: %s = %s", type.c_str(), url.c_str());
         bool ret = media_demuxer.open(
             caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-            caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+            caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+            [&](caiwei::media::AudioFrame& frame) {
+                if (enable_asr) {
+                    std::unique_lock<std::mutex> lock(asr_mutex);
+                    asr_cv.wait(lock, [&]() {
+                        return drop_on_full || audio_frame_buffer.size() + frame.data.size() <= asr_queue_size || !callback(nullptr, 0);
+                    });
+                    if (audio_frame_buffer.size() + frame.data.size() <= asr_queue_size) {
+                        audio_frame_buffer.insert(
+                            audio_frame_buffer.end(),
+                            frame.data.begin(),
+                            frame.data.end()
+                        );
+                        if (audio_frame_buffer.size() >= asr_samples) {
+                            asr_cv.notify_one();
+                        }
+                    } else {
+                        CW_LOG_W("音频数据队列已满无法添加数据");
+                        asr_cv.notify_one();
+                    }
+                }
+                return callback(nullptr, 0);
+            },
+            [&](caiwei::media::VideoFrame& frame) {
+                if (++frame_count % video_fps != 0) {
+                    return callback(nullptr, 0);
+                }
+                if (enable_yolo) {
+                    std::unique_lock<std::mutex> lock(yolo_mutex);
+                    yolo_cv.wait(lock, [&]() {
+                        return drop_on_full || image_frame_size + 1 <= yolo_queue_size || !callback(nullptr, 0);
+                    });
+                    if (image_frame_size + 1 <= yolo_queue_size) {
+                        auto& data = image_frame_buffer[image_frame_size];
+                        if (
+                            data.width       != frame.width    ||
+                            data.height      != frame.height   ||
+                            data.channels    != frame.channels ||
+                            data.data.size() != frame.data.size()
+                        ) {
+                            data.width    = frame.width;
+                            data.height   = frame.height;
+                            data.channels = frame.channels;
+                            data.data.resize(frame.data.size());
+                        }
+                        if (enable_vlm) {
+                            std::copy(frame.data.begin(), frame.data.end(), data.data.begin());
+                        } else {
+                            frame.data.swap(data.data);
+                        }
+                        ++image_frame_size;
+                        yolo_cv.notify_one();
+                    } else {
+                        CW_LOG_W("图片数据队列已满无法添加数据");
+                        yolo_cv.notify_one();
+                    }
+                }
+                if (enable_vlm) {
+                    std::unique_lock<std::mutex> lock(vlm_mutex);
+                    vlm_cv.wait(lock, [&]() {
+                        return drop_on_full || video_frame_size + 1 <= vlm_frames || !callback(nullptr, 0);
+                    });
+                    if (video_frame_size + 1 <= vlm_frames) {
+                        auto& data = video_frame_buffer[video_frame_size];
+                        if (
+                            data.width       != frame.width    ||
+                            data.height      != frame.height   ||
+                            data.channels    != frame.channels ||
+                            data.data.size() != frame.data.size()
+                        ) {
+                            data.width    = frame.width;
+                            data.height   = frame.height;
+                            data.channels = frame.channels;
+                            data.data.resize(frame.data.size());
+                        }
+                        if (enable_yolo) {
+                            std::copy(frame.data.begin(), frame.data.end(), data.data.begin());
+                        } else {
+                            frame.data.swap(data.data);
+                        }
+                        ++video_frame_size;
+                        if (video_frame_size == vlm_frames) {
+                            vlm_cv.notify_one();
+                        }
+                    } else {
+                        CW_LOG_W("视频数据队列已满无法添加数据");
+                        vlm_cv.notify_one();
+                    }
+                }
+                return callback(nullptr, 0);
+            }
         );
         media_demuxer.stop();
         // TODO 等待队列处理完成
-        std::this_thread::sleep_for(std::chrono::seconds(120));
+        // std::this_thread::sleep_for(std::chrono::seconds(120));
         media_stop = true;
         if (asr_thread.joinable()) {
             asr_thread.join();
@@ -652,18 +654,22 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
     }
     caiwei::media::AudioFrame audio_frame;
     audio_frame.data.reserve(samples);
-    caiwei::media::MediaDemuxer media_demuxer(type, audio_url, [&](caiwei::media::AudioFrame& frame) {
-        audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
-        return audio_frame.data.size() < samples;
-    }, [&](caiwei::media::VideoFrame& frame) {
-        return true;
-    });
+    caiwei::media::MediaDemuxer media_demuxer(type, audio_url);
     bool ret = media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [&](caiwei::media::AudioFrame& frame) {
+            audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
+            return audio_frame.data.size() < samples;
+        },
+        [&](caiwei::media::VideoFrame& frame) {
+            return true;
+        }
     );
     media_demuxer.stop();
-    audio_frame.data.resize(samples);
+    if (audio_frame.data.size() > samples) {
+        audio_frame.data.resize(samples);
+    }
     message.audio_data.push_back(std::move(audio_frame));
 }
 
@@ -753,17 +759,21 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
         return;
     }
     std::vector<caiwei::media::VideoFrame> video_frames;
-    caiwei::media::MediaDemuxer media_demuxer(type, video_url, [&](caiwei::media::AudioFrame& frame) {
-        return true;
-    }, [&](caiwei::media::VideoFrame& frame) {
-        video_frames.push_back(std::move(frame));
-        return video_frames.size() < frames;
-    });
+    caiwei::media::MediaDemuxer media_demuxer(type, video_url);
     bool ret = media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [&](caiwei::media::AudioFrame& frame) {
+            return true;
+        },
+        [&](caiwei::media::VideoFrame& frame) {
+            video_frames.push_back(std::move(frame));
+            return video_frames.size() < frames;
+        }
     );
     media_demuxer.stop();
-    video_frames.resize(frames);
+    if (video_frames.size() > frames) {
+        video_frames.resize(frames);
+    }
     message.video_data.push_back(std::move(video_frames));
 }

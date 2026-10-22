@@ -25,9 +25,10 @@ private:
           llama_model* model = nullptr;
     const llama_vocab* vocab = nullptr;
 public:
-    Tokenizer(const std::string& path);
+    Tokenizer();
     ~Tokenizer();
 public:
+    bool load(const std::string& path);
     bool is_eog(llama_token token_id);
     int32_t get_size();
     llama_token get_nl();

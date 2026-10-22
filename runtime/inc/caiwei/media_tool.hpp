@@ -55,6 +55,7 @@ class MediaMuxer;
 
 class MediaFormat {
 private:
+    bool write_header = false;
     std::vector<uint8_t> buffer;
     AVStream* audio_stream{ nullptr }; // 音频流
     AVStream* video_stream{ nullptr }; // 视频流
@@ -77,8 +78,8 @@ public:
     bool stop();
     bool send(MediaType, AVPacket* packet);
 private:
-    void send_header ();
-    void send_trailer();
+    bool send_header ();
+    bool send_trailer();
 };
 
 class MediaMuxer {
@@ -131,13 +132,16 @@ private:
     volatile bool running; // 是否运行
     std::string type; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
     std::string url ; // 媒体地址
-    AudioCallback audio_callback; // 音频回调
-    VideoCallback video_callback; // 视频回调
 public:
-    MediaDemuxer(const std::string& type, const std::string& url, AudioCallback audio_callback, VideoCallback video_callback);
-    ~MediaDemuxer();
+    MediaDemuxer(const std::string& type, const std::string& url);
 public:
-    bool open(AudioInfo audio_info, VideoInfo video_info, MediaFormat* media_format = nullptr);
+    bool open(
+        AudioInfo audio_info,
+        VideoInfo video_info,
+        AudioCallback audio_callback,
+        VideoCallback video_callback,
+        MediaFormat* media_format = nullptr
+    );
     bool stop();
 };
 

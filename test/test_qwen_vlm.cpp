@@ -56,17 +56,19 @@ void test_vlm() {
     request.messages.back().image_data.emplace_back(std::move(frame2));
     std::vector<caiwei::media::VideoFrame> video_frames;
     int frame_index = 0;
-    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp4", [](caiwei::media::AudioFrame& frame) {
-        return true;
-    }, [&video_frames, &frame_index](caiwei::media::VideoFrame& frame) {
-        if (++frame_index % 8 == 0) {
-            video_frames.emplace_back(std::move(frame));
-        }
-        return video_frames.size() < 4;
-    });
+    caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp4");
     media_demuxer.open(
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24)
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [](caiwei::media::AudioFrame& frame) {
+            return true;
+        },
+        [&video_frames, &frame_index](caiwei::media::VideoFrame& frame) {
+            if (++frame_index % 8 == 0) {
+                video_frames.emplace_back(std::move(frame));
+            }
+            return video_frames.size() < 4;
+        }
     );
     media_demuxer.stop();
     request.messages.back().video_data.emplace_back(std::move(video_frames));

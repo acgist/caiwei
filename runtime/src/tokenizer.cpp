@@ -5,17 +5,7 @@
 #include "caiwei/log.hpp"
 #include "caiwei/tokenizer.hpp"
 
-caiwei::context::Tokenizer::Tokenizer(const std::string& path) {
-    llama_model_params params = llama_model_default_params();
-    params.vocab_only = true;
-    this->model = llama_model_load_from_file(path.c_str(), params);
-    if (this->model == nullptr) {
-        CW_LOG_W("加载Tokenizer模型失败: %s", path.c_str());
-        return;
-    }
-    // TODO
-    // llama_model_chat_template
-    this->vocab = llama_model_get_vocab(this->model);
+caiwei::context::Tokenizer::Tokenizer() {
 }
 
 caiwei::context::Tokenizer::~Tokenizer() {
@@ -23,6 +13,24 @@ caiwei::context::Tokenizer::~Tokenizer() {
         llama_model_free(this->model);
         this->model = nullptr;
     }
+}
+
+bool caiwei::context::Tokenizer::load(const std::string& path) {
+    llama_model_params params = llama_model_default_params();
+    params.vocab_only = true;
+    this->model = llama_model_load_from_file(path.c_str(), params);
+    if (this->model == nullptr) {
+        CW_LOG_W("加载Tokenizer模型失败: %s", path.c_str());
+        return false;
+    }
+    // TODO
+    // llama_model_chat_template
+    this->vocab = llama_model_get_vocab(this->model);
+    if (this->vocab == nullptr) {
+        CW_LOG_W("加载Tokenizer模型失败: %s", path.c_str());
+        return false;
+    }
+    return true;
 }
 
 bool caiwei::context::Tokenizer::is_eog(llama_token token_id) {
