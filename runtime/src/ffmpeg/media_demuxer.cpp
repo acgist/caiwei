@@ -106,7 +106,7 @@ bool caiwei::media::MediaDemuxer::open(
     int audio_stream_idx = -1;
     int video_stream_idx = -1;
     int             audio_frame_format      = 0;
-    AVChannelLayout audio_frame_ch_layout;
+    AVChannelLayout audio_frame_ch_layout{};
     int             audio_frame_sample_rate = 0;
     int             video_frame_width       = 0;
     int             video_frame_height      = 0;

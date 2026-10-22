@@ -40,11 +40,12 @@ caiwei::text::ChatTemplate::ChatTemplate() {
 caiwei::text::ChatTemplate::~ChatTemplate() {
 }
 
-void caiwei::text::ChatTemplate::set_template(const std::string& template_text, const std::string& bos, const std::string& eos) {
-    CW_LOG_I("set_template: %s", template_text.c_str());
-    if (template_text.empty()) {
+void caiwei::text::ChatTemplate::set_template(const char* template_text, const std::string& bos, const std::string& eos) {
+    if (template_text == nullptr) {
+        CW_LOG_I("set_template is nullptr");
         return;
     }
+    CW_LOG_D("set_template: %s", template_text);
     this->chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
 }
 

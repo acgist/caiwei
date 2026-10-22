@@ -49,7 +49,7 @@ public:
     virtual ~LlamaCPPContext();
 public:
     bool load_model();
-    bool load_mtmd();
+    bool load_mtmd_model();
 };
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {

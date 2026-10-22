@@ -27,7 +27,7 @@ public:
     ChatTemplate();
     ~ChatTemplate();
 public:
-    void set_template(const std::string& template_text, const std::string& bos, const std::string& eos);
+    void set_template(const char* template_text, const std::string& bos, const std::string& eos);
     std::string apply(
         const SpecialToken& special_token,
         const caiwei::text::CompletionsRequest& request,

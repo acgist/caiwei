@@ -100,12 +100,12 @@ private:
     const AVCodec * video_codec{ nullptr }; // 视频编码器
     uint8_t    * audio_buffer[8] { nullptr }; // 音频通道缓存
     AVAudioFifo* audio_fifo      { nullptr }; // 音频编码缓存
+    AudioInfo in_audio_info;  // 输入音频
+    AudioInfo out_audio_info; // 输出音频
+    VideoInfo in_video_info;  // 输入视频
+    VideoInfo out_video_info; // 输出视频
     PacketCallback packet_callback; // 编码数据回调
 public:
-    AudioInfo in_audio_info;  // 输入音频
-    VideoInfo in_video_info;  // 输入视频
-    AudioInfo out_audio_info; // 输出音频
-    VideoInfo out_video_info; // 输出视频
     AVCodecContext* audio_codec_ctx{ nullptr }; // 音频编码器上下文
     AVCodecContext* video_codec_ctx{ nullptr }; // 视频编码器上下文
 public:

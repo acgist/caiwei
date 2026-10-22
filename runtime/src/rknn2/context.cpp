@@ -20,9 +20,11 @@ caiwei::context::RKNN2Result::~RKNN2Result() {
 }
 
 caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)) {
+    CW_LOG_I("创建RKNN2Context: %s", this->path.c_str());
 }
 
 caiwei::context::RKNN2Context::~RKNN2Context() {
+    CW_LOG_I("释放RKNN2Context: %s", this->path.c_str());
     if (this->context != 0) {
         rknn_destroy(this->context);
         this->context = 0;

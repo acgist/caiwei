@@ -23,6 +23,7 @@ caiwei::context::RKNN3Context::RKNN3Context(
 ) : model_path(std::move(model_path)), weight_path(std::move(weight_path)),
     embedding_path(std::move(embedding_path)), tokenizer_path(std::move(tokenizer_path)),
     max_token_length(max_token_length), special_token(std::move(special_token)) {
+    CW_LOG_I("创建RKNN3Context: %s", this->model_path.c_str());
 }
 
 caiwei::context::RKNN3Context::RKNN3Context(
@@ -33,9 +34,11 @@ caiwei::context::RKNN3Context::RKNN3Context(
     embedding_path(std::move(embedding_path)), tokenizer_path(std::move(tokenizer_path)),
     media_model_path(std::move(media_model_path)), media_weight_path(std::move(media_weight_path)),
     max_token_length(max_token_length), special_token(std::move(special_token)) {
+    CW_LOG_I("创建RKNN3Context: %s", this->model_path.c_str());
 }
 
 caiwei::context::RKNN3Context::~RKNN3Context() {
+    CW_LOG_I("释放RKNN3Context: %s", this->model_path.c_str());
     for (int i = 0; i < this->output_tensors.size(); ++i) {
         if (this->output_tensors[i].attr) {
             delete this->output_tensors[i].attr;
@@ -142,7 +145,7 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
         return false;
     }
     this->chat_template.set_template(llm_config.chat_template, this->special_token.bos, this->special_token.eos);
-    CW_LOG_I("模型输入最大输入长度: %d/%d", llm_config.max_ctx_len, this->max_token_length);
+    CW_LOG_I("模型最大输入长度: %d/%d", llm_config.max_ctx_len, this->max_token_length);
     this->max_token_length = std::min(this->max_token_length, (int32_t) llm_config.max_ctx_len);
     printf_tensor_info(this->context);
     // TODO 移到 load embedding
@@ -551,7 +554,6 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 session->toolcall = true;
                 session->toolcall_session.reset();
             } else if (token_id == session->e_toolcall) {
-                // TOOLCALL不要修改状态
                 session->toolcall_session.finish();
                 session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->toolcall_session });
                 session->condition.notify_one();

@@ -24,8 +24,8 @@ caiwei::media::MediaMuxer::MediaMuxer(
     VideoInfo out_video_info,
     PacketCallback packet_callback
 ) : in_audio_info(in_audio_info),
-    in_video_info(in_video_info),
     out_audio_info(out_audio_info),
+    in_video_info(in_video_info),
     out_video_info(out_video_info),
     packet_callback(packet_callback) {
 }
@@ -248,7 +248,13 @@ bool caiwei::media::MediaMuxer::on_video(const VideoFrame& frame) {
     return this->on_video(frame.width, frame.height, frame.channels, frame.msec, frame.frames, frame.data.size(), frame.data.data());
 }
 
-bool caiwei::media::MediaMuxer::on_audio(const int nb_samples, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t** data) {
+bool caiwei::media::MediaMuxer::on_audio(
+    const int nb_samples,
+    const size_t /* msec */,
+    const size_t /* frames */,
+    const uint32_t /* data_length */,
+    const uint8_t** data
+) {
     if (this->audio_frame == nullptr || this->audio_packet == nullptr || this->audio_codec_ctx == nullptr) {
         return false;
     }
@@ -295,7 +301,15 @@ bool caiwei::media::MediaMuxer::on_audio(const int nb_samples, const size_t msec
     return callable;
 }
 
-bool caiwei::media::MediaMuxer::on_video(const int width, const int height, const int channels, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t* data) {
+bool caiwei::media::MediaMuxer::on_video(
+    const int width,
+    const int height,
+    const int channels,
+    const size_t /* msec */,
+    const size_t /* frames */,
+    const uint32_t /* data_length */,
+    const uint8_t* data
+) {
     if (this->video_frame == nullptr || this->video_packet == nullptr || this->video_codec_ctx == nullptr) {
         return false;
     }

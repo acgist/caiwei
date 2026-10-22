@@ -12,7 +12,7 @@ caiwei::context::ASRLlamaCPPContext::~ASRLlamaCPPContext() {
 }
 
 bool caiwei::context::ASRLlamaCPPContext::load() {
-    return this->load_model() && this->load_mtmd();
+    return this->load_model() && this->load_mtmd_model();
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::ASRLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
