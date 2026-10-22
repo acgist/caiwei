@@ -46,6 +46,9 @@ caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
 }
 
 bool caiwei::context::LlamaCPPContext::load_model() {
+    if (this->model) {
+        return true;
+    }
     llama_model_params params = llama_model_default_params();
     this->model = llama_model_load_from_file(this->path.c_str(), params);
     if (this->model == nullptr) {
@@ -66,6 +69,9 @@ bool caiwei::context::LlamaCPPContext::load_model() {
 }
 
 bool caiwei::context::LlamaCPPContext::load_mtmd_model() {
+    if (this->mtmd_model) {
+        return true;
+    }
     if (this->special_token.media_marker.empty()) {
         this->special_token.media_marker = mtmd_default_marker();
         CW_LOG_W("设置默认媒体标记: %s", this->special_token.media_marker.c_str());
@@ -189,7 +195,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         } else {
             n_ctx_pos += 1;
         }
-        if (n_ctx_pos + batch.n_tokens > n_ctx) {
+        if (n_ctx_pos + batch.n_tokens > static_cast<int32_t>(n_ctx)) {
             CW_LOG_W("上下文超过最大长度: %d", n_ctx);
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
             break;
@@ -399,7 +405,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         } else {
             n_ctx_pos += 1;
         }
-        if (n_ctx_pos + batch.n_tokens > n_ctx) {
+        if (n_ctx_pos + batch.n_tokens > static_cast<int32_t>(n_ctx)) {
             CW_LOG_W("上下文超过最大长度: %d", n_ctx);
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
             break;
@@ -481,7 +487,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     #endif
 }
 
-bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const {
+bool caiwei::context::LlamaCPPContext::build_mtmd(std::string& /* prompt */, mtmd::bitmaps& /* bitmaps */, const caiwei::text::CompletionsRequest& /* request */) const {
     return false;
 }
 
@@ -509,7 +515,7 @@ void caiwei::context::batch_add(llama_batch& batch, llama_token id, llama_pos po
     batch.n_tokens++;
 }
 
-void caiwei::context::batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out) {
+void caiwei::context::batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output, int /* n_seq */, int n_embd_out) {
     const enum llama_pooling_type pooling_type = llama_pooling_type(ctx);
     llama_memory_clear(llama_get_memory(ctx), true);
     int32_t ret = llama_decode(ctx, batch);
