@@ -49,6 +49,10 @@ void test_asr() {
     for (const auto& value : ptr->run(request)) {
         // -
     }
+    request.max_completion_tokens = 2;
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
 }
 
 void test_asr_for() {

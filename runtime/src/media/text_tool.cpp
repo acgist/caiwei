@@ -41,8 +41,8 @@ caiwei::text::ChatTemplate::~ChatTemplate() {
 }
 
 void caiwei::text::ChatTemplate::set_template(const char* template_text, const std::string& bos, const std::string& eos) {
-    if (template_text == nullptr) {
-        CW_LOG_I("set_template is nullptr");
+    if (template_text == nullptr || std::strlen(template_text) == 0) {
+        CW_LOG_I("set_template is nullptr or empty");
         return;
     }
     CW_LOG_D("set_template: %s", template_text);
