@@ -21,6 +21,8 @@ struct AVFormatContext;
 namespace caiwei {
 namespace media  {
 
+inline constexpr const char* sdp_file_path = "./sdp/";
+
 void init();
 void stop();
 
@@ -56,6 +58,7 @@ class MediaMuxer;
 class MediaFormat {
 private:
     bool write_header = false;
+    std::string filename;
     std::vector<uint8_t> buffer;
     AVStream* audio_stream{ nullptr }; // 音频流
     AVStream* video_stream{ nullptr }; // 视频流
@@ -66,14 +69,15 @@ public:
     bool callable = true;
     FormatCallback format_callback;
 public:
+    MediaFormat(std::string filename);
     MediaFormat(FormatCallback format_callback);
     ~MediaFormat();
 public:
     bool open(
         const AVCodecContext* audio_codec_ctx,
         const AVCodecContext* video_codec_ctx,
-        AVRational* audio_time_base = nullptr,
-        AVRational* video_time_base = nullptr
+        const AVRational    * audio_time_base = nullptr,
+        const AVRational    * video_time_base = nullptr
     );
     bool stop();
     bool send(MediaType, AVPacket* packet);
@@ -118,8 +122,8 @@ public:
     bool stop();
     bool on_audio(const AudioFrame& frame);
     bool on_video(const VideoFrame& frame);
-    bool on_audio(const int nb_samples,              const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t* data);
-    bool on_video(const int width, const int height, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t* data);
+    bool on_audio(const int nb_samples,                                  const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t** data);
+    bool on_video(const int width, const int height, const int channels, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t*  data);
 private:
     bool open_audio();
     bool open_video();

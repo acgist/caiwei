@@ -7,11 +7,14 @@
 
 void test_tokenizer() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
-    caiwei::context::Tokenizer tokenizer("/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.tokenizer.gguf");
+    caiwei::context::Tokenizer tokenizer;
+    tokenizer.load("/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.tokenizer.gguf");
     #elif CAIWEI_OS_UNIX
-    caiwei::context::Tokenizer tokenizer("/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
+    caiwei::context::Tokenizer tokenizer;
+    tokenizer.load("/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf");
     #else
-    caiwei::context::Tokenizer tokenizer("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
+    caiwei::context::Tokenizer tokenizer;
+    tokenizer.load("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
     #endif
     int32_t bos = tokenizer.get_bos();
     int32_t eos = tokenizer.get_eos();

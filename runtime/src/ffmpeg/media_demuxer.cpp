@@ -4,6 +4,7 @@
 
 #include <mutex>
 #include <chrono>
+#include <thread>
 #include <fstream>
 #include <filesystem>
 
@@ -17,7 +18,7 @@ extern "C" {
 #include "libswresample/swresample.h"
 }
 
-static bool save_file(const char* data, int size, const std::filesystem::path& path);
+static bool write_sdp_file(const char* data, int size, const std::filesystem::path& path);
 
 static SwrContext* init_audio_swr(caiwei::media::AudioInfo& audio_info, AVFrame* frame);
 static SwsContext* init_video_sws(caiwei::media::VideoInfo& video_info, AVFrame* frame);
@@ -44,6 +45,10 @@ inline bool recv_audio_frame(
     caiwei::media::AudioFrame& audio_frame
 ) {
     int nb_samples = swr_get_out_samples(swr_ctx, frame->nb_samples);
+    if (nb_samples < 0) {
+        CW_LOG_W("音频重采样失败: %d", nb_samples);
+        return false;
+    }
     audio_frame.data.resize(nb_samples * audio_info.channels * audio_info.bytes_per_sample);
     uint8_t* dst_data = audio_frame.data.data();
     nb_samples = swr_convert(swr_ctx, &dst_data, nb_samples, (const uint8_t**) frame->data, frame->nb_samples);
@@ -73,7 +78,8 @@ inline bool recv_video_frame(
     if (dst_height < 0) {
         CW_LOG_W("视频重采样失败: %d", dst_height);
         return false;
-    } else if (dst_height != video_info.height) {
+    }
+    if (dst_height != video_info.height) {
         CW_LOG_W("视频重采样失败: %d != %d", dst_height, video_info.height);
         return false;
     }
@@ -91,7 +97,7 @@ bool caiwei::media::MediaDemuxer::open(
     VideoCallback video_callback,
     MediaFormat* media_format
 ) {
-    int ret = AVERROR_EXIT;
+    int ret = AVERROR_UNKNOWN;
     bool open_device = false;
     std::string sdp_file;
     int64_t msec = 0;
@@ -128,41 +134,42 @@ bool caiwei::media::MediaDemuxer::open(
         if (demuxer->running) {
             return 0;
         }
+        CW_LOG_D("媒体中断回调");
         return AVERROR_EXIT;
     };
     av_dict_set(&opts, "seekable",          "0",                                               0);
     av_dict_set(&opts, "buffer_size",       "262144",                                          0);
     av_dict_set(&opts, "thread_queue_size", "2048",                                            0);
     av_dict_set(&opts, "protocol_whitelist", "tcp,tls,udp,rtp,data,file,http,https,rtmp,rtsp", 0);
-    if(this->type == "rtp" || this->type == "sdp") {
+    if (this->type == "rtp" || this->type == "sdp") {
         av_dict_set(&opts, "timeout",                     "10000000",               0);
         av_dict_set(&opts, "rw_timeout",                  "10000000",               0);
         av_dict_set(&opts, "fflags",                      "+genpts+discardcorrupt", 0);
         av_dict_set(&opts, "max_delay",                   "1000000",                0);
         av_dict_set(&opts, "reorder_queue_size",          "2048",                   0);
         av_dict_set(&opts, "use_wallclock_as_timestamps", "1",                      0);
-        sdp_file = "./sdp/" + caiwei::env::id() + ".sdp";
-        if (save_file(this->url.c_str(), this->url.size(), sdp_file)) {
+        sdp_file = sdp_file_path + caiwei::env::id() + ".sdp";
+        if (write_sdp_file(this->url.c_str(), this->url.size(), sdp_file)) {
             ret = avformat_open_input(&fmt_ctx, sdp_file.c_str(), nullptr, &opts);
         }
-    } else if(this->type == "data") {
+    } else if (this->type == "data") {
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
-    } else if(this->type == "file") {
+    } else if (this->type == "file") {
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
-    } else if(this->type == "http") {
+    } else if (this->type == "http") {
         av_dict_set(&opts, "timeout",          "10000000", 0);
         av_dict_set(&opts, "rw_timeout",       "10000000", 0);
         av_dict_set(&opts, "follow_redirects", "1",        0);
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
-    } else if(this->type == "rtmp") {
+    } else if (this->type == "rtmp") {
         // 不能配置timeout
         av_dict_set(&opts, "rw_timeout", "10000000", 0);
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
-    } else if(this->type == "rtsp") {
+    } else if (this->type == "rtsp") {
         av_dict_set(&opts, "timeout",    "10000000", 0);
         av_dict_set(&opts, "rw_timeout", "10000000", 0);
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
-    } else if(this->type == "device") {
+    } else if (this->type == "device") {
         #if CAIWEI_OS_WIN
         std::lock_guard<std::mutex> lock(device_mutex);
         if (device_open) {
@@ -215,7 +222,7 @@ bool caiwei::media::MediaDemuxer::open(
             }
             audio_stream_idx = i;
             audio_time_base  = fmt_ctx->streams[i]->time_base;
-        } else if(codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+        } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             if (video_stream_idx != -1) {
                 continue;
             }
@@ -229,7 +236,7 @@ bool caiwei::media::MediaDemuxer::open(
             // -
         }
     }
-    if(audio_stream_idx == -1 && video_stream_idx == -1) {
+    if (audio_stream_idx == -1 && video_stream_idx == -1) {
         CW_LOG_W("媒体接收失败: %s - %s", this->type.c_str(), this->url.c_str());
         goto close_all;
     }
@@ -241,9 +248,9 @@ bool caiwei::media::MediaDemuxer::open(
     }
     audio_info.bytes_per_sample = av_get_bytes_per_sample((AVSampleFormat) audio_info.format);
     video_frame.channels = av_pix_fmt_desc_get((AVPixelFormat) video_info.format)->nb_components;
-    while(this->running) {
+    while (this->running) {
         ret = av_read_frame(fmt_ctx, decoder_packet);
-        if(ret == 0) {
+        if (ret == 0) {
             last_recv_time = std::chrono::steady_clock::now();
             if (decoder_packet->stream_index == audio_stream_idx) {
                 if (media_format != nullptr) {
@@ -251,10 +258,10 @@ bool caiwei::media::MediaDemuxer::open(
                 }
                 msec = av_rescale_q(decoder_packet->pts, audio_time_base, msec_time_base);
                 ret = avcodec_send_packet(audio_decoder_ctx, decoder_packet);
-                while(ret == 0) {
+                while (ret == 0) {
                     ret = avcodec_receive_frame(audio_decoder_ctx, decoder_frame);
-                    if(ret == 0) {
-                        if(swr_ctx == nullptr) {
+                    if (ret == 0) {
+                        if (swr_ctx == nullptr) {
                             audio_frame_format      = decoder_frame->format;
                             audio_frame_ch_layout   = decoder_frame->ch_layout;
                             audio_frame_sample_rate = decoder_frame->sample_rate;
@@ -293,16 +300,16 @@ bool caiwei::media::MediaDemuxer::open(
                     }
                     av_frame_unref(decoder_frame);
                 }
-            } else if(decoder_packet->stream_index == video_stream_idx) {
+            } else if (decoder_packet->stream_index == video_stream_idx) {
                 if (media_format != nullptr) {
                     media_format->send(MediaType::VIDEO, decoder_packet);
                 }
                 msec = av_rescale_q(decoder_packet->pts, video_time_base, msec_time_base);
                 ret = avcodec_send_packet(video_decoder_ctx, decoder_packet);
-                while(ret == 0) {
+                while (ret == 0) {
                     ret = avcodec_receive_frame(video_decoder_ctx, decoder_frame);
-                    if(ret == 0) {
-                        if(sws_ctx == nullptr) {
+                    if (ret == 0) {
+                        if (sws_ctx == nullptr) {
                             video_frame_width  = decoder_frame->width;
                             video_frame_height = decoder_frame->height;
                             video_frame_format = decoder_frame->format;
@@ -311,7 +318,7 @@ bool caiwei::media::MediaDemuxer::open(
                                 CW_LOG_W("视频重采样上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
                                 goto close_all;
                             }
-                        } else if(
+                        } else if (
                             video_frame_width  != decoder_frame->width  ||
                             video_frame_height != decoder_frame->height ||
                             video_frame_format != decoder_frame->format
@@ -346,18 +353,18 @@ bool caiwei::media::MediaDemuxer::open(
             }
             av_packet_unref(decoder_packet);
             auto send_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_send_time).count();
-            if(send_timeout >= timeout) {
+            if (send_timeout >= timeout) {
                 CW_LOG_W("媒体发送超时自动关闭: %s - %s = %d", this->type.c_str(), this->url.c_str(), send_timeout);
                 goto close_all;
             }
-        } else if(ret == AVERROR_EOF || ret == AVERROR_EXIT) {
+        } else if (ret == AVERROR_EOF || ret == AVERROR_EXIT) {
             // 忽略刷出缓冲数据
             CW_LOG_I("媒体已经关闭: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
             goto close_all;
         } else {
-            CW_LOG_I("媒体接收失败: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
+            CW_LOG_D("媒体接收失败: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
             auto recv_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_recv_time).count();
-            if(recv_timeout >= timeout) {
+            if (recv_timeout >= timeout) {
                 CW_LOG_W("媒体接收超时自动关闭: %s - %s = %d", this->type.c_str(), this->url.c_str(), recv_timeout);
                 goto close_all;
             } else {
@@ -371,19 +378,19 @@ bool caiwei::media::MediaDemuxer::open(
     av_packet_unref(decoder_packet);
     av_frame_free(&decoder_frame);
     av_packet_free(&decoder_packet);
-    if(swr_ctx) {
+    if (swr_ctx) {
         swr_free(&swr_ctx);
     }
     if (sws_ctx) {
         sws_free(&sws_ctx);
     }
-    if(fmt_ctx) {
+    if (fmt_ctx) {
         avformat_close_input(&fmt_ctx);
     }
-    if(audio_decoder_ctx) {
+    if (audio_decoder_ctx) {
         avcodec_free_context(&audio_decoder_ctx);
     }
-    if(video_decoder_ctx) {
+    if (video_decoder_ctx) {
         avcodec_free_context(&video_decoder_ctx);
     }
     if (open_device && device_open) {
@@ -392,7 +399,7 @@ bool caiwei::media::MediaDemuxer::open(
             device_open = false;
         }
     }
-    if((this->type == "rtp" || this->type == "sdp") && std::filesystem::exists(sdp_file)) {
+    if ((this->type == "rtp" || this->type == "sdp") && std::filesystem::exists(sdp_file)) {
         std::filesystem::remove(sdp_file);
     }
     CW_LOG_I("媒体接收线程结束: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
@@ -404,18 +411,18 @@ bool caiwei::media::MediaDemuxer::stop() {
     return true;
 }
 
-static bool save_file(const char* data, int size, const std::filesystem::path& path) {
-    if(path.empty()) {
+static bool write_sdp_file(const char* data, int size, const std::filesystem::path& path) {
+    if (path.empty()) {
         CW_LOG_W("没有指定文件路径");
         return false;
     }
     std::filesystem::path parent = path.parent_path();
-    if(!std::filesystem::exists(parent)) {
+    if (!std::filesystem::exists(parent)) {
         std::filesystem::create_directories(parent);
     }
     std::ofstream stream;
     stream.open(path, std::ios_base::binary);
-    if(!stream.is_open()) {
+    if (!stream.is_open()) {
         CW_LOG_W("保存文件失败: %s", path.string().c_str());
         stream.close();
         return false;
@@ -427,7 +434,7 @@ static bool save_file(const char* data, int size, const std::filesystem::path& p
 
 static SwrContext* init_audio_swr(caiwei::media::AudioInfo& audio_info, AVFrame* frame) {
     SwrContext* swr = swr_alloc();
-    if(swr == nullptr) {
+    if (swr == nullptr) {
         CW_LOG_W("音频重采样打开失败");
         return nullptr;
     }
@@ -439,13 +446,13 @@ static SwrContext* init_audio_swr(caiwei::media::AudioInfo& audio_info, AVFrame*
         &frame->ch_layout, (AVSampleFormat) frame->    format, frame->    sample_rate,
         0, nullptr
     );
-    if(ret != 0) {
+    if (ret != 0) {
         swr_free(&swr);
         CW_LOG_W("音频重采样设置失败: %d", ret);
         return nullptr;
     }
     ret = swr_init(swr);
-    if(ret != 0) {
+    if (ret != 0) {
         swr_free(&swr);
         CW_LOG_W("音频重采样加载失败: %d", ret);
         return nullptr;
@@ -464,7 +471,7 @@ static SwsContext* init_video_sws(caiwei::media::VideoInfo& video_info, AVFrame*
         SWS_FAST_BILINEAR,
         nullptr, nullptr, nullptr
     );
-    if(sws == nullptr) {
+    if (sws == nullptr) {
         CW_LOG_W("视频重采样打开失败");
         return nullptr;
     }
@@ -472,7 +479,7 @@ static SwsContext* init_video_sws(caiwei::media::VideoInfo& video_info, AVFrame*
 }
 
 static void sws_free(SwsContext** sws) {
-    if(*sws) {
+    if (*sws) {
         sws_freeContext(*sws);
         *sws = nullptr;
     }
@@ -490,12 +497,12 @@ static bool init_decoder_ctx(const std::string& type, const std::string& url, AV
         return false;
     }
     int ret = avcodec_parameters_to_context(*decoder_ctx, codecpar);
-    if(ret < 0) {
+    if (ret < 0) {
         CW_LOG_W("解码器设置失败: %s - %s = %d", type.c_str(), url.c_str(), ret);
         return false;
     }
     ret = avcodec_open2(*decoder_ctx, decoder, nullptr);
-    if(ret != 0) {
+    if (ret != 0) {
         CW_LOG_W("解码器打开失败: %s - %s = %d", type.c_str(), url.c_str(), ret);
         return false;
     }

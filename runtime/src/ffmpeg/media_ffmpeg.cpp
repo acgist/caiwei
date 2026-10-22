@@ -1,7 +1,7 @@
+#include <filesystem>
+
 #include "caiwei/log.hpp"
 #include "caiwei/media_tool.hpp"
-
-#include <filesystem>
 
 extern "C" {
 #include "libavformat/avio.h"
@@ -9,17 +9,21 @@ extern "C" {
 #include "libavdevice/avdevice.h"
 }
 
-static void print_all_protocols();
+#if CAIWEI_DEBUG
 static void print_all_decoder();
 static void print_all_encoder();
+static void print_all_protocols();
+#endif
 static void delete_old_sdp_file();
 
 void caiwei::media::init() {
     avformat_network_init();
     avdevice_register_all();
-    print_all_protocols();
+    #if CAIWEI_DEBUG
     print_all_decoder();
     print_all_encoder();
+    print_all_protocols();
+    #endif
     delete_old_sdp_file();
 }
 
@@ -27,23 +31,16 @@ void caiwei::media::stop() {
     avformat_network_deinit();
 }
 
-static void print_all_protocols() {
-    void* iter = nullptr;
-    const char* name = nullptr;
-    while ((name = avio_enum_protocols(&iter, 0)) != nullptr) {
-        CW_LOG_D("protocol: %s", name);
-    }
-}
-
+#if CAIWEI_DEBUG
 static void print_all_decoder() {
     void* iter = nullptr;
     const AVCodec* codec = nullptr;
     while ((codec = av_codec_iterate(&iter))) {
         if (av_codec_is_decoder(codec)) {
             if (codec->type == AVMEDIA_TYPE_AUDIO) {
-                CW_LOG_D("audio decoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("ffmpeg audio decoder: %-16s = %s", codec->name, codec->long_name);
             } else if (codec->type == AVMEDIA_TYPE_VIDEO) {
-                CW_LOG_D("video decoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("ffmpeg video decoder: %-16s = %s", codec->name, codec->long_name);
             } else {
                 // -
             }
@@ -57,9 +54,9 @@ static void print_all_encoder() {
     while ((codec = av_codec_iterate(&iter))) {
         if (av_codec_is_encoder(codec)) {
             if (codec->type == AVMEDIA_TYPE_AUDIO) {
-                CW_LOG_D("audio encoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("ffmpeg audio encoder: %-16s = %s", codec->name, codec->long_name);
             } else if (codec->type == AVMEDIA_TYPE_VIDEO) {
-                CW_LOG_D("video encoder: %-16s = %s", codec->name, codec->long_name);
+                CW_LOG_D("ffmpeg video encoder: %-16s = %s", codec->name, codec->long_name);
             } else {
                 // -
             }
@@ -67,15 +64,26 @@ static void print_all_encoder() {
     }
 }
 
+static void print_all_protocols() {
+    void* iter = nullptr;
+    const char* name = nullptr;
+    while ((name = avio_enum_protocols(&iter, 0)) != nullptr) {
+        CW_LOG_D("ffmpeg protocol: %s", name);
+    }
+}
+#endif
+
 static void delete_old_sdp_file() {
-    std::filesystem::path sdp_parent = "./sdp/";
-    if (!std::filesystem::exists(sdp_parent)) {
+    if (!std::filesystem::exists(caiwei::media::sdp_file_path)) {
         return;
     }
-    for (auto& entry : std::filesystem::directory_iterator(sdp_parent)) {
+    for (auto& entry : std::filesystem::directory_iterator(caiwei::media::sdp_file_path)) {
         if (entry.is_regular_file() && entry.path().extension() == ".sdp") {
-            CW_LOG_I("删除旧的SDP文件: %s", entry.path().string().c_str());
-            std::filesystem::remove(entry.path());
+            if (std::filesystem::remove(entry.path())) {
+                CW_LOG_I("删除旧的SDP文件成功: %s", entry.path().string().c_str());
+            } else {
+                CW_LOG_W("删除旧的SDP文件失败: %s", entry.path().string().c_str());
+            }
         }
     }
 }
