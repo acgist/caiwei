@@ -448,9 +448,12 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         }
         auto status = context_session.condition.wait_for(lock, std::chrono::seconds(8));
         if (status == std::cv_status::timeout) {
-            if (++timeout_count > 4) {
-                CW_LOG_W("超时次数超限: %d", timeout_count);
+            ++timeout_count;
+            if (timeout_count > 4) {
+                CW_LOG_W("生成超时次数超限: %d", timeout_count);
                 break;
+            } else {
+                CW_LOG_I("生成超时: %d", timeout_count);
             }
         }
     }
