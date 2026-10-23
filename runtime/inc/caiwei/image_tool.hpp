@@ -60,7 +60,7 @@ inline void padding(
     const int pad_w,
     const int pad_h,
     const int w,
-    const int h,
+    const int /* h */,
     const int channels = 3
 ) {
     if (pad_w == 0 && pad_h == 0) {

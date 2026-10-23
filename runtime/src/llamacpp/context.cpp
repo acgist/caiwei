@@ -9,6 +9,9 @@
 #include "mtmd.h"
 #include "mtmd-helper.h"
 
+static void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits);
+static void batch_decode_pooling(llama_context* ctx, llama_batch& batch, const enum llama_pooling_type& pooling_type, float* output, int n_seq, int n_embd_out);
+
 caiwei::context::caiwei_llama_batch::~caiwei_llama_batch() {
     if (this->embedding) {
         llama_batch_free(this->batch);
@@ -153,11 +156,11 @@ llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(const caiwei::text:
     return sampler;
 }
 
-caiwei::context::caiwei_llama_batch caiwei::context::LlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch caiwei::context::LlamaCPPContext::get_inputs(std::string& /* prompt */, llama_context* /* context */, const caiwei::text::CompletionsRequest& /* request */) const {
     return {};
 }
 
-bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwei_batch, mtmd::bitmaps& bitmaps, const std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwei_batch, mtmd::bitmaps& bitmaps, const std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& /* request */) const {
     mtmd_input_text text;
     text.text          = prompt.data();
     text.text_len      = prompt.size();
@@ -245,6 +248,80 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
     return true;
 }
 
+std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const std::vector<std::vector<llama_token>>& inputs) const {
+    if (llama_model_has_encoder(this->model)) {
+        CW_LOG_W("不支持的编码模型: %s", this->path.c_str());
+        return {};
+    }
+    llama_context_ptr context{ this->get_context(true) };
+    const int n_batch = llama_n_batch(context.get());
+    const int n_prompts = inputs.size();
+    if (n_prompts > n_batch) {
+        CW_LOG_W("不支持的输入数量: %d > %d", n_prompts, n_batch);
+        return {};
+    }
+    const enum llama_pooling_type pooling_type = llama_pooling_type(context.get());
+    int n_embd_out   = 0;
+    int n_embd_count = 0;
+    if (pooling_type == LLAMA_POOLING_TYPE_LAST) {
+        n_embd_out   = llama_model_n_embd_out(this->model);
+        n_embd_count = n_prompts;
+    } else if (pooling_type == LLAMA_POOLING_TYPE_RANK) {
+        n_embd_out   = llama_model_n_cls_out(this->model);
+        n_embd_count = n_prompts;
+    } else if (pooling_type == LLAMA_POOLING_TYPE_MEAN) {
+        n_embd_out   = llama_model_n_embd_out(this->model);
+        n_embd_count = n_prompts;
+    } else if (pooling_type == LLAMA_POOLING_TYPE_NONE) {
+        n_embd_out = llama_model_n_embd_out(this->model);
+        for (int k = 0; k < n_prompts; k++) {
+            n_embd_count += inputs[k].size();
+        }
+    } else {
+        CW_LOG_W("不支持的池化类型: %d", pooling_type);
+        return {};
+    }
+    int emb_pos = 0;
+    int seq_pos = 0;
+    const int seq_max = llama_max_parallel_sequences();
+    std::vector<float> embeddings(n_embd_count * n_embd_out, 0);
+    float* emb = embeddings.data();
+    struct llama_batch batch = llama_batch_init(n_batch, 0, 1);
+    for (int k = 0; k < n_prompts; ++k) {
+        auto& input = inputs[k];
+        const size_t n_tokens = input.size();
+        if (n_tokens > static_cast<size_t>(n_batch)) {
+            CW_LOG_W("单个嵌入词元超长: %" PRId64 " > %d", n_tokens, n_batch);
+            llama_batch_free(batch);
+            return {};
+        }
+        if (batch.n_tokens + n_tokens > static_cast<size_t>(n_batch) || seq_pos >= seq_max) {
+            float* out = emb + emb_pos * n_embd_out;
+            batch_decode_pooling(context.get(), batch, pooling_type, out, seq_pos, n_embd_out);
+            emb_pos += pooling_type == LLAMA_POOLING_TYPE_NONE ? batch.n_tokens : seq_pos;
+            seq_pos = 0;
+            batch.n_tokens = 0;
+        }
+        for (size_t i = 0; i < n_tokens; ++i) {
+            batch_add(batch, input[i], i, { seq_pos }, true);
+        }
+        seq_pos += 1;
+    }
+    float* out = emb + emb_pos * n_embd_out;
+    batch_decode_pooling(context.get(), batch, pooling_type, out, seq_pos, n_embd_out);
+    llama_batch_free(batch);
+    #if ENABLE_CAIWEI_PERF
+    llama_perf_context_print(context.get());
+    #endif
+    std::vector<std::vector<float>> result;
+    for (int i = 0; i < n_embd_count; ++i) {
+        std::vector<float> item;
+        item.assign(embeddings.begin() + i * n_embd_out, embeddings.begin() + (i + 1) * n_embd_out);
+        result.push_back(std::move(item));
+    }
+    return result;
+}
+
 std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) const {
     if (llama_model_has_encoder(this->model)) {
         CW_LOG_W("不支持的模型: %s", this->path.c_str());
@@ -286,17 +363,6 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     uint32_t generated_tokens = 0;
     const uint32_t max_completion_tokens = request.max_completion_tokens.value_or(this->max_token_length);
     while (true) {
-        llama_pos n_ctx_pos = llama_memory_seq_pos_max(llama_get_memory(context.get()), 0);
-        if (n_ctx_pos < 0) {
-            n_ctx_pos = 0;
-        } else {
-            n_ctx_pos += 1;
-        }
-        if (n_ctx_pos + batch.n_tokens > static_cast<int32_t>(n_ctx)) {
-            CW_LOG_W("上下文超过最大长度: %d", n_ctx);
-            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
-            break;
-        }
         if (generated_tokens > max_completion_tokens) {
             CW_LOG_W("生成内容超过最大长度: %d", max_completion_tokens);
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
@@ -324,7 +390,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         ++generated_tokens;
         int32_t buffer_length = llama_token_to_piece(this->vocab, token_id, buffer.data(), buffer.size(), 0, true);
         if (buffer_length < 0) {
-            // 理论上不可能超过这个缓冲直接失败
+            // 单个词元缓存不会超限
             CW_LOG_W("解码失败: %d", buffer_length);
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
             break;
@@ -354,7 +420,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         }
         if (caiwei_batch.embedding) {
             batch.n_tokens = 0;
-            caiwei::context::batch_add(batch, token_id, caiwei_batch.n_pos++, { 0 }, true);
+            batch_add(batch, token_id, caiwei_batch.n_pos++, { 0 }, true);
         } else {
             batch.n_tokens = 1;
             batch.token = &token_id;
@@ -391,7 +457,7 @@ std::vector<llama_token> caiwei::context::tokenize(const llama_vocab* vocab, con
     return tokens;
 }
 
-void caiwei::context::batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits) {
+static void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits) {
     batch.token   [batch.n_tokens] = id;
     batch.pos     [batch.n_tokens] = pos;
     batch.n_seq_id[batch.n_tokens] = seq_id.size();
@@ -402,8 +468,7 @@ void caiwei::context::batch_add(llama_batch& batch, llama_token id, llama_pos po
     batch.n_tokens++;
 }
 
-void caiwei::context::batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output, int /* n_seq */, int n_embd_out) {
-    const enum llama_pooling_type pooling_type = llama_pooling_type(ctx);
+static void batch_decode_pooling(llama_context* ctx, llama_batch& batch, const enum llama_pooling_type& pooling_type, float* output, int /* n_seq */, int n_embd_out) {
     llama_memory_clear(llama_get_memory(ctx), true);
     int32_t ret = llama_decode(ctx, batch);
     if (ret != 0) {

@@ -1,8 +1,12 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-caiwei::context::LLMLlamaCPPContext::LLMLlamaCPPContext(std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
-  : LLMContext(runtime),
+caiwei::context::LLMLlamaCPPContext::LLMLlamaCPPContext(
+    std::string path,
+    int32_t max_token_length,
+    caiwei::text::SpecialToken special_token,
+    caiwei::runtime::Runtime* runtime
+) : LLMContext(runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {
 }
     
@@ -34,6 +38,13 @@ caiwei::context::caiwei_llama_batch caiwei::context::LLMLlamaCPPContext::get_inp
         return caiwei_batch;
     }
     caiwei_batch.n_prompt_tokens = prompt_tokens.size();
+    const uint32_t n_batch = llama_n_batch(context);
+    if (caiwei_batch.n_prompt_tokens > n_batch) {
+        CW_LOG_W("提示词超长: %d > %d", caiwei_batch.n_prompt_tokens, n_batch);
+        caiwei_batch.success = false;
+        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
+        return caiwei_batch;
+    }
     caiwei_batch.batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
     const int32_t ret = llama_decode(context, caiwei_batch.batch);
     if (ret == 1) {

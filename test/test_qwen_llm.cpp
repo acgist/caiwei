@@ -101,7 +101,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_llm();
-    // test_llm_for();
+    test_llm_for();
     // test_llm_thread();
     // test_llm_thread();
     caiwei::test::stop_test();

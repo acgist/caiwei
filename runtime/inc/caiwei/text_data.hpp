@@ -268,6 +268,12 @@ struct SpecialToken {
     std::string instruction_key;
     std::string query_key;
     std::string document_key;
+
+    void load_asr();
+    void load_llm();
+    void load_vlm();
+    void load_embedding();
+    void load_reranking();
 };
 
 struct ToolcallSession {

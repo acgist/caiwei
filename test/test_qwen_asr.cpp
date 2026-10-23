@@ -158,7 +158,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_asr();
-    // test_asr_for();
+    test_asr_for();
     // test_asr_thread();
     // test_asr_thread();
     caiwei::test::stop_test();

@@ -91,7 +91,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_embedding();
-    // test_embedding_for();
+    test_embedding_for();
     // test_embedding_thread();
     // test_embedding_thread();
     caiwei::test::stop_test();

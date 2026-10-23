@@ -43,6 +43,7 @@ protected:
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request) const;
     virtual caiwei_llama_batch get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
     virtual bool get_mtmd_inputs(caiwei_llama_batch& caiwei_batch, mtmd::bitmaps& bitmaps, const std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
+    std::vector<std::vector<float>> pooling(const std::vector<std::vector<llama_token>>& inputs) const;
     std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request) const;
 public:
     LlamaCPPContext(std::string path,                        int32_t max_token_length, caiwei::text::SpecialToken special_token);
@@ -132,8 +133,6 @@ public:
 };
 
 std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = true, bool parse_special = true);
-void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits);
-void batch_decode_pooling(llama_context* ctx, llama_batch& batch, float* output, int n_seq, int n_embd_out);
 
 } // context
 } // caiwei

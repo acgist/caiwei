@@ -374,3 +374,65 @@ std::string caiwei::text::to_json(const RerankingsResponse& response) {
     }
     return json.dump();
 }
+
+void caiwei::text::SpecialToken::load_asr() {
+    this->bos = caiwei::env::get("CAIWEI_ASR_TOKEN_BOS");
+    this->eos = caiwei::env::get("CAIWEI_ASR_TOKEN_EOS");
+    this->pad = caiwei::env::get("CAIWEI_ASR_TOKEN_PAD");
+    this->b_audio = caiwei::env::get("CAIWEI_ASR_TOKEN_BAUDIO");
+    this->c_audio = caiwei::env::get("CAIWEI_ASR_TOKEN_CAUDIO");
+    this->e_audio = caiwei::env::get("CAIWEI_ASR_TOKEN_EAUDIO");
+    this->b_thinking = caiwei::env::get("CAIWEI_ASR_TOKEN_BTHINKING");
+    this->e_thinking = caiwei::env::get("CAIWEI_ASR_TOKEN_ETHINKING");
+    this->b_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_BTOOLCALL");
+    this->e_toolcall = caiwei::env::get("CAIWEI_ASR_TOKEN_ETOOLCALL");
+    this->enable_thinking = caiwei::env::get("CAIWEI_ASR_ENABLE_THINKING");
+    this->media_marker = caiwei::env::get("CAIWEI_ASR_MEDIA_MARKER");
+    this->audio_marker = caiwei::env::get("CAIWEI_ASR_AUDIO_MARKER");
+}
+
+void caiwei::text::SpecialToken::load_llm() {
+    this->bos = caiwei::env::get("CAIWEI_LLM_TOKEN_BOS");
+    this->eos = caiwei::env::get("CAIWEI_LLM_TOKEN_EOS");
+    this->pad = caiwei::env::get("CAIWEI_LLM_TOKEN_PAD");
+    this->b_thinking = caiwei::env::get("CAIWEI_LLM_TOKEN_BTHINKING");
+    this->e_thinking = caiwei::env::get("CAIWEI_LLM_TOKEN_ETHINKING");
+    this->b_toolcall = caiwei::env::get("CAIWEI_LLM_TOKEN_BTOOLCALL");
+    this->e_toolcall = caiwei::env::get("CAIWEI_LLM_TOKEN_ETOOLCALL");
+    this->enable_thinking = caiwei::env::get("CAIWEI_LLM_ENABLE_THINKING");
+}
+
+void caiwei::text::SpecialToken::load_vlm() {
+    this->bos = caiwei::env::get("CAIWEI_VLM_TOKEN_BOS");
+    this->eos = caiwei::env::get("CAIWEI_VLM_TOKEN_EOS");
+    this->pad = caiwei::env::get("CAIWEI_VLM_TOKEN_PAD");
+    this->b_image = caiwei::env::get("CAIWEI_VLM_TOKEN_BIMAGE");
+    this->c_image = caiwei::env::get("CAIWEI_VLM_TOKEN_CIMAGE");
+    this->e_image = caiwei::env::get("CAIWEI_VLM_TOKEN_EIMAGE");
+    this->b_video = caiwei::env::get("CAIWEI_VLM_TOKEN_BVIDEO");
+    this->c_video = caiwei::env::get("CAIWEI_VLM_TOKEN_CVIDEO");
+    this->e_video = caiwei::env::get("CAIWEI_VLM_TOKEN_EVIDEO");
+    this->b_thinking = caiwei::env::get("CAIWEI_VLM_TOKEN_BTHINKING");
+    this->e_thinking = caiwei::env::get("CAIWEI_VLM_TOKEN_ETHINKING");
+    this->b_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_BTOOLCALL");
+    this->e_toolcall = caiwei::env::get("CAIWEI_VLM_TOKEN_ETOOLCALL");
+    this->enable_thinking = caiwei::env::get("CAIWEI_VLM_ENABLE_THINKING");
+    this->media_marker = caiwei::env::get("CAIWEI_VLM_MEDIA_MARKER");
+    this->image_marker = caiwei::env::get("CAIWEI_VLM_IMAGE_MARKER");
+    this->video_marker = caiwei::env::get("CAIWEI_VLM_VIDEO_MARKER");
+}
+
+void caiwei::text::SpecialToken::load_embedding() {
+}
+
+void caiwei::text::SpecialToken::load_reranking() {
+    this->system_prompt      = caiwei::env::get("CAIWEI_RERANKING_SYSTEM");
+    this->instruction_prompt = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION");
+    this->instruction_key    = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_KEY");
+    this->query_key          = caiwei::env::get("CAIWEI_RERANKING_QUERY_KEY");
+    this->document_key       = caiwei::env::get("CAIWEI_RERANKING_DOCUMENT_KEY");
+    this->bos = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BOS");
+    this->eos = caiwei::env::get("CAIWEI_RERANKING_TOKEN_EOS");
+    this->b_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BTHINKING");
+    this->e_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_ETHINKING");
+}

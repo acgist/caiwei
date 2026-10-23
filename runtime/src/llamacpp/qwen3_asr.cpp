@@ -1,11 +1,14 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
-#include "mtmd.h"
-
-caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime)
-    : LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token),
-    ASRContext(runtime) {
+caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(
+    std::string path,
+    std::string mtmd_path,
+    int32_t max_token_length,
+    caiwei::text::SpecialToken special_token,
+    caiwei::runtime::Runtime* runtime
+) : ASRContext(runtime),
+    LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, std::move(special_token)) {
 }
 
 caiwei::context::ASRLlamaCPPContext::~ASRLlamaCPPContext() {

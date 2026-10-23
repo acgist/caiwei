@@ -184,7 +184,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_vlm();
-    // test_vlm_for();
+    test_vlm_for();
     // test_vlm_thread();
     // test_vlm_thread();
     caiwei::test::stop_test();
