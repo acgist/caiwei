@@ -433,7 +433,6 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     begin_time = std::chrono::steady_clock::now();
     // int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     int ret = rknn3_session_run_async(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
-    int timeout_count = 0;
     while (true) {
         std::unique_lock<std::mutex> lock(context_session.mutex);
         if (!context_session.token_result.empty()) {
@@ -450,16 +449,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         if (context_session.stop) {
             break;
         }
-        auto status = context_session.condition.wait_for(lock, std::chrono::seconds(8));
-        if (status == std::cv_status::timeout) {
-            ++timeout_count;
-            if (timeout_count > 4) {
-                CW_LOG_W("生成超时次数超限: %d", timeout_count);
-                break;
-            } else {
-                CW_LOG_I("生成超时: %d", timeout_count);
-            }
-        }
+        context_session.condition.wait_for(lock, std::chrono::seconds(8));
     }
     end_time = std::chrono::steady_clock::now();
     context_session.generate_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();

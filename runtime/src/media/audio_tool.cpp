@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/audio_tool.hpp"
 
 #include <cmath>
@@ -15,14 +16,6 @@
 #endif
 
 #include "pocketfft_hdronly/pocketfft_hdronly.h"
-
-static void pad_mel_spec(const std::vector<float> input, int rows_input, int cols_input, std::vector<float> &output, int cols_output)
-{
-    for (int i = 0; i < rows_input; ++i)
-    {
-        std::copy(input.begin() + i * cols_input, input.begin() + (i + 1) * cols_input, output.begin() + i * cols_output);
-    }
-}
 
 static void hann_window(std::vector<float> &window, int length)
 {
@@ -50,7 +43,7 @@ static void stfts(const std::vector<float> &audio, int audio_length, int window_
     for (int i = 0; i < num_frames; i++)
     {
         int start = i * hop_length;
-        int end = start + window_length;
+
         for (int j = 0; j < window_length - 3; j += 4)
         {
             if (start + j < audio_length)
@@ -94,7 +87,6 @@ static void stfts(const std::vector<float> &audio, int audio_length, int window_
     for (int i = 0; i < num_frames; i++)
     {
         int start = i * hop_length;
-        int end = start + window_length;
 
         for (int j = 0; j < window_length; j++)
         {
@@ -134,6 +126,9 @@ static void compute_magnitudes(std::complex<float> *stft_result, int num_mel_fil
 
 static void clamp_and_log_max(std::vector<float> &mel_spec, int rows, int cols)
 {
+    if (rows <= 0 || cols <= 0) {
+        return;
+    }
     float min_val = 1e-10;
     float scaling_factor = 1.0 / 4.0;
     float shift_value = 4.0;
@@ -156,7 +151,7 @@ static void clamp_and_log_max(std::vector<float> &mel_spec, int rows, int cols)
     }
 }
 
-void transpose(std::complex<float> *input, int input_rows, int input_cols, std::complex<float> *output)
+static void transpose(std::complex<float> *input, int input_rows, int input_cols, std::complex<float> *output)
 {
     for (int i = 0; i < input_rows; ++i)
     {
@@ -171,55 +166,31 @@ void transpose(std::complex<float> *input, int input_rows, int input_cols, std::
 }
 
 #if defined(__aarch64__)
-void matmul(const float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B)
-{
-    int k_start = COLS_A, k_end = 0;
-    for (auto i = 0; i < ROWS_A; i++)
-    {
-        for (auto k = 0; k < COLS_A; k++)
-        {
-            if (A[i * COLS_A + k] != 0.0f)
-            {
-                k_start = k;
-                break;
+void matmul(const float* A, float* B, std::vector<float>& C, int ROWS_A, int COLS_A, int COLS_B) {
+    for (int i = 0; i < ROWS_A; i++) {
+        float* c_row = &C[i * COLS_B];
+        std::fill(c_row, c_row + COLS_B, 0.0f);
+        for (int k = 0; k < COLS_A; k++) {
+            const float a = A[i * COLS_A + k];
+            if (a == 0.0f) {
+                continue;
             }
-        }
-        for (auto k = COLS_A - 1; k > 0; k--)
-        {
-            if (A[i * COLS_A + k] != 0.0f)
-            {
-                k_end = k;
-                break;
+            const float* b_row = &B[k * COLS_B];
+            const float32x4_t va = vdupq_n_f32(a);
+            int j = 0;
+            for (; j <= COLS_B - 4; j += 4) {
+                const float32x4_t vb = vld1q_f32(b_row + j);
+                const float32x4_t vc = vld1q_f32(c_row + j);
+                vst1q_f32(c_row + j, vmlaq_f32(vc, va, vb));
             }
-        }
-
-        int k_diff = k_end - k_start + 1;
-        if (k_diff % 4)
-        {
-            k_diff = 4 - (k_diff % 4);
-            if (k_start > k_diff)
-                k_start -= k_diff;
-            else if (k_end < (COLS_A - k_diff))
-                k_end += k_diff;
-        }
-        k_diff = (k_end - k_start) % 4;
-        for (auto j = 0; j < COLS_B; j++)
-        {
-            float32x4_t v_tot = vdupq_n_f32(0.0f);
-            for (auto k = k_start; k <= k_end - 3; k += 4)
-            {
-                float32x4_t vq_mat1 = vld1q_f32(&A[i * COLS_A + k]);
-                float32x4_t vq_mat2 = vld1q_f32(&B[k * COLS_B + j]);
-                v_tot = vmlaq_f32(v_tot, vq_mat1, vq_mat2);
+            for (; j < COLS_B; j++) {
+                c_row[j] += a * b_row[j];
             }
-
-            float32x2_t tmp = vadd_f32(vget_high_f32(v_tot), vget_low_f32(v_tot));
-            C[i * COLS_B + j] = vget_lane_f32(tmp, 0) + vget_lane_f32(tmp, 1);
         }
     }
 }
 #else
-void matmul(const float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B)
+static void matmul(const float *A, float *B, std::vector<float> &C, int ROWS_A, int COLS_A, int COLS_B)
 {
     std::fill(C.begin(), C.end(), 0.0f);
 
@@ -268,23 +239,13 @@ static void log_mel_spectrogram(const float *audio_data, int audio_length, int c
 
 void caiwei::audio::log_mel_spectrogram(const float *audio, int audio_length, const float *mel_filters, int n_fft, int hop_length, int n_mels, int max_audio_length, std::vector<float> &mel_spec, int *actual_length)
 {
-    if (audio_length >= max_audio_length)
-    {
-        std::vector<float> audio_data(max_audio_length);
-        std::copy(audio, audio + max_audio_length, audio_data.begin());
-        int cur_num_frames_of_stfts = max_audio_length / hop_length + 1;
-        ::log_mel_spectrogram(audio_data.data(), max_audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, mel_spec);
-        *actual_length = max_audio_length / hop_length;
+    if (audio == nullptr || mel_filters == nullptr) {
+        CW_LOG_W("参数错误");
+        return;
     }
-    else
-    {
-        int cur_num_frames_of_stfts = audio_length / hop_length + 1;
-        int mel_spec_rows = n_mels;
-        int mel_spec_cols = cur_num_frames_of_stfts - 1;
-        int mel_spec_cols_pad = max_audio_length / hop_length;
-        std::vector<float> cur_mel_spec(mel_spec_rows * mel_spec_cols, 0.0F);
-        ::log_mel_spectrogram(audio, audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, cur_mel_spec);
-        pad_mel_spec(cur_mel_spec, mel_spec_rows, mel_spec_cols, mel_spec, mel_spec_cols_pad);
-        *actual_length = mel_spec_cols;
-    }
+    std::vector<float> audio_data(max_audio_length);
+    std::copy(audio, audio + max_audio_length, audio_data.begin());
+    int cur_num_frames_of_stfts = max_audio_length / hop_length + 1;
+    ::log_mel_spectrogram(audio_data.data(), max_audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, mel_spec);
+    *actual_length = max_audio_length / hop_length;
 }

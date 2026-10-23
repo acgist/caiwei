@@ -101,6 +101,10 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
         return {};
     }
     const int num_frames = audio_frame.size() * sizeof(uint8_t) / sizeof(int16_t);
+    if (num_frames < (N_FFT + HOP_LENGTH) * 2) {
+        CW_LOG_W("音频数据长度不足无法进行识别");
+        return {};
+    }
     context_session->audio_frames = num_frames;
     int batch_size = this->media_input[0].attr->shape[0];
     int n_mels = this->media_input[0].attr->shape[2];

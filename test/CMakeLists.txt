@@ -48,6 +48,17 @@ target_link_libraries(
 )
 
 add_executable(
+    test_media_audio
+    test_media_audio.cpp
+)
+add_test(NAME test_media_audio COMMAND test_media_audio)
+set_target_properties(test_media_audio PROPERTIES FOLDER "test")
+target_link_libraries(
+    test_media_audio
+    caiwei-test
+)
+
+add_executable(
     test_media_image
     test_media_image.cpp
 )

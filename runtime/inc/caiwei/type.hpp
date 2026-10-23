@@ -1,11 +1,16 @@
 #ifndef CAIWEI_RUNTIME_TYPE_HPP
 #define CAIWEI_RUNTIME_TYPE_HPP
 
-#include <bit>
 #include <cmath>
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
+
+#if defined(__aarch64__)
+#include <arm_neon.h>
+#else
+#include <immintrin.h>
+#endif
 
 namespace caiwei {
 namespace type   {
@@ -32,8 +37,6 @@ inline int8_t qnt_affine_to_i8(float f32, int32_t zp, float scale) {
 }
 
 #if defined(__aarch64__)
-#include <arm_neon.h>
-
 inline void f32_to_fp16(uint16_t* __restrict dst, const float* __restrict src, int count) {
     int i = 0;
     for (; i <= count - 4; i += 4) {
@@ -61,8 +64,6 @@ inline void fp16_to_f32(float* __restrict dst, const uint16_t* __restrict src, i
     }
 }
 #else
-#include <immintrin.h>
-
 inline void f32_to_fp16(uint16_t* __restrict dst, const float* __restrict src, int count) {
     int i = 0;
     for (; i <= count - 8; i += 8) {
