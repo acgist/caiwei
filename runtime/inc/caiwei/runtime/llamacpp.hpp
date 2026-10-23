@@ -6,26 +6,27 @@
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
 
-struct llama_batch;
-struct llama_model;
-struct llama_vocab;
-struct llama_context;
-struct llama_sampler;
+#include "mtmd.h"
 
-struct mtmd_context;
-
-typedef int32_t llama_pos;
-typedef int32_t llama_token;
-typedef int32_t llama_seq_id;
-
-namespace mtmd {
-
-struct bitmaps;
-
-}; // mtmd
+#include "llama.h"
 
 namespace caiwei  {
 namespace context {
+
+struct caiwei_llama_batch {
+    bool success   = true;
+    bool embedding = false;
+    uint32_t    n_prompt_tokens = 0;
+    llama_pos   n_pos;
+    llama_batch batch;
+    std::string finish_reason;
+    caiwei_llama_batch() noexcept = default;
+    ~caiwei_llama_batch();
+    caiwei_llama_batch(const caiwei_llama_batch& batch) noexcept = delete;
+    caiwei_llama_batch& operator=(const caiwei_llama_batch& batch) noexcept = delete;
+    caiwei_llama_batch(caiwei_llama_batch&& batch) noexcept = default;
+    caiwei_llama_batch& operator=(caiwei_llama_batch&& batch) noexcept = default;
+};
 
 class LlamaCPPContext {
 protected:
@@ -40,9 +41,9 @@ protected:
 protected:
     llama_context* get_context(bool embeddings = false) const;
     llama_sampler* get_sampler(const caiwei::text::CompletionsRequest& request) const;
-    std::generator<caiwei::text::CompletionResult> generate     (const caiwei::text::CompletionsRequest& request) const;
-    std::generator<caiwei::text::CompletionResult> generate_mtmd(const caiwei::text::CompletionsRequest& request) const;
-    virtual bool build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const;
+    virtual caiwei_llama_batch get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
+    virtual bool get_mtmd_inputs(caiwei_llama_batch& caiwei_batch, mtmd::bitmaps& bitmaps, const std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
+    std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request) const;
 public:
     LlamaCPPContext(std::string path,                        int32_t max_token_length, caiwei::text::SpecialToken special_token);
     LlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
@@ -62,10 +63,11 @@ public:
         caiwei::runtime::Runtime* runtime
     );
     ~ASRLlamaCPPContext();
+protected:
+    caiwei_llama_batch get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
-    bool build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const override;
 };
 
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
@@ -77,6 +79,8 @@ public:
         caiwei::runtime::Runtime* runtime
     );
     ~LLMLlamaCPPContext();
+protected:
+    caiwei_llama_batch get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
@@ -92,10 +96,11 @@ public:
         caiwei::runtime::Runtime* runtime
     );
     ~VLMLlamaCPPContext();
+protected:
+    caiwei_llama_batch get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
-    bool build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const override;
 };
 
 class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {

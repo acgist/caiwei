@@ -108,7 +108,9 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
 }
 
 bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t core_mask) {
-    rknn3_config config;
+    rknn3_config config{};
+    config.priority = 0;
+    config.run_timeout = 120'000;
     config.run_core_mask = core_mask;
     if (user_mem_internal) {
         config.user_mem_internal = 1;
@@ -175,6 +177,8 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
 
 bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal, uint32_t core_mask) {
     rknn3_config config{};
+    config.priority = 0;
+    config.run_timeout = 120'000;
     config.run_core_mask = core_mask;
     if (user_mem_internal) {
         config.user_mem_internal = 1;

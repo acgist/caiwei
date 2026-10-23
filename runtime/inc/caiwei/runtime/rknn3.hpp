@@ -81,7 +81,6 @@ protected:
     bool init_internal_tensor_mems(uint32_t core_mask_llm = 0xFF, uint32_t core_mask_media = 0xFF);
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
     virtual std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
-public:
     std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(

@@ -5,12 +5,7 @@
 #include <vector>
 #include <cstdint>
 
-typedef int32_t llama_pos;
-typedef int32_t llama_token;
-typedef int32_t llama_seq_id;
-
-struct llama_model;
-struct llama_vocab;
+#include "llama.h"
 
 namespace caiwei  {
 namespace context {

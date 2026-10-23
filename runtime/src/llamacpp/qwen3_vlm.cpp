@@ -17,7 +17,7 @@ bool caiwei::context::VLMLlamaCPPContext::load() {
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::VLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
-    return this->generate_mtmd(request);
+    return this->generate(request);
 }
 
 static mtmd_bitmap* fill_media(int width, int height, int channels, const std::vector<uint8_t>& data) {
@@ -72,9 +72,10 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
     );
 }
 
-bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
     int image_count = 0;
     int video_count = 0;
+    mtmd::bitmaps bitmaps;
     for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {
             continue;
@@ -128,5 +129,14 @@ bool caiwei::context::VLMLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::
         }
     }
     prompt = this->chat_template.apply(this->special_token, request, this->special_token.media_marker, this->special_token.media_marker, this->special_token.media_marker);
-    return true;
+    caiwei_llama_batch caiwei_batch{};
+    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
+        caiwei_batch.success = true;
+        return caiwei_batch;
+    } else {
+        CW_LOG_W("图片编码失败");
+        caiwei_batch.success = false;
+        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        return caiwei_batch;
+    }
 }

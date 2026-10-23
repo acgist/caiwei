@@ -16,10 +16,11 @@ bool caiwei::context::ASRLlamaCPPContext::load() {
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::ASRLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
-    return this->generate_mtmd(request);
+    return this->generate(request);
 }
 
-bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::bitmaps& bitmaps, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+    mtmd::bitmaps bitmaps;
     prompt.append(this->special_token.bos).append("user\n");
     for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {
@@ -40,5 +41,14 @@ bool caiwei::context::ASRLlamaCPPContext::build_mtmd(std::string& prompt, mtmd::
         }
     }
     prompt.append(this->special_token.eos).append("\n").append(this->special_token.bos).append("assistant\n");
-    return true;
+    caiwei_llama_batch caiwei_batch{};
+    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
+        caiwei_batch.success = true;
+        return caiwei_batch;
+    } else {
+        CW_LOG_W("音频编码失败");
+        caiwei_batch.success = false;
+        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        return caiwei_batch;
+    }
 }
