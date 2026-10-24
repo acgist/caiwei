@@ -2,6 +2,7 @@
 #include "caiwei/audio_tool.hpp"
 
 #include <cmath>
+#include <limits>
 #include <vector>
 #include <complex>
 #include <cstring>
@@ -17,13 +18,36 @@
 
 #include "pocketfft_hdronly/pocketfft_hdronly.h"
 
+#define MEL_FILTERS_PATH "mel_128_filters.txt"
+
+void caiwei::audio::load_mel_filters(
+    const int n_mels,
+    const int n_fft,
+    std::vector<float>& mel_filters
+) {
+    FILE* file = fopen(MEL_FILTERS_PATH, "r");
+    if (file == nullptr) {
+        CW_LOG_W("读取mel_filters文件失败: %s", MEL_FILTERS_PATH);
+        return;
+    }
+    const int n_mels_filters = n_fft / 2 + 1;
+    const int size           = n_mels * n_mels_filters;
+    mel_filters.resize(size);
+    auto* data = mel_filters.data();
+    int line = 0;
+    while (line < size && fscanf(file, "%f", &data[line]) == 1) {
+        line++;
+    }
+    fclose(file);
+}
+
 static void hann_window(std::vector<float>& window, int length) {
     for (int i = 0; i < length; ++i) {
         window[i] = 0.5 * (1 - std::cos(2 * M_PI * i / (length - 1)));
     }
 }
 
-static void reflect_pad(const std::vector<float>& audio, std::vector<float>& pad_audio, int pad_width) {
+static void reflect_pad(const std::vector<float>& audio, std::vector<float>& pad_audio, const int pad_width) {
     std::copy(audio.begin(), audio.end(), pad_audio.begin() + pad_width);
     std::reverse_copy(audio.begin(), audio.begin() + pad_width, pad_audio.begin());
     std::reverse_copy(audio.end() - pad_width, audio.end(), pad_audio.end() - pad_width);
@@ -31,19 +55,19 @@ static void reflect_pad(const std::vector<float>& audio, std::vector<float>& pad
 
 static void stfts(
     const std::vector<float>& audio,
-    int audio_length,
-    int window_length,
-    int hop_length,
+    const int audio_length,
+    const int window_length,
+    const int hop_length,
     const std::vector<float>& window,
     std::complex<float>* stft_result,
-    int num_frames
+    const int n_stfts
 ) {
     std::vector<float> input(window_length, 0.0F);
     std::vector<std::complex<float>> output(window_length / 2 + 1);
     pocketfft::shape_t  shape      = { static_cast<size_t>(window_length) };
     pocketfft::stride_t stride_in  = { sizeof(float)                      };
     pocketfft::stride_t stride_out = { sizeof(std::complex<float>)        };
-    for (int i = 0; i < num_frames; ++i) {
+    for (int i = 0; i < n_stfts; ++i) {
         int pos = i * hop_length;
         #if defined(__aarch64__)
         for (int j = 0; j < window_length - 3; j += 4) {
@@ -81,29 +105,24 @@ static float compute_magnitude(const std::complex<float>& value) {
     return value.real() * value.real() + value.imag() * value.imag();
 }
 
-static void compute_magnitudes(std::complex<float>* stft_result, int num_mel_filters, int num_frames, std::vector<float>& magnitudes) {
+static void compute_magnitudes(const std::complex<float>* stft_result, const int n_mels_filters, const int n_stfts, std::vector<float>& magnitudes) {
     int k = 0;
-    for (int i = 0; i < num_mel_filters; ++i) {
-        for (int j = 0; j < num_frames - 1; ++j) {
-            magnitudes[k] = compute_magnitude(stft_result[i * num_frames + j]);
+    for (int i = 0; i < n_mels_filters; ++i) {
+        for (int j = 0; j < n_stfts - 1; ++j) {
+            magnitudes[k] = compute_magnitude(stft_result[i * n_stfts + j]);
             ++k;
         }
     }
 }
 
-static void clamp_and_log_max(std::vector<float>& mel_spec, int rows, int cols) {
-    if (rows <= 0 || cols <= 0) {
-        return;
-    }
+static void clamp_and_log_max(std::vector<float>& mel_spec, const int rows, const int cols) {
     const float min_val        = 1e-10;
     const float shift_value    = 4.0;
     const float scaling_factor = 1.0 / 4.0;
-    float max_val = mel_spec[0];
+    float max_val = -std::numeric_limits<float>::infinity();
     for (int i = 0; i < rows * cols; ++i) {
         mel_spec[i] = std::log10f(std::max(min_val, mel_spec[i]));
-        if (mel_spec[i] > max_val) {
-            max_val = mel_spec[i];
-        }
+        max_val = std::max(max_val, mel_spec[i]);
     }
     float threshold = max_val - 8.0;
     for (int i = 0; i < rows * cols; ++i) {
@@ -111,18 +130,18 @@ static void clamp_and_log_max(std::vector<float>& mel_spec, int rows, int cols) 
     }
 }
 
-static void transpose(std::complex<float>* input, int input_rows, int input_cols, std::complex<float>* output) {
-    for (int i = 0; i < input_rows; ++i) {
-        for (int j = 0; j < input_cols; ++j) {
-            const int input_index  = i * input_cols + j;
-            const int output_index = j * input_rows + i;
+static void transpose(const std::complex<float>* input, const int rows, int const cols, std::complex<float>* output) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            const int input_index  = i * cols + j;
+            const int output_index = j * rows + i;
             output[output_index] = input[input_index];
         }
     }
 }
 
 #if defined(__aarch64__)
-static void matmul(const float* A, const float* B, std::vector<float>& C, int ROWS_A, int COLS_A, int COLS_B) {
+static void matmul(const float* A, const float* B, std::vector<float>& C, const int ROWS_A, const int COLS_A, const int COLS_B) {
     std::fill(C.begin(), C.end(), 0.0F);
     for (int i = 0; i < ROWS_A; ++i) {
         float* c = &C[i * COLS_B];
@@ -146,7 +165,7 @@ static void matmul(const float* A, const float* B, std::vector<float>& C, int RO
     }
 }
 #else
-static void matmul(const float* A, const float* B, std::vector<float>& C, int ROWS_A, int COLS_A, int COLS_B) {
+static void matmul(const float* A, const float* B, std::vector<float>& C, const int ROWS_A, const int COLS_A, const int COLS_B) {
     std::fill(C.begin(), C.end(), 0.0F);
     for (int i = 0; i < ROWS_A; ++i) {
         float* c = &C[i * COLS_B];
@@ -166,52 +185,48 @@ static void matmul(const float* A, const float* B, std::vector<float>& C, int RO
 
 static void log_mel_spectrogram(
     const float* audio_data,
-    int audio_length,
-    int cur_num_frames_of_stfts,
+    const int    audio_length,
     const float* filters,
-    int n_fft,
-    int hop_length,
-    int n_mels,
+    const int    n_fft,
+    const int    hop_length,
+    const int    n_mels,
     std::vector<float>& mel_spec
 ) {
-    const int mels_filters_size = n_fft / 2 + 1;
-    std::vector<float> window(n_fft);
-    hann_window(window, n_fft);
-    std::vector<float> audio(audio_data, audio_data + audio_length);
+    const int n_stfts = audio_length / hop_length + 1;
     const int pad_size = audio_length + n_fft;
-    std::vector<float> pad_audio(pad_size);
-    reflect_pad(audio, pad_audio, n_fft / 2);
-    std::vector<std::complex<float>> stfts_result(mels_filters_size * cur_num_frames_of_stfts);
-    stfts(pad_audio, pad_size, n_fft, hop_length, window, stfts_result.data(), cur_num_frames_of_stfts);
-    std::vector<std::complex<float>> stfts_result_t(mels_filters_size * cur_num_frames_of_stfts);
-    transpose(stfts_result.data(), cur_num_frames_of_stfts, mels_filters_size, stfts_result_t.data());
-    std::vector<float> magnitudes(mels_filters_size * (cur_num_frames_of_stfts - 1));
-    compute_magnitudes(stfts_result_t.data(), mels_filters_size, cur_num_frames_of_stfts, magnitudes);
+    const int n_mels_filters = n_fft / 2 + 1;
     const int ROWS_A = n_mels;
-    const int COLS_A = mels_filters_size;
-    const int COLS_B = cur_num_frames_of_stfts - 1;
+    const int COLS_A = n_mels_filters;
+    const int COLS_B = n_stfts - 1;
+    std::vector<float> window(n_fft);
+    std::vector<float> audio(audio_data, audio_data + audio_length);
+    std::vector<float> pad_audio(pad_size);
+    std::vector<std::complex<float>> stfts_result(n_mels_filters * n_stfts);
+    std::vector<std::complex<float>> stfts_result_t(n_mels_filters * n_stfts);
+    std::vector<float> magnitudes(n_mels_filters * (n_stfts - 1));
+    hann_window(window, n_fft);
+    reflect_pad(audio, pad_audio, n_fft / 2);
+    stfts(pad_audio, pad_size, n_fft, hop_length, window, stfts_result.data(), n_stfts);
+    transpose(stfts_result.data(), n_stfts, n_mels_filters, stfts_result_t.data());
+    compute_magnitudes(stfts_result_t.data(), n_mels_filters, n_stfts, magnitudes);
     matmul(filters, magnitudes.data(), mel_spec, ROWS_A, COLS_A, COLS_B);
     clamp_and_log_max(mel_spec, ROWS_A, COLS_B);
 }
 
 void caiwei::audio::log_mel_spectrogram(
     const float* audio,
-    int audio_length,
+    const int    audio_length,
     const float* mel_filters,
-    int n_fft,
-    int hop_length,
-    int n_mels,
-    int max_audio_length,
-    std::vector<float>& mel_spec,
-    int* actual_length
+    const int    n_fft,
+    const int    hop_length,
+    const int    n_mels,
+    const int    max_audio_length,
+    std::vector<float>& mel_spec
 ) {
-    if (audio == nullptr || mel_filters == nullptr) {
-        CW_LOG_W("参数错误");
+    if (audio_length < max_audio_length) {
         return;
     }
     std::vector<float> audio_data(max_audio_length);
     std::copy(audio, audio + max_audio_length, audio_data.begin());
-    int cur_num_frames_of_stfts = max_audio_length / hop_length + 1;
-    ::log_mel_spectrogram(audio_data.data(), max_audio_length, cur_num_frames_of_stfts, mel_filters, n_fft, hop_length, n_mels, mel_spec);
-    *actual_length = max_audio_length / hop_length;
+    ::log_mel_spectrogram(audio_data.data(), max_audio_length, mel_filters, n_fft, hop_length, n_mels, mel_spec);
 }

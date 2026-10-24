@@ -6,6 +6,12 @@
 namespace caiwei {
 namespace audio  {
 
+void load_mel_filters(
+    const int n_mels,
+    const int n_fft,
+    std::vector<float>& mel_filters
+);
+
 void log_mel_spectrogram(
     const float* audio,
     int audio_length,
@@ -14,8 +20,7 @@ void log_mel_spectrogram(
     int hop_length,
     int n_mels,
     int max_audio_length,
-    std::vector<float>& mel_spec,
-    int* actual_length
+    std::vector<float>& mel_spec
 );
 
 } // audio

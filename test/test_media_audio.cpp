@@ -34,30 +34,16 @@ void test_log_mel_spectrogram() {
     // audio_frame.data.resize((N_FFT + HOP_LENGTH) * 2);
     const int n_mels = 128;
     std::vector<float> mel_filters{};
-    int mels_filters_size = N_FFT / 2 + 1;
-    int max_lines = n_mels * mels_filters_size;
-    mel_filters.resize(max_lines);
-    int line_count = 0;
-    FILE* file = fopen(MEL_FILTERS_PATH, "r");
-    auto* data = mel_filters.data();
-    if (file == NULL) {
-        printf("read mel_filters fail! Please check if the file \"%s\" exists.\n", MEL_FILTERS_PATH);
-        return;
-    }
-    while (line_count < max_lines && fscanf(file, "%f", &data[line_count]) == 1) {
-        line_count++;
-    }
-    fclose(file);
-    const int num_frames = audio_frame.data.size() * sizeof(uint8_t) / sizeof(int16_t);
-    int n_frame = floor((num_frames - N_FFT) / HOP_LENGTH ) + 1;
-    int actual_len;
-    std::vector<float> audio_data(num_frames);
+    caiwei::audio::load_mel_filters(n_mels, N_FFT, mel_filters);
+    const int n_frames = audio_frame.data.size() * sizeof(uint8_t) / sizeof(int16_t);
+    int n_frame = floor((n_frames - N_FFT) / HOP_LENGTH ) + 1;
+    std::vector<float> audio_data(n_frames);
     const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio_frame.data.data());
-    std::transform(audio_data_ptr, audio_data_ptr + num_frames, audio_data.data(), [](int16_t v) {
+    std::transform(audio_data_ptr, audio_data_ptr + n_frames, audio_data.data(), [](int16_t v) {
         return static_cast<float>(v) / 32768.0F;
     });
     std::vector<float> padding_feature(n_mels * n_frame, 0.0F);
-    caiwei::audio::log_mel_spectrogram(audio_data.data(), audio_data.size(), mel_filters.data(), N_FFT, HOP_LENGTH, n_mels, n_frame * HOP_LENGTH, padding_feature, &actual_len);
+    caiwei::audio::log_mel_spectrogram(audio_data.data(), audio_data.size(), mel_filters.data(), N_FFT, HOP_LENGTH, n_mels, n_frame * HOP_LENGTH, padding_feature);
     stbi_write_hdr("./log_mel_spectrogram.hdr", n_frame, n_mels, 1, padding_feature.data());
 }
 
