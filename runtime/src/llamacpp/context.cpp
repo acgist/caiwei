@@ -1,13 +1,13 @@
 #include <algorithm>
 
-#include "caiwei/log.hpp"
-#include "caiwei/tokenizer.hpp"
-#include "caiwei/runtime/llamacpp.hpp"
-
 #include "llama-cpp.h"
 
 #include "mtmd.h"
 #include "mtmd-helper.h"
+
+#include "caiwei/log.hpp"
+#include "caiwei/tokenizer.hpp"
+#include "caiwei/runtime/llamacpp.hpp"
 
 static void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits);
 static void batch_decode_pooling(llama_context* ctx, llama_batch& batch, const enum llama_pooling_type& pooling_type, float* output, int n_seq, int n_embd_out);

@@ -1,6 +1,3 @@
-#include "caiwei/log.hpp"
-#include "caiwei/audio_tool.hpp"
-
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -8,19 +5,20 @@
 #include <cstring>
 #include <algorithm>
 
+#include "caiwei/log.hpp"
+#include "caiwei/audio_tool.hpp"
+
 #if defined(__aarch64__)
 #include "arm_neon.h"
 #endif
-
 #if CAIWEI_OS_WIN
 #include <corecrt_math_defines.h>
 #endif
-
 #include "pocketfft_hdronly/pocketfft_hdronly.h"
 
 #define MEL_FILTERS_PATH "mel_128_filters.txt"
 
-void caiwei::audio::load_mel_filters(
+bool caiwei::audio::load_mel_filters(
     const int n_mels,
     const int n_fft,
     std::vector<float>& mel_filters
@@ -28,22 +26,23 @@ void caiwei::audio::load_mel_filters(
     FILE* file = fopen(MEL_FILTERS_PATH, "r");
     if (file == nullptr) {
         CW_LOG_W("读取mel_filters文件失败: %s", MEL_FILTERS_PATH);
-        return;
+        return false;
     }
     const int n_mels_filters = n_fft / 2 + 1;
     const int size           = n_mels * n_mels_filters;
     mel_filters.resize(size);
     auto* data = mel_filters.data();
-    int line = 0;
-    while (line < size && fscanf(file, "%f", &data[line]) == 1) {
-        line++;
+    int index = 0;
+    while (index < size && fscanf(file, "%f", &data[index]) == 1) {
+        index++;
     }
     fclose(file);
+    return index == size;
 }
 
-static void hann_window(std::vector<float>& window, int length) {
-    for (int i = 0; i < length; ++i) {
-        window[i] = 0.5 * (1 - std::cos(2 * M_PI * i / (length - 1)));
+static void hann_window(std::vector<float>& window, const int window_length) {
+    for (int i = 0; i < window_length; ++i) {
+        window[i] = 0.5 * (1 - std::cos(2 * M_PI * i / (window_length - 1)));
     }
 }
 
@@ -64,18 +63,18 @@ static void stfts(
 ) {
     std::vector<float> input(window_length, 0.0F);
     std::vector<std::complex<float>> output(window_length / 2 + 1);
-    pocketfft::shape_t  shape      = { static_cast<size_t>(window_length) };
-    pocketfft::stride_t stride_in  = { sizeof(float)                      };
-    pocketfft::stride_t stride_out = { sizeof(std::complex<float>)        };
+    const pocketfft::shape_t  shape         = { static_cast<size_t>(window_length) };
+    const pocketfft::stride_t stride_input  = { sizeof(float)                      };
+    const pocketfft::stride_t stride_output = { sizeof(std::complex<float>)        };
     for (int i = 0; i < n_stfts; ++i) {
-        int pos = i * hop_length;
+        const int pos = i * hop_length;
         #if defined(__aarch64__)
         for (int j = 0; j < window_length - 3; j += 4) {
             if (pos + j < audio_length) {
-                float32x4_t in  = vld1q_f32(audio.data() + pos + j);
-                float32x4_t win = vld1q_f32(window.data() + j);
-                float32x4_t out = vmulq_f32(in, win);
-                vst1q_f32(input.data() + j, out);
+                const float32x4_t audio_input  = vld1q_f32(audio.data() + pos + j);
+                const float32x4_t window_input = vld1q_f32(window.data() + j);
+                const float32x4_t audio_output = vmulq_f32(audio_input, window_input);
+                vst1q_f32(input.data() + j, audio_output);
             } else {
                 vst1q_f32(input.data() + j, vdupq_n_f32(0.0F));
             }
@@ -96,37 +95,8 @@ static void stfts(
             }
         }
         #endif
-        pocketfft::r2c(shape, stride_in, stride_out, 0, true, input.data(), output.data(), 1.0F);
+        pocketfft::r2c(shape, stride_input, stride_output, 0, true, input.data(), output.data(), 1.0F);
         std::memcpy(stft_result + i * (window_length / 2 + 1), output.data(), sizeof(std::complex<float>) * (window_length / 2 + 1));
-    }
-}
-
-static float compute_magnitude(const std::complex<float>& value) {
-    return value.real() * value.real() + value.imag() * value.imag();
-}
-
-static void compute_magnitudes(const std::complex<float>* stft_result, const int n_mels_filters, const int n_stfts, std::vector<float>& magnitudes) {
-    int k = 0;
-    for (int i = 0; i < n_mels_filters; ++i) {
-        for (int j = 0; j < n_stfts - 1; ++j) {
-            magnitudes[k] = compute_magnitude(stft_result[i * n_stfts + j]);
-            ++k;
-        }
-    }
-}
-
-static void clamp_and_log_max(std::vector<float>& mel_spec, const int rows, const int cols) {
-    const float min_val        = 1e-10;
-    const float shift_value    = 4.0;
-    const float scaling_factor = 1.0 / 4.0;
-    float max_val = -std::numeric_limits<float>::infinity();
-    for (int i = 0; i < rows * cols; ++i) {
-        mel_spec[i] = std::log10f(std::max(min_val, mel_spec[i]));
-        max_val = std::max(max_val, mel_spec[i]);
-    }
-    float threshold = max_val - 8.0;
-    for (int i = 0; i < rows * cols; ++i) {
-        mel_spec[i] = (std::max(mel_spec[i], threshold) + shift_value) * scaling_factor;
     }
 }
 
@@ -136,6 +106,25 @@ static void transpose(const std::complex<float>* input, const int rows, int cons
             const int input_index  = i * cols + j;
             const int output_index = j * rows + i;
             output[output_index] = input[input_index];
+        }
+    }
+}
+
+inline static float compute_magnitude(const std::complex<float>& value) {
+    return value.real() * value.real() + value.imag() * value.imag();
+}
+
+static void compute_magnitudes(
+    const std::complex<float>* stft_result,
+    const int n_mels_filters,
+    const int n_stfts,
+    std::vector<float>& magnitudes
+) {
+    int k = 0;
+    for (int i = 0; i < n_mels_filters; ++i) {
+        for (int j = 0; j < n_stfts - 1; ++j) {
+            magnitudes[k] = compute_magnitude(stft_result[i * n_stfts + j]);
+            ++k;
         }
     }
 }
@@ -158,7 +147,7 @@ static void matmul(const float* A, const float* B, std::vector<float>& C, const 
                 const float32x4_t vc = vld1q_f32(c + j);
                 vst1q_f32(c + j, vmlaq_f32(vc, va, vb));
             }
-            for (; j < COLS_B; j++) {
+            for (; j < COLS_B; ++j) {
                 c[j] += a * b[j];
             }
         }
@@ -182,6 +171,21 @@ static void matmul(const float* A, const float* B, std::vector<float>& C, const 
     }
 }
 #endif
+
+static void clamp_and_log_max(std::vector<float>& mel_spec, const int rows, const int cols) {
+    const float min_val        = 1e-10;
+    const float shift_value    = 4.0;
+    const float scaling_factor = 1.0 / 4.0;
+    float max_val = -std::numeric_limits<float>::infinity();
+    for (int i = 0; i < rows * cols; ++i) {
+        mel_spec[i] = std::log10f(std::max(min_val, mel_spec[i]));
+        max_val = std::max(max_val, mel_spec[i]);
+    }
+    float threshold = max_val - 8.0;
+    for (int i = 0; i < rows * cols; ++i) {
+        mel_spec[i] = (std::max(mel_spec[i], threshold) + shift_value) * scaling_factor;
+    }
+}
 
 static void log_mel_spectrogram(
     const float* audio_data,
@@ -224,6 +228,11 @@ void caiwei::audio::log_mel_spectrogram(
     std::vector<float>& mel_spec
 ) {
     if (audio_length < max_audio_length) {
+        CW_LOG_W("长度不足");
+        return;
+    }
+    if (audio == nullptr || mel_filters == nullptr || n_fft <= 1 || hop_length <= 0 || n_mels <= 0) {
+        CW_LOG_W("参数错误");
         return;
     }
     std::vector<float> audio_data(max_audio_length);

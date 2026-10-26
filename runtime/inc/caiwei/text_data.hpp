@@ -263,11 +263,11 @@ struct SpecialToken {
     std::string image_marker;
     std::string video_marker;
     std::string enable_thinking;
-    std::string system_prompt;
-    std::string instruction_prompt;
     std::string instruction_key;
     std::string query_key;
     std::string document_key;
+    std::string system_prompt;
+    std::string instruction_prompt;
 
     void load_asr();
     void load_llm();

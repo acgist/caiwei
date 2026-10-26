@@ -1,6 +1,6 @@
-#include "caiwei/image_data.hpp"
-
 #include "nlohmann/json.hpp"
+
+#include "caiwei/image_data.hpp"
 
 namespace caiwei {
 namespace image  {

@@ -33,7 +33,8 @@ struct AudioInfo {
     int format;
 
     AudioInfo() = default;
-    AudioInfo(int channels, int sample_rate, int format);
+    AudioInfo(int channels, int sample_rate,                       int format);
+    AudioInfo(int channels, int sample_rate, int bytes_per_sample, int format);
 };
 
 struct VideoInfo {

@@ -1,14 +1,14 @@
 #ifndef CAIWEI_RUNTIME_LLAMACPP_HPP
 #define CAIWEI_RUNTIME_LLAMACPP_HPP
 
+#include "mtmd.h"
+
+#include "llama.h"
+
 #include <generator>
 
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
-
-#include "mtmd.h"
-
-#include "llama.h"
 
 namespace caiwei  {
 namespace context {

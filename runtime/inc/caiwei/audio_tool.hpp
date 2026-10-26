@@ -6,7 +6,7 @@
 namespace caiwei {
 namespace audio  {
 
-void load_mel_filters(
+bool load_mel_filters(
     const int n_mels,
     const int n_fft,
     std::vector<float>& mel_filters

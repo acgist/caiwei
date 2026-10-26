@@ -21,8 +21,7 @@ caiwei::context::ASRRKNN3Context::~ASRRKNN3Context() {
 
 bool caiwei::context::ASRRKNN3Context::load_mel_filters() {
     const int n_mels = this->media_input[0].attr->shape[2];
-    caiwei::audio::load_mel_filters(n_mels, N_FFT, this->mel_filters);
-    return !this->mel_filters.empty();
+    return caiwei::audio::load_mel_filters(n_mels, N_FFT, this->mel_filters);
 }
 
 bool caiwei::context::ASRRKNN3Context::init_prompt_token() {

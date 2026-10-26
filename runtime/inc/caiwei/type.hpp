@@ -2,8 +2,8 @@
 #define CAIWEI_RUNTIME_TYPE_HPP
 
 #include <cmath>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
 #include <algorithm>
 
 #if defined(__aarch64__)

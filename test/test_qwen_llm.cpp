@@ -10,25 +10,30 @@ void test_llm() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
     request.enable_thinking = false;
-    request.messages.push_back({.role = "user", .content = "1+1=?"});
+    // request.messages.push_back({.role = "user", .content = "1+1=?"});
     // request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
     // request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
-    // request.messages.push_back({.role = "user", .content = "查询北京天气"});
-    // request.tools = {
-    //     caiwei::text::CompletionsRequestTool {
-    //         .type = "function",
-    //         .function = caiwei::text::CompletionsRequestToolFunction {
-    //             .name = "get_weather",
-    //             .description = "查询城市天气",
-    //             .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
-    //         },
-    //     }
-    // };
+    request.messages.push_back({.role = "user", .content = "查询北京天气"});
+    request.tools = {
+        caiwei::text::CompletionsRequestTool {
+            .type = "function",
+            .function = caiwei::text::CompletionsRequestToolFunction {
+                .name = "get_weather",
+                .description = "查询城市天气",
+                .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
+            },
+        }
+    };
     // {"name": "get_weather", "arguments": {"city": "北京"}}
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
         return;
     }
+    for (const auto& value : ptr->run(request)) {
+        // -
+    }
+    request.messages.clear();
+    request.messages.push_back({.role = "user", .content = "1+1=?"});
     for (const auto& value : ptr->run(request)) {
         // -
     }

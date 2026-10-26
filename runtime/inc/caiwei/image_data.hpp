@@ -9,8 +9,8 @@ namespace caiwei {
 namespace image  {
 
 struct Cls {
-    uint32_t class_id;
-    float    score;
+    int   class_id;
+    float score;
 };
 
 struct Box {

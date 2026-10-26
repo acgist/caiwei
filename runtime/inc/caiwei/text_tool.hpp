@@ -21,11 +21,11 @@ std::string get_reranking_prompt(
 );
 
 class ChatTemplate {
-private:
-    std::unique_ptr<minja::chat_template> chat_template{ nullptr };
 public:
     ChatTemplate();
     ~ChatTemplate();
+private:
+    std::unique_ptr<minja::chat_template> chat_template{ nullptr };
 public:
     void set_template(const char* template_text, const std::string& bos, const std::string& eos);
     std::string apply(
@@ -34,7 +34,7 @@ public:
         const std::string& audio_marker = "",
         const std::string& image_marker = "",
         const std::string& video_marker = "",
-        bool add_vision_id = true
+        bool add_vision_id = false
     ) const;
 };
 

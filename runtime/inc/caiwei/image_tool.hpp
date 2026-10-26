@@ -6,12 +6,12 @@
 #include <cstdint>
 #include <algorithm>
 
-#ifdef ENABLE_CAIWEI_TEST
 #include "stb/stb_image.h"
+#include "stb/stb_image_resize2.h"
+
+#ifdef ENABLE_CAIWEI_TEST
 #include "stb/stb_image_write.h"
 #endif
-
-#include "stb/stb_image_resize2.h"
 
 namespace caiwei {
 namespace image  {
@@ -152,7 +152,7 @@ inline std::vector<R> top_k(const T* score, const uint32_t size, const uint32_t 
     }
     std::vector<R> ret;
     ret.reserve(size);
-    for (uint32_t i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) {
         if (score[i] >= confidence_threshold) {
             ret.push_back({
                 .class_id = i,
