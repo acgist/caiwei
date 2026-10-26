@@ -419,10 +419,10 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         co_return;
     }
     std::string prompt;
-    auto begin_time = std::chrono::steady_clock::now();
+    auto b_time = std::chrono::steady_clock::now();
     std::vector<rknn3_llm_input> inputs = this->get_inputs(prompt, &context_session, request);
-    auto end_time = std::chrono::steady_clock::now();
-    context_session.feature_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
+    auto e_time = std::chrono::steady_clock::now();
+    context_session.feature_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
     if (inputs.empty()) {
         CW_LOG_W("获取输入数据失败");
         co_return;
@@ -430,16 +430,16 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     rknn3_llm_infer_param llm_infer_param;
     llm_infer_param.keep_history   = 0;
     llm_infer_param.max_new_tokens = request.max_completion_tokens.value_or(this->max_token_length);
-    begin_time = std::chrono::steady_clock::now();
+    b_time = std::chrono::steady_clock::now();
     // int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     int ret = rknn3_session_run_async(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     while (true) {
         std::unique_lock<std::mutex> lock(context_session.mutex);
         if (!context_session.token_result.empty()) {
             if (context_session.prefill_ms == 0) {
-                end_time = std::chrono::steady_clock::now();
-                context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
-                begin_time = std::chrono::steady_clock::now();
+                e_time = std::chrono::steady_clock::now();
+                context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
+                b_time = std::chrono::steady_clock::now();
             }
             for (auto& result : context_session.token_result) {
                 co_yield std::move(result);
@@ -451,8 +451,8 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         }
         context_session.condition.wait_for(lock, std::chrono::seconds(8));
     }
-    end_time = std::chrono::steady_clock::now();
-    context_session.generate_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count();
+    e_time = std::chrono::steady_clock::now();
+    context_session.generate_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
     if (ret < 0) {
         CW_LOG_W("RKNN3会话运行失败: %d", ret);
     } else {
@@ -582,7 +582,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
 }
 
 static int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max) {
-    CW_LOG_I("tokenizer_callback: %s", text);
+    CW_LOG_D("tokenizer_callback: %s", text);
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
     int n_tokens = tokenizer->tokenize(text, text_len, tokens, n_tokens_max);

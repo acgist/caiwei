@@ -32,11 +32,14 @@ void test_llm() {
     for (const auto& value : ptr->run(request)) {
         // -
     }
+    caiwei_wait_enter();
+    request.tools.reset();
     request.messages.clear();
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     for (const auto& value : ptr->run(request)) {
         // -
     }
+    caiwei_wait_enter();
     request.max_completion_tokens = 2;
     for (const auto& value : ptr->run(request)) {
         // -

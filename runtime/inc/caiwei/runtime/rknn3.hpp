@@ -26,7 +26,7 @@ inline auto rknn3_session_deleter = [](rknn3_session* session) {
 
 using rknn3_session_ptr = std::unique_ptr<rknn3_session, decltype(rknn3_session_deleter)>;
 
-struct ContextSession {
+struct alignas(16) ContextSession {
     bool stop     = false;
     bool thinking = false;
     bool toolcall = false;
