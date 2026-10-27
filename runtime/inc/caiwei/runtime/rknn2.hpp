@@ -25,33 +25,39 @@ class RKNN2Context {
 protected:
     const std::string path;
     rknn_context context = 0;
+    std::vector<uint16_t> data_f16;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
-    int dst_w;   // 缩放目标宽度
-    int dst_h;   // 缩放目标高度
-    int pad_w;   // 缩放填充宽度
-    int pad_h;   // 缩放填充高度
-    float scale; // 缩放比例: 输入图片 / 原始图片
+    int   dst_w;
+    int   dst_h;
+    int   pad_w;
+    int   pad_h;
+    float scale;
 private:
-    uint32_t src_w; // 输入图片宽度
-    uint32_t src_h; // 输入图片高度
-    std::vector<uint8_t> dst; // 缩放图片
-    std::vector<uint8_t> pad; // 填充图片
-    std::vector<float>   hwc; // HWC填充图片
-    std::vector<float>   chw; // CHW填充图片
-    std::vector<uint8_t> chw_i8; // CHW填充图片
+    uint32_t src_w = 0;
+    uint32_t src_h = 0;
+    std::vector<uint8_t> dst;
+    std::vector<uint8_t> pad;
+    std::vector<float>   hwc;
+    std::vector<float>   chw;
+    std::vector<int8_t>  pad_i8;
+    std::vector<int8_t>  chw_i8;
+    std::vector<uint8_t> chw_u8;
 public:
     RKNN2Context(std::string path, int c, int h, int w);
     virtual ~RKNN2Context();
 public:
     bool load_model();
-    RKNN2Result run(int h, int w, const caiwei::media::ImageFrame& image);
-    RKNN2Result run(uint8_t* blob, size_t size, int batch = 1);
-    RKNN2Result run(float  * blob, size_t size, int batch = 1);
+    RKNN2Result run(const int h, const int w, const caiwei::media::ImageFrame& image);
+    RKNN2Result run(uint8_t* blob, const size_t size, const int batch = 1);
+    RKNN2Result run(int8_t * blob, const size_t size, const int batch = 1);
+    RKNN2Result run(float  * blob, const size_t size, const int batch = 1);
 };
 
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {
 using RKNN2Context::run;
+private:
+    std::vector<float> out_dst;
 public:
     ClsRKNN2Context(
         std::string path,
@@ -71,6 +77,10 @@ public:
 
 class DetRKNN2Context : public DetContext, public RKNN2Context {
 using RKNN2Context::run;
+private:
+    std::vector<int8_t> out_dst_i8;
+    std::vector<float>  out_buf_f32;
+    std::vector<float>  out_dst_f32;
 public:
     DetRKNN2Context(
         std::string path,

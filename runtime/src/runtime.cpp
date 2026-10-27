@@ -85,7 +85,7 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             return nullptr;
         }
         if (!ptr->load()) {
-            CW_LOG_E("加载context失败: %s = %s", get_type_name(this->type), info->name.c_str());
+            CW_LOG_W("加载context失败: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
         CW_LOG_I("新建context: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());

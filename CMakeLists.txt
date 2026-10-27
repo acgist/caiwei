@@ -33,22 +33,18 @@ option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # 跨平台
 option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"          ON)  # FFmpeg
 option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"     ON)  # cpp-httplib
 
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 if(ANDROID)
     add_definitions(-DCAIWEI_OS_ANDROID=1)
-    set(CMAKE_C_STANDARD 17)
-    set(CMAKE_C_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_STANDARD 23)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 elseif(CMAKE_HOST_UNIX)
     add_definitions(-DCAIWEI_OS_UNIX=1)
-    set(CMAKE_C_STANDARD 17)
-    set(CMAKE_C_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_STANDARD 23)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g")
@@ -58,20 +54,18 @@ elseif(CMAKE_HOST_UNIX)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CMAKE_COMMAND} -E time")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 elseif(CMAKE_HOST_WIN32)
-    add_definitions(-DCAIWEI_OS_WIN=1)
     if(MSVC)
-        set(CMAKE_C_STANDARD 17)
-        set(CMAKE_C_STANDARD_REQUIRED ON)
-        set(CMAKE_CXX_STANDARD 23)
-        set(CMAKE_CXX_STANDARD_REQUIRED ON)
-        set(CMAKE_CXX_EXTENSIONS OFF)
+        add_definitions(-DCAIWEI_OS_WIN=1)
         add_compile_options(
+            $<$<COMPILE_LANGUAGE:C>:/W3>
+            $<$<COMPILE_LANGUAGE:CXX>:/W3>
             $<$<COMPILE_LANGUAGE:C>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>
             $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>
             $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:__cplusplus>
         )
+        add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     else()
         message(FATAL_ERROR "需要安装MSVC开发环境")
     endif()
@@ -198,12 +192,7 @@ if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
     endif()
     set(LLAMA_BUILD_MTMD ON)
     add_subdirectory(${LLAMACPP_PATH})
-    set_target_properties(ggml        PROPERTIES FOLDER "llama.cpp")
-    set_target_properties(ggml-cpu    PROPERTIES FOLDER "llama.cpp")
-    set_target_properties(ggml-base   PROPERTIES FOLDER "llama.cpp")
-    set_target_properties(mtmd        PROPERTIES FOLDER "llama.cpp")
-    set_target_properties(llama       PROPERTIES FOLDER "llama.cpp")
-    set_target_properties(vendor-hash PROPERTIES FOLDER "llama.cpp")
+    set_target_properties(ggml ggml-cpu ggml-base mtmd llama vendor-hash PROPERTIES FOLDER "llama.cpp")
     list(APPEND CAIWEI_RUNTIME_LIBS ggml ggml-cpu ggml-base mtmd llama vendor-hash)
     if(ENABLE_CAIWEI_BACKEND_CUDA)
         set_target_properties(ggml-cuda PROPERTIES FOLDER "llama.cpp")

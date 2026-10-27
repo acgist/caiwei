@@ -11,9 +11,11 @@ caiwei::context::Context::Context(caiwei::runtime::Runtime* runtime)
   : id(caiwei::env::id()),
     runtime(runtime),
     last_run_time(std::chrono::steady_clock::now()) {
+    CW_LOG_D("创建context: %s", this->id.c_str());
 }
 
 caiwei::context::Context::~Context() {
+    CW_LOG_D("释放context: %s", this->id.c_str());
 }
 
 bool caiwei::context::Context::load() {

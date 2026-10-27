@@ -40,14 +40,14 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_CLS_W",                    "224" },
     {"CAIWEI_CLS_CLASS_SIZE",           "1000"},
     {"CAIWEI_CLS_TOP_K",                "5"   },
-    {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.2" },
+    {"CAIWEI_CLS_CONFIDENCE_THRESHOLD", "0.4" },
     // DET
     {"CAIWEI_DET_C",                    "3"  },
     {"CAIWEI_DET_H",                    "640"},
     {"CAIWEI_DET_W",                    "640"},
     {"CAIWEI_DET_CLASS_SIZE",           "80" },
     {"CAIWEI_DET_IOU_THRESHOLD",        "0.6"},
-    {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.2"},
+    {"CAIWEI_DET_CONFIDENCE_THRESHOLD", "0.4"},
     // ASR
     {"CAIWEI_ASR_MAX_TOKEN_LENGTH", "24576"          },
     {"CAIWEI_ASR_TOKEN_BOS",        "<|im_start|>"   },

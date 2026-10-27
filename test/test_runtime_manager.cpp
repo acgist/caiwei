@@ -12,7 +12,7 @@ void test_manager() {
                 CW_LOG_I("获取context: %d", i);
                 std::this_thread::sleep_for(std::chrono::seconds(4));
             } else {
-                CW_LOG_E("获取context失败: %d", i);
+                CW_LOG_W("获取context失败: %d", i);
             }
             std::fflush(stdout);
         }));

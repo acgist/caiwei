@@ -1,9 +1,18 @@
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
-caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(std::string path, int c, int h, int w, int class_size, int top_k, float confidence_threshold, Ort::Env* env, caiwei::runtime::Runtime* runtime)
- : ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime),
-   ONNXRuntimeContext(path, c, h, w, env) {
+caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(
+    std::string path,
+    int c,
+    int h,
+    int w,
+    int class_size,
+    int top_k,
+    float confidence_threshold,
+    Ort::Env* env,
+    caiwei::runtime::Runtime* runtime
+) : ONNXRuntimeContext(std::move(path), c, h, w, env),
+    ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime) {
 }
 
 caiwei::context::ClsONNXRuntimeContext::~ClsONNXRuntimeContext() {
@@ -15,8 +24,8 @@ bool caiwei::context::ClsONNXRuntimeContext::load() {
 
 std::vector<caiwei::image::Cls> caiwei::context::ClsONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
-    float* output_data = output.front().GetTensorMutableData<float>();
-    const auto& output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
+    const float*  output_data = output.front().GetTensorMutableData<float>();
+    const auto&   output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     const int64_t data_length = output_dims[1];
     return caiwei::image::top_k<float, caiwei::image::Cls>(output_data, data_length, this->top_k, this->confidence_threshold);
 }

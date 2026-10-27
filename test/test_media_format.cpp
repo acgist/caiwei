@@ -45,9 +45,9 @@ void test_format() {
         caiwei::media::VideoInfo(24, 640, 360, AV_PIX_FMT_YUV420P),
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
         if (type == caiwei::media::MediaType::AUDIO) {
-            // CW_LOG_D("audio packet: %" PRId64 " %" PRId64 " %" PRId64 " %" PRId32, packet->pts, packet->dts, packet->duration, packet->size);
+            // CW_LOG_D("audio packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
         } else if (type == caiwei::media::MediaType::VIDEO) {
-            // CW_LOG_D("video packet: %" PRId64 " %" PRId64 " %" PRId64 " %" PRId32, packet->pts, packet->dts, packet->duration, packet->size);
+            // CW_LOG_D("video packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
         } else {
             // -
         }
@@ -61,13 +61,13 @@ void test_format() {
         caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
         caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
         [&media_muxer](caiwei::media::AudioFrame& frame) {
-            // CW_LOG_D("audioFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32, frame.msec, frame.frames, frame.data.size(), frame.samples);
+            // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
             // std::fflush(stdout);
             media_muxer.on_audio(frame);
             return true;
         },
         [&media_muxer](caiwei::media::VideoFrame& frame) {
-            // CW_LOG_D("videoFrame: %" PRId64 " %" PRId64 " %" PRId32 " %" PRId32 "x%" PRId32, frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+            // CW_LOG_D("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
             // std::fflush(stdout);
             media_muxer.on_video(frame);
             return true;

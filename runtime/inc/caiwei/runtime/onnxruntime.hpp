@@ -20,25 +20,25 @@ protected:
     std::vector<std::vector<int64_t>>    input_node_dims;
     std::vector<Ort::AllocatedStringPtr> input_node_names;
     std::vector<Ort::AllocatedStringPtr> output_node_names;
-    int   dst_w; // 缩放目标宽度
-    int   dst_h; // 缩放目标高度
-    int   pad_w; // 缩放填充宽度
-    int   pad_h; // 缩放填充高度
-    float scale; // 缩放比例: 输入图片 / 原始图片
+    int   dst_w;
+    int   dst_h;
+    int   pad_w;
+    int   pad_h;
+    float scale;
 private:
-    uint32_t src_w; // 输入图片宽度
-    uint32_t src_h; // 输入图片高度
-    std::vector<uint8_t> dst; // 缩放图片
-    std::vector<uint8_t> pad; // 填充图片
-    std::vector<float>   hwc; // HWC填充图片
-    std::vector<float>   chw; // CHW填充图片
+    uint32_t src_w = 0;
+    uint32_t src_h = 0;
+    std::vector<uint8_t> dst;
+    std::vector<uint8_t> pad;
+    std::vector<float>   hwc;
+    std::vector<float>   chw;
 public:
     ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env);
     virtual ~ONNXRuntimeContext();
 public:
     bool load_model();
-    std::vector<Ort::Value> run(float* blob, size_t size, int batch = 1);
-    std::vector<Ort::Value> run(int h, int w, const caiwei::media::ImageFrame& image);
+    std::vector<Ort::Value> run(const int h, const int w, const caiwei::media::ImageFrame& image);
+    std::vector<Ort::Value> run(float* blob, const size_t size, const int batch = 1);
 };
 
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
@@ -63,6 +63,8 @@ public:
 
 class DetONNXRuntimeContext : public DetContext, public ONNXRuntimeContext {
 using ONNXRuntimeContext::run;
+private:
+    std::vector<float> out_dst;
 public:
     DetONNXRuntimeContext(
         std::string path,

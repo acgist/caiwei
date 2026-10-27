@@ -15,25 +15,26 @@
 namespace caiwei {
 namespace type   {
 
-inline void i8_to_f32(const uint8_t* __restrict src, const uint32_t size, float* __restrict dst) {
-    std::transform(src, src + size, dst, [](uint8_t v) {
-        return static_cast<float>(v);
-    });
+inline void u8_to_i8(const uint8_t* __restrict src, const size_t size, int8_t* __restrict dst) {
+    for (size_t i = 0; i < size; ++i) {
+        dst[i] = static_cast<int8_t>(static_cast<int>(src[i]) - 128);
+    }
 }
 
-inline void i8_to_f32(const uint8_t* __restrict src, const uint32_t size, float* __restrict dst, const float scale) {
-    std::transform(src, src + size, dst, [scale](uint8_t v) {
-        return static_cast<float>(v) / scale;
-    });
+inline void u8_to_f32(const uint8_t* __restrict src, const size_t size, float* __restrict dst, const float scale) {
+    for (size_t i = 0; i < size; ++i) {
+        dst[i] = static_cast<float>(src[i]) / scale;
+    }
 }
 
-inline float deqnt_affine_to_f32(int8_t qnt, int32_t zp, float scale) {
-    return ((static_cast<float>(qnt) - static_cast<float>(zp)) * scale);
-}
-
-inline int8_t qnt_affine_to_i8(float f32, int32_t zp, float scale) {
-    int32_t ret = std::round(std::clamp((f32 / scale) + zp, -128.0F, 127.0F));
+inline int8_t qnt_affine_to_i8(const float f32, const int32_t zp, const float scale) {
+    const float   f32v = std::clamp((f32 / scale) + zp, -128.0F, 127.0F);
+    const int32_t ret  = static_cast<int32_t>(std::round(f32v));
     return static_cast<int8_t>(ret);
+}
+
+inline float deqnt_affine_to_f32(const int8_t qnt, const int32_t zp, const float scale) {
+    return ((static_cast<float>(qnt) - static_cast<float>(zp)) * scale);
 }
 
 #if defined(__aarch64__)

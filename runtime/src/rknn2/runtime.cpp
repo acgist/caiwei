@@ -1,9 +1,9 @@
+#include <filesystem>
+
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 #include "caiwei/runtime/rknn2.hpp"
-
-#include <filesystem>
 
 template<>
 std::shared_ptr<caiwei::runtime::RKNN2Runtime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
@@ -19,7 +19,9 @@ std::shared_ptr<caiwei::runtime::RKNN2Runtime> caiwei::runtime::get_runtime(caiw
     return std::make_shared<caiwei::runtime::RKNN2Runtime>(min_pool, max_pool, timeout, keepalive, share);
 }
 
-caiwei::runtime::RKNN2Runtime::RKNN2Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN2) {
+caiwei::runtime::RKNN2Runtime::RKNN2Runtime(
+    int min_pool, int max_pool, int timeout, int keepalive, bool share
+) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN2) {
     CW_LOG_I("创建RKNN2Runtime");
 }
 
@@ -32,12 +34,12 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::RKNN2Runtime::get_
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    int c = caiwei::env::get_int("CAIWEI_CLS_C");
-    int h = caiwei::env::get_int("CAIWEI_CLS_H");
-    int w = caiwei::env::get_int("CAIWEI_CLS_W");
-    int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
-    int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
+    const int c = caiwei::env::get_int("CAIWEI_CLS_C");
+    const int h = caiwei::env::get_int("CAIWEI_CLS_H");
+    const int w = caiwei::env::get_int("CAIWEI_CLS_W");
+    const int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
+    const int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
+    const float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
     return std::make_shared<caiwei::context::ClsRKNN2Context>(info->path, c, h, w, class_size, top_k, confidence_threshold, this);
 }
 
@@ -46,11 +48,11 @@ std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::RKNN2Runtime::get_
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    int c = caiwei::env::get_int("CAIWEI_DET_C");
-    int h = caiwei::env::get_int("CAIWEI_DET_H");
-    int w = caiwei::env::get_int("CAIWEI_DET_W");
-    int class_size = caiwei::env::get_int("CAIWEI_DET_CLASS_SIZE");
-    float iou_threshold = caiwei::env::get_float("CAIWEI_DET_IOU_THRESHOLD");
-    float confidence_threshold = caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD");
+    const int c = caiwei::env::get_int("CAIWEI_DET_C");
+    const int h = caiwei::env::get_int("CAIWEI_DET_H");
+    const int w = caiwei::env::get_int("CAIWEI_DET_W");
+    const int class_size = caiwei::env::get_int("CAIWEI_DET_CLASS_SIZE");
+    const float iou_threshold = caiwei::env::get_float("CAIWEI_DET_IOU_THRESHOLD");
+    const float confidence_threshold = caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD");
     return std::make_shared<caiwei::context::DetRKNN2Context>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this);
 }

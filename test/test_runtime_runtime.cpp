@@ -14,6 +14,11 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
     caiwei::context::RKNN2Context context(path.empty() ? "yolo26n-det.rknn" : path, 3, size, size);
     context.load_model();
     if (type == "i8") {
+        std::vector<int8_t> data(3 * size * size);
+        CAIWEI_FOR_EACH(1000)
+        auto result = context.run(data.data(), data.size());
+        CAIWEI_FOR_EACH_END
+    } else if (type == "u8") {
         std::vector<uint8_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
         auto result = context.run(data.data(), data.size());

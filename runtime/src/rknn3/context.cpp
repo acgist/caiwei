@@ -23,7 +23,7 @@ caiwei::context::RKNN3Context::RKNN3Context(
 ) : model_path(std::move(model_path)), weight_path(std::move(weight_path)),
     embedding_path(std::move(embedding_path)), tokenizer_path(std::move(tokenizer_path)),
     max_token_length(max_token_length), special_token(std::move(special_token)) {
-    CW_LOG_I("创建RKNN3Context: %s", this->model_path.c_str());
+        CW_LOG_I("创建RKNN3Context: %s", this->model_path.c_str());
 }
 
 caiwei::context::RKNN3Context::RKNN3Context(
@@ -40,18 +40,21 @@ caiwei::context::RKNN3Context::RKNN3Context(
 caiwei::context::RKNN3Context::~RKNN3Context() {
     CW_LOG_I("释放RKNN3Context: %s", this->model_path.c_str());
     for (int i = 0; i < this->output_tensors.size(); ++i) {
-        if (this->output_tensors[i].attr) {
-            delete this->output_tensors[i].attr;
-            this->output_tensors[i].attr = nullptr;
-        }
         if (this->output_tensors[i].mem) {
+            CW_LOG_I("释放RKNN3Context output_tensor mem");
             rknn3_destroy_mem(this->context, this->output_tensors[i].mem);
             this->output_tensors[i].mem = nullptr;
+        }
+        if (this->output_tensors[i].attr) {
+            CW_LOG_I("释放RKNN3Context output_tensor attr");
+            delete this->output_tensors[i].attr;
+            this->output_tensors[i].attr = nullptr;
         }
     }
     if (!this->internal_tensor_mems.empty()) {
         for (int i = 0; i < this->internal_tensor_mems.size(); i++) {
             if (this->internal_tensor_mems[i]) {
+                CW_LOG_I("释放RKNN3Context internal_tensor mem");
                 rknn3_destroy_mem(this->context, this->internal_tensor_mems[i]);
                 this->internal_tensor_mems[i] = nullptr;
             }
@@ -62,10 +65,12 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
     if (!this->media_input.empty()) {
         for (auto& tensor : this->media_input) {
             if (tensor.mem) {
+                CW_LOG_I("释放RKNN3Context media_input mem");
                 rknn3_destroy_mem(this->media_context, tensor.mem);
                 tensor.mem = nullptr;
             }
             if (tensor.attr) {
+                CW_LOG_I("释放RKNN3Context media_input attr");
                 delete tensor.attr;
                 tensor.attr = nullptr;
             }
@@ -75,10 +80,12 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
     if (!this->media_output.empty()) {
         for (auto& tensor : this->media_output) {
             if (tensor.mem) {
+                CW_LOG_I("释放RKNN3Context media_output mem");
                 rknn3_destroy_mem(this->media_context, tensor.mem);
                 tensor.mem = nullptr;
             }
             if (tensor.attr) {
+                CW_LOG_I("释放RKNN3Context media_output attr");
                 delete tensor.attr;
                 tensor.attr = nullptr;
             }
@@ -86,18 +93,22 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
         this->media_output.clear();
     }
     if (this->media_context != 0) {
+        CW_LOG_I("释放RKNN3Context media_context");
         rknn3_destroy(this->media_context);
         this->media_context = 0;
     }
     if (this->context != 0) {
+        CW_LOG_I("释放RKNN3Context context");
         rknn3_destroy(this->context);
         this->context = 0;
     }
     if (this->tokenizer) {
+        CW_LOG_I("释放RKNN3Context tokenizer");
         delete this->tokenizer;
         this->tokenizer = nullptr;
     }
     if (this->embedding_fd != -1) {
+        CW_LOG_I("释放RKNN3Context embedding");
         if (this->embedding_data != MAP_FAILED && this->embedding_data != NULL) {
             munmap((void*) this->embedding_data, this->embedding_stat.st_size);
             this->embedding_data = NULL;
@@ -108,6 +119,9 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
 }
 
 bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t core_mask) {
+    if (this->context != 0) {
+        return true;
+    }
     rknn3_config config{};
     config.priority = 0;
     config.run_timeout = 120'000;
@@ -176,6 +190,9 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
 }
 
 bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal, uint32_t core_mask) {
+    if (this->media_context != 0) {
+        return true;
+    }
     rknn3_config config{};
     config.priority = 0;
     config.run_timeout = 120'000;

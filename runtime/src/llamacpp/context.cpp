@@ -43,12 +43,12 @@ caiwei::context::LlamaCPPContext::LlamaCPPContext(
 caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
     CW_LOG_I("释放LlamaCPPContext: %s", this->path.c_str());
     if (this->model) {
-        CW_LOG_D("释放LlamaCPPContext模型: %s", this->path.c_str());
+        CW_LOG_D("释放LlamaCPPContext model");
         llama_model_free(this->model);
         this->model = nullptr;
     }
     if (this->mtmd_model) {
-        CW_LOG_D("释放LlamaCPPContext模型: %s", this->mtmd_path.c_str());
+        CW_LOG_D("释放LlamaCPPContext mtmd_model");
         mtmd_free(this->mtmd_model);
         this->mtmd_model = nullptr;
     }
@@ -175,7 +175,7 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
     }
     const size_t n_chunks = mtmd_input_chunks_size(chunks.ptr.get());
     if (n_chunks == 0) {
-        CW_LOG_W("分词失败: %" PRId64, n_chunks);
+        CW_LOG_W("分词失败: %zu", n_chunks);
         return false;
     }
     int32_t   n_batch    = this->max_token_length;
@@ -186,10 +186,10 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
         auto* chunk      = mtmd_input_chunks_get(chunks.ptr.get(), i);
         auto  chunk_type = mtmd_input_chunk_get_type(chunk);
         if (chunk_type == MTMD_INPUT_CHUNK_TYPE_TEXT) {
-            CW_LOG_D("文本嵌入: %" PRId64 " / %" PRId64, i + 1, n_chunks);
+            CW_LOG_D("文本嵌入: %zu / %zu", i + 1, n_chunks);
             ret = mtmd_helper_eval_chunk_single(this->mtmd_model, context, chunk, n_pos, 0, n_batch, i == n_chunks - 1, &n_pos_chunk);
             if (ret != 0) {
-                CW_LOG_W("文本嵌入失败: %" PRId64 " = %d", i, ret);
+                CW_LOG_W("文本嵌入失败: %zu = %d", i, ret);
                 caiwei_batch.n_prompt_tokens = n_pos;
                 return false;
             }
@@ -203,7 +203,7 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
                 mtmd_batch.reset(mtmd_batch_init(this->mtmd_model));
                 ret = mtmd_batch_add_chunk(mtmd_batch.get(), chunk);
                 if (ret != 0) {
-                    CW_LOG_W("添加媒体失败: %" PRId64 " = %d", i, ret);
+                    CW_LOG_W("添加媒体失败: %zu = %d", i, ret);
                     caiwei_batch.n_prompt_tokens = n_pos;
                     return false;
                 }
@@ -216,25 +216,25 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
                     }
                     ret = mtmd_batch_add_chunk(mtmd_batch.get(), next_chunk);
                     if (ret != 0) {
-                        CW_LOG_W("添加媒体失败: %" PRId64 " = %d", j, ret);
+                        CW_LOG_W("添加媒体失败: %zu = %d", j, ret);
                         caiwei_batch.n_prompt_tokens = n_pos;
                         return false;
                     }
                     n_batch_chunk++;
                 }
-                CW_LOG_D("媒体编码: %" PRId64 " / %" PRId64 " = %d", i + 1, n_chunks, n_batch_chunk);
+                CW_LOG_D("媒体编码: %zu / %zu = %d", i + 1, n_chunks, n_batch_chunk);
                 ret = mtmd_batch_encode(mtmd_batch.get());
                 if (ret != 0) {
-                    CW_LOG_W("媒体编码失败: %" PRId64 " = %d", i, ret);
+                    CW_LOG_W("媒体编码失败: %zu = %d", i, ret);
                     caiwei_batch.n_prompt_tokens = n_pos;
                     return false;
                 }
                 embd = mtmd_batch_get_output_embd(mtmd_batch.get(), chunk);
             }
-            CW_LOG_D("媒体嵌入: %" PRId64 " / %" PRId64, i + 1, n_chunks);
+            CW_LOG_D("媒体嵌入: %zu / %zu", i + 1, n_chunks);
             ret = mtmd_helper_decode_image_chunk(this->mtmd_model, context, chunk, embd, n_pos, 0, n_batch, &n_pos_chunk, nullptr, nullptr);
             if (ret != 0) {
-                CW_LOG_W("媒体嵌入失败: %" PRId64 " = %d", i, ret);
+                CW_LOG_W("媒体嵌入失败: %zu = %d", i, ret);
                 caiwei_batch.n_prompt_tokens = n_pos;
                 return false;
             }
@@ -291,7 +291,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
         auto& input = inputs[k];
         const size_t n_tokens = input.size();
         if (n_tokens > static_cast<size_t>(n_batch)) {
-            CW_LOG_W("单个嵌入词元超长: %" PRId64 " > %d", n_tokens, n_batch);
+            CW_LOG_W("单个嵌入词元超长: %zu > %d", n_tokens, n_batch);
             llama_batch_free(batch);
             return {};
         }

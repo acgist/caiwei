@@ -19,7 +19,9 @@ std::shared_ptr<caiwei::runtime::RKNN3Runtime> caiwei::runtime::get_runtime(caiw
     return std::make_shared<caiwei::runtime::RKNN3Runtime>(min_pool, max_pool, timeout, keepalive, share);
 }
 
-caiwei::runtime::RKNN3Runtime::RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN3) {
+caiwei::runtime::RKNN3Runtime::RKNN3Runtime(
+    int min_pool, int max_pool, int timeout, int keepalive, bool share
+) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN3) {
     CW_LOG_I("创建RKNN3Runtime");
 }
 
@@ -33,12 +35,12 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path        = paths[0];
-    std::string weight_path       = paths[1];
-    std::string embedding_path    = paths[2];
-    std::string tokenizer_path    = paths[3];
-    std::string media_model_path  = paths[4];
-    std::string media_weight_path = paths[5];
+    const std::string model_path        = paths[0];
+    const std::string weight_path       = paths[1];
+    const std::string embedding_path    = paths[2];
+    const std::string tokenizer_path    = paths[3];
+    const std::string media_model_path  = paths[4];
+    const std::string media_weight_path = paths[5];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;
@@ -75,10 +77,10 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path     = paths[0];
-    std::string weight_path    = paths[1];
-    std::string embedding_path = paths[2];
-    std::string tokenizer_path = paths[3];
+    const std::string model_path     = paths[0];
+    const std::string weight_path    = paths[1];
+    const std::string embedding_path = paths[2];
+    const std::string tokenizer_path = paths[3];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;
@@ -108,12 +110,12 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path        = paths[0];
-    std::string weight_path       = paths[1];
-    std::string embedding_path    = paths[2];
-    std::string tokenizer_path    = paths[3];
-    std::string media_model_path  = paths[4];
-    std::string media_weight_path = paths[5];
+    const std::string model_path        = paths[0];
+    const std::string weight_path       = paths[1];
+    const std::string embedding_path    = paths[2];
+    const std::string tokenizer_path    = paths[3];
+    const std::string media_model_path  = paths[4];
+    const std::string media_weight_path = paths[5];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;
@@ -150,10 +152,10 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path     = paths[0];
-    std::string weight_path    = paths[1];
-    std::string embedding_path = paths[2];
-    std::string tokenizer_path = paths[3];
+    const std::string model_path     = paths[0];
+    const std::string weight_path    = paths[1];
+    const std::string embedding_path = paths[2];
+    const std::string tokenizer_path = paths[3];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;
@@ -181,10 +183,10 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path     = paths[0];
-    std::string weight_path    = paths[1];
-    std::string embedding_path = paths[2];
-    std::string tokenizer_path = paths[3];
+    const std::string model_path     = paths[0];
+    const std::string weight_path    = paths[1];
+    const std::string embedding_path = paths[2];
+    const std::string tokenizer_path = paths[3];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;

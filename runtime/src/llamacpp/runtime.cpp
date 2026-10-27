@@ -19,7 +19,9 @@ std::shared_ptr<caiwei::runtime::LlamaCPPRuntime> caiwei::runtime::get_runtime(c
     return std::make_shared<caiwei::runtime::LlamaCPPRuntime>(min_pool, max_pool, timeout, keepalive, share);
 }
 
-caiwei::runtime::LlamaCPPRuntime::LlamaCPPRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::LLAMACPP) {
+caiwei::runtime::LlamaCPPRuntime::LlamaCPPRuntime(
+    int min_pool, int max_pool, int timeout, int keepalive, bool share
+) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::LLAMACPP) {
     CW_LOG_I("创建LlamaCPPRuntime");
 }
 
@@ -33,8 +35,8 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::g
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path  = paths[0];
-    std::string mmproj_path = paths[1];
+    const std::string model_path  = paths[0];
+    const std::string mmproj_path = paths[1];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;
@@ -66,8 +68,8 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::g
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    std::string model_path  = paths[0];
-    std::string mmproj_path = paths[1];
+    const std::string model_path  = paths[0];
+    const std::string mmproj_path = paths[1];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;

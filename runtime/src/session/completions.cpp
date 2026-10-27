@@ -678,18 +678,18 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
     if (image_url.starts_with(caiwei::text::CONTENT_TYPE_DATA)) {
         auto pos = image_url.find(',');
         if (pos == std::string::npos) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         auto image_data = base64_decode(image_url.substr(pos + 1));
         if (image_data.empty()) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         int width, height, channels;
         auto* data = stbi_load_from_memory((const stbi_uc*) image_data.data(), image_data.size(), &width, &height, &channels, STBI_default);
         if (data == nullptr) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         frame.width    = width;
@@ -701,7 +701,7 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
         int width, height, channels;
         auto* data = stbi_load(image_url.c_str(), &width, &height, &channels, STBI_default);
         if (data == nullptr) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         frame.width    = width;
@@ -712,12 +712,12 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
     } else if (image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTP) || image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
         auto pos = image_url.find("://");
         if(pos == std::string::npos) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         pos = image_url.find('/', pos + 3);
         if(pos == std::string::npos) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         httplib::Client client(image_url.substr(0, pos));
@@ -725,13 +725,13 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
         client.set_connection_timeout(5);
         auto response = client.Get(image_url.substr(pos));
         if (!response || response->status != 200) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         int width, height, channels;
         auto* data = stbi_load_from_memory((const stbi_uc*) response->body.data(), response->body.size(), &width, &height, &channels, STBI_default);
         if (data == nullptr) {
-            CW_LOG_E("加载图片失败: %s", image_url.c_str());
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         frame.width    = width;

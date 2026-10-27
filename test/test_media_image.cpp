@@ -210,7 +210,7 @@ void test_hwc_to_chw() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     std::vector<float> hwc(width * height * channels);
     std::vector<float> chw(width * height * channels);
-    caiwei::type::i8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
+    caiwei::type::u8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
     caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
     caiwei::image::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
     stbi_write_hdr("./image_hwc_to_chw.hdr", width, height, channels, hwc.data());
@@ -221,7 +221,7 @@ void test_hwc_to_chw() {
     }
     {
         CAIWEI_FOR_EACH(1000)
-        caiwei::image::hwc_to_chw_i8_f32(data, chw.data(), height, width, channels, 255.0F);
+        caiwei::image::hwc_to_chw_u8_f32(data, chw.data(), height, width, channels, 255.0F);
         CAIWEI_FOR_EACH_END
     }
     stbi_image_free(data);
@@ -243,7 +243,7 @@ void test_image() {
         CAIWEI_FOR_EACH(1000)
         caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
         caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
-        caiwei::type::i8_to_f32(pad.data(), w * h * channels, hwc.data(), 255.0F);
+        caiwei::type::u8_to_f32(pad.data(), w * h * channels, hwc.data(), 255.0F);
         caiwei::image::hwc_to_chw(hwc.data(), chw.data(), h, w, channels);
         CAIWEI_FOR_EACH_END
     }
@@ -251,7 +251,7 @@ void test_image() {
         CAIWEI_FOR_EACH(1000)
         caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
         caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
-        caiwei::image::hwc_to_chw_i8_f32(pad.data(), chw.data(), h, w, channels, 255.0F);
+        caiwei::image::hwc_to_chw_u8_f32(pad.data(), chw.data(), h, w, channels, 255.0F);
         CAIWEI_FOR_EACH_END
     }
     stbi_image_free(data);

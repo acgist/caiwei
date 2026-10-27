@@ -1,23 +1,28 @@
+#include <thread>
+
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
-#include <thread>
-
 #if CAIWEI_DEBUG
-OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO;
+OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE;
 #else
-OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING;
+OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO;
 #endif
 
-static void print_tensor_info(const char* title, size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape);
+static void print_tensor_info(const char* title, const size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape);
 
-caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env)
-  : path(std::move(path)), env(env) {
-    this->input_node_dims.push_back({ 1, c, h, w });
+caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(
+    std::string path,
+    int c,
+    int h,
+    int w,
+    const Ort::Env* env
+) : path(std::move(path)), env(env) {
     CW_LOG_I("创建ONNXRuntimeContext: %s", this->path.c_str());
+    this->input_node_dims.push_back({ 1, c, h, w });
 }
 
 caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
@@ -32,46 +37,35 @@ caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
         delete this->session;
         this->session = nullptr;
     }
-    this->input_node_names.clear();
-    this->output_node_names.clear();
 }
 
 bool caiwei::context::ONNXRuntimeContext::load_model() {
+    if (this->session != nullptr) {
+        return true;
+    }
     Ort::SessionOptions options;
-    // options.DisableCpuMemArena();
-    #ifdef ENABLE_CAIWEI_BACKEND_CUDA
-    options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
     options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
+    options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+    #if ENABLE_CAIWEI_BACKEND_CUDA
+    options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
     options.SetIntraOpNumThreads(1);
     options.SetInterOpNumThreads(1);
-    options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
     Ort::CUDAProviderOptions cudaOptions;
+    const std::string cuda_id = caiwei::env::get("CAIWEI_CUDA_ID");
     std::unordered_map<std::string, std::string> opts = {
-        {"device_id",     "0"         },
+        {"device_id",     cuda_id     },
         {"gpu_mem_limit", "1073741824"},
     };
     cudaOptions.Update(opts);
-//  cudaOptions.device_id     = caiwei::env::get_int("CAIWEI_CUDA_ID");
-//  cudaOptions.gpu_mem_limit = caiwei::env::get_int("CAIWEI_CUDA_LIMIT");
     options.AppendExecutionProvider_CUDA_V2(*cudaOptions);
-    CW_LOG_I("ONNXRuntimeContext使用CUDA推理: %d", caiwei::env::get_int("CAIWEI_CUDA_ID"));
     #else
-    int cpu_core = std::thread::hardware_concurrency();
-    if (cpu_core <= 0) {
-        cpu_core = 4;
-    } else {
-        cpu_core /= 2;
-    }
     options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
-    options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
-    options.SetIntraOpNumThreads(cpu_core);
+    options.SetIntraOpNumThreads(std::thread::hardware_concurrency() / 2);
     options.SetInterOpNumThreads(1);
-    options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    CW_LOG_I("ONNXRuntimeContext使用CPU推理");
     #endif
     #if CAIWEI_OS_WIN
-    std::wstring wPath(this->path.begin(), this->path.end());
-    this->session = new Ort::Session(*env, wPath.c_str(), options);
+    std::wstring path(this->path.begin(), this->path.end());
+    this->session = new Ort::Session(*env, path.c_str(), options);
     #else
     this->session = new Ort::Session(*env, this->path.c_str(), options);
     #endif
@@ -81,14 +75,13 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     this->input_node_dims.resize(inputNodeCount);
     for(size_t index = 0; index < inputNodeCount; ++index) {
         Ort::AllocatedStringPtr name = this->session->GetInputNameAllocated(index, allocator);
-        auto info = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
+        auto info  = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
         auto shape = info.GetShape();
-        // TODO GPU shape - 0
         if (shape.size() == 0) {
             shape.assign(this->input_node_dims[index].begin(), this->input_node_dims[index].end());
         } else {
             this->input_node_dims[index].clear();
-            for (auto dim : shape) {
+            for (const auto& dim : shape) {
                 this->input_node_dims[index].push_back(dim);
             }
         }
@@ -97,9 +90,8 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     }
     for(size_t index = 0; index < outputNodeCount; ++ index) {
         Ort::AllocatedStringPtr name = this->session->GetOutputNameAllocated(index, allocator);
-        auto info = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
+        auto info  = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
         auto shape = info.GetShape();
-        // TODO GPU shape - 0
         print_tensor_info("ONNXRuntimeContext输出节点", index, name.get(), shape);
         this->output_node_names.push_back(std::move(name));
     }
@@ -108,7 +100,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     return true;
 }
 
-std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, const caiwei::media::ImageFrame& image) {
+std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(const int h, const int w, const caiwei::media::ImageFrame& image) {
     if (this->src_w != image.width || this->src_h != image.height) {
         this->src_w = image.width;
         this->src_h = image.height;
@@ -120,16 +112,14 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(int h, int w, c
     }
     caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h);
     caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
-    // caiwei::type::i8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
-    // caiwei::image::hwc_to_chw(this->hwc.data(), this->chw.data(), h, w, image.channels);
-    caiwei::image::hwc_to_chw_i8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
+    caiwei::image::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
     return this->run(this->chw.data(), this->chw.size());
 }
 
-std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, size_t size, int batch) {
+std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, const size_t size, const int batch) {
     Ort::IoBinding io_binding(*this->session);
     std::vector<Ort::Value> input_tensors;
-    for (int i = 0; i < this->input_node_names.size(); ++i) {
+    for (size_t i = 0; i < this->input_node_names.size(); ++i) {
         this->input_node_dims[i][0] = batch;
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
             memory_info,
@@ -141,29 +131,23 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, si
         input_tensors.push_back(std::move(input_tensor));
         io_binding.BindInput(this->input_node_names[i].get(), input_tensors[i]);
     }
-    for (int i = 0; i < this->output_node_names.size(); ++i) {
+    for (size_t i = 0; i < this->output_node_names.size(); ++i) {
         io_binding.BindOutput(this->output_node_names[i].get(), memory_info);
     }
     this->session->Run(*this->run_options, io_binding);
-    auto output_tensor = io_binding.GetOutputValues();
-    std::vector<Ort::Value> ret;
-    ret.reserve(output_tensor.size());
-    for (auto iter = output_tensor.begin(); iter != output_tensor.end(); ++iter) {
-        ret.push_back(std::move(*iter));
-    }
-    return ret;
+    return io_binding.GetOutputValues();
 }
 
-static void print_tensor_info(const char* title, size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape) {
+static void print_tensor_info(const char* title, const size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape) {
     std::string shape_info = "(";
-    if (shape.size() > 0) {
+    if (shape.empty()) {
+        shape_info += "-";
+    } else {
         shape_info += std::to_string(shape[0]);
-        for (int i = 1; i < shape.size(); ++i) {
+        for (size_t i = 1; i < shape.size(); ++i) {
             shape_info += ", " + std::to_string(shape[i]);
         }
-    } else {
-        shape_info += "0";
     }
     shape_info += ")";
-    CW_LOG_I("%s: %" PRId64 " = %s shape: %s", title, index, name, shape_info.c_str());
+    CW_LOG_I("%s: %zu = %s shape: %s", title, index, name, shape_info.c_str());
 }

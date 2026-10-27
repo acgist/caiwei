@@ -1,7 +1,6 @@
 #ifndef CAIWEI_RUNTIME_LOG_HPP
 #define CAIWEI_RUNTIME_LOG_HPP
 
-#include <cinttypes>
 #include <source_location>
 
 namespace caiwei {

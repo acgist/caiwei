@@ -179,10 +179,10 @@ std::string caiwei::text::ChatTemplate::apply(
                 if (message_tool_call.function.has_value()) {
                     nlohmann::json message_tool_call_function_json;
                     const auto& message_tool_call_function = message_tool_call.function.value();
-                    if (message_tool_call.function.has_value()) {
+                    if (message_tool_call_function.name.has_value()) {
                         message_tool_call_function_json["name"] = message_tool_call_function.name.value_or("");
                     }
-                    if (message_tool_call.function.has_value()) {
+                    if (message_tool_call_function.arguments.has_value()) {
                         message_tool_call_function_json["arguments"] = message_tool_call_function.arguments.value_or("");
                     }
                     message_tool_call_json["function"] = std::move(message_tool_call_function_json);
