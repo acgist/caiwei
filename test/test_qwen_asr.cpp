@@ -47,12 +47,16 @@ void test_asr() {
         return;
     }
     for (const auto& value : ptr->run(request)) {
-        // -
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
     }
     caiwei_wait_enter();
     request.max_completion_tokens = 2;
     for (const auto& value : ptr->run(request)) {
-        // -
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
     }
 }
 
@@ -159,7 +163,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_asr();
-    test_asr_for();
+    // test_asr_for();
     // test_asr_thread();
     // test_asr_thread();
     caiwei::test::stop_test();

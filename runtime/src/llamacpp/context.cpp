@@ -61,19 +61,20 @@ bool caiwei::context::LlamaCPPContext::load_model() {
     llama_model_params params = llama_model_default_params();
     this->model = llama_model_load_from_file(this->path.c_str(), params);
     if (this->model == nullptr) {
-        CW_LOG_W("加载LlamaCPPContext模型失败: %s", this->path.c_str());
+        CW_LOG_W("模型加载失败: %s", this->path.c_str());
         return false;
     }
     this->vocab = llama_model_get_vocab(this->model);
     if (this->vocab == nullptr) {
-        CW_LOG_W("获取LlamaCPPContext模型词汇表失败: %s", this->path.c_str());
+        CW_LOG_W("模型加载失败: %s", this->path.c_str());
         return false;
     }
-    CW_LOG_D("加载LlamaCPPContext模型成功: %s", this->path.c_str());
-    const int32_t n_ctx_train = llama_model_n_ctx_train(this->model);
-    CW_LOG_I("模型最大输入长度: %d/%d", this->max_token_length, n_ctx_train);
-    this->max_token_length = std::min(this->max_token_length, n_ctx_train);
+    CW_LOG_I("模型加载成功: %s", this->path.c_str());
     this->chat_template.set_template(llama_model_chat_template(this->model, nullptr), this->special_token.bos, this->special_token.eos);
+    const int32_t n_ctx_train = llama_model_n_ctx_train(this->model);
+    const int32_t min_ctx_len = std::min(this->max_token_length, n_ctx_train);
+    CW_LOG_I("模型最大输入长度: min(%d/%d) = %d", this->max_token_length, n_ctx_train, min_ctx_len);
+    this->max_token_length = min_ctx_len;
     return true;
 }
 
@@ -89,10 +90,10 @@ bool caiwei::context::LlamaCPPContext::load_mtmd_model() {
     params.media_marker = this->special_token.media_marker.c_str();
     this->mtmd_model = mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params);
     if (this->mtmd_model == nullptr) {
-        CW_LOG_W("加载LlamaCPPContext模型失败: %s", this->mtmd_path.c_str());
+        CW_LOG_W("模型加载失败: %s", this->mtmd_path.c_str());
         return false;
     }
-    CW_LOG_D("加载LlamaCPPContext模型成功: %s", this->mtmd_path.c_str());
+    CW_LOG_I("模型加载成功: %s", this->mtmd_path.c_str());
     return true;
 }
 

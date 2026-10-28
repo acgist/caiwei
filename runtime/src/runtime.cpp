@@ -258,8 +258,8 @@ static void init_llamacpp() {
     mtmd_helper_log_set(caiwei_llama_log, nullptr);
     ggml_backend_load_all();
     CW_LOG_I("llama.cpp version: %s", ggml_version());
-    const int backend_count = ggml_backend_reg_count();
-    for (int i = 0; i < backend_count; i++) {
+    const size_t backend_count = ggml_backend_reg_count();
+    for (size_t i = 0; i < backend_count; i++) {
         ggml_backend_reg* reg = ggml_backend_reg_get(i);
         if (!reg) {
             continue;

@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <fstream>
 #include <filesystem>
 
@@ -179,12 +180,12 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
         }
     } else if (input_attr.fmt == RKNN_TENSOR_NHWC) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
-            caiwei::type::u8_to_i8(this->pad.data(), w * h * image.channels, this->hwc_i8.data());
+            caiwei::type::u8_to_i8(this->pad.data(), this->pad.size(), this->hwc_i8.data());
             return this->run<int8_t>(this->hwc_i8.data(), this->hwc_i8.size());
         } else if (input_attr.type == RKNN_TENSOR_UINT8) {
             return this->run<uint8_t>(this->pad.data(), this->pad.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
-            caiwei::type::u8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
+            caiwei::type::u8_to_f32(this->pad.data(), this->pad.size(), this->hwc.data(), 255.0F);
             caiwei::type::f32_to_fp16(this->dst_f16.data(), this->hwc.data(), this->hwc.size());
             return this->run<uint16_t>(this->dst_f16.data(), this->dst_f16.size());
         } else {
@@ -198,10 +199,17 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
 }
 
 static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {
+    std::string shape{};
+    for (uint32_t j = 0; j < attr.n_dims; j++) {
+        shape += std::to_string(attr.dims[j]);
+        if (j < attr.n_dims - 1) {
+            shape += ", ";
+        }
+    }
     CW_LOG_I(
-        "%s: %u name: %s size: %u n_dims: %u n_elems: %u zp: %d scale: %.6f "
-        "fmt: %s type: %s qnt_type: %s "
-        "shape: (%u, %u, %u, %u, %u, %u, %u, %u)",
+        "%s: %u => "
+        "name: %s size: %u n_dims: %u n_elems: %u zp: %d scale: %.6f shape: [%s] "
+        "fmt: %s type: %s qnt_type: %s ",
         title,
         attr.index,
         attr.name,
@@ -210,17 +218,10 @@ static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {
         attr.n_elems,
         attr.zp,
         attr.scale,
-        get_format_string  (attr.fmt),
-        get_type_string    (attr.type),
-        get_qnt_type_string(attr.qnt_type),
-        attr.dims[0],
-        attr.dims[1],
-        attr.dims[2],
-        attr.dims[3],
-        attr.dims[4],
-        attr.dims[5],
-        attr.dims[6],
-        attr.dims[7]
+        shape.c_str(),
+        get_format_string(attr.fmt),
+        get_type_string(attr.type),
+        get_qnt_type_string(attr.qnt_type)
     );
 }
 

@@ -30,19 +30,25 @@ void test_llm() {
         return;
     }
     for (const auto& value : ptr->run(request)) {
-        // -
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
     }
     caiwei_wait_enter();
     request.tools.reset();
     request.messages.clear();
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     for (const auto& value : ptr->run(request)) {
-        // -
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
     }
     caiwei_wait_enter();
     request.max_completion_tokens = 2;
     for (const auto& value : ptr->run(request)) {
-        // -
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
     }
 }
 
@@ -109,7 +115,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_llm();
-    test_llm_for();
+    // test_llm_for();
     // test_llm_thread();
     // test_llm_thread();
     caiwei::test::stop_test();

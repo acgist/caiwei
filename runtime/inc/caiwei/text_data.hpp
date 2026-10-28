@@ -88,7 +88,7 @@ struct CompletionsRequest {
     std::string model;
     std::vector<CompletionsRequestMessage> messages;
     std::optional<int>   seed;
-    std::optional<int>   top_k          = 10; // 设置20时RKNN3开始胡说
+    std::optional<int>   top_k          = 10;
     std::optional<float> top_p          = 0.95F;
     std::optional<float> temperature    = 0.8F;
     std::optional<float> repeat_penalty = 1.04F;

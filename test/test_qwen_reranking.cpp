@@ -82,7 +82,7 @@ int main() {
     #endif
     caiwei::test::init_test();
     test_reranking();
-    test_reranking_for();
+    // test_reranking_for();
     // test_reranking_thread();
     // test_reranking_thread();
     caiwei::test::stop_test();

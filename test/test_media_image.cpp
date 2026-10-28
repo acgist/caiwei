@@ -57,8 +57,8 @@ void test_resize_rga() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
-    rga_buffer_t src_img = wrapbuffer_virtualaddr(data, width, height, RK_FORMAT_RGB_888);
-    rga_buffer_t dst_img = wrapbuffer_virtualaddr(dst.data(), dst_w, dst_h, RK_FORMAT_RGB_888);
+    rga_buffer_t src_img = wrapbuffer_virtualaddr(data,       width, height, RK_FORMAT_RGB_888);
+    rga_buffer_t dst_img = wrapbuffer_virtualaddr(dst.data(), dst_w, dst_h,  RK_FORMAT_RGB_888);
     imresize(src_img, dst_img, scale, scale);
     stbi_write_jpg("./image_resize_rga.jpg", dst_w, dst_h, channels, dst.data(), 80);
     CAIWEI_FOR_EACH(1000)
@@ -88,13 +88,13 @@ void test_resize_ffmpeg() {
     int src_stride = width * 3;
     int dst_stride = dst_w * 3;
     auto dst_data = dst.data();
-    {
-        int ret = sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
-        stbi_write_jpg("./image_resize_ffmpeg.jpg", dst_w, dst_h, channels, dst.data(), 80);
-    }
+    sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
+    stbi_write_jpg("./image_resize_ffmpeg.jpg", dst_w, dst_h, channels, dst.data(), 80);
     CAIWEI_FOR_EACH(1000)
-    int ret = sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
+    sws_scale(sws, &data, &src_stride, 0, height, &dst_data, &dst_stride);
     CAIWEI_FOR_EACH_END
+    sws_freeContext(sws);
+    sws = nullptr;
 }
 
 [[maybe_unused]]
@@ -129,16 +129,16 @@ void test_resize_pad_rga() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> pad(w * h * channels, caiwei::image::DEFAULT_PADDING);
-    rga_buffer_t src_img = wrapbuffer_virtualaddr(data, width, height, RK_FORMAT_RGB_888);
-    rga_buffer_t dst_img = wrapbuffer_virtualaddr(pad.data(), w, h, RK_FORMAT_RGB_888);
-    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr, 0, 0, 0);
-    im_rect src_rect = { 0, 0, width, height };
-    im_rect dst_rect = { pad_w, pad_h, dst_w, dst_h };
-    im_rect pat_rect = { 0, 0, 0, 0 };
+    rga_buffer_t src_img = wrapbuffer_virtualaddr(data,       width, height, RK_FORMAT_RGB_888);
+    rga_buffer_t dst_img = wrapbuffer_virtualaddr(pad.data(), w,     h,      RK_FORMAT_RGB_888);
+    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr,    0,     0,      0                );
+    im_rect src_rect = { 0,     0,     width, height };
+    im_rect dst_rect = { pad_w, pad_h, dst_w, dst_h  };
+    im_rect pat_rect = { 0,     0,     0,     0      };
     improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
     stbi_write_jpg("./image_resize_pad_rga.jpg", w, h, channels, pad.data(), 80);
     CAIWEI_FOR_EACH(1000)
-    improcess(src_img, dst_img, {}, src_rect, dst_rect, {}, IM_SYNC);
+    improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }

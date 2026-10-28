@@ -20,14 +20,14 @@ bool caiwei::context::Tokenizer::load(const std::string& path) {
     params.vocab_only = true;
     this->model = llama_model_load_from_file(path.c_str(), params);
     if (this->model == nullptr) {
-        CW_LOG_W("加载Tokenizer模型失败: %s", path.c_str());
+        CW_LOG_W("分词模型加载失败: %s", path.c_str());
         return false;
     }
     // TODO
     // llama_model_chat_template
     this->vocab = llama_model_get_vocab(this->model);
     if (this->vocab == nullptr) {
-        CW_LOG_W("加载Tokenizer模型失败: %s", path.c_str());
+        CW_LOG_W("分词模型加载失败: %s", path.c_str());
         return false;
     }
     return true;
