@@ -108,7 +108,7 @@ bool caiwei::context::RKNN3Context::load_model(
         CW_LOG_W("没有设备");
         return false;
     }
-    const int rknn_id = std::max(0, std::min(caiwei::env::get_int("CAIWEI_RKNN_ID"), devs.n_devices - 1));
+    const int rknn_id = std::max(0, std::min(caiwei::env::get_int("CAIWEI_RKNN_ID"), (int) devs.n_devices - 1));
     rknn3_init_extend extend{};
     extend.device_id = devs.devices[rknn_id].id;
     ret = rknn3_init(&context, &extend);
@@ -479,7 +479,7 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(ContextSession* contex
     return session;
 }
 
-std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(std::string& /* prompt */, ContextSession* /* context_session */, const caiwei::text::CompletionsRequest& /* request */) {
     CW_LOG_W("输入逻辑没有实现");
     return {};
 }

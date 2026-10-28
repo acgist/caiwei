@@ -31,7 +31,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LLMRKNN3Context:
     return this->generate(request);
 }
 
-std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* /* context_session */, const caiwei::text::CompletionsRequest& request) {
     prompt = this->chat_template.apply(this->special_token, request);
     rknn3_llm_tensor tensor{
         .name     = "input_embeds",

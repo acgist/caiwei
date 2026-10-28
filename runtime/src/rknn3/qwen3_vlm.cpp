@@ -180,9 +180,9 @@ bool caiwei::context::VLMRKNN3Context::init_deepstack_tensors(int length, int si
 }
 
 std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
-    int image_count = 0;
-    int video_count = 0;
-    int frame_count = 0;
+    uint64_t image_count = 0;
+    uint64_t video_count = 0;
+    uint64_t frame_count = 0;
     std::vector<std::tuple<const caiwei::media::ImageFrame*, const std::vector<caiwei::media::VideoFrame>*>> data_list;
     auto& input_tensor  = this->media_input[0];
     auto& output_tensor = this->media_output[0];
@@ -210,8 +210,8 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
         }
         const std::vector<caiwei::text::CompletionsRequestMessageContentItem>& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
         auto iter = items.begin();
-        int image_index = 0;
-        int video_index = 0;
+        uint64_t image_index = 0;
+        uint64_t video_index = 0;
         while (iter != items.end()) {
             if (iter->type == "text") {
                 // -
@@ -261,7 +261,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
     int image_i = 0;
     int video_i = 0;
     int deepstack_i = 0;
-    int per_video_frame = 0;
+    uint64_t per_video_frame = 0;
     for (const auto& [image_ptr, video_ptr] : data_list) {
         if (image_ptr != nullptr) {
             if (!this->fill_media(
