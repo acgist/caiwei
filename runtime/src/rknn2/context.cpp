@@ -102,18 +102,53 @@ bool caiwei::context::RKNN2Context::load_model() {
     return true;
 }
 
+template<typename T>
+caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(T* blob, const size_t size, const int batch) {
+    std::vector<rknn_input>  inputs (this->input_attrs.size());
+    std::vector<rknn_output> outputs(this->output_attrs.size());
+    for (size_t i = 0; i < inputs.size(); ++i) {
+        inputs[i].buf   = blob;
+        inputs[i].fmt   = this->input_attrs[i].fmt;
+        inputs[i].type  = this->input_attrs[i].type;
+        inputs[i].size  = this->input_attrs[i].size;
+        inputs[i].index = i;
+        inputs[i].pass_through = 1;
+    }
+    for (size_t i = 0; i < outputs.size(); ++i) {
+        outputs[i].index = i;
+        outputs[i].want_float = 0;
+    }
+    int ret = rknn_inputs_set(this->context, inputs.size(), inputs.data());
+    if (ret != RKNN_SUCC) {
+        CW_LOG_W("输入失败: %d", ret);
+        return {};
+    }
+    ret = rknn_run(this->context, nullptr);
+    if (ret != RKNN_SUCC) {
+        CW_LOG_W("计算失败: %d", ret);
+        return {};
+    }
+    ret = rknn_outputs_get(this->context, outputs.size(), outputs.data(), nullptr);
+    if (ret != RKNN_SUCC) {
+        CW_LOG_W("输出失败: %d", ret);
+        return {};
+    }
+    return { this->context, std::move(outputs) };
+}
+
 caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, const int w, const caiwei::media::ImageFrame& image) {
     if (this->src_w != image.width || this->src_h != image.height) {
         this->src_w = image.width;
         this->src_h = image.height;
         caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale);
-        this->dst.resize   (this->dst_w * this->dst_h * image.channels);
-        this->pad.resize   (          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
-        this->hwc.resize   (          w *           h * image.channels);
-        this->chw.resize   (          w *           h * image.channels);
-        this->chw_i8.resize(          w *           h * image.channels);
-        this->pad_i8.resize(          w *           h * image.channels);
-        this->chw_u8.resize(          w *           h * image.channels);
+        this->dst.resize    (this->dst_w * this->dst_h * image.channels);
+        this->pad.resize    (          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
+        this->hwc.resize    (          w *           h * image.channels);
+        this->chw.resize    (          w *           h * image.channels);
+        this->hwc_i8.resize (          w *           h * image.channels);
+        this->chw_i8.resize (          w *           h * image.channels);
+        this->chw_u8.resize (          w *           h * image.channels);
+        this->dst_f16.resize(          w *           h * image.channels);
     }
     rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) image.data.data(), image.width, image.height, RK_FORMAT_RGB_888);
     rga_buffer_t dst_img = wrapbuffer_virtualaddr(this->pad.data(),          w,           h,            RK_FORMAT_RGB_888);
@@ -130,26 +165,28 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
             caiwei::image::hwc_to_chw_u8_i8(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
-            return this->run(this->chw_i8.data(), this->chw_i8.size());
+            return this->run<int8_t>(this->chw_i8.data(), this->chw_i8.size());
         } else if (input_attr.type == RKNN_TENSOR_UINT8) {
             caiwei::image::hwc_to_chw(this->pad.data(), this->chw_u8.data(), h, w, image.channels);
-            return this->run(this->chw_u8.data(), this->chw_u8.size());
+            return this->run<uint8_t>(this->chw_u8.data(), this->chw_u8.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
             caiwei::image::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
-            return this->run(this->chw.data(), this->chw.size());
+            caiwei::type::f32_to_fp16(this->dst_f16.data(), this->chw.data(), this->chw.size());
+            return this->run<uint16_t>(this->dst_f16.data(), this->dst_f16.size());
         } else {
             CW_LOG_W("不支持的输入类型: %s", get_type_string(input_attr.type));
             return {};
         }
     } else if (input_attr.fmt == RKNN_TENSOR_NHWC) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
-            caiwei::type::u8_to_i8(this->pad.data(), w * h * image.channels, this->pad_i8.data());
-            return this->run(this->pad_i8.data(), this->pad_i8.size());
+            caiwei::type::u8_to_i8(this->pad.data(), w * h * image.channels, this->hwc_i8.data());
+            return this->run<int8_t>(this->hwc_i8.data(), this->hwc_i8.size());
         } else if (input_attr.type == RKNN_TENSOR_UINT8) {
-            return this->run(this->pad.data(), this->pad.size());
+            return this->run<uint8_t>(this->pad.data(), this->pad.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
             caiwei::type::u8_to_f32(this->pad.data(), w * h * image.channels, this->hwc.data(), 255.0F);
-            return this->run(this->hwc.data(), this->hwc.size());
+            caiwei::type::f32_to_fp16(this->dst_f16.data(), this->hwc.data(), this->hwc.size());
+            return this->run<uint16_t>(this->dst_f16.data(), this->dst_f16.size());
         } else {
             CW_LOG_W("不支持的输入类型: %s", get_type_string(input_attr.type));
             return {};
@@ -158,107 +195,6 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
         CW_LOG_W("不支持的输入格式: %s", get_format_string(input_attr.fmt));
         return {};
     }
-}
-
-caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(uint8_t* blob, const size_t size, const int batch) {
-    std::vector<rknn_input>  inputs (this->input_attrs.size());
-    std::vector<rknn_output> outputs(this->output_attrs.size());
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        inputs[i].buf   = blob;
-        inputs[i].fmt   = this->input_attrs[i].fmt;
-        inputs[i].type  = this->input_attrs[i].type;
-        inputs[i].size  = this->input_attrs[i].size;
-        inputs[i].index = i;
-        inputs[i].pass_through = 1;
-    }
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        outputs[i].index = i;
-        outputs[i].want_float = 0;
-    }
-    int ret = rknn_inputs_set(this->context, inputs.size(), inputs.data());
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("输入失败: %d", ret);
-        return {};
-    }
-    ret = rknn_run(this->context, nullptr);
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("计算失败: %d", ret);
-        return {};
-    }
-    ret = rknn_outputs_get(this->context, outputs.size(), outputs.data(), nullptr);
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("输出失败: %d", ret);
-        return {};
-    }
-    return { this->context, std::move(outputs) };
-}
-
-caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(int8_t* blob, const size_t size, const int batch) {
-    std::vector<rknn_input>  inputs (this->input_attrs.size());
-    std::vector<rknn_output> outputs(this->output_attrs.size());
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        inputs[i].buf   = blob;
-        inputs[i].fmt   = this->input_attrs[i].fmt;
-        inputs[i].type  = this->input_attrs[i].type;
-        inputs[i].size  = this->input_attrs[i].size;
-        inputs[i].index = i;
-        inputs[i].pass_through = 1;
-    }
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        outputs[i].index = i;
-        outputs[i].want_float = 0;
-    }
-    int ret = rknn_inputs_set(this->context, inputs.size(), inputs.data());
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("输入失败: %d", ret);
-        return {};
-    }
-    ret = rknn_run(this->context, nullptr);
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("计算失败: %d", ret);
-        return {};
-    }
-    ret = rknn_outputs_get(this->context, outputs.size(), outputs.data(), nullptr);
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("输出失败: %d", ret);
-        return {};
-    }
-    return { this->context, std::move(outputs) };
-}
-
-caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(float* blob, const size_t size, const int batch) {
-    this->data_f16.resize(size);
-    caiwei::type::f32_to_fp16(this->data_f16.data(), blob, size);
-    std::vector<rknn_input>  inputs (this->input_attrs.size());
-    std::vector<rknn_output> outputs(this->output_attrs.size());
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        inputs[i].buf   = this->data_f16.data();
-        inputs[i].fmt   = this->input_attrs[i].fmt;
-        inputs[i].type  = this->input_attrs[i].type;
-        inputs[i].size  = this->input_attrs[i].size;
-        inputs[i].index = i;
-        inputs[i].pass_through = 1;
-    }
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        outputs[i].index = i;
-        outputs[i].want_float = 0;
-    }
-    int ret = rknn_inputs_set(this->context, inputs.size(), inputs.data());
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("输入失败: %d", ret);
-        return {};
-    }
-    ret = rknn_run(this->context, nullptr);
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("计算失败: %d", ret);
-        return {};
-    }
-    ret = rknn_outputs_get(this->context, outputs.size(), outputs.data(), nullptr);
-    if (ret != RKNN_SUCC) {
-        CW_LOG_W("输出失败: %d", ret);
-        return {};
-    }
-    return { this->context, std::move(outputs) };
 }
 
 static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {
@@ -287,3 +223,7 @@ static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {
         attr.dims[7]
     );
 }
+
+template caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run<int8_t>  (int8_t  * blob, const size_t size, const int batch);
+template caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run<uint8_t> (uint8_t * blob, const size_t size, const int batch);
+template caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run<uint16_t>(uint16_t* blob, const size_t size, const int batch);

@@ -25,7 +25,6 @@ class RKNN2Context {
 protected:
     const std::string path;
     rknn_context context = 0;
-    std::vector<uint16_t> data_f16;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
     int   dst_w;
@@ -36,22 +35,22 @@ protected:
 private:
     uint32_t src_w = 0;
     uint32_t src_h = 0;
-    std::vector<uint8_t> dst;
-    std::vector<uint8_t> pad;
-    std::vector<float>   hwc;
-    std::vector<float>   chw;
-    std::vector<int8_t>  pad_i8;
-    std::vector<int8_t>  chw_i8;
-    std::vector<uint8_t> chw_u8;
+    std::vector<uint8_t>  dst;
+    std::vector<uint8_t>  pad;
+    std::vector<float>    hwc;
+    std::vector<float>    chw;
+    std::vector<int8_t>   hwc_i8;
+    std::vector<int8_t>   chw_i8;
+    std::vector<uint8_t>  chw_u8;
+    std::vector<uint16_t> dst_f16;
 public:
     RKNN2Context(std::string path, int c, int h, int w);
     virtual ~RKNN2Context();
 public:
     bool load_model();
     RKNN2Result run(const int h, const int w, const caiwei::media::ImageFrame& image);
-    RKNN2Result run(uint8_t* blob, const size_t size, const int batch = 1);
-    RKNN2Result run(int8_t * blob, const size_t size, const int batch = 1);
-    RKNN2Result run(float  * blob, const size_t size, const int batch = 1);
+    template<typename T>
+    RKNN2Result run(T* blob, const size_t size, const int batch = 1);
 };
 
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {

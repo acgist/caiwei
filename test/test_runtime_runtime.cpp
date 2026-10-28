@@ -16,17 +16,17 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
     if (type == "i8") {
         std::vector<int8_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
-        auto result = context.run(data.data(), data.size());
+        auto result = context.run<int8_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else if (type == "u8") {
         std::vector<uint8_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
-        auto result = context.run(data.data(), data.size());
+        auto result = context.run<uint8_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else {
-        std::vector<float> data(3 * size * size);
+        std::vector<uint16_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
-        auto result = context.run(data.data(), data.size());
+        auto result = context.run<uint16_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     }
 }
