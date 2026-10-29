@@ -9,11 +9,8 @@
 void test_llm() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
-    request.enable_thinking = false;
-    // request.messages.push_back({.role = "user", .content = "1+1=?"});
-    // request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
-    // request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
-    request.messages.push_back({.role = "user", .content = "查询北京天气"});
+    request.enable_thinking = true;
+    request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
     request.tools = {
         caiwei::text::CompletionsRequestTool {
             .type = "function",
@@ -24,32 +21,128 @@ void test_llm() {
             },
         }
     };
-    // {"name": "get_weather", "arguments": {"city": "北京"}}
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
         return;
     }
+    std::string content;
+    std::string thinking;
+    std::string toolcall_name;
+    std::string toolcall_arguments;
     for (const auto& value : ptr->run(request)) {
+        if (value.toolcall) {
+            toolcall_name      += value.toolcall_name;
+            toolcall_arguments += value.toolcall_arguments;
+        } else if (value.thinking) {
+            thinking += value.token;
+        } else {
+            content += value.token;
+        }
         if (!value.finish_reason.empty()) {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
+    std::printf("content: %s\n", content.c_str());
+    std::printf("thinking: %s\n", thinking.c_str());
+    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
+    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
     caiwei_wait_enter();
+    content = "";
+    thinking = "";
+    toolcall_name = "";
+    toolcall_arguments = "";
+    request.messages.clear();
+    request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
+    request.enable_thinking = false;
+    for (const auto& value : ptr->run(request)) {
+        if (value.toolcall) {
+            toolcall_name      += value.toolcall_name;
+            toolcall_arguments += value.toolcall_arguments;
+        } else if (value.thinking) {
+            thinking += value.token;
+        } else {
+            content += value.token;
+        }
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
+    }
+    std::printf("content: %s\n", content.c_str());
+    std::printf("thinking: %s\n", thinking.c_str());
+    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
+    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    caiwei_wait_enter();
+    content = "";
+    thinking = "";
+    toolcall_name = "";
+    toolcall_arguments = "";
+    request.messages.clear();
+    request.messages.push_back({.role = "user", .content = "查询北京天气"});
+    for (const auto& value : ptr->run(request)) {
+        if (value.toolcall) {
+            toolcall_name      += value.toolcall_name;
+            toolcall_arguments += value.toolcall_arguments;
+        } else if (value.thinking) {
+            thinking += value.token;
+        } else {
+            content += value.token;
+        }
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
+    }
+    std::printf("content: %s\n", content.c_str());
+    std::printf("thinking: %s\n", thinking.c_str());
+    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
+    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    caiwei_wait_enter();
+    content = "";
+    thinking = "";
+    toolcall_name = "";
+    toolcall_arguments = "";
     request.tools.reset();
     request.messages.clear();
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     for (const auto& value : ptr->run(request)) {
+        if (value.toolcall) {
+            toolcall_name      += value.toolcall_name;
+            toolcall_arguments += value.toolcall_arguments;
+        } else if (value.thinking) {
+            thinking += value.token;
+        } else {
+            content += value.token;
+        }
         if (!value.finish_reason.empty()) {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
+    std::printf("content: %s\n", content.c_str());
+    std::printf("thinking: %s\n", thinking.c_str());
+    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
+    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
     caiwei_wait_enter();
+    content = "";
+    thinking = "";
+    toolcall_name = "";
+    toolcall_arguments = "";
     request.max_completion_tokens = 2;
     for (const auto& value : ptr->run(request)) {
+        if (value.toolcall) {
+            toolcall_name      += value.toolcall_name;
+            toolcall_arguments += value.toolcall_arguments;
+        } else if (value.thinking) {
+            thinking += value.token;
+        } else {
+            content += value.token;
+        }
         if (!value.finish_reason.empty()) {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
+    std::printf("content: %s\n", content.c_str());
+    std::printf("thinking: %s\n", thinking.c_str());
+    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
+    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
 }
 
 void test_llm_for() {

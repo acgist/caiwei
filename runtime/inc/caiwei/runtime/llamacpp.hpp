@@ -12,8 +12,8 @@ namespace caiwei  {
 namespace context {
 
 struct caiwei_llama_batch {
-    bool success   = true;
-    bool embedding = false;
+    bool success = true;
+    bool mtmd    = false;
     uint32_t    n_prompt_tokens = 0;
     llama_pos   n_pos;
     llama_batch batch;

@@ -309,9 +309,9 @@ struct CompletionResult {
     std::string toolcall_id;
     uint32_t    toolcall_index;
 
-    CompletionResult(bool thinking, bool toolcall, std::string token);
-    CompletionResult(bool thinking, bool toolcall, ToolcallSession& toolcall_session);
-    CompletionResult(bool thinking, bool toolcall, std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
+    CompletionResult(bool thinking, bool toolcall, std::string token, ToolcallSession& toolcall_session);
+    CompletionResult(bool thinking, bool toolcall, uint32_t prompt_tokens, uint32_t completion_tokens);
+    CompletionResult(std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 
 struct EmbeddingResult {

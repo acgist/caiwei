@@ -569,6 +569,11 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         CW_LOG_W("会话异步运行失败: %d", ret);
         co_return;
     }
+    auto raii_guard = caiwei::context::RaiiGuard([&]() {
+        #if ENABLE_CAIWEI_PERF
+        rknn3_perf_session_print(session.get(), &context_session);
+        #endif
+    });
     while (true) {
         std::unique_lock<std::mutex> lock(context_session.mutex);
         if (!context_session.token_result.empty()) {
@@ -589,9 +594,6 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     }
     e_time = std::chrono::steady_clock::now();
     context_session.generate_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
-    #if ENABLE_CAIWEI_PERF
-    rknn3_perf_session_print(session.get(), &context_session);
-    #endif
 }
 
 static int embed_callback(void* userdata, int32_t* tokens, uint64_t n_tokens, void* embed, uint64_t len) {
@@ -631,19 +633,17 @@ static int output_callback(void* userdata, rknn3_tensor* output_tensors, uint32_
 static int result_callback(void* userdata, RKLLMResult* result, LLMCallState state) {
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
+    std::lock_guard<std::mutex> lock(session->mutex);
     if (state == RKLLM_RUN_NORMAL) {
-        std::lock_guard<std::mutex> lock(session->mutex);
+        if (session->stop) {
+            session->condition.notify_one();
+            return 0;
+        }
         for (int i = 0; i < result->num_tokens; ++i) {
             const int32_t token_id = result->token_ids[i];
             if (token_id == LLAMA_TOKEN_NULL) {
                 CW_LOG_W("采样失败: %d", token_id);
-                session->token_result.push_back(caiwei::text::CompletionResult{
-                    false,
-                    false,
-                    caiwei::text::FINISH_REASON_STOP,
-                    session->n_prefill_tokens,
-                    session->n_generate_tokens
-                });
+                session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, session->n_prefill_tokens, session->n_generate_tokens });
                 session->stop = true;
                 session->condition.notify_one();
                 return 0;
@@ -655,23 +655,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 std::fflush(stdout);
                 #endif
                 CW_LOG_D("采样结束: %d", token_id);
-                if (session->toolcall) {
-                    session->token_result.push_back(caiwei::text::CompletionResult{
-                        session->thinking,
-                        session->toolcall,
-                        caiwei::text::FINISH_REASON_TOOL_CALLS,
-                        session->n_prefill_tokens,
-                        session->n_generate_tokens
-                    });
-                } else {
-                    session->token_result.push_back(caiwei::text::CompletionResult{
-                        session->thinking,
-                        session->toolcall,
-                        caiwei::text::FINISH_REASON_STOP,
-                        session->n_prefill_tokens,
-                        session->n_generate_tokens
-                    });
-                }
+                session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->n_prefill_tokens, session->n_generate_tokens });
                 session->stop = true;
                 session->condition.notify_one();
                 return 0;
@@ -685,21 +669,14 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 session->toolcall_session.reset();
             } else if (token_id == session->e_toolcall) {
                 session->toolcall_session.finish();
-                session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->toolcall_session });
-                session->condition.notify_one();
+                session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, "", session->toolcall_session });
             } else {
                 // TODO asr_text 151704
                 auto& token_buffer = session->token_buffer;
                 const int32_t buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
                 if (buffer_length < 0) {
                     CW_LOG_W("解码失败: %d", buffer_length);
-                    session->token_result.push_back(caiwei::text::CompletionResult{
-                        false,
-                        false,
-                        caiwei::text::FINISH_REASON_STOP,
-                        session->n_prefill_tokens,
-                        session->n_generate_tokens
-                    });
+                    session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, session->n_prefill_tokens, session->n_generate_tokens });
                     session->stop = true;
                     session->condition.notify_one();
                     return 0;
@@ -709,71 +686,46 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 std::printf("%s", piece.c_str());
                 std::fflush(stdout);
                 #endif
-                if (session->toolcall) {
-                    session->toolcall_session.put_token(std::move(piece));
-                    session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->toolcall_session });
-                } else {
-                    session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, piece });
-                }
-                session->condition.notify_one();
+                session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, std::move(piece), session->toolcall_session });
             }
         }
+        session->condition.notify_one();
     } else if (state == RKLLM_RUN_FINISH) {
         CW_LOG_I("会话运行完成");
-        std::lock_guard<std::mutex> lock(session->mutex);
-        if (session->toolcall) {
-            session->token_result.push_back(caiwei::text::CompletionResult{
-                session->thinking,
-                session->toolcall,
-                caiwei::text::FINISH_REASON_TOOL_CALLS,
-                session->n_prefill_tokens,
-                session->n_generate_tokens
-            });
-        } else {
-            session->token_result.push_back(caiwei::text::CompletionResult{
-                session->thinking,
-                session->toolcall,
-                caiwei::text::FINISH_REASON_STOP,
-                session->n_prefill_tokens,
-                session->n_generate_tokens
-            });
+        if (session->stop) {
+            session->condition.notify_one();
+            return 0;
         }
+        session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->n_prefill_tokens, session->n_generate_tokens });
         session->stop = true;
         session->condition.notify_one();
     } else if (state == RKLLM_RUN_STOP) {
         CW_LOG_I("会话运行停止");
-        std::lock_guard<std::mutex> lock(session->mutex);
-        if (session->toolcall) {
-            session->token_result.push_back(caiwei::text::CompletionResult{
-                session->thinking,
-                session->toolcall,
-                caiwei::text::FINISH_REASON_TOOL_CALLS,
-                session->n_prefill_tokens,
-                session->n_generate_tokens
-            });
-        } else {
-            session->token_result.push_back(caiwei::text::CompletionResult{
-                session->thinking,
-                session->toolcall,
-                caiwei::text::FINISH_REASON_STOP,
-                session->n_prefill_tokens,
-                session->n_generate_tokens
-            });
+        if (session->stop) {
+            session->condition.notify_one();
+            return 0;
         }
+        session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, session->n_prefill_tokens, session->n_generate_tokens });
         session->stop = true;
         session->condition.notify_one();
     } else if (state == RKLLM_RUN_ERROR) {
         CW_LOG_W("会话运行错误");
-        std::lock_guard<std::mutex> lock(session->mutex);
-        session->token_result.push_back(caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, session->n_prefill_tokens, session->n_generate_tokens });
+        if (session->stop) {
+            session->condition.notify_one();
+            return 0;
+        }
+        session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, session->n_prefill_tokens, session->n_generate_tokens });
         session->stop = true;
         session->condition.notify_one();
     } else if (state == RKLLM_RUN_WAITING) {
         CW_LOG_W("会话运行告警");
     } else if (state == RKLLM_RUN_MAX_NEW_TOKEN_REACHED) {
         CW_LOG_W("会话词元超量");
-        std::lock_guard<std::mutex> lock(session->mutex);
-        session->token_result.push_back(caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_LENGTH, session->n_prefill_tokens, session->n_generate_tokens });
+        if (session->stop) {
+            session->condition.notify_one();
+            return 0;
+        }
+        session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_LENGTH, session->n_prefill_tokens, session->n_generate_tokens });
         session->stop = true;
         session->condition.notify_one();
     } else {

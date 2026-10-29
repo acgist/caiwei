@@ -7,32 +7,46 @@
 caiwei::text::CompletionResult::CompletionResult(
     bool thinking,
     bool toolcall,
-    std::string token
-) : thinking(thinking), toolcall(toolcall), token(std::move(token)) {
-}
-
-caiwei::text::CompletionResult::CompletionResult(
-    bool thinking,
-    bool toolcall,
+    std::string token,
     ToolcallSession& toolcall_session
 ) : thinking(thinking), toolcall(toolcall) {
-    this->toolcall_name      = toolcall_session.get_name();
-    this->toolcall_arguments = toolcall_session.get_arguments();
-    this->toolcall_id        = toolcall_session.toolcall_id;
-    this->toolcall_index     = toolcall_session.toolcall_index;
+    if (toolcall) {
+        toolcall_session.put_token(std::move(token));
+        this->toolcall_name      = toolcall_session.get_name();
+        this->toolcall_arguments = toolcall_session.get_arguments();
+        this->toolcall_id        = toolcall_session.toolcall_id;
+        this->toolcall_index     = toolcall_session.toolcall_index;
+    } else {
+        this->token = std::move(token);
+    }
+}
+
+caiwei::text::CompletionResult::CompletionResult(
+    std::string finish_reason,
+    uint32_t prompt_tokens,
+    uint32_t completion_tokens
+) : thinking(false),
+    toolcall(false),
+    finish_reason(std::move(finish_reason)),
+    prompt_tokens(prompt_tokens),
+    completion_tokens(completion_tokens) {
+    this->total_tokens = this->prompt_tokens + this->completion_tokens;
 }
 
 caiwei::text::CompletionResult::CompletionResult(
     bool thinking,
     bool toolcall,
-    std::string finish_reason,
     uint32_t prompt_tokens,
     uint32_t completion_tokens
 ) : thinking(thinking),
     toolcall(toolcall),
-    finish_reason(std::move(finish_reason)),
     prompt_tokens(prompt_tokens),
     completion_tokens(completion_tokens) {
+    if (toolcall) {
+        this->finish_reason = caiwei::text::FINISH_REASON_TOOL_CALLS;
+    } else {
+        this->finish_reason = caiwei::text::FINISH_REASON_STOP;
+    }
     this->total_tokens = this->prompt_tokens + this->completion_tokens;
 }
 

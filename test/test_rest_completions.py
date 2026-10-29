@@ -179,4 +179,6 @@ RERANKING,QWEN,qwen3-reranking,/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Q
 # test_asr()
 # test_llm()
 # test_vlm()
-test_media()
+# test_media()
+for i in range(100):
+    test_llm()

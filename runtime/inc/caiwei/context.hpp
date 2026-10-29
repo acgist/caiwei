@@ -157,6 +157,20 @@ public:
 void init();
 void stop();
 
+template<typename F>
+struct RaiiGuard {
+    F fun;
+    explicit RaiiGuard(F&& fun) : fun(std::forward<F>(fun)) {
+    }
+    ~RaiiGuard() noexcept {
+        this->fun();
+    }
+    RaiiGuard(const RaiiGuard&) = delete;
+    RaiiGuard& operator=(const RaiiGuard&) = delete;
+    RaiiGuard(RaiiGuard&&) = delete;
+    RaiiGuard& operator=(RaiiGuard&&) = delete;
+};
+
 } // context
 } // caiwei
 
