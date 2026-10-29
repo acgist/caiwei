@@ -2,13 +2,13 @@
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
 
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+#include "rknn2/rknn_api.h"
+#endif
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 #include "rknn3/rknn3_api.h"
 #endif
 #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
-#include "llama.h"
-
-#include "mtmd.h"
 #include "mtmd-helper.h"
 #endif
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
@@ -28,10 +28,16 @@ static const char* get_type_name(caiwei::runtime::Type type) {
     }
 }
 
-caiwei::runtime::Runtime::Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type)
-  : id(caiwei::env::id()),
-    min_pool(min_pool),
-    max_pool(max_pool),
+caiwei::runtime::Runtime::Runtime(
+    int min_pool,
+    int max_pool,
+    int timeout,
+    int keepalive,
+    bool share,
+    caiwei::runtime::Type type
+) : id(caiwei::env::id()),
+    min_pool(std::clamp(min_pool, 0, max_pool)),
+    max_pool(std::clamp(max_pool, 1, max_pool)),
     timeout(timeout),
     keepalive(keepalive),
     share(share),
@@ -142,13 +148,14 @@ size_t caiwei::runtime::Runtime::optimize() {
             continue;
         }
         for (auto iter = map_iter->second.begin(); iter != map_iter->second.end();) {
-            if ((*iter)->ref_count > 0) {
+            const auto& ptr = *iter;
+            if (ptr->ref_count > 0) {
                 ++iter;
                 continue;
             }
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - (*iter)->last_run_time);
+            const auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - ptr->last_run_time);
             if (duration.count() > this->keepalive) {
-                CW_LOG_I("释放context: %s = %s", map_iter->first.c_str(), (*iter)->id.c_str());
+                CW_LOG_I("释放context: %s = %s", map_iter->first.c_str(), ptr->id.c_str());
                 iter = map_iter->second.erase(iter);
             } else {
                 ++iter;
@@ -224,6 +231,16 @@ void caiwei::runtime::stop() {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 static void init_rknn2() {
+    rknn_context ctx = 0;
+    int ret = rknn_init(&ctx, nullptr, 0, 0, nullptr);
+    if (ret == RKNN_SUCC || ret == RKNN_ERR_MODEL_INVALID) {
+        CW_LOG_I("RKNN2设备正常");
+    } else {
+        CW_LOG_W("RKNN2设备无效");
+    }
+    if (ctx != 0) {
+        rknn_destroy(ctx);
+    }
 }
 #endif
 
@@ -232,11 +249,11 @@ static void init_rknn3() {
     rknn3_devices devs;
     int ret = rknn3_find_devices(&devs);
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_I("没有找到RKNN3设备");
+        CW_LOG_W("RKNN3设备无效");
         return;
     }
-    for (int i = 0; i < devs.n_devices; i++) {
-        CW_LOG_I("RKNN3设备 %d: 类型=%s, ID=%s", i, devs.devices[i].type, devs.devices[i].id);
+    for (uint32_t i = 0; i < devs.n_devices; i++) {
+        CW_LOG_I("RKNN3设备: %u = %s => %s", i, devs.devices[i].type, devs.devices[i].id);
     }
 }
 #endif
@@ -247,15 +264,20 @@ static void caiwei_llama_log(enum ggml_log_level level, const char* text, void* 
     if (n == 0) {
         return;
     }
-    n--;
+    if (text[n - 1] == '\n') {
+        if (n > 1 && text[n - 2] == '\r') {
+            n--;
+        }
+        n--;
+    }
     if (level == GGML_LOG_LEVEL_DEBUG) {
-        // CW_LOG_D("%.*s", n, text);
+        // CW_LOG_D("%.*s", static_cast<int>(n), text);
     } else if (level == GGML_LOG_LEVEL_INFO) {
-        CW_LOG_I("%.*s", n, text);
+        CW_LOG_I("%.*s", static_cast<int>(n), text);
     } else if (level == GGML_LOG_LEVEL_WARN) {
-        CW_LOG_W("%.*s", n, text);
+        CW_LOG_W("%.*s", static_cast<int>(n), text);
     } else if (level == GGML_LOG_LEVEL_ERROR) {
-        CW_LOG_E("%.*s", n, text);
+        CW_LOG_E("%.*s", static_cast<int>(n), text);
     } else {
         // -
     }
@@ -263,18 +285,16 @@ static void caiwei_llama_log(enum ggml_log_level level, const char* text, void* 
 
 static void init_llamacpp() {
     llama_log_set(caiwei_llama_log, nullptr);
-    mtmd_log_set(caiwei_llama_log, nullptr);
     mtmd_helper_log_set(caiwei_llama_log, nullptr);
     ggml_backend_load_all();
     CW_LOG_I("llama.cpp version: %s", ggml_version());
     const size_t backend_count = ggml_backend_reg_count();
     for (size_t i = 0; i < backend_count; i++) {
         ggml_backend_reg* reg = ggml_backend_reg_get(i);
-        if (!reg) {
+        if (reg == nullptr) {
             continue;
         }
-        const char* name = ggml_backend_reg_name(reg);
-        CW_LOG_I("llama.cpp backend name: %s", name);
+        CW_LOG_I("llama.cpp backend name: %s", ggml_backend_reg_name(reg));
     }
 }
 #endif

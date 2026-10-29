@@ -16,6 +16,9 @@ caiwei::context::Tokenizer::~Tokenizer() {
 }
 
 bool caiwei::context::Tokenizer::load(const std::string& path) {
+    if (this->model != nullptr) {
+        return true;
+    }
     llama_model_params params = llama_model_default_params();
     params.vocab_only = true;
     this->model = llama_model_load_from_file(path.c_str(), params);
@@ -23,8 +26,6 @@ bool caiwei::context::Tokenizer::load(const std::string& path) {
         CW_LOG_W("分词模型加载失败: %s", path.c_str());
         return false;
     }
-    // TODO
-    // llama_model_chat_template
     this->vocab = llama_model_get_vocab(this->model);
     if (this->vocab == nullptr) {
         CW_LOG_W("分词模型加载失败: %s", path.c_str());
@@ -78,7 +79,7 @@ std::string caiwei::context::Tokenizer::detokenize(llama_token* tokens, int32_t 
 }
 
 llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std::string& piece, bool add_special, bool parse_special) {
-    llama_token token;
+    llama_token token{};
     if (llama_tokenize(vocab, piece.c_str(), piece.size(), &token, 1, add_special, parse_special) < 0) {
         CW_LOG_W("编码失败: %s", piece.c_str());
         return LLAMA_TOKEN_NULL;
@@ -88,16 +89,16 @@ llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std:
 
 std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value, bool special) {
     if (token == LLAMA_TOKEN_NULL) {
-        return std::move(default_value);
+        return default_value;
     }
     std::string piece;
-    piece.resize(piece.capacity());
+    piece.resize(16);
     const int length = llama_token_to_piece(vocab, token, piece.data(), piece.size(), 0, special);
     if (length < 0) {
         piece.resize(-length);
         if (llama_token_to_piece(vocab, token, piece.data(), piece.size(), 0, special) != -length) {
             CW_LOG_W("解码失败: %d", length);
-            return std::move(default_value);
+            return default_value;
         }
     } else {
         piece.resize(length);
@@ -125,6 +126,19 @@ std::string caiwei::context::detokenize(const llama_vocab* vocab, llama_token* t
     return text;
 }
 
+std::vector<llama_token> caiwei::context::tokenize(const llama_vocab* vocab, const std::string& text, bool add_special, bool parse_special) {
+    if (text.empty()) {
+        return {};
+    }
+    const int n_tokens = -llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, parse_special);
+    std::vector<llama_token> tokens(n_tokens);
+    if (llama_tokenize(vocab, text.c_str(), text.size(), tokens.data(), tokens.size(), add_special, parse_special) < 0) {
+        CW_LOG_W("编码失败: %s", text.c_str());
+        return {};
+    }
+    return tokens;
+}
+
 void caiwei::context::euclidean(const float* embd, float* out, int size) {
     if (size < 0) {
         return;
@@ -141,7 +155,7 @@ void caiwei::context::euclidean(const float* embd, float* out, int size) {
         sum += embd[i] * embd[i];
     }
     sum = std::sqrt(sum);
-    const float norm = sum > 0.0 ? 1.0 / sum : 0.0F;
+    const float norm = sum > 0.0 ? 1.0F / sum : 0.0F;
     for (int i = 0; i < size; i++) {
         out[i] = embd[i] * norm;
     }

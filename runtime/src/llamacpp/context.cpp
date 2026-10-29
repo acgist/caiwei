@@ -1,8 +1,6 @@
 #include <algorithm>
 
 #include "llama-cpp.h"
-
-#include "mtmd.h"
 #include "mtmd-helper.h"
 
 #include "caiwei/log.hpp"
@@ -443,19 +441,6 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     llama_perf_sampler_print(sampler.get());
     llama_perf_context_print(context.get());
     #endif
-}
-
-std::vector<llama_token> caiwei::context::tokenize(const llama_vocab* vocab, const std::string& text, bool add_special, bool parse_special) {
-    if (text.empty()) {
-        return {};
-    }
-    const int n_tokens = -llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, parse_special);
-    std::vector<llama_token> tokens(n_tokens);
-    if (llama_tokenize(vocab, text.c_str(), text.size(), tokens.data(), tokens.size(), add_special, parse_special) < 0) {
-        CW_LOG_W("编码失败: %s", text.c_str());
-        return {};
-    }
-    return tokens;
 }
 
 static void batch_add(llama_batch& batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id>& seq_id, bool logits) {

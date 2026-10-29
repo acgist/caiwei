@@ -1,4 +1,5 @@
 #include "caiwei/log.hpp"
+#include "caiwei/tokenizer.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
 caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(

@@ -1,8 +1,7 @@
 #include "caiwei/env.hpp"
 #include "caiwei/session.hpp"
 
-caiwei::session::Session::Session() {
-    this->id = caiwei::env::id();
+caiwei::session::Session::Session() : id(caiwei::env::id()) {
 }
 
 caiwei::session::Session::~Session() {

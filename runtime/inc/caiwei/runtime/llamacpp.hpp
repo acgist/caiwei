@@ -3,8 +3,6 @@
 
 #include "mtmd.h"
 
-#include "llama.h"
-
 #include <generator>
 
 #include "caiwei/context.hpp"
@@ -131,8 +129,6 @@ public:
     bool load() override;
     caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
 };
-
-std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = true, bool parse_special = true);
 
 } // context
 } // caiwei

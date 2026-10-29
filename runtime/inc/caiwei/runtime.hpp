@@ -42,9 +42,9 @@ private:
     int timeout   = 30;
     int keepalive = 600;
     bool share    = false;
+    caiwei::runtime::Type type;
     std::mutex mutex;
     std::condition_variable condition;
-    caiwei::runtime::Type type;
     std::map<std::string, std::vector<std::shared_ptr<caiwei::context::Context>>> context_map;
 public:
     const std::string id;

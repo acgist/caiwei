@@ -2,14 +2,16 @@
 #include "caiwei/manager.hpp"
 
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include <condition_variable>
 
-static void runtime_optimize_timer();
-static bool runtime_optimize_running = false;
-static std::mutex runtime_optimize_mutex;
-static std::thread runtime_optimize_thread;
+static std::atomic<bool>       runtime_optimize_running = false;
+static std::mutex              runtime_optimize_mutex;
+static std::thread             runtime_optimize_thread;
 static std::condition_variable runtime_optimize_cv;
+
+static void runtime_optimize_timer();
 
 void caiwei::manager::init() {
     runtime_optimize_timer();
@@ -31,6 +33,9 @@ void caiwei::manager::stop() {
 }
 
 static void runtime_optimize_timer() {
+    if (runtime_optimize_thread.joinable()) {
+        return;
+    }
     runtime_optimize_running = true;
     runtime_optimize_thread = std::thread([]() {
         while (runtime_optimize_running) {
@@ -42,7 +47,7 @@ static void runtime_optimize_timer() {
             std::lock_guard<std::mutex> runtime_lock(caiwei::runtime::runtime_mutex);
             for (auto iter = caiwei::runtime::runtime_map.begin(); iter != caiwei::runtime::runtime_map.end();) {
                 if (iter->second->optimize() == 0) {
-                    CW_LOG_I("优化释放runtime: %s", iter->second->id.c_str());
+                    CW_LOG_I("释放runtime: %s", iter->second->id.c_str());
                     iter = caiwei::runtime::runtime_map.erase(iter);
                 } else {
                     ++iter;
