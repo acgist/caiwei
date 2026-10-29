@@ -136,7 +136,12 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
     }
     CW_LOG_D("回收context: %s", context->id.c_str());
     std::lock_guard<std::mutex> lock(mutex);
-    context->ref_count--;
+    if (context->ref_count > 0) {
+        context->ref_count--;
+    } else {
+        CW_LOG_W("回收context计数失败: %s = %d", context->id.c_str(), context->ref_count.load());
+        context->ref_count = 0;
+    }
     this->condition.notify_all();
 }
 
