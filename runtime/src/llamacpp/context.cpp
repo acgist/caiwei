@@ -349,8 +349,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
         co_return;
     }
     llama_batch& batch = caiwei_batch.batch;
-    std::string buffer;
-    buffer.resize(1024);
+    TokenBuffer token_buffer;
     llama_token token_id;
     bool thinking = false;
     bool toolcall = false;
@@ -373,6 +372,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
             break;
         }
+        ++generated_tokens;
         if (llama_vocab_is_eog(this->vocab, token_id)) {
             #if ENABLE_CAIWEI_PERF
             std::printf("\n");
@@ -386,14 +386,6 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             }
             break;
         }
-        ++generated_tokens;
-        int32_t buffer_length = llama_token_to_piece(this->vocab, token_id, buffer.data(), buffer.size(), 0, true);
-        if (buffer_length < 0) {
-            // 单个词元缓存不会超限
-            CW_LOG_W("解码失败: %d", buffer_length);
-            co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
-            break;
-        }
         if (token_id == b_thinking) {
             thinking = true;
         } else if (token_id == e_thinking) {
@@ -405,7 +397,13 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             toolcall_session.finish();
             co_yield caiwei::text::CompletionResult{ thinking, toolcall, toolcall_session };
         } else {
-            std::string token(buffer.begin(), buffer.begin() + buffer_length);
+            const int32_t buffer_length = caiwei::context::token_to_piece(this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length());
+            if (buffer_length < 0) {
+                CW_LOG_W("解码失败: %d", buffer_length);
+                co_yield caiwei::text::CompletionResult{ false, false, caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
+                break;
+            }
+            std::string token = token_buffer.get_token(buffer_length);
             #if ENABLE_CAIWEI_PERF
             std::printf("%s", token.c_str());
             std::fflush(stdout);

@@ -52,6 +52,7 @@ struct alignas(16) ContextSession {
     int        embedding_dim;
     float16  * embedding_data{ nullptr };
     Tokenizer* tokenizer     { nullptr };
+    TokenBuffer token_buffer;
     caiwei::text::ToolcallSession toolcall_session;
     std::vector<std::vector<float>> pool_result{};
     std::vector<caiwei::text::CompletionResult> token_result{};

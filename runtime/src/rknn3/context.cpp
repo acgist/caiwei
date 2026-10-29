@@ -633,14 +633,28 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
     if (state == RKLLM_RUN_NORMAL) {
         std::lock_guard<std::mutex> lock(session->mutex);
-        session->n_generate_tokens += result->num_tokens;
         for (int i = 0; i < result->num_tokens; ++i) {
             const int32_t token_id = result->token_ids[i];
+            if (token_id == LLAMA_TOKEN_NULL) {
+                CW_LOG_W("采样失败: %d", token_id);
+                session->token_result.push_back(caiwei::text::CompletionResult{
+                    false,
+                    false,
+                    caiwei::text::FINISH_REASON_STOP,
+                    session->n_prefill_tokens,
+                    session->n_generate_tokens
+                });
+                session->stop = true;
+                session->condition.notify_one();
+                return 0;
+            }
+            ++session->n_generate_tokens;
             if (tokenizer->is_eog(token_id)) {
                 #if ENABLE_CAIWEI_PERF
                 std::printf("\n");
                 std::fflush(stdout);
                 #endif
+                CW_LOG_D("采样结束: %d", token_id);
                 if (session->toolcall) {
                     session->token_result.push_back(caiwei::text::CompletionResult{
                         session->thinking,
@@ -675,7 +689,22 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 session->condition.notify_one();
             } else {
                 // TODO asr_text 151704
-                std::string piece = tokenizer->token_to_piece(token_id);
+                auto& token_buffer = session->token_buffer;
+                const int32_t buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
+                if (buffer_length < 0) {
+                    CW_LOG_W("解码失败: %d", buffer_length);
+                    session->token_result.push_back(caiwei::text::CompletionResult{
+                        false,
+                        false,
+                        caiwei::text::FINISH_REASON_STOP,
+                        session->n_prefill_tokens,
+                        session->n_generate_tokens
+                    });
+                    session->stop = true;
+                    session->condition.notify_one();
+                    return 0;
+                }
+                std::string piece = token_buffer.get_token(buffer_length);
                 #if ENABLE_CAIWEI_PERF
                 std::printf("%s", piece.c_str());
                 std::fflush(stdout);

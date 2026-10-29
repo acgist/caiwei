@@ -5,6 +5,80 @@
 #include "caiwei/log.hpp"
 #include "caiwei/tokenizer.hpp"
 
+inline static int buffer_size(uint8_t v) {
+    if (v < 0x80)           return 1;
+    if ((v & 0xE0) == 0xC0) return 2;
+    if ((v & 0xF0) == 0xE0) return 3;
+    if ((v & 0xF8) == 0xF0) return 4;
+    return 0;
+}
+
+caiwei::context::TokenBuffer::TokenBuffer() {
+    this->buffer.resize(this->len);
+}
+
+int caiwei::context::TokenBuffer::get_length() {
+    return this->len - this->pos;
+}
+
+char* caiwei::context::TokenBuffer::get_buffer() {
+    return this->buffer.data() + this->pos;
+}
+
+std::string caiwei::context::TokenBuffer::get_token(int length) {
+    if (length == 0) {
+        return "";
+    }
+    if (length < 0 || this->pos + length > this->len) {
+        CW_LOG_D("长度错误: %d + %d > %d", this->pos, length, this->len);
+        return "";
+    }
+    int i = 0;
+    this->pos += length;
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(this->buffer.data());
+    while (i < this->pos) {
+        const int size = buffer_size(buf[i]);
+        if (size == 0) {
+            CW_LOG_W("非法字节: %d", buf[i]);
+            std::copy(buf + i + 1, buf + this->pos, this->buffer.begin() + i);
+            --this->pos;
+            continue;
+        }
+        if (i + size > this->pos) {
+            break;
+        }
+        bool verify = true;
+        for (int k = 1; k < size; ++k) {
+            if ((buf[i + k] & 0xC0) != 0x80) {
+                CW_LOG_W("非法字节: %d", buf[i + k]);
+                verify = false;
+                break;
+            }
+        }
+        if (verify) {
+            i += size;
+        } else {
+            std::copy(buf + i + 1, buf + this->pos, this->buffer.begin() + i);
+            --this->pos;
+        }
+    }
+    if (i == 0) {
+        return "";
+    }
+    std::string ret = std::string(buffer.data(), i);
+    if (i < this->pos) {
+        std::copy(buf + i, buf + this->pos, this->buffer.begin());
+    }
+    this->pos -= i;
+    return ret;
+}
+
+std::string caiwei::context::TokenBuffer::flush() {
+    std::string ret = std::string(buffer.data(), this->pos);
+    this->pos = 0;
+    return ret;
+}
+
 caiwei::context::Tokenizer::Tokenizer() {
 }
 
@@ -74,8 +148,8 @@ std::string caiwei::context::Tokenizer::token_to_piece(llama_token token, bool s
     return caiwei::context::token_to_piece(this->vocab, token, special);
 }
 
-int caiwei::context::Tokenizer::token_to_piece(llama_token token, std::string& piece, bool special) {
-    return caiwei::context::token_to_piece(this->vocab, token, piece, special);
+int caiwei::context::Tokenizer::token_to_piece(llama_token token, char* buf, int len, bool special) {
+    return caiwei::context::token_to_piece(this->vocab, token, buf, len, special);
 }
 
 int caiwei::context::Tokenizer::tokenize(const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special, bool parse_special) {
@@ -118,8 +192,8 @@ std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_toke
     return piece;
 }
 
-int caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, std::string& piece, bool special) {
-    return llama_token_to_piece(vocab, token, piece.data(), piece.size(), 0, special);
+int caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, char* buf, int len, bool special) {
+    return llama_token_to_piece(vocab, token, buf, len, 0, special);
 }
 
 int caiwei::context::tokenize(const llama_vocab* vocab, const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special, bool parse_special) {

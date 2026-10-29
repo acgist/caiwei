@@ -12,10 +12,24 @@ namespace context {
 
 llama_token piece_to_token(const llama_vocab* vocab, const std::string& piece, bool add_special = false, bool parse_special = true);
 std::string token_to_piece(const llama_vocab* vocab, llama_token token, bool special = true);
-int token_to_piece(const llama_vocab* vocab, llama_token token, std::string& piece, bool special = true);;
+int token_to_piece(const llama_vocab* vocab, llama_token token, char* buf, int len, bool special = true);;
 int tokenize(const llama_vocab* vocab, const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = false, bool parse_special = true);
 std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = false, bool parse_special = true);
 std::string detokenize(const llama_vocab* vocab, llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
+
+class TokenBuffer {
+private:
+          int pos = 0;
+    const int len = 1024;
+    std::string buffer;
+public:
+    TokenBuffer();
+public:
+    int   get_length();
+    char* get_buffer();
+    std::string get_token(int length);
+    std::string flush();
+};
 
 class Tokenizer {
 private:
@@ -35,7 +49,7 @@ public:
     llama_token get_pad();
     llama_token piece_to_token(const std::string& piece, bool add_special = false, bool parse_special = true);
     std::string token_to_piece(llama_token token, bool special = true);
-    int token_to_piece(llama_token token, std::string& piece, bool special = true);
+    int token_to_piece(llama_token token, char* buf, int len, bool special = true);
     int tokenize(const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = false, bool parse_special = true);
     std::vector<llama_token> tokenize(const std::string& text, bool add_special = false, bool parse_special = true);
     std::string detokenize(llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
