@@ -182,7 +182,7 @@ bool caiwei::media::MediaMuxer::open_video() {
 }
 
 bool caiwei::media::MediaMuxer::stop() {
-    return this->stop_audio() && this->stop_video();
+    return this->stop_audio() & this->stop_video();
 }
 
 bool caiwei::media::MediaMuxer::stop_audio() {

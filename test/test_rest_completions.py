@@ -126,8 +126,8 @@ def test_media():
     stream = True
     client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
     resp = client.chat.completions.create(
-        # model="qwen3-asr",
-        model="qwen3-vlm",
+        model="qwen3-asr",
+        # model="qwen3-vlm",
         # model="yolo26n-cls",
         # model="yolo26n-det",
         stream=stream,
