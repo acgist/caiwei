@@ -236,16 +236,7 @@ void caiwei::runtime::stop() {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 static void init_rknn2() {
-    rknn_context ctx = 0;
-    int ret = rknn_init(&ctx, nullptr, 0, 0, nullptr);
-    if (ret == RKNN_SUCC || ret == RKNN_ERR_MODEL_INVALID) {
-        CW_LOG_I("RKNN2设备正常");
-    } else {
-        CW_LOG_W("RKNN2设备无效");
-    }
-    if (ctx != 0) {
-        rknn_destroy(ctx);
-    }
+    CW_LOG_I("RKNN2设备环境");
 }
 #endif
 
@@ -258,7 +249,7 @@ static void init_rknn3() {
         return;
     }
     for (uint32_t i = 0; i < devs.n_devices; i++) {
-        CW_LOG_I("RKNN3设备: %u = %s => %s", i, devs.devices[i].type, devs.devices[i].id);
+        CW_LOG_I("RKNN3设备环境: %u = %s => %s", i, devs.devices[i].type, devs.devices[i].id);
     }
 }
 #endif

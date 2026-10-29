@@ -570,6 +570,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         co_return;
     }
     auto raii_guard = caiwei::context::RaiiGuard([&]() {
+        rknn3_session_stop(session.get());
         #if ENABLE_CAIWEI_PERF
         rknn3_perf_session_print(session.get(), &context_session);
         #endif
@@ -760,29 +761,32 @@ void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::c
     std::printf("\n--------------------------------------------------------------------------------------\n");
     std::printf(" %-12s  %-15s  %-8s  %-23s  %-23s\n", "Stage", "Total Time (ms)", "Tokens", "Time per Token (ms)", "Tokens per Second");
     std::printf("--------------------------------------------------------------------------------------\n");
+    const float prefill_ms = context_session->prefill_ms;
     const uint32_t prefill_n_tokens = context_session->n_prefill_tokens;
-    if (prefill_n_tokens > 0) {
-        const float prefill_tpt = prefill_n_tokens == 0 ? 0.0F :        context_session->prefill_ms / prefill_n_tokens;
-        const float prefill_tps = prefill_n_tokens == 0 ? 0.0F : 1e3F / context_session->prefill_ms * prefill_n_tokens;
-        std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Prefill", context_session->prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
+    if (prefill_n_tokens > 0 && prefill_ms > 0.0F) {
+        const float prefill_tpt = prefill_n_tokens == 0 ? 0.0F :        prefill_ms / prefill_n_tokens;
+        const float prefill_tps = prefill_n_tokens == 0 ? 0.0F : 1e3F / prefill_ms * prefill_n_tokens;
+        std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Prefill", prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
     }
+    const float generate_ms = context_session->generate_ms;
     const uint32_t generate_n_tokens = context_session->n_generate_tokens;
-    if (generate_n_tokens > 0) {
-        const float generate_tpt = generate_n_tokens == 0 ? 0.0F :        context_session->generate_ms / generate_n_tokens;
-        const float generate_tps = generate_n_tokens == 0 ? 0.0F : 1e3F / context_session->generate_ms * generate_n_tokens;
-        std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", context_session->generate_ms, generate_n_tokens, generate_tpt, generate_tps);
+    if (generate_n_tokens > 0 && generate_ms > 0.0F) {
+        const float generate_tpt = generate_n_tokens == 0 ? 0.0F :        generate_ms / generate_n_tokens;
+        const float generate_tps = generate_n_tokens == 0 ? 0.0F : 1e3F / generate_ms * generate_n_tokens;
+        std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", generate_ms, generate_n_tokens, generate_tpt, generate_tps);
     }
+    const float feature_ms = context_session->feature_ms;
     const int audio_frames = context_session->audio_frames;
-    if (audio_frames > 0) {
-        std::printf("--------------------------------------------------------------------------------------\n");
-        const float fps = audio_frames * 1000.0F / context_session->feature_ms;
-        std::printf(" Audio latency = %.2f ms, FPS = %.2f\n", context_session->feature_ms, fps);
-    }
     const int image_frames = context_session->image_frames;
-    if (image_frames > 0) {
+    if (audio_frames > 0 && feature_ms > 0.0F) {
         std::printf("--------------------------------------------------------------------------------------\n");
-        const float fps = image_frames * 1000.0F / context_session->feature_ms;
-        std::printf(" Image latency = %.2f ms, FPS = %.2f\n", context_session->feature_ms, fps);
+        const float fps = audio_frames * 1000.0F / feature_ms;
+        std::printf(" Audio latency = %.2f ms, FPS = %.2f\n", feature_ms, fps);
+    }
+    if (image_frames > 0 && feature_ms > 0.0F) {
+        std::printf("--------------------------------------------------------------------------------------\n");
+        const float fps = image_frames * 1000.0F / feature_ms;
+        std::printf(" Image latency = %.2f ms, FPS = %.2f\n", feature_ms, fps);
     }
     std::printf("--------------------------------------------------------------------------------------\n\n");
 }
