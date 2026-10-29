@@ -11,7 +11,7 @@ std::string caiwei::session::EmbeddingsSession::get() {
     auto result = ptr->run(this->request);
     caiwei::text::EmbeddingsResponse response;
     response.model = request.model;
-    for (int i = 0; i < result.result.size(); ++i) {
+    for (size_t i = 0; i < result.result.size(); ++i) {
         caiwei::text::EmbeddingsResponseData data;
         data.index = i;
         data.embedding = std::move(result.result[i]);

@@ -126,15 +126,15 @@ def test_media():
     stream = True
     client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
     resp = client.chat.completions.create(
-        model="qwen3-asr",
-        # model="qwen3-vlm",
+        # model="qwen3-asr",
+        model="qwen3-vlm",
+        # model="yolo26n-cls",
         # model="yolo26n-det",
         stream=stream,
         extra_body={
             # "media_url": "./caiwei.mp3",
             "media_url": "./caiwei.mp4",
             "media_type": "file",
-            "asr_samples": 32000,
             "drop_on_full": False,
             # "model_list": ["qwen3-vlm"],
             # "model_list": ["qwen3-asr", "qwen3-vlm"],

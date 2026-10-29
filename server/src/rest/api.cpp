@@ -51,20 +51,21 @@ static void get_video_play() {
             auto url  = request.get_param_value("url");
             auto type = request.get_param_value("type");
             auto copy = request.get_param_value("copy");
-            caiwei::session::VideoPlaySession session(copy == "true", type, url, [&sink](const char* data, int length) {
-                if (length == 0) {
-                    return sink.is_writable();
-                }
-                if (sink.is_writable()) {
-                    sink.write("data: ", 6);
-                    if(length > 0) {
-                        sink.write(data, length);
+            caiwei::session::VideoPlaySession session(copy == "true", url, type, [&sink](const char* data, int length) {
+                const bool writable = sink.is_writable();
+                if (writable) {
+                    if (data == nullptr || length == 0) {
+                        return writable;
                     } else {
-                        sink.write(data, std::strlen(data));
+                        sink.write("data: ", 6);
+                        if (length < 0) {
+                            length = std::strlen(data);
+                        }
+                        sink.write(data, length);
+                        sink.write("\n\n", 2);
                     }
-                    sink.write("\n\n", 2);
                 }
-                return sink.is_writable();
+                return writable;
             });
             session.get().get();
             sink.done();
@@ -94,20 +95,23 @@ static void post_chat_completions() {
         auto completions = caiwei::text::json_to_completions(request.body);
         if (completions.stream) {
             response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [req = std::move(completions)](size_t /*offset*/, httplib::DataSink& sink) mutable -> bool {
-                caiwei::session::CompletionsSession session(req, [&sink](const char* data, int length) {
-                    if (length == 0) {
-                        return sink.is_writable();
-                    }
-                    if (sink.is_writable()) {
-                        sink.write("data: ", 6);
-                        if(length > 0) {
-                            sink.write(data, length);
+                auto mutex = std::make_shared<std::mutex>();
+                caiwei::session::CompletionsSession session(req, [&sink, mutex](const char* data, int length) {
+                    const bool writable = sink.is_writable();
+                    if (writable) {
+                        if (data == nullptr || length == 0) {
+                            return writable;
                         } else {
-                            sink.write(data, std::strlen(data));
+                            std::lock_guard<std::mutex> lock(*mutex);
+                            sink.write("data: ", 6);
+                            if (length < 0) {
+                                length = std::strlen(data);
+                            }
+                            sink.write(data, length);
+                            sink.write("\n\n", 2);
                         }
-                        sink.write("\n\n", 2);
                     }
-                    return sink.is_writable();
+                    return writable;
                 });
                 session.get().get();
                 if (sink.is_writable()) {

@@ -253,11 +253,16 @@ bool caiwei::media::MediaDemuxer::open(
             last_recv_time = std::chrono::steady_clock::now();
             if (decoder_packet->stream_index == audio_stream_idx) {
                 if (media_format != nullptr) {
-                    media_format->send(MediaType::AUDIO, decoder_packet);
+                    if (media_format->send(MediaType::AUDIO, decoder_packet)) {
+                        last_send_time = std::chrono::steady_clock::now();
+                    } else {
+                        CW_LOG_I("音频回调结束: %s - %s", this->type.c_str(), this->url.c_str());
+                        this->running = false;
+                    }
                 }
                 msec = av_rescale_q(decoder_packet->pts, audio_time_base, msec_time_base);
                 ret = avcodec_send_packet(audio_decoder_ctx, decoder_packet);
-                while (ret == 0) {
+                while (ret == 0 && this->running) {
                     ret = avcodec_receive_frame(audio_decoder_ctx, decoder_frame);
                     if (ret == 0) {
                         if (swr_ctx == nullptr) {
@@ -301,11 +306,16 @@ bool caiwei::media::MediaDemuxer::open(
                 }
             } else if (decoder_packet->stream_index == video_stream_idx) {
                 if (media_format != nullptr) {
-                    media_format->send(MediaType::VIDEO, decoder_packet);
+                    if (media_format->send(MediaType::VIDEO, decoder_packet)) {
+                        last_send_time = std::chrono::steady_clock::now();
+                    } else {
+                        CW_LOG_I("视频回调结束: %s - %s", this->type.c_str(), this->url.c_str());
+                        this->running = false;
+                    }
                 }
                 msec = av_rescale_q(decoder_packet->pts, video_time_base, msec_time_base);
                 ret = avcodec_send_packet(video_decoder_ctx, decoder_packet);
-                while (ret == 0) {
+                while (ret == 0 && this->running) {
                     ret = avcodec_receive_frame(video_decoder_ctx, decoder_frame);
                     if (ret == 0) {
                         if (sws_ctx == nullptr) {

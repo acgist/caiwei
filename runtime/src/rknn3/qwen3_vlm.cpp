@@ -208,7 +208,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
         if (std::holds_alternative<std::string>(message.content.value())) {
             continue;
         }
-        const std::vector<caiwei::text::CompletionsRequestMessageContentItem>& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+        const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
         auto iter = items.begin();
         uint64_t image_index = 0;
         uint64_t video_index = 0;

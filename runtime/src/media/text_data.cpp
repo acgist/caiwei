@@ -187,9 +187,7 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     set_opt(data, request.tools,           "tools");
     set_opt(data, request.video_fps,       "video_fps");
     set_opt(data, request.asr_samples,     "asr_samples");
-    set_opt(data, request.asr_queue_size,  "asr_queue_size");
     set_opt(data, request.vlm_frames,      "vlm_frames");
-    set_opt(data, request.yolo_queue_size, "yolo_queue_size");
     set_opt(data, request.media_url,       "media_url");
     set_opt(data, request.media_type,      "media_type");
     set_opt(data, request.drop_on_full,    "drop_on_full");

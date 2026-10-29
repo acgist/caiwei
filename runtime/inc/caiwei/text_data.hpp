@@ -24,6 +24,10 @@ inline constexpr const char* ROLE_FUNCTION  = "function";
 inline constexpr const char* ROLE_ASSISTANT = "assistant";
 inline constexpr const char* ROLE_DEVELOPER = "developer";
 
+inline constexpr const char* TYPE_FUNCTION  = "function";
+inline constexpr const char* TYPE_EMBEDDING = "embedding";
+inline constexpr const char* TYPE_RERANKING = "reranking";
+
 inline constexpr const char* FINISH_REASON_STOP       = "stop";
 inline constexpr const char* FINISH_REASON_LENGTH     = "length";
 inline constexpr const char* FINISH_REASON_TOOL_CALLS = "tool_calls";
@@ -97,15 +101,13 @@ struct CompletionsRequest {
     std::optional<uint32_t> max_completion_tokens;
     std::optional<std::vector<CompletionsRequestTool>> tools;
     // 扩展字段
-    std::optional<int> video_fps       = 8;      // 视频识别间隔帧数: VLM/YOLO
-    std::optional<int> asr_samples     = 32000;  // ASR 识别采样数量: 16000 * 1 * 16 *  1 / 8 = 32000
-    std::optional<int> asr_queue_size  = 320000; // ASR 识别队列大小: 16000 * 1 * 16 * 10 / 8 = 320000
-    std::optional<int> vlm_frames      = 8;      // VLM 识别帧数大小
-    std::optional<int> yolo_queue_size = 8;      // YOLO识别队列大小
+    std::optional<int> video_fps   = 8;      // 视频识别间隔帧数: VLM/YOLO
+    std::optional<int> asr_samples = 32000;  // ASR采样队列数量: 16000 * 1 * 16 *  1 / 8 = 32000
+    std::optional<int> vlm_frames  = 8;      // VLM帧数队列数量
+    std::optional<bool> drop_on_full    = false; // 队列满时是否丢弃数据
+    std::optional<bool> enable_thinking = false; // 是否开启思考模式
     std::optional<std::string> media_url;  // 持续识别视频文件地址
     std::optional<std::string> media_type; // 持续识别视频文件类型
-    std::optional<bool> drop_on_full    = false;
-    std::optional<bool> enable_thinking = false;
     std::optional<std::vector<std::string>> model_list;
     CW_TRANSIENT std::string id;
     CW_TRANSIENT uint32_t    created;

@@ -70,7 +70,6 @@ void test_vlm() {
             return video_frames.size() < 4;
         }
     );
-    media_demuxer.stop();
     request.messages.back().video_data.emplace_back(std::move(video_frames));
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {

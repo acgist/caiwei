@@ -31,7 +31,6 @@ void test_asr() {
             return true;
         }
     );
-    media_demuxer.stop();
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {
         .role = "user",
@@ -74,7 +73,6 @@ void test_asr_for() {
             return true;
         }
     );
-    media_demuxer.stop();
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {
         .role = "user",
@@ -120,7 +118,6 @@ void test_asr_thread() {
             return true;
         }
     );
-    media_demuxer.stop();
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {
         .role = "user",

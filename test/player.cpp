@@ -11,7 +11,6 @@
 const static int USER_EVENT_VIDEO_FRAME = 1;
 
 struct PlayerState {
-    bool init_done     = false;
     bool running       = false;
     bool audio_running = false;
     bool video_running = false;
@@ -38,7 +37,6 @@ static void stop_audio_player();
 static void stop_video_player();
 
 bool caiwei::player::open_player(int channel, int sample_rate, int video_width, int video_height) {
-    player_state.init_done = false;
     player_state.audio_spec = {
         .freq     = sample_rate,
         .format   = AUDIO_S16,
@@ -65,7 +63,6 @@ bool caiwei::player::open_player(int channel, int sample_rate, int video_width, 
             CW_LOG_I("打开播放器成功");
             {
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
-                player_state.init_done = true;
                 player_state.player_cv.notify_one();
             }
             SDL_Event event;
@@ -110,7 +107,6 @@ bool caiwei::player::open_player(int channel, int sample_rate, int video_width, 
             CW_LOG_W("打开播放器失败");
             {
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
-                player_state.init_done = true;
                 player_state.player_cv.notify_one();
             }
         }
@@ -119,9 +115,7 @@ bool caiwei::player::open_player(int channel, int sample_rate, int video_width, 
         SDL_Quit();
     });
     std::unique_lock<std::mutex> lock(player_state.player_mutex);
-    player_state.player_cv.wait_for(lock, std::chrono::seconds(10), []() {
-        return player_state.init_done;
-    });
+    player_state.player_cv.wait_for(lock, std::chrono::seconds(10));
     return player_state.running;
 }
 

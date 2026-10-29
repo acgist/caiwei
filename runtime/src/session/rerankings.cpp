@@ -11,10 +11,15 @@ std::string caiwei::session::RerankingsSession::get() {
     auto result = ptr->run(this->request);
     caiwei::text::RerankingsResponse response;
     response.model = request.model;
-    for (int i = 0; i < result.result.size(); ++i) {
+    for (size_t i = 0; i < result.result.size(); ++i) {
         caiwei::text::RerankingsResponseData data;
         data.index = i;
-        data.score = result.result[i][0];
+        if (result.result[i].empty()) {
+            CW_LOG_W("结果为空: %zu", i);
+            data.score = 0.0F;
+        } else {
+            data.score = result.result[i][0];
+        }
         response.data.push_back(std::move(data));
     }
     response.usage = {

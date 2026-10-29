@@ -59,7 +59,6 @@ const ContextInfo* get_context_info(const std::string& name);
 class Context {
 public:
     const std::string id;
-    bool usage = false;
     std::atomic_int32_t ref_count = 0;
     std::chrono::steady_clock::time_point last_run_time;
 protected:

@@ -15,7 +15,7 @@
 ## base64
 
 * 版本: master
-* 协议: MIT License
+* 协议: https://github.com/ReneNyffenegger/cpp-base64/blob/master/LICENSE
 * https://github.com/ReneNyffenegger/cpp-base64
 
 ## nlohmann
@@ -24,12 +24,8 @@
 * 协议: MIT License
 * https://github.com/nlohmann/json
 
-## tokenizer
-
-* 版本: main
-* 协议: Apache-2.0 license
-* https://github.com/airockchip/rknn3-model-zoo/blob/main/tokenizer
-
 ## pocketfft_hdronly
 
+* 版本: master
+* 协议: BSD-3-Clause license
 * https://github.com/hayguen/pocketfft

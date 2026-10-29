@@ -133,7 +133,6 @@ void det_video() {
             return caiwei::player::play_video(data.data(), frame.width * 3);
         }
     );
-    media_demuxer.stop();
     caiwei::player::stop_player();
 }
 

@@ -1,15 +1,16 @@
+#include <sstream>
+
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
 
-#include <sstream>
-
 std::vector<caiwei::context::ContextInfo> caiwei::context::context_info_list;
 
-caiwei::context::Context::Context(caiwei::runtime::Runtime* runtime)
-  : id(caiwei::env::id()),
-    runtime(runtime),
+caiwei::context::Context::Context(
+    caiwei::runtime::Runtime* runtime
+) : runtime(runtime),
+    id(caiwei::env::id()),
     last_run_time(std::chrono::steady_clock::now()) {
     CW_LOG_D("创建context: %s", this->id.c_str());
 }
@@ -40,69 +41,78 @@ const caiwei::context::ContextInfo* caiwei::context::get_context_info(const std:
     return nullptr;
 }
 
-caiwei::context::ClsContext::ClsContext(int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime)
- : c(c),
-   h(h),
-   w(w),
-   class_size(class_size),
-   top_k(top_k),
-   confidence_threshold(confidence_threshold),
-   Context(runtime) {
+caiwei::context::ClsContext::ClsContext(
+    int c,
+    int h,
+    int w,
+    int class_size,
+    int top_k,
+    float confidence_threshold,
+    caiwei::runtime::Runtime* runtime
+) : c(c),
+    h(h),
+    w(w),
+    class_size(class_size),
+    top_k(top_k),
+    confidence_threshold(confidence_threshold),
+    Context(runtime) {
 }
 
 caiwei::context::ClsContext::~ClsContext() {
 }
 
-caiwei::context::DetContext::DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime)
- : c(c),
-   h(h),
-   w(w),
-   class_size(class_size),
-   iou_threshold(iou_threshold),
-   confidence_threshold(confidence_threshold),
-   Context(runtime) {
+caiwei::context::DetContext::DetContext(
+    int c,
+    int h,
+    int w,
+    int class_size,
+    float iou_threshold,
+    float confidence_threshold,
+    caiwei::runtime::Runtime* runtime
+) : c(c),
+    h(h),
+    w(w),
+    class_size(class_size),
+    iou_threshold(iou_threshold),
+    confidence_threshold(confidence_threshold),
+    Context(runtime) {
 }
 
 caiwei::context::DetContext::~DetContext() {
 }
 
-caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime)
- : Context(runtime) {
+caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
 }
 
 caiwei::context::ASRContext::~ASRContext() {
 }
 
-caiwei::context::LLMContext::LLMContext(caiwei::runtime::Runtime* runtime)
- : Context(runtime) {
+caiwei::context::LLMContext::LLMContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
 }
 
 caiwei::context::LLMContext::~LLMContext() {
 }
 
-caiwei::context::VLMContext::VLMContext(caiwei::runtime::Runtime* runtime)
- : Context(runtime) {
+caiwei::context::VLMContext::VLMContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
 }
 
 caiwei::context::VLMContext::~VLMContext() {
 }
 
-caiwei::context::EmbeddingContext::EmbeddingContext(caiwei::runtime::Runtime* runtime)
- : Context(runtime) {
+caiwei::context::EmbeddingContext::EmbeddingContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
 }
 
 caiwei::context::EmbeddingContext::~EmbeddingContext() {
 }
 
-caiwei::context::RerankingContext::RerankingContext(caiwei::runtime::Runtime* runtime)
- : Context(runtime) {
+caiwei::context::RerankingContext::RerankingContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
 }
 
 caiwei::context::RerankingContext::~RerankingContext() {
 }
 
 static void init_context_info_list() {
-    auto& list = caiwei::context::context_info_list;
+    std::vector<caiwei::context::ContextInfo> list;
     std::string line;
     std::string info = caiwei::env::get("CAIWEI_CONTEXT_INFO");
     std::stringstream stream(info);
@@ -138,7 +148,8 @@ static void init_context_info_list() {
         } else if (type == "RERANKING") {
             list.push_back(caiwei::context::ContextInfo{ caiwei::context::Type::RERANKING, std::move(type), std::move(name), std::move(path), std::move(vendor), std::move(paths) });
         } else {
-            // -
+            CW_LOG_W("未知模型类型: %s", type.c_str());
         }
     }
+    caiwei::context::context_info_list.swap(list);
 }

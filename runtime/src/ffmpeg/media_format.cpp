@@ -33,7 +33,9 @@ bool caiwei::media::MediaFormat::open(
     const AVRational    * audio_time_base,
     const AVRational    * video_time_base
 ) {
-    this->stop();
+    if (this->format_ctx != nullptr) {
+        this->stop();
+    }
     if (!audio_codec_ctx || !video_codec_ctx) {
         CW_LOG_W("缺少音视频编码器参数");
         return false;
@@ -152,7 +154,6 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
 
 bool caiwei::media::MediaFormat::send_header() {
     if (this->format_ctx == nullptr) {
-        CW_LOG_W("格式化上下文未初始化");
         return false;
     }
     AVDictionary* options = nullptr;
@@ -177,7 +178,6 @@ bool caiwei::media::MediaFormat::send_header() {
 
 bool caiwei::media::MediaFormat::send_trailer() {
     if (this->format_ctx == nullptr) {
-        CW_LOG_W("格式化上下文未初始化");
         return false;
     }
     int ret = av_interleaved_write_frame(this->format_ctx, nullptr);
@@ -187,7 +187,7 @@ bool caiwei::media::MediaFormat::send_trailer() {
     if (this->write_header) {
         ret = av_write_trailer(this->format_ctx);
         if (ret != 0) {
-            CW_LOG_W("视频写出尾部失败");
+            CW_LOG_W("视频写出尾部失败: %d", ret);
             return false;
         } else {
             CW_LOG_D("视频写出尾部成功");

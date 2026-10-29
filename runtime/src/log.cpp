@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <cstdarg>
+#include <string_view>
 
 static std::mutex mutex;
 #ifdef CAIWEI_LOG_LEVEL
@@ -19,7 +20,7 @@ inline const char* format_level(caiwei::log::Level level) {
     case caiwei::log::Level::I: return "I";
     case caiwei::log::Level::W: return "W";
     case caiwei::log::Level::E: return "E";
-    default                   : return "W";
+    default                   : return "?";
     }
 }
 
@@ -33,26 +34,23 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
     }
     std::lock_guard<std::mutex> lock(::mutex);
     // 日志时间
-    static std::string time;
-    time.resize(15);
+    static char        time_buf[16] = {};
+    static std::time_t time_cached  = 0;
     time_t time_tt = std::time(nullptr);
-    struct tm time_tm;
-    #if CAIWEI_OS_WIN
-    localtime_s(&time_tm, &time_tt);
-    #else
-    localtime_r(&time_tt, &time_tm);
-    #endif
-    std::strftime(time.data(), time.size(), "%m-%d %H:%M:%S", &time_tm);
-    // 文件名称
-    std::string filename = loc.file_name();
-#if CAIWEI_OS_WIN
-    auto pos = filename.find_last_of('\\');
-#else
-    auto pos = filename.find_last_of('/');
-#endif
-    if (pos != std::string::npos) {
-        filename = filename.substr(pos + 1);
+    if (time_tt != time_cached) {
+        time_cached = time_tt;
+        struct tm time_tm;
+        #if CAIWEI_OS_WIN
+        localtime_s(&time_tm, &time_tt);
+        #else
+        localtime_r(&time_tt, &time_tm);
+        #endif
+        std::strftime(time_buf, sizeof(time_buf), "%m-%d %H:%M:%S", &time_tm);
     }
+    // 文件名称
+    const std::string_view file = loc.file_name();
+    const auto             pos  = file.find_last_of("/\\");
+    const std::string_view name = (pos == std::string_view::npos) ? file : file.substr(pos + 1);
     // 日志内容
     constexpr int MESSAGE_SIZE = 2048;
     static std::vector<char> message(MESSAGE_SIZE);
@@ -69,5 +67,11 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
         message[MESSAGE_SIZE - 2] = '.';
         message[MESSAGE_SIZE - 1] = '\0';
     }
-    std::printf("[%s] %s %-16s:%4d | %s\n", format_level(level), time.c_str(), filename.c_str(), loc.line(), message.data()); 
+    if (level == caiwei::log::Level::E || level == caiwei::log::Level::W) {
+        std::fprintf(stderr, "[%s] %s %-16.*s:%4d | %s\n", format_level(level), time_buf, static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
+        std::fflush(stderr);
+    } else {
+        std::fprintf(stdout, "[%s] %s %-16.*s:%4d | %s\n", format_level(level), time_buf, static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
+        std::fflush(stdout);
+    }
 }

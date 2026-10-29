@@ -35,7 +35,9 @@ caiwei::media::MediaMuxer::~MediaMuxer() {
 }
 
 bool caiwei::media::MediaMuxer::open() {
-    this->stop();
+    if (this->audio_codec_ctx != nullptr && this->video_codec_ctx != nullptr) {
+        this->stop();
+    }
     return this->open_audio() && this->open_video();
 }
 
@@ -180,7 +182,7 @@ bool caiwei::media::MediaMuxer::open_video() {
 }
 
 bool caiwei::media::MediaMuxer::stop() {
-    return this->stop_audio() || this->stop_video();
+    return this->stop_audio() && this->stop_video();
 }
 
 bool caiwei::media::MediaMuxer::stop_audio() {

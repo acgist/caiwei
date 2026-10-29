@@ -85,7 +85,7 @@ caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inp
         if (std::holds_alternative<std::string>(message.content.value())) {
             continue;
         }
-        const std::vector<caiwei::text::CompletionsRequestMessageContentItem>& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+        const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
         auto iter = items.begin();
         size_t image_index = 0;
         size_t video_index = 0;

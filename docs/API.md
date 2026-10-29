@@ -126,10 +126,8 @@
         ...
     ],
     "video_fps"      : 视频识别间隔帧数,
-    "asr_samples"    : ASR 识别采样数量,
-    "asr_queue_size" : ASR 识别队列大小,
-    "vlm_frames"     : VLM 识别帧数大小,
-    "yolo_queue_size": YOLO识别队列大小,
+    "asr_samples"    : ASR采样队列数量,
+    "vlm_frames"     : VLM帧数队列数量,
     "media_url"      : "持续识别媒体地址",
     "media_type"     : "持续识别媒体类型",
     "enable_thinking": 是否开启思考模式,

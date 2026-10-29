@@ -1,12 +1,16 @@
+#include <map>
+#include <mutex>
+#include <cstring>
+#include <unordered_map>
+
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 
-#include <map>
-#include <cstring>
+static std::mutex mutex;
+static std::unordered_map<std::string, std::string> env_map;
 
 std::atomic_uint32_t caiwei::env::id_index = 0;
 
-// 默认配置
 static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VERSION",     "1.0.0"  }, // 版本号
     {"CAIWEI_CUDA_ID",     "0"      }, // CUDA ID
@@ -126,8 +130,12 @@ RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B-Q4_K_M.gguf
 };
 
 std::string caiwei::env::get(const std::string& name) {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (auto iter = env_map.find(name); iter != env_map.end()) {
+        return iter->second;
+    }
     const char* value = std::getenv(name.c_str());
-    if (!value || std::strlen(value) == 0) {
+    if (value == nullptr || std::strlen(value) == 0) {
         auto iterator = default_config.find(name);
         if (iterator == default_config.end()) {
             CW_LOG_W("不支持的环境配置: %s", name.c_str());
@@ -136,6 +144,7 @@ std::string caiwei::env::get(const std::string& name) {
             value = iterator->second.c_str();
         }
     }
+    env_map.emplace(name, value);
     return value;
 }
 
@@ -161,13 +170,8 @@ std::string caiwei::env::get_string(const std::string& name) {
 
 void caiwei::env::set(const std::string& name, const std::string& value) {
     CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
-#if CAIWEI_OS_WIN
-    _putenv_s(name.c_str(), value.c_str());
-#elif CAIWEI_OS_UNIX
-    setenv(name.c_str(), value.c_str(), true);
-#else
-    CW_LOG_W("设置环境失败: %s = %s", name.c_str(), value.c_str());
-#endif
+    std::lock_guard<std::mutex> lock(mutex);
+    env_map.insert_or_assign(name, value);
 }
 
 void caiwei::env::print_all_env() {

@@ -44,10 +44,10 @@ public:
 class VideoPlaySession : public StatefulSession {
 private:
     const bool copy;
-    const std::string type;
     const std::string url;
+    const std::string type;
 public:
-    VideoPlaySession(bool copy, std::string type, std::string url, Callback callback);
+    VideoPlaySession(bool copy, std::string url, std::string type, Callback callback);
 public:
     std::future<bool> get() override;
 protected:

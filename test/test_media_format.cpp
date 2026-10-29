@@ -73,9 +73,6 @@ void test_format() {
             return true;
         }
     );
-    media_demuxer.stop();
-    media_format.stop();
-    media_muxer.stop();
     output.close();
 }
 
@@ -95,8 +92,6 @@ void test_format_fwd_file() {
         },
         &media_format
     );
-    media_demuxer.stop();
-    media_format.stop();
 }
 
 void test_format_fwd_callback() {
@@ -119,8 +114,6 @@ void test_format_fwd_callback() {
         },
         &media_format
     );
-    media_demuxer.stop();
-    media_format.stop();
     output.close();
 }
 

@@ -29,7 +29,6 @@ void test_log_mel_spectrogram() {
             return true;
         }
     );
-    media_demuxer.stop();
     // audio_frame.data.resize(0);
     // audio_frame.data.resize((N_FFT + HOP_LENGTH) * 2);
     const int n_mels = 128;

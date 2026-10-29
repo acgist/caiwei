@@ -97,7 +97,6 @@ void cls_video() {
             return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }
     );
-    media_demuxer.stop();
     caiwei::player::stop_player();
 }
 
