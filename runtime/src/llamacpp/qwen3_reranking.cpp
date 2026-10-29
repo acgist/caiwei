@@ -23,7 +23,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(con
     std::vector<std::vector<llama_token>> inputs;
     for (const auto& document : request.documents) {
         std::string prompt = caiwei::text::get_reranking_prompt(document, request, this->special_token);
-        inputs.push_back(caiwei::context::tokenize(this->vocab, prompt, false, true));
+        inputs.push_back(caiwei::context::tokenize(this->vocab, prompt, false, false));
         prompt_tokens += inputs.back().size();
     }
     caiwei::text::RerankingResult result;

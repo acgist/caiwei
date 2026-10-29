@@ -24,7 +24,10 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::ASRLlamaCPPConte
 
 caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
     mtmd::bitmaps bitmaps;
-    prompt.append(this->special_token.bos).append("user\n");
+    prompt
+        .append(this->special_token.bos)
+        .append(caiwei::text::ROLE_USER)
+        .append("\n");
     for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {
             continue;
@@ -43,7 +46,12 @@ caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inp
             bitmaps.entries.emplace_back(mtmd_bitmap_init_from_audio(audio_data.size(), audio_data.data()));
         }
     }
-    prompt.append(this->special_token.eos).append("\n").append(this->special_token.bos).append("assistant\n");
+    prompt
+        .append(this->special_token.eos)
+        .append("\n")
+        .append(this->special_token.bos)
+        .append(caiwei::text::ROLE_ASSISTANT)
+        .append("\n");
     caiwei_llama_batch caiwei_batch{};
     if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
         caiwei_batch.success = true;

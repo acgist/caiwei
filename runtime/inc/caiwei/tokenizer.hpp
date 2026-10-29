@@ -11,10 +11,11 @@ namespace caiwei  {
 namespace context {
 
 llama_token piece_to_token(const llama_vocab* vocab, const std::string& piece, bool add_special = false, bool parse_special = true);
-std::string token_to_piece(const llama_vocab* vocab, llama_token token, std::string default_value = "", bool special = true);
-int tokenize(const llama_vocab* vocab, const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = true, bool parse_special = true);
+std::string token_to_piece(const llama_vocab* vocab, llama_token token, bool special = true);
+int token_to_piece(const llama_vocab* vocab, llama_token token, std::string& piece, bool special = true);;
+int tokenize(const llama_vocab* vocab, const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = false, bool parse_special = true);
+std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = false, bool parse_special = true);
 std::string detokenize(const llama_vocab* vocab, llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
-std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = true, bool parse_special = true);
 
 class Tokenizer {
 private:
@@ -33,8 +34,10 @@ public:
     llama_token get_eot();
     llama_token get_pad();
     llama_token piece_to_token(const std::string& piece, bool add_special = false, bool parse_special = true);
-    std::string token_to_piece(llama_token token, std::string default_value = "", bool special = true);
-    int tokenize(const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = true, bool parse_special = true);
+    std::string token_to_piece(llama_token token, bool special = true);
+    int token_to_piece(llama_token token, std::string& piece, bool special = true);
+    int tokenize(const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = false, bool parse_special = true);
+    std::vector<llama_token> tokenize(const std::string& text, bool add_special = false, bool parse_special = true);
     std::string detokenize(llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
 };
 

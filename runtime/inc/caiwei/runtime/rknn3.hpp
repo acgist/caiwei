@@ -34,6 +34,8 @@ struct alignas(16) ContextSession {
     bool stop     = false;
     bool thinking = false;
     bool toolcall = false;
+    bool add_special   = false;
+    bool parse_special = true;
     int32_t b_thinking;
     int32_t e_thinking;
     int32_t b_toolcall;

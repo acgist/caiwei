@@ -486,6 +486,8 @@ std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(std::stri
 
 std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t& prompt_tokens, std::vector<const std::string*> prompt_list) {
     ContextSession context_session;
+    context_session.add_special    = false;
+    context_session.parse_special  = false;
     context_session.tokenizer      = this->tokenizer;
     context_session.embedding_dim  = this->embedding_dim;
     context_session.embedding_data = this->embedding_data;
@@ -754,7 +756,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
 static int tokenizer_callback(void* userdata, const char* text, int32_t text_len, int32_t* tokens, int32_t n_tokens_max) {
     caiwei::context::ContextSession* session   = (caiwei::context::ContextSession*) userdata;
     caiwei::context::Tokenizer     * tokenizer = session->tokenizer;
-    const int n_tokens = tokenizer->tokenize(text, text_len, tokens, n_tokens_max);
+    const int n_tokens = tokenizer->tokenize(text, text_len, tokens, n_tokens_max, session->add_special, session->parse_special);
     if (n_tokens <= 0) {
         CW_LOG_W("分词失败: %s", text);
         return n_tokens;

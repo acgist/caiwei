@@ -56,15 +56,15 @@ bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
         .append("\n");
     CW_LOG_I("音频开始提示词: %s", prefix.c_str());
     CW_LOG_I("音频结束提示词: %s", suffix.c_str());
-    int n_prefix_token = this->tokenizer->tokenize(prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size());
+    int n_prefix_token = this->tokenizer->tokenize(prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size(), false, false);
     if (n_prefix_token < 0) {
         this->prefix_token.resize(-n_prefix_token);
-        n_prefix_token = this->tokenizer->tokenize(prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size());
+        n_prefix_token = this->tokenizer->tokenize(prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size(), false, false);
     }
-    int n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size());
+    int n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, false);
     if (n_suffix_token < 0) {
         this->suffix_token.resize(-n_suffix_token);
-        n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size());
+        n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, false);
     }
     CW_LOG_I("音频开始提示词词元数量: %d", n_prefix_token);
     CW_LOG_I("音频结束提示词词元数量: %d", n_suffix_token);
