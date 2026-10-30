@@ -28,19 +28,19 @@ void cls_image() {
     // 258 == samoyed
     assert(!result.empty());
     assert(result[0].class_id== 258);
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -68,7 +68,7 @@ void cls_image_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]

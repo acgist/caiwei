@@ -51,7 +51,7 @@ void test_asr() {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     request.max_completion_tokens = 2;
     for (const auto& value : ptr->run(request)) {
         if (!value.finish_reason.empty()) {
@@ -89,21 +89,21 @@ void test_asr_for() {
     if (!ptr) {
         return;
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
     for (const auto& value : ptr->run(request)) {
         // -
     }
     CAIWEI_FOR_EACH_END
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -148,7 +148,7 @@ void test_asr_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 int main() {

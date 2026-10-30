@@ -47,15 +47,15 @@ void test_embedding_for() {
     if (!ptr) {
         return;
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     ptr->run(request);
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
     ptr->run(request);
     CAIWEI_FOR_EACH_END
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     ptr->run(request);
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -80,7 +80,7 @@ void test_embedding_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 int main() {

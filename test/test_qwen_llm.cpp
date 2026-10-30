@@ -47,7 +47,7 @@ void test_llm() {
     std::printf("thinking: %s\n", thinking.c_str());
     std::printf("toolcall_name: %s\n", toolcall_name.c_str());
     std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
     toolcall_name = "";
@@ -72,7 +72,7 @@ void test_llm() {
     std::printf("thinking: %s\n", thinking.c_str());
     std::printf("toolcall_name: %s\n", toolcall_name.c_str());
     std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
     toolcall_name = "";
@@ -96,7 +96,7 @@ void test_llm() {
     std::printf("thinking: %s\n", thinking.c_str());
     std::printf("toolcall_name: %s\n", toolcall_name.c_str());
     std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
     toolcall_name = "";
@@ -121,7 +121,7 @@ void test_llm() {
     std::printf("thinking: %s\n", thinking.c_str());
     std::printf("toolcall_name: %s\n", toolcall_name.c_str());
     std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
     toolcall_name = "";
@@ -156,21 +156,21 @@ void test_llm_for() {
     if (!ptr) {
         return;
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
     for (const auto& value : ptr->run(request)) {
         // -
     }
     CAIWEI_FOR_EACH_END
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     for (const auto& value : ptr->run(request)) {
         // -
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -196,7 +196,7 @@ void test_llm_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 int main() {

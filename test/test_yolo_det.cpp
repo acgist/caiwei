@@ -12,6 +12,7 @@ void det_draw() {
     int width, height, channels;
     auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
     caiwei::media::ImageFrame frame(width * height * channels);
+    frame.data.resize(width * height * channels);
     std::copy_n(data, width * height * channels, frame.data.data());
     frame.width = width;
     frame.height = height;
@@ -30,7 +31,8 @@ void det_draw() {
             box.x1 * frame.width,
             box.y1 * frame.height,
             (box.x2 - box.x1) * frame.width,
-            (box.y2 - box.y1) * frame.height
+            (box.y2 - box.y1) * frame.height,
+            channels
         );
     }
     stbi_write_jpg("./acgist_det.jpg", width, height, channels, data, 80);
@@ -51,19 +53,19 @@ void det_image() {
     if (ptr == nullptr) {
         return;
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
         auto result = ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -91,7 +93,7 @@ void det_image_thread() {
     for (auto& thread : threads) {
         thread.join();
     }
-    caiwei_wait_enter();
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -127,7 +129,8 @@ void det_video() {
                     box.x1 * frame.width,
                     box.y1 * frame.height,
                     (box.x2 - box.x1) * frame.width,
-                    (box.y2 - box.y1) * frame.height
+                    (box.y2 - box.y1) * frame.height,
+                    frame.channels
                 );
             }
             return caiwei::player::play_video(data.data(), frame.width * 3);
