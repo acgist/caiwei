@@ -1,6 +1,6 @@
 # 采薇
 
-采薇一个`AI`模型部署平台，主要支持`YOLO`和`QWEN`相关模型，支持`RKNN`、`CUDA`等等后端。
+一个`AI`模型部署平台，主要支持`YOLO`和`QWEN`相关模型，支持`RKNN`、`CUDA`后端。
 
 ```
 小雅·采薇
@@ -34,7 +34,7 @@
 |llama.cpp  |https://github.com/ggml-org/llama.cpp   |√|
 |ONNXRuntime|https://github.com/microsoft/onnxruntime|√|
 
-## 厂商推理SDK
+## 厂家推理SDK
 
 |SDK|官方地址|支持计划|
 |:--|:--|:--|
@@ -72,7 +72,3 @@ $ = 配置更新
 & = 依赖升级
 ? = 其他修改
 ```
-
-## TODO
-
-* 解决加载函数幂等问题

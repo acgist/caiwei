@@ -8,8 +8,8 @@ Checks: >
   -abseil-*,
   -google-*,
   -fuchsia-*,
-  -readability-function-size,
   -readability-magic-numbers,
+  -readability-function-size,
   -readability-identifier-length,
   -modernize-use-trailing-return-type,
   -bugprone-easily-swappable-parameters,
@@ -19,9 +19,3 @@ Checks: >
 CheckOptions:
   - key: modernize-use-nullptr.NullMacros
     value: "NULL"
-  - key: readability-function-size.LineThreshold
-    value: "128"
-  - key: readability-function-size.ParameterThreshold
-    value: "8"
-  - key: readability-function-size.StatementThreshold
-    value: "128"

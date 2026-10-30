@@ -10,11 +10,7 @@ if(ENABLE_CAIWEI_SDL2)
     # -
     elseif(CMAKE_HOST_WIN32)
         set(SDL2_PATH "${CMAKE_SOURCE_DIR}/deps/sdl2" CACHE STRING "SDL2 Path")
-        set(
-            CMAKE_PREFIX_PATH
-            ${CMAKE_PREFIX_PATH}
-            ${SDL2_PATH}
-        )
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${SDL2_PATH})
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             file(GLOB SDL2_DLLS "${SDL2_PATH}/debug/bin/*.dll")
         else()

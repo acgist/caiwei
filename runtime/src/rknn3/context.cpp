@@ -581,7 +581,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
             if (context_session.prefill_ms == 0) {
                 e_time = std::chrono::steady_clock::now();
                 context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
-                b_time = std::chrono::steady_clock::now();
+                // 此处不要刷新时间
             }
             for (auto& result : context_session.token_result) {
                 co_yield std::move(result);

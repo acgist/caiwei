@@ -11,6 +11,7 @@ modelscope download --model Qwen/Qwen3-VL-2B-Thinking --local_dir ./Qwen/Qwen3-V
 ## 模型微调
 
 ```
+FPS=1                                 \
 FPS_MAX_FRAMES=8                      \
 CUDA_VISIBLE_DEVICES=0                \
 swift sft                             \
@@ -55,6 +56,8 @@ swift export              \
 python run.py
 python run_lora.py
 
+FPS=1                     \
+FPS_MAX_FRAMES=8          \
 CUDA_VISIBLE_DEVICES=0    \
 swift infer               \
     --stream true         \
@@ -63,6 +66,8 @@ swift infer               \
     --max_new_tokens 1024 \
     --adapters Qwen3-VL-2B-Instruct-lora/v0-20261015-100745/checkpoint-1
 
+FPS=1                     \
+FPS_MAX_FRAMES=8          \
 CUDA_VISIBLE_DEVICES=0    \
 swift infer               \
     --stream true         \

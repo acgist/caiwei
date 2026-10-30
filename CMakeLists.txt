@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.22.0)
 
 project(caiwei-project VERSION 1.0.0 LANGUAGES C CXX)
 
-# https://gcc.gnu.org/releases.html
 # https://gcc.gnu.org/projects/c-status.html
 # https://gcc.gnu.org/projects/cxx-status.html
 # https://gcc.gnu.org/onlinedocs/gcc/Standards.html
@@ -10,7 +9,6 @@ project(caiwei-project VERSION 1.0.0 LANGUAGES C CXX)
 # https://cmake.org/cmake/help/latest/prop_tgt/C_STANDARD.html
 # https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html
 # https://learn.microsoft.com/zh-cn/cpp/build/reference/compiler-options-listed-by-category
-# https://learn.microsoft.com/zh-cn/cpp/error-messages/compiler-warnings/compiler-warnings-c4000-c5999
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -22,8 +20,8 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 是否编译测试
-option(ENABLE_CAIWEI_PERF                "Performance"     ON)  # 性能测试
+option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 编译测试
+option(ENABLE_CAIWEI_PERF                "Performance"     ON)  # 性能统计
 option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"    OFF) #           ONNXRuntime
 option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"      OFF) # llama.cpp ONNXRuntime
 option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2"  OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
@@ -33,6 +31,7 @@ option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # 跨平台
 option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"          ON)  # FFmpeg
 option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"     ON)  # cpp-httplib
 
+# TODO 升级 23
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
@@ -97,18 +96,14 @@ else()
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
-if(ENABLE_ASAN)
-	message(STATUS "Enable ASAN")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+if(ENABLE_CAIWEI_TEST)
+    message(STATUS "编译测试")
+    add_definitions(-DENABLE_CAIWEI_TEST=1)
 endif()
 
-if (ENABLE_CAIWEI_TEST)
-add_definitions(-DENABLE_CAIWEI_TEST=1)
-endif()
-
-if (ENABLE_CAIWEI_PERF)
-add_definitions(-DENABLE_CAIWEI_PERF=1)
+if(ENABLE_CAIWEI_PERF)
+    message(STATUS "性能统计")
+    add_definitions(-DENABLE_CAIWEI_PERF=1)
 endif()
 
 if(ENABLE_CAIWEI_BACKEND_RKNN)
@@ -153,7 +148,7 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
-    message(STATUS "Running with RKNN2")
+    message(STATUS "Enable Rockchip RKNN2")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2=1)
     if(ANDROID)
     # -
@@ -167,15 +162,12 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN2)
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN3)
-    message(STATUS "Running with RKNN3")
+    message(STATUS "Enable Rockchip RKNN3")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3=1)
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
-        list(APPEND CAIWEI_RUNTIME_LIBS rknn3_api)
-        # list(APPEND CAIWEI_RUNTIME_LIBS
-        #     ${CMAKE_SOURCE_DIR}/deps/rknn3/librknn3_api.so
-        # )
+        list(APPEND CAIWEI_RUNTIME_LIBS rga rknn3_api)
     elseif(CMAKE_HOST_WIN32)
     # -
     else()
@@ -184,9 +176,9 @@ if(ENABLE_CAIWEI_RUNTIME_RKNN3)
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
-    message(STATUS "Running with llama.cpp")
+    message(STATUS "Enable llama.cpp")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_LLAMACPP=1)
-    set(LLAMACPP_PATH "${CMAKE_SOURCE_DIR}/deps/llama.cpp" CACHE STRING "LlamaCPP Path")
+    set(LLAMACPP_PATH "${CMAKE_SOURCE_DIR}/deps/llama.cpp" CACHE STRING "llama.cpp Path")
     if(ENABLE_CAIWEI_BACKEND_CUDA)
         set(GGML_CUDA ON)
     endif()
@@ -201,14 +193,10 @@ if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
-    message(STATUS "Running with ONNXRuntime")
+    message(STATUS "Enable ONNXRuntime")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME=1)
     set(ONNXRUNTIME_PATH "${CMAKE_SOURCE_DIR}/deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
-    set(
-        CMAKE_PREFIX_PATH
-        ${CMAKE_PREFIX_PATH}
-        ${ONNXRUNTIME_PATH}
-    )
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${ONNXRUNTIME_PATH})
     if(ANDROID)
     # -
     elseif(CMAKE_HOST_UNIX)
@@ -231,7 +219,8 @@ if(ENABLE_CAIWEI_FFMPEG)
     # -
     elseif(CMAKE_HOST_UNIX)
         if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-            list(APPEND CAIWEI_RUNTIME_LIBS
+            list(
+                APPEND CAIWEI_RUNTIME_LIBS
                 ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
                 ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
                 ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
@@ -244,11 +233,7 @@ if(ENABLE_CAIWEI_FFMPEG)
         endif()
     elseif(CMAKE_HOST_WIN32)
         set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
-        set(
-            CMAKE_PREFIX_PATH
-            ${CMAKE_PREFIX_PATH}
-            ${FFMPEG_PATH}
-        )
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${FFMPEG_PATH})
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/debug/bin/*.dll")
         else()
@@ -272,11 +257,7 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
     # -
     elseif(CMAKE_HOST_WIN32)
         set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
-        set(
-            CMAKE_PREFIX_PATH
-            ${CMAKE_PREFIX_PATH}
-            ${CPP_HTTPLIB_PATH}
-        )
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CPP_HTTPLIB_PATH})
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
         else()
@@ -293,6 +274,5 @@ endif()
 add_subdirectory(runtime)
 add_subdirectory(server)
 if(ENABLE_CAIWEI_TEST)
-    message(STATUS "Build Test")
     add_subdirectory(test)
 endif()

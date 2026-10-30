@@ -9,7 +9,7 @@
 #include "stb/stb_image.h"
 #include "stb/stb_image_resize2.h"
 
-#ifdef ENABLE_CAIWEI_TEST
+#if ENABLE_CAIWEI_TEST
 #include "stb/stb_image_write.h"
 #endif
 
