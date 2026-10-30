@@ -23,25 +23,24 @@ void caiwei::rest::register_api() {
     post_chat_completions();
 }
 
-
 static void get_health() {
-    caiwei::rest::server->Get("/v1/health", [](const httplib::Request&, httplib::Response& response) {
+    caiwei::rest::server->Get("/v1/health", [](const httplib::Request& /* request */, httplib::Response& response) {
         response.set_content(caiwei::json::buildResponse("running"), caiwei::rest::content::type::JSON);
     });
 }
 
 static void get_models() {
-    caiwei::rest::server->Get("/v1/models", [](const httplib::Request&, httplib::Response& response) {
+    caiwei::rest::server->Get("/v1/models", [](const httplib::Request& /* request */, httplib::Response& response) {
+        nlohmann::json body;
         const auto& list = caiwei::context::context_info_list;
-        nlohmann::json ret;
         for (const auto& value : list) {
-            ret.push_back({
+            body.push_back({
                 {"type", value.type_name},
-                {"name", value.name },
-                {"path", value.path }
+                {"name", value.name     },
+                {"path", value.path     }
             });
         }
-        response.set_content(caiwei::json::buildResponse(ret), caiwei::rest::content::type::JSON);
+        response.set_content(caiwei::json::buildResponse(body), caiwei::rest::content::type::JSON);
     });
 }
 
@@ -51,7 +50,7 @@ static void get_video_play() {
             auto url  = request.get_param_value("url");
             auto type = request.get_param_value("type");
             auto copy = request.get_param_value("copy");
-            caiwei::session::VideoPlaySession session(copy == "true", url, type, [&sink](const char* data, int length) {
+            caiwei::session::VideoPlaySession session(copy == "true", std::move(url), std::move(type), [&sink](const char* data, int length) {
                 const bool writable = sink.is_writable();
                 if (writable) {
                     if (data == nullptr || length == 0) {
@@ -115,7 +114,7 @@ static void post_chat_completions() {
                 });
                 session.get().get();
                 if (sink.is_writable()) {
-                    sink.write("data: [DONE]", 12);
+                    sink.write("data: [DONE]\n\n", 14);
                 }
                 sink.done();
                 return true;

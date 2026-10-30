@@ -28,7 +28,6 @@ import Embeddings from "./Embeddings.vue";
 import Rerankings from "./Rerankings.vue";
 import VideoPlay from "./VideoPlay.vue";
 export default {
-  
   name: "App",
   components: {
     VideoPlay,

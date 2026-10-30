@@ -1,6 +1,6 @@
 enable_testing()
 
-option(ENABLE_CAIWEI_SDL2 "SDL2 Player" ON) # SDL2
+option(ENABLE_CAIWEI_SDL2 "SDL2 Player" ON)
 
 if(ENABLE_CAIWEI_SDL2)
     message(STATUS "Enable SDL2 Player")

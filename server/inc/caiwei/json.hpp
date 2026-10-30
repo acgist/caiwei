@@ -1,10 +1,5 @@
-/**
- * JSON
- */
 #ifndef CAIWEI_SERVER_JSON_HPP
 #define CAIWEI_SERVER_JSON_HPP
-
-#include <vector>
 
 #include "nlohmann/json.hpp"
 

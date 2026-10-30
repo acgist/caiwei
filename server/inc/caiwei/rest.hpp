@@ -1,15 +1,3 @@
-/**
- * REST API
- * 
- * 使用标准OpenAI接口
- * 
- * 0000: 成功
- * 0xxx: 系统错误
- * 1xxx: 网关错误（REST）
- * 2xxx: 媒体错误（MEDIA）
- * 3xxx: 推理错误（RUNTIME）
- * 9999: 未知错误
- */
 #ifndef CAIWEI_SERVER_REST_HPP
 #define CAIWEI_SERVER_REST_HPP
 
@@ -25,17 +13,17 @@ namespace rest   {
 namespace content {
 namespace type    {
 
-    const char* const HTML  = "text/html";
-    const char* const ICON  = "image/x-icon";
-    const char* const JSON  = "application/json";
-    const char* const EVENT = "text/event-stream";
+    inline constexpr const char* HTML  = "text/html";
+    inline constexpr const char* ICON  = "image/x-icon";
+    inline constexpr const char* JSON  = "application/json";
+    inline constexpr const char* EVENT = "text/event-stream";
 
 }; // type
 }; // content
 
 extern httplib::Server* server;
 
-void open();
+bool open();
 void stop();
 void register_api();
 

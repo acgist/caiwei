@@ -1,5 +1,14 @@
 # API
 
+## 状态编码
+
+* 0000: 成功
+* 0xxx: 系统错误
+* 1xxx: 网关错误（REST）
+* 2xxx: 媒体错误（MEDIA）
+* 3xxx: 推理错误（RUNTIME）
+* 9999: 未知错误
+
 ## GET /v1/health
 ## GET /v1/models
 ## GET /v1/video/play
