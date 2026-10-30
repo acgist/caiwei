@@ -61,12 +61,12 @@ bool caiwei::player::open_player(int channel, int sample_rate, int video_width, 
         }
         if(init_audio_player() && init_video_player()) {
             CW_LOG_I("打开播放器成功");
+            player_state.running = true;
             {
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
                 player_state.player_cv.notify_one();
             }
             SDL_Event event;
-            player_state.running = true;
             while(player_state.running) {
                 int ret_event = SDL_WaitEventTimeout(&event, 1000);
                 if (ret_event == 0) {

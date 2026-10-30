@@ -21,6 +21,7 @@ void test_manager() {
     }
 }
 
+[[maybe_unused]]
 void test_manager_optimize() {
     auto ptr1 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     assert(ptr1 != nullptr);

@@ -227,6 +227,7 @@ void test_hwc_to_chw() {
     stbi_image_free(data);
 }
 
+[[maybe_unused]]
 void test_image() {
     const int w = resize_w;
     const int h = resize_h;

@@ -7,6 +7,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
+[[maybe_unused]]
 void test_format() {
     // rtp|sdp|file|http|rtmp|rtsp|device
     auto type = "file";
@@ -62,13 +63,11 @@ void test_format() {
         caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
         [&media_muxer](caiwei::media::AudioFrame& frame) {
             // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
-            // std::fflush(stdout);
             media_muxer.on_audio(frame);
             return true;
         },
         [&media_muxer](caiwei::media::VideoFrame& frame) {
             // CW_LOG_D("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
-            // std::fflush(stdout);
             media_muxer.on_video(frame);
             return true;
         }
@@ -76,6 +75,7 @@ void test_format() {
     output.close();
 }
 
+[[maybe_unused]]
 void test_format_fwd_file() {
     auto type = "file";
     auto url  = "./caiwei.mp4";
@@ -94,6 +94,7 @@ void test_format_fwd_file() {
     );
 }
 
+[[maybe_unused]]
 void test_format_fwd_callback() {
     auto type = "file";
     auto url  = "./caiwei.mp4";

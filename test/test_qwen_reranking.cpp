@@ -5,6 +5,7 @@
 #include <thread>
 #include <vector>
 
+[[maybe_unused]]
 void test_reranking() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
@@ -25,6 +26,7 @@ void test_reranking() {
     std::fflush(stdout);
 }
 
+[[maybe_unused]]
 void test_reranking_for() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
@@ -45,6 +47,7 @@ void test_reranking_for() {
     caiwei_wait_enter();
 }
 
+[[maybe_unused]]
 void test_reranking_thread() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";

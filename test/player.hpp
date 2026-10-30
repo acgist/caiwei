@@ -1,6 +1,3 @@
-/**
- * 播放器
- */
 #ifndef CAIWEI_RUNTIME_PLAYER_HPP
 #define CAIWEI_RUNTIME_PLAYER_HPP
 

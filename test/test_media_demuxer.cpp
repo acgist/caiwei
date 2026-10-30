@@ -10,6 +10,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
+[[maybe_unused]]
 static std::string base64_file(const std::string& type, const std::string& path) {
     std::ifstream stream(path, std::ios::binary);
     std::string data;
@@ -18,6 +19,7 @@ static std::string base64_file(const std::string& type, const std::string& path)
     return type + base64_encode(data);
 }
 
+[[maybe_unused]]
 void test_demuxer() {
     // rtp|sdp|data|file|http|rtmp|rtsp|device
     auto type = "file";
@@ -57,13 +59,11 @@ void test_demuxer() {
         caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
         [](caiwei::media::AudioFrame& frame) {
             // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
-            // std::fflush(stdout);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return caiwei::player::play_audio(frame.data.data(), frame.data.size());
         },
         [](caiwei::media::VideoFrame& frame) {
             // CW_LOG_D("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
-            // std::fflush(stdout);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }

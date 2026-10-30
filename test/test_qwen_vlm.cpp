@@ -12,6 +12,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
+[[maybe_unused]]
 static void read_image(caiwei::media::ImageFrame& frame, const char* path) {
     int width, height, channels;
     auto* data = stbi_load(path, &width, &height, &channels, STBI_default);
@@ -89,6 +90,7 @@ void test_vlm() {
     }
 }
 
+[[maybe_unused]]
 void test_vlm_for() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {
@@ -133,6 +135,7 @@ void test_vlm_for() {
     caiwei_wait_enter();
 }
 
+[[maybe_unused]]
 void test_vlm_thread() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {

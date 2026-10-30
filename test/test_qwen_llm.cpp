@@ -6,6 +6,7 @@
 #include <vector>
 #include <generator>
 
+[[maybe_unused]]
 void test_llm() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
@@ -145,6 +146,7 @@ void test_llm() {
     std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
 }
 
+[[maybe_unused]]
 void test_llm_for() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
@@ -171,6 +173,7 @@ void test_llm_for() {
     caiwei_wait_enter();
 }
 
+[[maybe_unused]]
 void test_llm_thread() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;

@@ -5,6 +5,7 @@
 #include <thread>
 #include <vector>
 
+[[maybe_unused]]
 static void diff(const std::vector<float>& a, const std::vector<float>& z) {
     float sum = 0.0F;
     for (size_t i = 0; i < a.size(); ++i) {
@@ -15,6 +16,7 @@ static void diff(const std::vector<float>& a, const std::vector<float>& z) {
     CW_LOG_I("欧式距离: %f", euclidean_dist);
 }
 
+[[maybe_unused]]
 void test_embedding() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
@@ -36,6 +38,7 @@ void test_embedding() {
     std::fflush(stdout);
 }
 
+[[maybe_unused]]
 void test_embedding_for() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
@@ -55,6 +58,7 @@ void test_embedding_for() {
     caiwei_wait_enter();
 }
 
+[[maybe_unused]]
 void test_embedding_thread() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";

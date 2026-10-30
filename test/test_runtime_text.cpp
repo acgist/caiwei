@@ -5,6 +5,7 @@
 #include "caiwei/text_tool.hpp"
 #include "caiwei/tokenizer.hpp"
 
+[[maybe_unused]]
 void test_tokenizer() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     caiwei::context::Tokenizer tokenizer;
@@ -279,6 +280,7 @@ void test_reranking_response_to_json() {
     CW_LOG_D("test_reranking_response_to_json: %s", json.c_str());
 }
 
+[[maybe_unused]]
 void test_image_data_json() {
     std::vector<caiwei::image::Cls> cls = {
         {1, 0.8},

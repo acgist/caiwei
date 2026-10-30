@@ -15,6 +15,7 @@ extern "C" {
 // {% endfor %}
 // {% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}
 
+[[maybe_unused]]
 void test_asr() {
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
@@ -59,6 +60,7 @@ void test_asr() {
     }
 }
 
+[[maybe_unused]]
 void test_asr_for() {
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
@@ -104,6 +106,7 @@ void test_asr_for() {
     caiwei_wait_enter();
 }
 
+[[maybe_unused]]
 void test_asr_thread() {
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
