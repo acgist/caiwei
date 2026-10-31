@@ -2,7 +2,6 @@
 
 #include "llama.h"
 
-#include "caiwei/text_tool.hpp"
 #include "caiwei/tokenizer.hpp"
 
 [[maybe_unused]]

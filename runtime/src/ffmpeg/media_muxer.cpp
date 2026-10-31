@@ -89,11 +89,6 @@ bool caiwei::media::MediaMuxer::open_audio() {
         CW_LOG_W("音频包创建失败");
         return false;
     }
-    this->swr_ctx = init_audio_swr(this->in_audio_info, this->out_audio_info);
-    if (this->swr_ctx == nullptr) {
-        CW_LOG_W("音频重采样上下文创建失败");
-        return false;
-    }
     ret = av_samples_alloc(
         this->audio_buffer,
         nullptr,
@@ -171,11 +166,6 @@ bool caiwei::media::MediaMuxer::open_video() {
     this->video_packet = av_packet_alloc();
     if (this->video_packet == nullptr) {
         CW_LOG_W("视频包创建失败");
-        return false;
-    }
-    this->sws_ctx = init_video_sws(this->in_video_info, this->out_video_info);
-    if (this->sws_ctx == nullptr) {
-        CW_LOG_W("视频重采样上下文创建失败");
         return false;
     }
     return true;
@@ -261,6 +251,13 @@ bool caiwei::media::MediaMuxer::on_audio(
         return false;
     }
     int ret = AVERROR_UNKNOWN;
+    if (this->swr_ctx == nullptr) {
+        this->swr_ctx = init_audio_swr(this->in_audio_info, this->out_audio_info);
+        if (this->swr_ctx == nullptr) {
+            CW_LOG_W("音频重采样上下文创建失败");
+            return false;
+        }
+    }
     int dst_nb_samples = swr_get_out_samples(this->swr_ctx, nb_samples);
     if (dst_nb_samples < 0) {
         CW_LOG_W("音频重采样失败: %d", dst_nb_samples);
@@ -316,23 +313,25 @@ bool caiwei::media::MediaMuxer::on_video(
         return false;
     }
     int ret = AVERROR_UNKNOWN;
-    if (width != this->video_frame->width || height != this->video_frame->height) {
-        av_frame_unref(this->video_frame);
-        this->video_frame->width   = width;
-        this->video_frame->height  = height;
+    if (this->sws_ctx == nullptr) {
         this->in_video_info.width  = width;
         this->in_video_info.height = height;
-        ret = av_frame_get_buffer(this->video_frame, 0);
-        if (ret != 0) {
-            CW_LOG_W("视频帧内存分配失败: %d", ret);
+        this->sws_ctx = init_video_sws(this->in_video_info, this->out_video_info);
+        if (this->sws_ctx == nullptr) {
+            CW_LOG_W("视频重采样上下文创建失败");
             return false;
         }
+    } else if (width != this->in_video_info.width || height != this->in_video_info.height) {
+        this->in_video_info.width  = width;
+        this->in_video_info.height = height;
         sws_free(&this->sws_ctx);
         this->sws_ctx = init_video_sws(this->in_video_info, this->out_video_info);
         if (this->sws_ctx == nullptr) {
             CW_LOG_W("视频重采样上下文创建失败");
             return false;
         }
+    } else {
+        // -
     }
     ret = av_frame_make_writable(this->video_frame);
     if (ret != 0) {

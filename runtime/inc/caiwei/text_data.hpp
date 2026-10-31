@@ -330,6 +330,8 @@ std::string to_json(const CompletionsChunk   & chunk);
 std::string to_json(const EmbeddingsResponse & response);
 std::string to_json(const RerankingsResponse & response);
 
+bool check_security(const CompletionsRequest& request);
+
 } // text
 } // caiwei
 

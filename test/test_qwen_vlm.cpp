@@ -2,15 +2,9 @@
 
 #include "nlohmann/json.hpp"
 
-#include "caiwei/image_tool.hpp"
-
 #include <thread>
 #include <vector>
 #include <generator>
-
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
 
 [[maybe_unused]]
 static void read_image(caiwei::media::ImageFrame& frame, const char* path) {
@@ -59,8 +53,8 @@ void test_vlm() {
     int frame_index = 0;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp4");
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return true;
         },

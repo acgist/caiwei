@@ -1,54 +1,41 @@
 #include "test.hpp"
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
-
 #include <thread>
 #include <vector>
 
 [[maybe_unused]]
 void det_draw() {
-    int width, height, channels;
-    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
-    caiwei::media::ImageFrame frame(width * height * channels);
-    frame.data.resize(width * height * channels);
-    std::copy_n(data, width * height * channels, frame.data.data());
-    frame.width = width;
-    frame.height = height;
-    frame.channels = channels;
+    caiwei::media::ImageFrame frame;
+    if (!frame.load_from_file("./acgist.jpg")) {
+        return;
+    }
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
     if (ptr == nullptr) {
         return;
     }
     auto result = ptr->run(frame);
     for (const auto& box : result) {
-        CW_LOG_I("box: %d = %f", box.class_id, box.score);
+        CW_LOG_I("box: %d = %.2f", box.class_id, box.score);
         caiwei::test::draw_rect(
-            data,
+            frame.data.data(),
             frame.width,
             frame.height,
             box.x1 * frame.width,
             box.y1 * frame.height,
             (box.x2 - box.x1) * frame.width,
             (box.y2 - box.y1) * frame.height,
-            channels
+            frame.channels
         );
     }
-    stbi_write_jpg("./acgist_det.jpg", width, height, channels, data, 80);
-    stbi_image_free(data);
+    stbi_write_jpg("./acgist_det.jpg", frame.width, frame.height, frame.channels, frame.data.data(), 80);
 }
 
 [[maybe_unused]]
 void det_image() {
-    int width, height, channels;
-    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
-    caiwei::media::ImageFrame frame(width * height * channels);
-    std::copy_n(data, width * height * channels, frame.data.data());
-    stbi_image_free(data);
-    frame.width = width;
-    frame.height = height;
-    frame.channels = channels;
+    caiwei::media::ImageFrame frame;
+    if (!frame.load_from_file("./acgist.jpg")) {
+        return;
+    }
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
     if (ptr == nullptr) {
         return;
@@ -56,13 +43,13 @@ void det_image() {
     caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
-        auto result = ptr->run(frame);
+        ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
     caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
-        auto result = ptr->run(frame);
+        ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
     caiwei::test::caiwei_wait_enter();
@@ -70,21 +57,17 @@ void det_image() {
 
 [[maybe_unused]]
 void det_image_thread() {
-    int width, height, channels;
-    auto data = stbi_load("./acgist.jpg", &width, &height, &channels, STBI_default);
-    caiwei::media::ImageFrame frame(width * height * channels);
-    std::copy_n(data, width * height * channels, frame.data.data());
-    stbi_image_free(data);
-    frame.width = width;
-    frame.height = height;
-    frame.channels = channels;
-    auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    if (ptr == nullptr) {
+    caiwei::media::ImageFrame frame;
+    if (!frame.load_from_file("./acgist.jpg")) {
         return;
     }
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread([&]() {
+            auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
+            if (ptr == nullptr) {
+                return;
+            }
             CAIWEI_FOR_EACH(100)
             ptr->run(frame);
             CAIWEI_FOR_EACH_END
@@ -98,32 +81,27 @@ void det_image_thread() {
 
 [[maybe_unused]]
 void det_video() {
-    // rtp|sdp|file|http|rtmp|rtsp|device
-    auto type = "file";
-    auto url  = "./caiwei.mp4";
-    // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
     if (ptr == nullptr) {
         return;
     }
-    int frame_count = 0;
+    size_t frame_count = 0;
     std::vector<caiwei::image::Box> ret;
-    caiwei::player::open_player(1, 16000, 640, 360);
-    caiwei::media::MediaDemuxer media_demuxer(type, url);
+    caiwei::player::open_player();
+    caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return caiwei::player::play_audio(frame.data.data(), frame.data.size());
         },
         [&ptr, &ret, &frame_count](caiwei::media::VideoFrame& frame) {
-            auto data = frame.data;
             if (frame_count++ % 4 == 0) {
                 ret = ptr->run(frame);
             }
             for (const auto& box : ret) {
                 caiwei::test::draw_rect(
-                    data.data(),
+                    frame.data.data(),
                     frame.width,
                     frame.height,
                     box.x1 * frame.width,
@@ -133,7 +111,7 @@ void det_video() {
                     frame.channels
                 );
             }
-            return caiwei::player::play_video(data.data(), frame.width * 3);
+            return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }
     );
     caiwei::player::stop_player();

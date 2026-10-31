@@ -27,23 +27,24 @@ bool caiwei::rest::open() {
     get_shutdown();
     register_api();
     register_handler();
-    const auto host = caiwei::env::get("CAIWEI_SERVER_HOST");
-    const auto port = caiwei::env::get_int("CAIWEI_SERVER_PORT");
-    const auto pool = caiwei::env::get_int("CAIWEI_SERVER_POOL");
+    const auto host     = caiwei::env::get("CAIWEI_SERVER_HOST");
+    const auto port     = caiwei::env::get_int("CAIWEI_SERVER_PORT");
+    const auto min_pool = caiwei::env::get_int("CAIWEI_SERVER_MIN_POOL");
+    const auto max_pool = caiwei::env::get_int("CAIWEI_SERVER_MAX_POOL");
     if (port <= 0) {
         CW_LOG_W("端口配置错误: %d", port);
         delete caiwei::rest::server;
         caiwei::rest::server = nullptr;
         return false;
     }
-    if (pool <= 0) {
-        CW_LOG_W("任务配置错误: %d", pool);
+    if (min_pool <= 0 || max_pool <= 0 || min_pool > max_pool) {
+        CW_LOG_W("任务配置错误: %d - %d", min_pool, max_pool);
         delete caiwei::rest::server;
         caiwei::rest::server = nullptr;
         return false;
     }
-    caiwei::rest::server->new_task_queue = [pool] {
-        return new httplib::ThreadPool(pool, 4 * pool);
+    caiwei::rest::server->new_task_queue = [min_pool, max_pool] {
+        return new httplib::ThreadPool(min_pool, max_pool);
     };
     caiwei::rest::server->set_read_timeout(60);
     caiwei::rest::server->set_write_timeout(60);
@@ -52,7 +53,7 @@ bool caiwei::rest::open() {
     caiwei::rest::server->set_logger([](const httplib::Request& request, const httplib::Response&) {
         CW_LOG_I("请求日志: %s - %s - %s", request.method.c_str(), request.path.c_str(), request.remote_addr.c_str());
     });
-    CW_LOG_I("启动REST服务: %s - %d => %d", host.c_str(), port, pool);
+    CW_LOG_I("启动REST服务: %s - %d => %d - %d", host.c_str(), port, min_pool, max_pool);
     caiwei::rest::server->listen(host, port);
     delete caiwei::rest::server;
     caiwei::rest::server = nullptr;

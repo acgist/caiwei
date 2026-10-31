@@ -463,3 +463,10 @@ void caiwei::text::SpecialToken::load_reranking() {
     this->system_prompt      = caiwei::env::get("CAIWEI_RERANKING_SYSTEM_PROMPT");
     this->instruction_prompt = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_PROMPT");
 }
+
+bool caiwei::text::check_security(const CompletionsRequest& request) {
+    // TODO 校验文件安全
+    // TODO 校验请求地址
+    // TODO 校验数据安全
+    return true;
+}

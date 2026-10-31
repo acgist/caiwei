@@ -4,7 +4,6 @@
 #include <condition_variable>
 
 #include "httplib.h"
-#include "stb/stb_image.h"
 #include "base64/base64.h"
 
 #include "caiwei/env.hpp"
@@ -15,10 +14,6 @@
 
 #define ASR_QUEUE_SIZE  320000
 #define YOLO_QUEUE_SIZE 8
-
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
 
 using TokenCallback = std::function<void(const std::string& token)>;
 
@@ -204,8 +199,8 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         CW_LOG_I("开始解析视频: %s = %s", type.c_str(), url.c_str());
         caiwei::media::MediaDemuxer media_demuxer(type, url);
         bool ret = media_demuxer.open(
-            caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-            caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+            caiwei::media::AUDIO_INFO_DECODE,
+            caiwei::media::VIDEO_INFO_DECODE,
             [&](caiwei::media::AudioFrame& frame) {
                 if (enable_asr) {
                     if (frame.data.size() > ASR_QUEUE_SIZE) {
@@ -678,8 +673,8 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
     audio_frame.data.reserve(samples);
     caiwei::media::MediaDemuxer media_demuxer(type, audio_url);
     bool ret = media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [&](caiwei::media::AudioFrame& frame) {
             audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
             return audio_frame.data.size() < samples;
@@ -710,30 +705,22 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        int width, height, channels;
-        auto* data = stbi_load_from_memory((const stbi_uc*) image_data.data(), image_data.size(), &width, &height, &channels, STBI_rgb);
-        if (data == nullptr) {
+        if (!frame.load_from_memory((const uint8_t*) image_data.data(), image_data.size())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        frame.width    = width;
-        frame.height   = height;
-        frame.channels = channels;
-        frame.data.assign(data, data + width * height * channels);
-        stbi_image_free(data);
     } else if (image_url.starts_with(caiwei::text::CONTENT_TYPE_FILE) || std::filesystem::exists(image_url)) {
-        int width, height, channels;
-        auto* data = stbi_load(image_url.c_str(), &width, &height, &channels, STBI_rgb);
-        if (data == nullptr) {
+        if (!frame.load_from_file(image_url.c_str())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        frame.width    = width;
-        frame.height   = height;
-        frame.channels = channels;
-        frame.data.assign(data, data + width * height * channels);
-        stbi_image_free(data);
     } else if (image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTP) || image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
+        #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
+        if (image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
+            CW_LOG_W("不支持的媒体地址: %s", image_url.c_str());
+            return;
+        }
+        #endif
         auto pos = image_url.find("://");
         if(pos == std::string::npos) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
@@ -747,22 +734,16 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
         httplib::Client client(image_url.substr(0, pos));
         client.set_read_timeout(5);
         client.set_connection_timeout(5);
+        client.set_payload_max_length(2LL * 1024 * 1024);
         auto response = client.Get(image_url.substr(pos));
         if (!response || response->status != 200) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        int width, height, channels;
-        auto* data = stbi_load_from_memory((const stbi_uc*) response->body.data(), response->body.size(), &width, &height, &channels, STBI_rgb);
-        if (data == nullptr) {
+        if (!frame.load_from_memory((const uint8_t*) response->body.data(), response->body.size())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        frame.width    = width;
-        frame.height   = height;
-        frame.channels = channels;
-        frame.data.assign(data, data + width * height * channels);
-        stbi_image_free(data);
     } else {
         CW_LOG_W("不支持的媒体地址: %s", image_url.c_str());
         return;
@@ -786,8 +767,8 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
     std::vector<caiwei::media::VideoFrame> video_frames;
     caiwei::media::MediaDemuxer media_demuxer(type, video_url);
     bool ret = media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [&](caiwei::media::AudioFrame& frame) {
             return true;
         },

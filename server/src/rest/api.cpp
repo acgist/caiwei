@@ -92,6 +92,10 @@ static void post_rerankings() {
 static void post_chat_completions() {
     caiwei::rest::server->Post("/v1/chat/completions", [](const httplib::Request& request, httplib::Response& response) {
         auto completions = caiwei::text::json_to_completions(request.body);
+        if (!caiwei::text::check_security(completions)) {
+            response.set_content(caiwei::json::buildResponse("请求失败"), caiwei::rest::content::type::JSON);
+            return;
+        }
         if (completions.stream) {
             response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [req = std::move(completions)](size_t /*offset*/, httplib::DataSink& sink) mutable -> bool {
                 auto mutex = std::make_shared<std::mutex>();

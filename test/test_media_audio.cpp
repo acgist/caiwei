@@ -4,10 +4,6 @@
 #include "caiwei/audio_tool.hpp"
 #include "caiwei/image_tool.hpp"
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
-
 #define N_FFT 400
 #define HOP_LENGTH 160
 #define MEL_FILTERS_PATH "mel_128_filters.txt"
@@ -17,8 +13,8 @@ void test_log_mel_spectrogram() {
     caiwei::media::AudioFrame audio_data_full;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [&audio_data_full](caiwei::media::AudioFrame& frame) {
             audio_data_full.data.insert(audio_data_full.data.end(), frame.data.begin(), frame.data.end());
             return true;

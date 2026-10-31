@@ -6,10 +6,6 @@
 
 #include "base64/base64.h"
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
-
 [[maybe_unused]]
 static std::string base64_file(const std::string& type, const std::string& path) {
     std::ifstream stream(path, std::ios::binary);
@@ -52,11 +48,11 @@ void test_demuxer() {
     // ffmpeg -list_devices true -f dshow -i dummy
     // ffmpeg -list_options true -f dshow -i video="deviceName"
     // url: audio=deviceName:video=deviceName
-    caiwei::player::open_player(1, 16000, 640, 360);
+    caiwei::player::open_player();
     caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));

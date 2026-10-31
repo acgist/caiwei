@@ -23,6 +23,12 @@ namespace media  {
 
 inline constexpr const char* sdp_file_path = "./sdp/";
 
+inline constexpr const int AUDIO_CHANNELS    = 1;
+inline constexpr const int AUDIO_SAMPLE_RATE = 16000;
+inline constexpr const int IMAGE_WIDTH       = 640;
+inline constexpr const int IMAGE_HEIGHT      = 360;
+inline constexpr const int IMAGE_CHANNELS    = 3;
+
 void init();
 void stop();
 
@@ -47,6 +53,12 @@ struct VideoInfo {
     VideoInfo(         int width, int height, int format);
     VideoInfo(int fps, int width, int height, int format);
 };
+
+inline const AudioInfo AUDIO_INFO_DECODE{ 1, 16000, 1 }; // 1 = AV_SAMPLE_FMT_S16
+inline const AudioInfo AUDIO_INFO_ENCODE{ 2, 48000, 8 }; // 8 = AV_SAMPLE_FMT_FLTP
+
+inline const VideoInfo VIDEO_INFO_DECODE{     640,   0, 2 }; // 2 = AV_PIX_FMT_RGB24
+inline const VideoInfo VIDEO_INFO_ENCODE{ 24, 640, 360, 0 }; // 0 = AV_PIX_FMT_YUV420P
 
 using AudioCallback = std::function<bool(AudioFrame&)>;
 using ImageCallback = std::function<bool(ImageFrame&)>;
@@ -149,6 +161,14 @@ public:
     );
     bool stop();
 };
+
+bool check_file_security(const std::string& file, std::initializer_list<std::string> suffix = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".mp3",
+    ".mp4",
+});
 
 } // media
 } // caiwei

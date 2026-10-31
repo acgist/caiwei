@@ -12,16 +12,17 @@ static std::unordered_map<std::string, std::string> env_map;
 std::atomic_uint32_t caiwei::env::id_index = 0;
 
 static std::map<std::string, std::string> default_config = {
-    {"CAIWEI_VERSION",     "1.0.0"  }, // 版本号
-    {"CAIWEI_CUDA_ID",     "0"      }, // CUDA ID
-    {"CAIWEI_RKNN_ID",     "0"      }, // RKNN ID
-    {"CAIWEI_SERVER_HOST", "0.0.0.0"}, // 监听主机
-    {"CAIWEI_SERVER_PORT", "8888"   }, // 监听端口
-    {"CAIWEI_SERVER_POOL", "4"      }, // 线程数量
-    {"CAIWEI_USERNAME",    "admin"  }, // 接口账号
-    {"CAIWEI_PASSWORD",    "admin"  }, // 接口密码
-    {"CAIWEI_SECURITY",    "OFF"    }, // 安全验证
-    {"CAIWEI_TIMEOUT",     "30000"  }, // 超时时间
+    {"CAIWEI_VERSION",         "1.0.0"  }, // 版本号
+    {"CAIWEI_CUDA_ID",         "0"      }, // CUDA ID
+    {"CAIWEI_RKNN_ID",         "0"      }, // RKNN ID
+    {"CAIWEI_SERVER_HOST",     "0.0.0.0"}, // 监听主机
+    {"CAIWEI_SERVER_PORT",     "8888"   }, // 监听端口
+    {"CAIWEI_SERVER_MIN_POOL", "4"      }, // 最小线程
+    {"CAIWEI_SERVER_MAX_POOL", "32"     }, // 最大线程
+    {"CAIWEI_USERNAME",        "admin"  }, // 接口账号
+    {"CAIWEI_PASSWORD",        "admin"  }, // 接口密码
+    {"CAIWEI_SECURITY",        "OFF"    }, // 安全验证
+    {"CAIWEI_TIMEOUT",         "30000"  }, // 超时时间
     // 运行配置
     {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
     {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},

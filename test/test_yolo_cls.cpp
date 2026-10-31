@@ -1,9 +1,5 @@
 #include "test.hpp"
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
-
 #include <thread>
 #include <vector>
 
@@ -53,13 +49,13 @@ void cls_image_thread() {
     frame.width = width;
     frame.height = height;
     frame.channels = channels;
-    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    if (ptr == nullptr) {
-        return;
-    }
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread([&]() {
+            auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
+            if (ptr == nullptr) {
+                return;
+            }
             CAIWEI_FOR_EACH(100)
             ptr->run(frame);
             CAIWEI_FOR_EACH_END
@@ -81,11 +77,11 @@ void cls_video() {
     if (ptr == nullptr) {
         return;
     }
-    caiwei::player::open_player(1, 16000, 640, 360);
+    caiwei::player::open_player();
     caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return caiwei::player::play_audio(frame.data.data(), frame.data.size());
         },

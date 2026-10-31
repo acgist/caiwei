@@ -4,7 +4,7 @@
 namespace caiwei {
 namespace player {
 
-bool open_player(int sample_rate, int nb_channels, int video_width, int video_height);
+bool open_player(int nb_channels = 1, int sample_rate = 16000, int video_width = 640, int video_height = 360);
 void stop_player();
 
 bool play_audio(const void* data, int len);

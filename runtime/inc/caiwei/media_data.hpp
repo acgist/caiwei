@@ -45,6 +45,9 @@ public:
 public:
     ImageFrame(uint32_t size);
     ImageFrame() noexcept = default;
+public:
+    bool load_from_file(const char* path);
+    bool load_from_memory(const uint8_t* buffer, const size_t size);
 };
 
 class VideoFrame : public ImageFrame {

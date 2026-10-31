@@ -4,10 +4,6 @@
 
 #include "base64/base64.h"
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
-
 caiwei::session::VideoPlaySession::VideoPlaySession(
     std::string url, std::string type, bool codec, Callback callback
 ) : StatefulSession(callback), url(std::move(url)), type(std::move(type)), codec(codec) {
@@ -38,10 +34,10 @@ bool caiwei::session::VideoPlaySession::media_codec() {
         }
     });
     caiwei::media::MediaMuxer media_muxer(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::AudioInfo(2, 48000, AV_SAMPLE_FMT_FLTP),
-        caiwei::media::VideoInfo(    640, 360, AV_PIX_FMT_RGB24),
-        caiwei::media::VideoInfo(24, 640, 360, AV_PIX_FMT_YUV420P),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::AUDIO_INFO_ENCODE,
+        caiwei::media::VIDEO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_ENCODE,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
             return media_format.send(type, packet);
         }
@@ -57,8 +53,8 @@ bool caiwei::session::VideoPlaySession::media_codec() {
     }
     CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
     if (!media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [&media_muxer](caiwei::media::AudioFrame& frame) {
             return media_muxer.on_audio(frame);
         },
@@ -86,8 +82,8 @@ bool caiwei::session::VideoPlaySession::media_forward() {
     caiwei::media::MediaDemuxer media_demuxer(this->type, this->url);
     CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
     bool ret = media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return true;
         },

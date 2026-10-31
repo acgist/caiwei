@@ -3,10 +3,6 @@
 #include <thread>
 #include <fstream>
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
-
 [[maybe_unused]]
 void test_format() {
     // rtp|sdp|file|http|rtmp|rtsp|device
@@ -40,10 +36,10 @@ void test_format() {
         return true;
     });
     caiwei::media::MediaMuxer media_muxer(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::AudioInfo(2, 48000, AV_SAMPLE_FMT_FLTP),
-        caiwei::media::VideoInfo(    640, 360, AV_PIX_FMT_RGB24),
-        caiwei::media::VideoInfo(24, 640, 360, AV_PIX_FMT_YUV420P),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::AUDIO_INFO_ENCODE,
+        caiwei::media::VIDEO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_ENCODE,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
         if (type == caiwei::media::MediaType::AUDIO) {
             // CW_LOG_D("audio packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
@@ -59,8 +55,8 @@ void test_format() {
     media_muxer.open();
     media_format.open(media_muxer.audio_codec_ctx, media_muxer.video_codec_ctx);
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [&media_muxer](caiwei::media::AudioFrame& frame) {
             // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
             media_muxer.on_audio(frame);
@@ -82,8 +78,8 @@ void test_format_fwd_file() {
     caiwei::media::MediaFormat media_format("./output_fwd_file.mp4");
     caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return true;
         },
@@ -105,8 +101,8 @@ void test_format_fwd_callback() {
     });
     caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return true;
         },
