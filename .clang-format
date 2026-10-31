@@ -4,6 +4,6 @@ TabWidth: 4
 IndentWidth: 4
 ColumnLimit: 256
 AccessModifierOffset: -4
-AllowShortLoopsOnASingleLine: None
+AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never

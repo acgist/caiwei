@@ -4,9 +4,7 @@ option(ENABLE_CAIWEI_SDL2 "SDL2 Player" ON)
 
 if(ENABLE_CAIWEI_SDL2)
     message(STATUS "Enable SDL2 Player")
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
     # -
     elseif(CMAKE_HOST_WIN32)
         set(SDL2_PATH "${CMAKE_SOURCE_DIR}/deps/sdl2" CACHE STRING "SDL2 Path")
@@ -43,159 +41,30 @@ target_link_libraries(
     ${CAIWEI_TEST_LIBS}
 )
 
-add_executable(
+set(
+    CAIWEI_TEST_LIST
     test_media_audio
-    test_media_audio.cpp
-)
-add_test(NAME test_media_audio COMMAND test_media_audio)
-set_target_properties(test_media_audio PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_media_audio
-    caiwei-test
-)
-
-add_executable(
     test_media_image
-    test_media_image.cpp
-)
-add_test(NAME test_media_image COMMAND test_media_image)
-set_target_properties(test_media_image PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_media_image
-    caiwei-test
-)
-
-add_executable(
     test_media_format
-    test_media_format.cpp
-)
-add_test(NAME test_media_format COMMAND test_media_format)
-set_target_properties(test_media_format PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_media_format
-    caiwei-test
-)
-
-add_executable(
     test_media_demuxer
-    test_media_demuxer.cpp
-)
-add_test(NAME test_media_demuxer COMMAND test_media_demuxer)
-set_target_properties(test_media_demuxer PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_media_demuxer
-    caiwei-test
-)
-
-add_executable(
     test_qwen_asr
-    test_qwen_asr.cpp
-)
-add_test(NAME test_qwen_asr COMMAND test_qwen_asr)
-set_target_properties(test_qwen_asr PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_qwen_asr
-    caiwei-test
-)
-
-add_executable(
     test_qwen_llm
-    test_qwen_llm.cpp
-)
-add_test(NAME test_qwen_llm COMMAND test_qwen_llm)
-set_target_properties(test_qwen_llm PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_qwen_llm
-    caiwei-test
-)
-
-add_executable(
     test_qwen_vlm
-    test_qwen_vlm.cpp
-)
-add_test(NAME test_qwen_vlm COMMAND test_qwen_vlm)
-set_target_properties(test_qwen_vlm PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_qwen_vlm
-    caiwei-test
-)
-
-add_executable(
     test_qwen_embedding
-    test_qwen_embedding.cpp
-)
-add_test(NAME test_qwen_embedding COMMAND test_qwen_embedding)
-set_target_properties(test_qwen_embedding PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_qwen_embedding
-    caiwei-test
-)
-
-add_executable(
     test_qwen_reranking
-    test_qwen_reranking.cpp
-)
-add_test(NAME test_qwen_reranking COMMAND test_qwen_reranking)
-set_target_properties(test_qwen_reranking PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_qwen_reranking
-    caiwei-test
-)
-
-add_executable(
     test_yolo_cls
-    test_yolo_cls.cpp
-)
-add_test(NAME test_yolo_cls COMMAND test_yolo_cls)
-set_target_properties(test_yolo_cls PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_yolo_cls
-    caiwei-test
-)
-
-add_executable(
     test_yolo_det
-    test_yolo_det.cpp
-)
-add_test(NAME test_yolo_det COMMAND test_yolo_det)
-set_target_properties(test_yolo_det PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_yolo_det
-    caiwei-test
-)
-
-add_executable(
     test_runtime_text
-    test_runtime_text.cpp
-)
-add_test(NAME test_runtime_text COMMAND test_runtime_text)
-set_target_properties(test_runtime_text PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_runtime_text
-    caiwei-test
+    test_runtime_manager
+    test_runtime_runtime
 )
 
-add_executable(
-    test_runtime_manager
-    test_runtime_manager.cpp
-)
-add_test(NAME test_runtime_manager COMMAND test_runtime_manager)
-set_target_properties(test_runtime_manager PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_runtime_manager
-    caiwei-test
-)
-
-add_executable(
-    test_runtime_runtime
-    test_runtime_runtime.cpp
-)
-add_test(NAME test_runtime_runtime COMMAND test_runtime_runtime)
-set_target_properties(test_runtime_runtime PROPERTIES FOLDER "test")
-target_link_libraries(
-    test_runtime_runtime
-    caiwei-test
-)
+foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)
+    add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    set_target_properties(${TEST_NAME} PROPERTIES FOLDER "test")
+    target_link_libraries(${TEST_NAME} caiwei-test)
+endforeach()
 
 message(STATUS "CAIWEI_TEST_DLLS: ${CAIWEI_TEST_DLLS}")
 message(STATUS "CAIWEI_TEST_INCS: ${CAIWEI_TEST_INCS}")
@@ -203,9 +72,7 @@ message(STATUS "CAIWEI_TEST_LIBS: ${CAIWEI_TEST_LIBS}")
 
 file(COPY ./ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.jpg" PATTERN "*.mp3" PATTERN "*.mp4")
 
-if(ANDROID)
-# -
-elseif(CMAKE_HOST_UNIX)
+if(CMAKE_HOST_UNIX)
 # -
 elseif(CMAKE_HOST_WIN32)
     if(CAIWEI_TEST_DLLS)

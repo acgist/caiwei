@@ -9,8 +9,8 @@ extern "C" {
 }
 
 caiwei::session::VideoPlaySession::VideoPlaySession(
-    bool copy, std::string url, std::string type, Callback callback
-) : StatefulSession(callback), copy(copy), url(std::move(url)), type(std::move(type)) {
+    std::string url, std::string type, bool codec, Callback callback
+) : StatefulSession(callback), url(std::move(url)), type(std::move(type)), codec(codec) {
 }
 
 std::future<bool> caiwei::session::VideoPlaySession::get() {
@@ -18,40 +18,13 @@ std::future<bool> caiwei::session::VideoPlaySession::get() {
     if (this->callback == nullptr) {
         promise.set_value(false);
     } else {
-        if (this->copy) {
-            promise.set_value(this->media_copy());
-        } else {
+        if (this->codec) {
             promise.set_value(this->media_codec());
+        } else {
+            promise.set_value(this->media_forward());
         }
     }
     return promise.get_future();
-}
-
-bool caiwei::session::VideoPlaySession::media_copy() {
-    caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
-        auto output = base64_encode(data, length);
-        if (this->callback(output.data(), output.length())) {
-            return true;
-        } else {
-            CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
-            return false;
-        }
-    });
-    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url);
-    CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
-    bool ret = media_demuxer.open(
-        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
-        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
-        [](caiwei::media::AudioFrame& frame) {
-            return true;
-        },
-        [](caiwei::media::VideoFrame& frame) {
-            return true;
-        },
-        &media_format
-    );
-    CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
-    return ret;
 }
 
 bool caiwei::session::VideoPlaySession::media_codec() {
@@ -98,4 +71,31 @@ bool caiwei::session::VideoPlaySession::media_codec() {
     }
     CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
     return true;
+}
+
+bool caiwei::session::VideoPlaySession::media_forward() {
+    caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
+        auto output = base64_encode(data, length);
+        if (this->callback(output.data(), output.length())) {
+            return true;
+        } else {
+            CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
+            return false;
+        }
+    });
+    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url);
+    CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
+    bool ret = media_demuxer.open(
+        caiwei::media::AudioInfo(1, 16000, AV_SAMPLE_FMT_S16),
+        caiwei::media::VideoInfo(640, 0, AV_PIX_FMT_RGB24),
+        [](caiwei::media::AudioFrame& frame) {
+            return true;
+        },
+        [](caiwei::media::VideoFrame& frame) {
+            return true;
+        },
+        &media_format
+    );
+    CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
+    return ret;
 }

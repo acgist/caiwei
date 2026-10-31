@@ -8,14 +8,14 @@ Checks: >
   -abseil-*,
   -google-*,
   -fuchsia-*,
+  -misc-non-private-member-variables-in-classes
+  -bugprone-easily-swappable-parameters,
+  -modernize-use-trailing-return-type,
   -readability-magic-numbers,
   -readability-function-size,
   -readability-identifier-length,
-  -modernize-use-trailing-return-type,
-  -bugprone-easily-swappable-parameters,
   -readability-redundant-access-specifiers,
   -readability-function-cognitive-complexity,
-  -misc-non-private-member-variables-in-classes
 CheckOptions:
   - key: modernize-use-nullptr.NullMacros
     value: "NULL"

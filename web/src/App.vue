@@ -40,22 +40,38 @@ export default {
       host  : `http://${location.hostname}:8888`,
       type  : "VideoPlay",
       status: "green",
+      healthTimerId: 0,
     }
   },
   mounted() {
-    setInterval(async () => {
-      try {
-        const resp = await fetch(`${this.host}/v1/health`);
-        const json = await resp.json();
-        if(json.header.code === "0000") {
-          this.status = "green";
-        } else {
+    this.healthTimer();
+  },
+  unmounted() {
+    this.clearHealthTimer();
+  },
+  methods: {
+    healthTimer() {
+      if (this.healthTimerId != 0) {
+        return;
+      }
+      this.healthTimerId = setInterval(async () => {
+        try {
+          const resp = await fetch(`${this.host}/v1/health`);
+          const json = await resp.json();
+          if (json.header.code === "0000") {
+            this.status = "green";
+          } else {
+            this.status = "red";
+          }
+        } catch (error) {
           this.status = "red";
         }
-      } catch (error) {
-        this.status = "red";
-      }
-    }, 5000);
+      }, 5000);
+    },
+    clearHealthTimer() {
+      clearInterval(this.healthTimerId);
+      this.healthTimerId = 0;
+    },
   },
 };
 </script>

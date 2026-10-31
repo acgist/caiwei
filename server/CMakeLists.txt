@@ -1,4 +1,4 @@
-project(caiwei-server VERSION 1.0.0 LANGUAGES C CXX)
+project(caiwei-server VERSION 1.0.0)
 
 set(
     CAIWEI_SERVER_SRCS
@@ -23,9 +23,7 @@ if(ENABLE_CAIWEI_CPPHTTPLIB)
     )
 endif()
 
-if(ANDROID)
-# -
-elseif(CMAKE_HOST_UNIX)
+if(CMAKE_HOST_UNIX)
 # -
 elseif(CMAKE_HOST_WIN32)
     list(
@@ -58,9 +56,7 @@ target_include_directories(
 file(COPY ${CMAKE_SOURCE_DIR}/LICENSE ${CMAKE_SOURCE_DIR}/README.md DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
 file(COPY res/ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.ico" PATTERN "*.txt")
 
-if(ANDROID)
-# -
-elseif(CMAKE_HOST_UNIX)
+if(CMAKE_HOST_UNIX)
     install(FILES ${CMAKE_SOURCE_DIR}/LICENSE ${CMAKE_SOURCE_DIR}/README.md DESTINATION ".")
     install(DIRECTORY res/ DESTINATION bin FILES_MATCHING PATTERN "*.ico" PATTERN "*.txt")
     install(

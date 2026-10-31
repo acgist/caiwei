@@ -14,10 +14,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-if(NOT BUILD_SHARED_LIBS)
-    set(BUILD_SHARED_LIBS ON)
-endif()
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 编译测试
@@ -38,11 +34,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(ANDROID)
-    add_definitions(-DCAIWEI_OS_ANDROID=1)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-elseif(CMAKE_HOST_UNIX)
+if(CMAKE_HOST_UNIX)
     add_definitions(-DCAIWEI_OS_UNIX=1)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -132,9 +124,7 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     # 50  Maxwell      GTX 750 Ti/750
     # 35  Kepler       GTX Titan、Tesla K80/K40/K20
     # 30  Kepler       GTX 680/670/660/650
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
         set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90)
         set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16")
     elseif(CMAKE_HOST_WIN32)
@@ -143,16 +133,13 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     else()
     # -
     endif()
-    find_package(CUDA        REQUIRED)
     find_package(CUDAToolkit REQUIRED)
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     message(STATUS "Enable Rockchip RKNN2")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2=1)
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
         list(APPEND CAIWEI_RUNTIME_LIBS rga rknnrt)
     elseif(CMAKE_HOST_WIN32)
     # -
@@ -164,9 +151,7 @@ endif()
 if(ENABLE_CAIWEI_RUNTIME_RKNN3)
     message(STATUS "Enable Rockchip RKNN3")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3=1)
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
         list(APPEND CAIWEI_RUNTIME_LIBS rga rknn3_api)
     elseif(CMAKE_HOST_WIN32)
     # -
@@ -197,9 +182,7 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME=1)
     set(ONNXRUNTIME_PATH "${CMAKE_SOURCE_DIR}/deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${ONNXRUNTIME_PATH})
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
         file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/libonnxruntime.so")
         list(APPEND CAIWEI_RUNTIME_INCS "${ONNXRUNTIME_PATH}/include")
     elseif(CMAKE_HOST_WIN32)
@@ -215,9 +198,7 @@ endif()
 
 if(ENABLE_CAIWEI_FFMPEG)
     message(STATUS "Enable FFmpeg")
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
         if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
             list(
                 APPEND CAIWEI_RUNTIME_LIBS
@@ -251,9 +232,7 @@ endif()
 if(ENABLE_CAIWEI_CPPHTTPLIB)
     message(STATUS "Enable cpp-httplib")
     add_definitions(-DENABLE_CAIWEI_REST=1)
-    if(ANDROID)
-    # -
-    elseif(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX)
     # -
     elseif(CMAKE_HOST_WIN32)
         set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")

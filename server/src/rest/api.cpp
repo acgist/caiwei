@@ -47,10 +47,10 @@ static void get_models() {
 static void get_video_play() {
     caiwei::rest::server->Get("/v1/video/play", [](const httplib::Request& request, httplib::Response& response) {
         response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [&](size_t /*offset*/, httplib::DataSink& sink) {
-            auto url  = request.get_param_value("url");
-            auto type = request.get_param_value("type");
-            auto copy = request.get_param_value("copy");
-            caiwei::session::VideoPlaySession session(copy == "true", std::move(url), std::move(type), [&sink](const char* data, int length) {
+            auto url   = request.get_param_value("url");
+            auto type  = request.get_param_value("type");
+            auto codec = request.get_param_value("codec");
+            caiwei::session::VideoPlaySession session(std::move(url), std::move(type), codec == "true", [&sink](const char* data, int length) {
                 const bool writable = sink.is_writable();
                 if (writable) {
                     if (data == nullptr || length == 0) {

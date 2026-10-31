@@ -1,4 +1,4 @@
-project(caiwei-runtime VERSION 1.0.0 LANGUAGES C CXX)
+project(caiwei-runtime VERSION 1.0.0)
 
 set(
     CAIWEI_RUNTIME_SRCS
@@ -107,9 +107,7 @@ target_include_directories(
     ${CAIWEI_RUNTIME_INCS}
 )
 
-if(ANDROID)
-# -
-elseif(CMAKE_HOST_UNIX)
+if(CMAKE_HOST_UNIX)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
         target_compile_options(${PROJECT_NAME} PRIVATE -mavx2 -mf16c)
     endif()

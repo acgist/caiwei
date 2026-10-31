@@ -7,9 +7,9 @@
     <el-button @click="stopMedia" type="danger" >关闭媒体</el-button>
   </div>
   <div style="display:flex;align-items:center;justify-content:center;padding:1rem;">
-    <el-select v-model="copy" style="width:6rem;margin-right:1rem;" @change="changeType">
-      <el-option :value="true"  label="复制"></el-option>
-      <el-option :value="false" label="解码"></el-option>
+    <el-select v-model="codec" style="width:6rem;margin-right:1rem;" @change="changeType">
+      <el-option :value="true"  label="解码"></el-option>
+      <el-option :value="false" label="转发"></el-option>
     </el-select>
     <el-select v-model="type" style="width:6rem;margin-right:1rem;" @change="changeType">
       <el-option value="rtp"    label="rtp"   ></el-option>
@@ -35,13 +35,17 @@ export default {
   },
   data() {
     return {
-      copy: true,
-      type: "file",
-      url : null,
-      urls: {
+      url   : null,
+      type  : "file",
+      codec : true,
+      event : null,
+      media : null,
+      queue : [],
+      buffer: null,
+      urls  : {
         // ffmpeg -re -i caiwei.mp4 -c:a pcm_alaw -ar 8000 -ac 1 -vn -f rtp -payload_type  8 -ssrc 1000 rtp://127.0.0.1:44444 > audio.sdp
         // ffmpeg -re -i caiwei.mp4 -c:v libx264                 -an -f rtp -payload_type 96 -ssrc 2000 rtp://127.0.0.1:44446 > video.sdp
-        rtp   : `v=0
+        rtp: `v=0
 c=IN IP4 0.0.0.0
 o=- 0 0 IN IP4 0.0.0.0
 s=caiwei rtp capture
@@ -55,7 +59,7 @@ a=rtcp:44447
 a=rtpmap:96 H264/90000
 a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
 a=recvonly`,
-        sdp   : `v=0
+        sdp: `v=0
 c=IN IP4 0.0.0.0
 o=- 0 0 IN IP4 0.0.0.0
 s=caiwei rtp capture
@@ -75,10 +79,6 @@ a=recvonly`,
         rtsp  : "rtsp://admin:admin@127.0.0.1:554/h264/ch1/main/av_stream",
         device: "audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera",
       },
-      queue : [],
-      media : null,
-      event : null,
-      buffer: null,
     };
   },
   mounted() {
@@ -92,18 +92,17 @@ a=recvonly`,
       this.url = this.urls[this.type];
     },
     async openMedia() {
-      if(this.event && this.media) {
+      if (this.event && this.media) {
         this.$message.error("媒体已经打开");
         return;
       }
-      this.event = new EventSource(`${this.host}/v1/video/play?copy=${this.copy}&type=${this.type}&url=${encodeURIComponent(this.url)}`);
+      this.event = new EventSource(`${this.host}/v1/video/play?codec=${this.codec}&type=${this.type}&url=${encodeURIComponent(this.url)}`);
       this.event.onopen = async e => {
         this.media = new MediaSource();
         const localVideo = this.$refs.localVideo;
         localVideo.src = URL.createObjectURL(this.media);
         this.media.addEventListener("sourceopen", async () => {
-          const mime = 'video/mp4; codecs="avc1.42C020, mp4a.40.2"';
-          this.buffer = this.media.addSourceBuffer(mime);
+          this.buffer = this.media.addSourceBuffer('video/mp4; codecs="avc1.42C020, mp4a.40.2"');
           this.buffer.addEventListener("updateend", () => {
             if (this.buffer.updating) {
               return;
@@ -114,8 +113,8 @@ a=recvonly`,
             }
             const playTime = localVideo.currentTime;
             const buffTime = this.buffer.buffered.start(0);
-            // 删除当前播放时间30秒钟以前缓存数据
-            if(playTime - buffTime > 60) {
+            // 删除媒体缓存数据
+            if (playTime - buffTime > 60) {
               this.buffer.remove(0, playTime - 30);
             }
           });
@@ -143,21 +142,20 @@ a=recvonly`,
         this.stopMedia();
       };
       this.event.addEventListener("message", e => {
-        if(!this.buffer) {
+        if (!this.buffer) {
           console.warn("媒体没有准备就绪");
           return;
         }
         const raw  = atob(e.data);
         const blob = new Uint8Array(raw.length);
-        for(let index = 0; index < raw.length; ++index) {
+        for (let index = 0; index < raw.length; ++index) {
           blob[index] = raw.charCodeAt(index);
         }
         this.queue.push(blob);
-        if(this.buffer.updating) {
-          // 更新中不处理
+        if (this.buffer.updating) {
           return;
         }
-        if(this.queue.length === 1) {
+        if (this.queue.length === 1) {
           this.buffer.appendBuffer(this.queue.shift());
           return;
         }
@@ -177,21 +175,22 @@ a=recvonly`,
       });
     },
     async stopMedia() {
-      if(this.event && this.media) {
-        console.info("关闭媒体");
+      if (this.event) {
+        console.info("关闭事件");
         this.queue = [];
         this.event.close();
         this.event = null;
+      }
+      if (this.media) {
+        console.info("关闭媒体");
         this.media.removeSourceBuffer(this.buffer);
-        this.media = null;
+        this.media  = null;
         this.buffer = null;
         const localVideo = this.$refs.localVideo;
         localVideo.pause();
         URL.revokeObjectURL(localVideo.src);
         localVideo.src = "";
         localVideo.load();
-      } else {
-        console.info("媒体已经关闭");
       }
     },
   },

@@ -14,9 +14,7 @@
 ```
 
 <p align="center">
-    <a target="_blank" href="https://starchart.cc/acgist/caiwei">
-        <img alt="GitHub stars" src="https://img.shields.io/github/stars/acgist/caiwei?style=flat-square&label=Github%20stars&color=crimson" />
-    </a>
+    <img alt="GitHub stars" src="https://img.shields.io/github/stars/acgist/caiwei?style=flat-square&label=Github%20stars&color=crimson" />
     <img alt="Gitee stars" src="https://img.shields.io/badge/dynamic/json?style=flat-square&label=Gitee%20stars&color=crimson&url=https://gitee.com/api/v5/repos/acgist/caiwei&query=$.stargazers_count&cacheSeconds=3600" />
     <br />
     <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/acgist/caiwei/build.yml?style=flat-square&branch=master" />

@@ -43,16 +43,16 @@ public:
 
 class VideoPlaySession : public StatefulSession {
 private:
-    const bool copy;
     const std::string url;
     const std::string type;
+    const bool codec;
 public:
-    VideoPlaySession(bool copy, std::string url, std::string type, Callback callback);
+    VideoPlaySession(std::string url, std::string type, bool codec, Callback callback);
 public:
     std::future<bool> get() override;
 protected:
-    bool media_copy();
     bool media_codec();
+    bool media_forward();
 };
 
 class EmbeddingsSession : public StatelessSession {
