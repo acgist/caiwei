@@ -5,35 +5,31 @@
 
 [[maybe_unused]]
 void cls_image() {
-    int width, height, channels;
-    auto data = stbi_load("./samoyed.jpg", &width, &height, &channels, STBI_default);
-    caiwei::media::ImageFrame frame(width * height * channels);
-    std::copy_n(data, width * height * channels, frame.data.data());
-    stbi_image_free(data);
-    frame.width = width;
-    frame.height = height;
-    frame.channels = channels;
+    caiwei::media::ImageFrame frame;
+    if (!frame.load_from_file("./samoyed.jpg")) {
+        return;
+    }
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
     auto result = ptr->run(frame);
+    assert(!result.empty());
     for (const auto& cls : result) {
-        std::printf("cls = %d, score = %f\n", cls.class_id, cls.score);
+        CW_LOG_I("cls: %d = %.2f", cls.class_id, cls.score);
     }
     // 258 == samoyed
-    assert(!result.empty());
     assert(result[0].class_id== 258);
     caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
-        auto result = ptr->run(frame);
+        ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
     caiwei::test::caiwei_wait_enter();
     {
         CAIWEI_FOR_EACH(1000)
-        auto result = ptr->run(frame);
+        ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
     caiwei::test::caiwei_wait_enter();
@@ -41,14 +37,10 @@ void cls_image() {
 
 [[maybe_unused]]
 void cls_image_thread() {
-    int width, height, channels;
-    auto data = stbi_load("./samoyed.jpg", &width, &height, &channels, STBI_default);
-    caiwei::media::ImageFrame frame(width * height * channels);
-    std::copy_n(data, width * height * channels, frame.data.data());
-    stbi_image_free(data);
-    frame.width = width;
-    frame.height = height;
-    frame.channels = channels;
+    caiwei::media::ImageFrame frame;
+    if (!frame.load_from_file("./samoyed.jpg")) {
+        return;
+    }
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread([&]() {
@@ -57,7 +49,8 @@ void cls_image_thread() {
                 return;
             }
             CAIWEI_FOR_EACH(100)
-            ptr->run(frame);
+            auto result = ptr->run(frame);
+            assert(result[0].class_id== 258);
             CAIWEI_FOR_EACH_END
         }));
     }
@@ -69,26 +62,23 @@ void cls_image_thread() {
 
 [[maybe_unused]]
 void cls_video() {
-    // rtp|sdp|file|http|rtmp|rtsp|device
-    auto type = "file";
-    auto url  = "./caiwei.mp4";
-    // auto url = R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)";
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
         return;
     }
     caiwei::player::open_player();
-    caiwei::media::MediaDemuxer media_demuxer(type, url);
+    caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
+    // caiwei::media::MediaDemuxer media_demuxer("device", R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)");
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
-            return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+            return caiwei::player::play_audio(frame.data.data(), static_cast<int>(frame.data.size()));
         },
         [&ptr](caiwei::media::VideoFrame& frame) {
             auto ret = ptr->run(frame);
             for (const auto& index : ret) {
-                CW_LOG_D("%d = %.2f", index.class_id, index.score);
+                CW_LOG_I("%d = %.2f", index.class_id, index.score);
             }
             return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }

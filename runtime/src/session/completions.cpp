@@ -734,7 +734,9 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
         httplib::Client client(image_url.substr(0, pos));
         client.set_read_timeout(5);
         client.set_connection_timeout(5);
+        #ifdef CPPHTTPLIB_VERSION_NUM
         client.set_payload_max_length(2LL * 1024 * 1024);
+        #endif
         auto response = client.Get(image_url.substr(pos));
         if (!response || response->status != 200) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());

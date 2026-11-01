@@ -23,12 +23,6 @@ namespace media  {
 
 inline constexpr const char* sdp_file_path = "./sdp/";
 
-inline constexpr const int AUDIO_CHANNELS    = 1;
-inline constexpr const int AUDIO_SAMPLE_RATE = 16000;
-inline constexpr const int IMAGE_WIDTH       = 640;
-inline constexpr const int IMAGE_HEIGHT      = 360;
-inline constexpr const int IMAGE_CHANNELS    = 3;
-
 void init();
 void stop();
 

@@ -43,10 +43,10 @@ void test_llm() {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
-    std::printf("content: %s\n", content.c_str());
-    std::printf("thinking: %s\n", thinking.c_str());
-    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
-    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    CW_LOG_I("content: %s", content.c_str());
+    CW_LOG_I("thinking: %s", thinking.c_str());
+    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
+    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
     caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
@@ -68,10 +68,10 @@ void test_llm() {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
-    std::printf("content: %s\n", content.c_str());
-    std::printf("thinking: %s\n", thinking.c_str());
-    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
-    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    CW_LOG_I("content: %s", content.c_str());
+    CW_LOG_I("thinking: %s", thinking.c_str());
+    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
+    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
     caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
@@ -92,10 +92,10 @@ void test_llm() {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
-    std::printf("content: %s\n", content.c_str());
-    std::printf("thinking: %s\n", thinking.c_str());
-    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
-    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    CW_LOG_I("content: %s", content.c_str());
+    CW_LOG_I("thinking: %s", thinking.c_str());
+    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
+    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
     caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
@@ -117,10 +117,10 @@ void test_llm() {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
-    std::printf("content: %s\n", content.c_str());
-    std::printf("thinking: %s\n", thinking.c_str());
-    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
-    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    CW_LOG_I("content: %s", content.c_str());
+    CW_LOG_I("thinking: %s", thinking.c_str());
+    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
+    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
     caiwei::test::caiwei_wait_enter();
     content = "";
     thinking = "";
@@ -140,10 +140,10 @@ void test_llm() {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
         }
     }
-    std::printf("content: %s\n", content.c_str());
-    std::printf("thinking: %s\n", thinking.c_str());
-    std::printf("toolcall_name: %s\n", toolcall_name.c_str());
-    std::printf("toolcall_arguments: %s\n", toolcall_arguments.c_str());
+    CW_LOG_I("content: %s", content.c_str());
+    CW_LOG_I("thinking: %s", thinking.c_str());
+    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
+    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
 }
 
 [[maybe_unused]]

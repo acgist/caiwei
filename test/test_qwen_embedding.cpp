@@ -13,7 +13,7 @@ static void diff(const std::vector<float>& a, const std::vector<float>& z) {
         sum += d * d;
     }
     float euclidean_dist = std::sqrt(sum);
-    CW_LOG_I("欧式距离: %f", euclidean_dist);
+    CW_LOG_I("欧式距离: %.2f", euclidean_dist);
 }
 
 [[maybe_unused]]
@@ -30,7 +30,7 @@ void test_embedding() {
     }
     auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
-        // std::printf("%s\n", nlohmann::json(item).dump().c_str());
+        // CW_LOG_I("%s", nlohmann::json(item).dump().c_str());
     }
     diff(ret.result[0], ret.result[1]);
     diff(ret.result[0], ret.result[2]);

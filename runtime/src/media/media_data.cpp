@@ -24,6 +24,7 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
     if (data == nullptr) {
         return false;
     }
+    channels = IMAGE_CHANNELS;
     this->data.assign(data, data + width * height * channels);
     stbi_image_free(data);
     this->width    = width;
@@ -41,6 +42,7 @@ bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const si
     if (data == nullptr) {
         return false;
     }
+    channels = IMAGE_CHANNELS;
     this->data.assign(data, data + width * height * channels);
     stbi_image_free(data);
     this->width    = width;

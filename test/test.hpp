@@ -46,7 +46,7 @@ namespace caiwei {
 namespace test   {
 
 inline void caiwei_wait_enter() {
-    std::printf("回车继续\n");
+    CW_LOG_I("回车继续");
     std::cin.get();
 }
 

@@ -10,23 +10,25 @@
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 [[maybe_unused]]
 void test_rknn2(int size, const std::string& path, const std::string& type) {
-    size = size == 0 ? 640 : size;
+    size = size <= 0 ? 640 : size;
     caiwei::context::RKNN2Context context(path.empty() ? "yolo26n-det.rknn" : path, 3, size, size);
-    context.load_model();
+    if (!context.load_model()) {
+        return;
+    }
     if (type == "i8") {
         std::vector<int8_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
-        auto result = context.run<int8_t>(data.data(), data.size());
+        context.run<int8_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else if (type == "u8") {
         std::vector<uint8_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
-        auto result = context.run<uint8_t>(data.data(), data.size());
+        context.run<uint8_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else {
         std::vector<uint16_t> data(3 * size * size);
         CAIWEI_FOR_EACH(1000)
-        auto result = context.run<uint16_t>(data.data(), data.size());
+        context.run<uint16_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     }
 }
@@ -35,13 +37,15 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 [[maybe_unused]]
 void test_onnxruntime(int size, const std::string& path) {
-    size = size == 0 ? 640 : size;
-    auto* env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei");
-    caiwei::context::ONNXRuntimeContext context(path.empty() ? "yolo26n-det.onnx" : path, 3, size, size, env);
-    context.load_model();
+    size = size <= 0 ? 640 : size;
+    auto env = std::make_unique<Ort::Env>(caiwei::context::onnxruntime_log_level, "caiwei");
+    caiwei::context::ONNXRuntimeContext context(path.empty() ? "yolo26n-det.onnx" : path, 3, size, size, env.get());
+    if (!context.load_model()) {
+        return;
+    }
     std::vector<float> data(3 * size * size);
     CAIWEI_FOR_EACH(1000)
-    auto result = context.run(data.data(), data.size());
+    context.run(data.data(), data.size());
     CAIWEI_FOR_EACH_END
 }
 #endif

@@ -20,10 +20,10 @@ void det_draw() {
             frame.data.data(),
             frame.width,
             frame.height,
-            box.x1 * frame.width,
-            box.y1 * frame.height,
-            (box.x2 - box.x1) * frame.width,
-            (box.y2 - box.y1) * frame.height,
+            static_cast<int>(box.x1 * frame.width),
+            static_cast<int>(box.y1 * frame.height),
+            static_cast<int>((box.x2 - box.x1) * frame.width),
+            static_cast<int>((box.y2 - box.y1) * frame.height),
             frame.channels
         );
     }
@@ -89,11 +89,12 @@ void det_video() {
     std::vector<caiwei::image::Box> ret;
     caiwei::player::open_player();
     caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
+    // caiwei::media::MediaDemuxer media_demuxer("device", R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)");
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
-            return caiwei::player::play_audio(frame.data.data(), frame.data.size());
+            return caiwei::player::play_audio(frame.data.data(), static_cast<int>(frame.data.size()));
         },
         [&ptr, &ret, &frame_count](caiwei::media::VideoFrame& frame) {
             if (frame_count++ % 4 == 0) {
@@ -104,10 +105,10 @@ void det_video() {
                     frame.data.data(),
                     frame.width,
                     frame.height,
-                    box.x1 * frame.width,
-                    box.y1 * frame.height,
-                    (box.x2 - box.x1) * frame.width,
-                    (box.y2 - box.y1) * frame.height,
+                    static_cast<int>(box.x1 * frame.width),
+                    static_cast<int>(box.y1 * frame.height),
+                    static_cast<int>((box.x2 - box.x1) * frame.width),
+                    static_cast<int>((box.y2 - box.y1) * frame.height),
                     frame.channels
                 );
             }

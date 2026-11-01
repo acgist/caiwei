@@ -21,7 +21,7 @@ void test_reranking() {
     }
     auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
-        std::printf("%s\n", nlohmann::json(item).dump().c_str());
+        CW_LOG_I("%s", nlohmann::json(item).dump().c_str());
     }
     std::fflush(stdout);
 }

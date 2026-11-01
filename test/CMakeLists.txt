@@ -54,8 +54,8 @@ set(
     test_qwen_reranking
     test_yolo_cls
     test_yolo_det
-    test_runtime_text
     test_runtime_manager
+    test_runtime_request
     test_runtime_runtime
 )
 
