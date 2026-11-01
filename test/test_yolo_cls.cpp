@@ -7,10 +7,12 @@
 void cls_image() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file("./samoyed.jpg")) {
+        CW_LOG_W("图片加载失败");
         return;
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     auto result = ptr->run(frame);
@@ -39,6 +41,7 @@ void cls_image() {
 void cls_image_thread() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file("./samoyed.jpg")) {
+        CW_LOG_W("图片加载失败");
         return;
     }
     std::vector<std::thread> threads;
@@ -46,6 +49,7 @@ void cls_image_thread() {
         threads.push_back(std::thread([&]() {
             auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
             if (ptr == nullptr) {
+                CW_LOG_W("模型加载失败");
                 return;
             }
             CAIWEI_FOR_EACH(100)
@@ -64,12 +68,13 @@ void cls_image_thread() {
 void cls_video() {
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::player::open_player();
     caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
     // caiwei::media::MediaDemuxer media_demuxer("device", R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)");
-    media_demuxer.open(
+    bool success = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
@@ -83,6 +88,9 @@ void cls_video() {
             return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }
     );
+    if (!success) {
+        CW_LOG_W("视频加载失败");
+    }
     caiwei::player::stop_player();
 }
 

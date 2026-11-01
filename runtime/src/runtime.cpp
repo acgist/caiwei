@@ -86,11 +86,18 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         default: break;
         }
         if (ptr == nullptr) {
-            CW_LOG_D("新建context失败: %s = %s", get_type_name(this->type), info->name.c_str());
+            CW_LOG_D("新建context无效: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
-        if (!ptr->load()) {
-            CW_LOG_W("加载context失败: %s = %s", get_type_name(this->type), info->name.c_str());
+        try {
+            if (ptr->load()) {
+                CW_LOG_D("加载context成功: %s = %s", get_type_name(this->type), info->name.c_str());
+            } else {
+                CW_LOG_W("加载context失败: %s = %s", get_type_name(this->type), info->name.c_str());
+                return nullptr;
+            }
+        } catch (...) {
+            CW_LOG_E("加载context异常: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
         CW_LOG_I("新建context成功: %s = %d = %s", info->name.c_str(), iter->second.size(), ptr->id.c_str());
@@ -147,11 +154,14 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
 
 size_t caiwei::runtime::Runtime::optimize() {
     std::lock_guard<std::mutex> lock(mutex);
+    CW_LOG_I("优化runtime开始: %s => %d", get_type_name(this->type), this->context_map.size());
     for (auto map_iter = this->context_map.begin(); map_iter != this->context_map.end();) {
+        CW_LOG_I("优化context信息: %s = %d", map_iter->first.c_str(), map_iter->second.size());
         if (map_iter->second.size() <= this->min_pool) {
             ++map_iter;
             continue;
         }
+        CW_LOG_I("优化context开始: %s = %d", map_iter->first.c_str(), map_iter->second.size());
         for (auto iter = map_iter->second.begin(); iter != map_iter->second.end();) {
             const auto& ptr = *iter;
             if (ptr->ref_count > 0) {
@@ -166,12 +176,10 @@ size_t caiwei::runtime::Runtime::optimize() {
                 ++iter;
             }
         }
-        if (map_iter->second.empty()) {
-            map_iter = this->context_map.erase(map_iter);
-        } else {
-            ++map_iter;
-        }
+        CW_LOG_I("优化context完成: %s = %d", map_iter->first.c_str(), map_iter->second.size());
+        ++map_iter;
     }
+    CW_LOG_I("优化runtime完成: %s => %d", get_type_name(this->type), this->context_map.size());
     return this->context_map.size();
 }
 

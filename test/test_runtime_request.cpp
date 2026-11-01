@@ -9,14 +9,17 @@ void test_tokenizer() {
     caiwei::context::Tokenizer tokenizer;
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     if (!tokenizer.load("/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.tokenizer.gguf")) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     #elif CAIWEI_OS_UNIX
     if (!tokenizer.load("/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf")) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     #else
     if (!tokenizer.load("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf")) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     #endif
@@ -100,11 +103,9 @@ void test_chat_template() {
         }
     };
     const caiwei::text::SpecialToken special_token;
-    {
-        CAIWEI_FOR_EACH(100)
-        chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
-        CAIWEI_FOR_EACH_END
-    }
+    CAIWEI_FOR_EACH(1000)
+    chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
+    CAIWEI_FOR_EACH_END
     const std::string prompt = chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
     CW_LOG_I("prompt: %s", prompt.c_str());
 }
