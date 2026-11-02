@@ -37,7 +37,7 @@ void test_manager_optimize() {
     auto ptr6 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     assert(ptr6 == nullptr);
     ptr5 = nullptr;
-    std::this_thread::sleep_for(std::chrono::minutes(60));
+    caiwei::test::caiwei_wait_enter();
 }
 
 int main() {

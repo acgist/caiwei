@@ -13,6 +13,7 @@
 #include "caiwei/media_tool.hpp"
 
 #include <chrono>
+#include <cassert>
 #include <iostream>
 
 #if CAIWEI_OS_WIN

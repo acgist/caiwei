@@ -10,6 +10,10 @@ std::string caiwei::text::get_reranking_prompt(
     const caiwei::text::RerankingsRequest& request,
     const caiwei::text::SpecialToken& special_token
 ) {
+    std::string instruct = request.instruct.value_or(special_token.instruction_prompt);
+    if (instruct.empty()) {
+        instruct = special_token.instruction_prompt;
+    }
     std::string prompt;
     prompt
         .append(special_token.bos)
@@ -22,7 +26,7 @@ std::string caiwei::text::get_reranking_prompt(
         .append(caiwei::text::ROLE_USER)
         .append("\n")
         .append(special_token.instruction_key)
-        .append(request.instruct.value_or(special_token.instruction_prompt))
+        .append(instruct)
         .append("\n")
         .append(special_token.query_key)
         .append(request.query)

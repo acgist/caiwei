@@ -23,12 +23,12 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(con
     std::vector<std::vector<llama_token>> inputs;
     if (std::holds_alternative<std::string>(request.input)) {
         const auto& item = std::get<std::string>(request.input);
-        inputs.push_back(caiwei::context::tokenize(this->vocab, item, false, false));
+        inputs.push_back(caiwei::context::tokenize(this->vocab, item, true, true));
         prompt_tokens += inputs.back().size();
     } else if (std::holds_alternative<std::vector<std::string>>(request.input)) {
         const auto& items = std::get<std::vector<std::string>>(request.input);
         for (const auto& item : items) {
-            inputs.push_back(caiwei::context::tokenize(this->vocab, item, false, false));
+            inputs.push_back(caiwei::context::tokenize(this->vocab, item, true, true));
             prompt_tokens += inputs.back().size();
         }
     } else {

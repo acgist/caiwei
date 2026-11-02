@@ -102,8 +102,9 @@ llama_context* caiwei::context::LlamaCPPContext::get_context(bool embeddings) co
     params.n_batch    = this->max_token_length;
     params.embeddings = embeddings;
     if (embeddings) {
-        params.n_seq_max  = llama_max_parallel_sequences();
-        params.kv_unified = true;
+        params.n_seq_max    = llama_max_parallel_sequences();
+        params.kv_unified   = true;
+        params.pooling_type = LLAMA_POOLING_TYPE_UNSPECIFIED;
     }
     #if ENABLE_CAIWEI_PERF
     params.no_perf = false;
@@ -270,7 +271,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
         n_embd_count = n_prompts;
     } else if (pooling_type == LLAMA_POOLING_TYPE_NONE) {
         n_embd_out = llama_model_n_embd_out(this->model);
-        for (int k = 0; k < n_prompts; k++) {
+        for (int k = 0; k < n_prompts; ++k) {
             n_embd_count += inputs[k].size();
         }
     } else {
@@ -279,7 +280,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
     }
     int emb_pos = 0;
     int seq_pos = 0;
-    const int seq_max = llama_max_parallel_sequences();
+    const size_t seq_max = llama_max_parallel_sequences();
     std::vector<float> embeddings(n_embd_count * n_embd_out, 0);
     float* emb = embeddings.data();
     struct llama_batch batch = llama_batch_init(n_batch, 0, 1);
@@ -462,6 +463,6 @@ static void batch_decode_pooling(llama_context* ctx, llama_batch& batch, const e
             continue;
         }
         float* out = output + embd_pos * n_embd_out;
-        caiwei::context::euclidean(embd, out, n_embd_out);
+        caiwei::context::normalize_l2(embd, out, n_embd_out);
     }
 }

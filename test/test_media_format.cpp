@@ -32,7 +32,7 @@ void test_format() {
     std::ofstream output("./output.mp4", std::ios_base::binary);
     caiwei::media::MediaFormat media_format([&output](uint32_t length, const uint8_t* data) {
         output.write((const char*) data, length);
-        // CW_LOG_D("write %d bytes", length);
+        // CW_LOG_I("write %d bytes", length);
         return true;
     });
     caiwei::media::MediaMuxer media_muxer(
@@ -42,9 +42,9 @@ void test_format() {
         caiwei::media::VIDEO_INFO_ENCODE,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
         if (type == caiwei::media::MediaType::AUDIO) {
-            // CW_LOG_D("audio packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
+            // CW_LOG_I("audio packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
         } else if (type == caiwei::media::MediaType::VIDEO) {
-            // CW_LOG_D("video packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
+            // CW_LOG_I("video packet: %lld %lld %lld %d", packet->pts, packet->dts, packet->duration, packet->size);
         } else {
             // -
         }
@@ -58,12 +58,12 @@ void test_format() {
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [&media_muxer](caiwei::media::AudioFrame& frame) {
-            // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
+            // CW_LOG_I("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
             media_muxer.on_audio(frame);
             return true;
         },
         [&media_muxer](caiwei::media::VideoFrame& frame) {
-            // CW_LOG_D("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+            // CW_LOG_I("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
             media_muxer.on_video(frame);
             return true;
         }

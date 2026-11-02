@@ -55,7 +55,7 @@ public:
     std::string detokenize(llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
 };
 
-void euclidean(const float* embd, float* out, int size);
+void normalize_l2(const float* embd, float* out, int size);
 
 } // context
 } // caiwei

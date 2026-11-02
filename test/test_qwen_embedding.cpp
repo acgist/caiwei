@@ -6,14 +6,26 @@
 #include <vector>
 
 [[maybe_unused]]
-static void diff(const std::vector<float>& a, const std::vector<float>& z) {
-    float sum = 0.0F;
-    for (size_t i = 0; i < a.size(); ++i) {
-        float d = a[i] - z[i];
-        sum += d * d;
+static void cosine_similarity(const std::vector<float>& a, const std::vector<float>& z) {
+    if (a.empty() || z.empty() || a.size() != z.size()) {
+        return;
     }
-    float euclidean_dist = std::sqrt(sum);
-    CW_LOG_I("欧式距离: %.2f", euclidean_dist);
+    double dot    = 0.0;
+    double norm_a = 0.0;
+    double norm_z = 0.0;
+    const size_t n = a.size();
+    for (size_t i = 0; i < n; ++i) {
+        dot    += (double) a[i] * z[i];
+        norm_a += (double) a[i] * a[i];
+        norm_z += (double) z[i] * z[i];
+    }
+    norm_a = std::sqrt(norm_a);
+    norm_z = std::sqrt(norm_z);
+    if (norm_a < 1e-8 || norm_z < 1e-8) {
+        return;
+    }
+    const float ret = static_cast<float>(dot / (norm_a * norm_z));
+    CW_LOG_I("余弦相似度: %.2f", ret);
 }
 
 [[maybe_unused]]
@@ -21,9 +33,7 @@ void test_embedding() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     // request.input = "北京";
-    // request.input = std::vector<std::string>{ "苹果", "苹果", "橘子", "汽车" };
-    // request.input = std::vector<std::string>{ "美国首都那座城市", "华盛顿", "中国首都是北京", "美国首都是广州" };
-    request.input = std::vector<std::string>{ "广州今天的天气怎么样", "出门可以坐地铁", "广州正在下雨", "达州正在下雨" };
+    request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
         return;
@@ -32,17 +42,19 @@ void test_embedding() {
     for (const auto& item : ret.result) {
         // CW_LOG_I("%s", nlohmann::json(item).dump().c_str());
     }
-    diff(ret.result[0], ret.result[1]);
-    diff(ret.result[0], ret.result[2]);
-    diff(ret.result[0], ret.result[3]);
-    std::fflush(stdout);
+    cosine_similarity(ret.result[0], ret.result[1]);
+    cosine_similarity(ret.result[0], ret.result[2]);
+    cosine_similarity(ret.result[0], ret.result[3]);
+    cosine_similarity(ret.result[1], ret.result[2]);
+    cosine_similarity(ret.result[1], ret.result[3]);
+    cosine_similarity(ret.result[2], ret.result[3]);
 }
 
 [[maybe_unused]]
 void test_embedding_for() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    request.input = std::vector<std::string>{ "广州今天的天气怎么样", "出门可以坐地铁", "广州正在下雨", "达州正在下雨" };
+    request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
         return;
@@ -62,7 +74,7 @@ void test_embedding_for() {
 void test_embedding_thread() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    request.input = std::vector<std::string>{ "广州今天的天气怎么样", "出门可以坐地铁", "广州正在下雨", "达州正在下雨" };
+    request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
         return;

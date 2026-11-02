@@ -54,12 +54,12 @@ void test_demuxer() {
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
-            // CW_LOG_D("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
+            // CW_LOG_I("audioFrame: %llu %llu %zu %u", frame.msec, frame.frames, frame.data.size(), frame.samples);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return caiwei::player::play_audio(frame.data.data(), frame.data.size());
         },
         [](caiwei::media::VideoFrame& frame) {
-            // CW_LOG_D("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
+            // CW_LOG_I("videoFrame: %llu %llu %zu %dx%d", frame.msec, frame.frames, frame.data.size(), frame.width, frame.height);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }

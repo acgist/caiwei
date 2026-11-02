@@ -40,7 +40,7 @@ caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const 
     }
     uint32_t prompt_tokens = 0;
     caiwei::text::RerankingResult result;
-    result.result = this->pooling(prompt_tokens, prompt_list);
+    result.result = this->pooling(prompt_tokens, prompt_list, false, true);
     result.prompt_tokens = prompt_tokens;
     result.total_tokens  = prompt_tokens;
     return result;

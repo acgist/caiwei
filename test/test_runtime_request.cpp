@@ -1,5 +1,7 @@
 #include "test.hpp"
 
+#include <variant>
+
 #include "llama.h"
 
 #include "caiwei/tokenizer.hpp"

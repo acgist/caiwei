@@ -229,7 +229,7 @@ std::string caiwei::context::detokenize(const llama_vocab* vocab, llama_token* t
     return text;
 }
 
-void caiwei::context::euclidean(const float* embd, float* out, int size) {
+void caiwei::context::normalize_l2(const float* embd, float* out, int size) {
     if (size < 0) {
         return;
     }

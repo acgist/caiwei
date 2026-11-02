@@ -484,10 +484,10 @@ std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(std::stri
     return {};
 }
 
-std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t& prompt_tokens, std::vector<const std::string*> prompt_list) {
+std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t& prompt_tokens, std::vector<const std::string*> prompt_list, bool add_special, bool parse_special) {
     ContextSession context_session;
-    context_session.add_special    = false;
-    context_session.parse_special  = false;
+    context_session.add_special    = add_special;
+    context_session.parse_special  = parse_special;
     context_session.tokenizer      = this->tokenizer;
     context_session.embedding_dim  = this->embedding_dim;
     context_session.embedding_data = this->embedding_data;
@@ -526,7 +526,7 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
         }
         for (size_t i = 0; i < this->output_tensors.size(); ++i) {
             auto& pool_result = context_session.pool_result[i];
-            caiwei::context::euclidean(pool_result.data(), pool_result.data(), pool_result.size());
+            caiwei::context::normalize_l2(pool_result.data(), pool_result.data(), pool_result.size());
             result.push_back(pool_result);
         }
         prompt_tokens += context_session.n_prefill_tokens;
