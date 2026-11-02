@@ -208,9 +208,13 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
                         return callback(nullptr, 0);
                     }
                     std::unique_lock<std::mutex> lock(asr_mutex);
-                    asr_cv.wait(lock, [&]() {
-                        return drop_on_full || !callback(nullptr, 0) || audio_frame_buffer.size() + frame.data.size() <= ASR_QUEUE_SIZE;
-                    });
+                    while (
+                        !drop_on_full        &&
+                        callback(nullptr, 0) &&
+                        (audio_frame_buffer.size() + frame.data.size() > ASR_QUEUE_SIZE)
+                    ) {
+                        asr_cv.wait_for(lock, std::chrono::milliseconds(100));
+                    }
                     if (audio_frame_buffer.size() + frame.data.size() <= ASR_QUEUE_SIZE) {
                         audio_frame_buffer.insert(
                             audio_frame_buffer.end(),
@@ -233,9 +237,13 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
                 }
                 if (enable_vlm) {
                     std::unique_lock<std::mutex> lock(vlm_mutex);
-                    vlm_cv.wait(lock, [&]() {
-                        return drop_on_full || !callback(nullptr, 0) || video_frame_size + 1 <= vlm_frames;
-                    });
+                    while (
+                        !drop_on_full        &&
+                        callback(nullptr, 0) &&
+                        video_frame_size + 1 > vlm_frames
+                    ) {
+                        vlm_cv.wait_for(lock, std::chrono::milliseconds(100));
+                    }
                     if (video_frame_size + 1 <= vlm_frames) {
                         auto& data = video_frame_buffer[video_frame_size];
                         if (
@@ -265,9 +273,13 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
                 }
                 if (enable_yolo) {
                     std::unique_lock<std::mutex> lock(yolo_mutex);
-                    yolo_cv.wait(lock, [&]() {
-                        return drop_on_full || !callback(nullptr, 0) || image_frame_size + 1 <= YOLO_QUEUE_SIZE;
-                    });
+                    while (
+                        !drop_on_full        &&
+                        callback(nullptr, 0) &&
+                        image_frame_size + 1 > YOLO_QUEUE_SIZE
+                    ) {
+                        yolo_cv.wait_for(lock, std::chrono::milliseconds(100));
+                    }
                     if (image_frame_size + 1 <= YOLO_QUEUE_SIZE) {
                         auto& data = image_frame_buffer[image_frame_size];
                         if (

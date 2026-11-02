@@ -1,10 +1,14 @@
 from openai import OpenAI
 
+stream = True
+api_key = "api-key"
+base_url = "http://127.0.0.1:8888/v1"
+
 
 def print_resp(stream, resp):
     usage = None
     if stream:
-        full_text = ""
+        choices = {}
         for chunk in resp:
             if not chunk.choices:
                 continue
@@ -12,11 +16,14 @@ def print_resp(stream, resp):
                 delta = choice.delta
                 if delta.content:
                     print(delta.content, end="", flush=True)
-                    full_text += delta.content
+                    if choice.index not in choices:
+                        choices[choice.index] = ""
+                    choices[choice.index] += delta.content
             if chunk.usage:
                 usage = chunk.usage
         print("")
-        print(f"full_text = {full_text}")
+        for index, text in choices.items():
+            print(f"choice[{index}] = {text}")
     else:
         for choice in resp.choices:
             print(f"choice[{choice.index}] = {choice.message.content}")
@@ -26,8 +33,7 @@ def print_resp(stream, resp):
 
 
 def test_cls():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
         model="yolo26n-cls",
         stream=stream,
@@ -37,7 +43,7 @@ def test_cls():
                 "content": [
                     {
                         "type": "image_url",
-                        "image_url": {"url": "./acgist.jpg"},
+                        "image_url": {"url": "./samoyed.jpg"},
                     },
                 ],
             },
@@ -47,8 +53,7 @@ def test_cls():
 
 
 def test_det():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
         model="yolo26n-det",
         stream=stream,
@@ -68,8 +73,7 @@ def test_det():
 
 
 def test_asr():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
         model="qwen3-asr",
         stream=stream,
@@ -89,24 +93,22 @@ def test_asr():
 
 
 def test_llm():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
         model="qwen3-llm",
         stream=stream,
-        messages=[{"role": "user", "content": "碧螺萧萧"}],
+        messages=[{"role": "user", "content": "简单解释一下“碧螺萧萧”"}],
     )
     print_resp(stream, resp)
 
 
 def test_vlm():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
         model="qwen3-vlm",
         stream=stream,
         messages=[
-            {"role": "system", "content": "简单描述图片"},
+            {"role": "system", "content": "按照用户要求识别图片"},
             {
                 "role": "user",
                 "content": [
@@ -123,20 +125,21 @@ def test_vlm():
 
 
 def test_media():
-    stream = True
-    client = OpenAI(api_key="acgist", base_url="http://127.0.0.1:8888/v1")
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
-        model="qwen3-asr",
+        # model="qwen3-asr",
         # model="qwen3-vlm",
         # model="yolo26n-cls",
-        # model="yolo26n-det",
-        stream=stream,
+        model="yolo26n-det",
+        stream=True,  # 必须使用stream模式
         extra_body={
             # "media_url": "./caiwei.mp3",
             "media_url": "./caiwei.mp4",
             "media_type": "file",
+            "asr_samples": 32000,
+            "vlm_frames": 1,
             "drop_on_full": False,
-            # "model_list": ["qwen3-vlm"],
+            "model_list": ["qwen3-vlm"],
             # "model_list": ["qwen3-asr", "qwen3-vlm"],
         },
         messages=[
@@ -184,11 +187,12 @@ RERANKING,QWEN,qwen3-reranking,/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.
 "
 """
 
-# test_cls()
-# test_det()
-# test_asr()
-# test_llm()
-# test_vlm()
-# test_media()
-for i in range(100):
-    test_llm()
+if __name__ == "__main__":
+    # test_cls()
+    # test_det()
+    # test_asr()
+    # test_llm()
+    # test_vlm()
+    # test_media()
+    for i in range(100):
+        test_llm()

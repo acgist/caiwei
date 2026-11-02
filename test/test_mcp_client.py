@@ -9,7 +9,7 @@ from mcp.client.sse import sse_client
 from sse_starlette.sse import EventSourceResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-openai = AsyncOpenAI(api_key = "api-key", base_url = "https://api.deepseek.com")
+openai = AsyncOpenAI(api_key = "api-key", base_url = "https://api.deepseek.com", timeout=120)
 
 class MCPServer:
     async def init_mcp_server(self, url):
@@ -74,7 +74,7 @@ class MCPClient:
                 continue
             try:
                 params   = json.loads(tool.function.arguments) if tool.function.arguments else "{}"
-                response = await self.mapping[tool.function.name].context.call_tool(tool.function.name, params)
+                response = await asyncio.wait_for(self.mapping[tool.function.name].context.call_tool(tool.function.name, params), timeout=120)
                 content  = "".join(list(map(lambda v: v.text, response.content)))
                 print(f"调用工具: {tool} - {content}")
                 messages.extend([
