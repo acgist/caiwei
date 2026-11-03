@@ -124,9 +124,6 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         if (request.messages.empty() || request.messages.back().role != caiwei::text::ROLE_USER) {
             request.messages.push_back(caiwei::text::CompletionsRequestMessage{
                 .role = caiwei::text::ROLE_USER,
-                .audio_data = {},
-                .image_data = {},
-                .video_data = {},
             });
         }
         std::mutex asr_mutex;

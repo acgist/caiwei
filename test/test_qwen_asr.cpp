@@ -4,10 +4,15 @@
 #include <vector>
 #include <generator>
 
-// {% for message in messages %}
-// {{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}
-// {% endfor %}
-// {% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}
+[[maybe_unused]]
+void asr_run(caiwei::manager::ASRWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
+    assert(ptr != nullptr);
+    for (const auto& value : ptr->run(request)) {
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
+    }
+}
 
 [[maybe_unused]]
 void test_asr() {
@@ -22,7 +27,7 @@ void test_asr() {
             audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
             return true;
         },
-        [](caiwei::media::VideoFrame& frame) {
+        [](caiwei::media::VideoFrame& /* frame */) {
             return true;
         }
     );
@@ -38,20 +43,14 @@ void test_asr() {
     request.messages.back().audio_data.push_back(std::move(audio_frame));
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
-    for (const auto& value : ptr->run(request)) {
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
+    asr_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     request.max_completion_tokens = 2;
-    for (const auto& value : ptr->run(request)) {
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
+    asr_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -65,7 +64,7 @@ void test_asr_for() {
             audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
             return true;
         },
-        [](caiwei::media::VideoFrame& frame) {
+        [](caiwei::media::VideoFrame& /* frame */) {
             return true;
         }
     );
@@ -81,22 +80,17 @@ void test_asr_for() {
     request.messages.back().audio_data.push_back(std::move(audio_frame));
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    asr_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    asr_run(ptr.get(), request);
     CAIWEI_FOR_EACH_END
     caiwei::test::caiwei_wait_enter();
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    asr_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
 }
 
@@ -111,7 +105,7 @@ void test_asr_thread() {
             audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
             return true;
         },
-        [](caiwei::media::VideoFrame& frame) {
+        [](caiwei::media::VideoFrame& /* frame */) {
             return true;
         }
     );
@@ -127,15 +121,14 @@ void test_asr_thread() {
     request.messages.back().audio_data.push_back(std::move(audio_frame));
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread([&]() {
             CAIWEI_FOR_EACH(100)
-            for (const auto& value : ptr->run(request)) {
-                // -
-            }
+            asr_run(ptr.get(), request);
             CAIWEI_FOR_EACH_END
         }));
     }

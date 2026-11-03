@@ -45,7 +45,7 @@ void cls_image_thread() {
         return;
     }
     std::vector<std::thread> threads;
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 4; ++i) {
         threads.push_back(std::thread([&]() {
             auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
             if (ptr == nullptr) {

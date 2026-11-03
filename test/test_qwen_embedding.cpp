@@ -36,11 +36,12 @@ void test_embedding() {
     request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
-    auto ret = ptr->run(request);
+    const auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
-        // CW_LOG_I("%s", nlohmann::json(item).dump().c_str());
+        CW_LOG_I("embedding: %zu", item.size());
     }
     cosine_similarity(ret.result[0], ret.result[1]);
     cosine_similarity(ret.result[0], ret.result[2]);
@@ -57,6 +58,7 @@ void test_embedding_for() {
     request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -77,9 +79,10 @@ void test_embedding_thread() {
     request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
-    auto true_ret = ptr->run(request);
+    const auto true_ret = ptr->run(request);
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::thread([&]() {

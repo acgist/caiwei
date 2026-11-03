@@ -7,25 +7,8 @@
 #include <generator>
 
 [[maybe_unused]]
-void test_llm() {
-    caiwei::text::CompletionsRequest request;
-    request.stream = true;
-    request.enable_thinking = true;
-    request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
-    request.tools = {
-        caiwei::text::CompletionsRequestTool {
-            .type = "function",
-            .function = caiwei::text::CompletionsRequestToolFunction {
-                .name = "get_weather",
-                .description = "查询城市天气",
-                .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
-            },
-        }
-    };
-    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
-    if (!ptr) {
-        return;
-    }
+void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
+    assert(ptr != nullptr);
     std::string content;
     std::string thinking;
     std::string toolcall_name;
@@ -47,103 +30,48 @@ void test_llm() {
     CW_LOG_I("thinking: %s", thinking.c_str());
     CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
     CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
+}
+
+[[maybe_unused]]
+void test_llm() {
+    caiwei::text::CompletionsRequest request;
+    request.stream = true;
+    request.enable_thinking = true;
+    request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
+    request.tools = {
+        caiwei::text::CompletionsRequestTool {
+            .type = "function",
+            .function = caiwei::text::CompletionsRequestToolFunction {
+                .name = "get_weather",
+                .description = "查询城市天气",
+                .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
+            },
+        }
+    };
+    auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
+    if (!ptr) {
+        CW_LOG_W("模型加载失败");
+        return;
+    }
+    llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
-    content = "";
-    thinking = "";
-    toolcall_name = "";
-    toolcall_arguments = "";
     request.messages.clear();
     request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
     request.enable_thinking = false;
-    for (const auto& value : ptr->run(request)) {
-        if (value.toolcall) {
-            toolcall_name      += value.toolcall_name;
-            toolcall_arguments += value.toolcall_arguments;
-        } else if (value.thinking) {
-            thinking += value.token;
-        } else {
-            content += value.token;
-        }
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
-    CW_LOG_I("content: %s", content.c_str());
-    CW_LOG_I("thinking: %s", thinking.c_str());
-    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
-    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
+    llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
-    content = "";
-    thinking = "";
-    toolcall_name = "";
-    toolcall_arguments = "";
     request.messages.clear();
     request.messages.push_back({.role = "user", .content = "查询北京天气"});
-    for (const auto& value : ptr->run(request)) {
-        if (value.toolcall) {
-            toolcall_name      += value.toolcall_name;
-            toolcall_arguments += value.toolcall_arguments;
-        } else if (value.thinking) {
-            thinking += value.token;
-        } else {
-            content += value.token;
-        }
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
-    CW_LOG_I("content: %s", content.c_str());
-    CW_LOG_I("thinking: %s", thinking.c_str());
-    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
-    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
+    llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
-    content = "";
-    thinking = "";
-    toolcall_name = "";
-    toolcall_arguments = "";
     request.tools.reset();
     request.messages.clear();
     request.messages.push_back({.role = "user", .content = "1+1=?"});
-    for (const auto& value : ptr->run(request)) {
-        if (value.toolcall) {
-            toolcall_name      += value.toolcall_name;
-            toolcall_arguments += value.toolcall_arguments;
-        } else if (value.thinking) {
-            thinking += value.token;
-        } else {
-            content += value.token;
-        }
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
-    CW_LOG_I("content: %s", content.c_str());
-    CW_LOG_I("thinking: %s", thinking.c_str());
-    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
-    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
+    llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
-    content = "";
-    thinking = "";
-    toolcall_name = "";
-    toolcall_arguments = "";
     request.max_completion_tokens = 2;
-    for (const auto& value : ptr->run(request)) {
-        if (value.toolcall) {
-            toolcall_name      += value.toolcall_name;
-            toolcall_arguments += value.toolcall_arguments;
-        } else if (value.thinking) {
-            thinking += value.token;
-        } else {
-            content += value.token;
-        }
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
-    CW_LOG_I("content: %s", content.c_str());
-    CW_LOG_I("thinking: %s", thinking.c_str());
-    CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
-    CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
+    llm_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -154,22 +82,17 @@ void test_llm_for() {
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    llm_run(ptr.get(), request);
     CAIWEI_FOR_EACH_END
     caiwei::test::caiwei_wait_enter();
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
 }
 
@@ -181,15 +104,14 @@ void test_llm_thread() {
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread([&]() {
             CAIWEI_FOR_EACH(100)
-            for (const auto& value : ptr->run(request)) {
-                // -
-            }
+            llm_run(ptr.get(), request);
             CAIWEI_FOR_EACH_END
         }));
     }

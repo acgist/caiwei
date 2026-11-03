@@ -13,11 +13,12 @@ void test_reranking() {
     request.documents = std::vector<std::string>{ "下雨打车出门", "广州正在下雨", "广州美食不错", "达州正在下雨" };
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
-    auto ret = ptr->run(request);
+    const auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
-        CW_LOG_I("%s", nlohmann::json(item).dump().c_str());
+        CW_LOG_I("reranking: %s", nlohmann::json(item).dump().c_str());
     }
 }
 
@@ -29,6 +30,7 @@ void test_reranking_for() {
     request.documents = std::vector<std::string>{ "下雨打车出门", "广州正在下雨", "广州美食不错", "达州正在下雨" };
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -50,9 +52,10 @@ void test_reranking_thread() {
     request.documents = std::vector<std::string>{ "下雨打车出门", "广州正在下雨", "广州美食不错", "达州正在下雨" };
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
-    auto true_ret = ptr->run(request);
+    const auto true_ret = ptr->run(request);
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::thread([&]() {

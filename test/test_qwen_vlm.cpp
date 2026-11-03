@@ -5,18 +5,16 @@
 #include <generator>
 
 [[maybe_unused]]
-static void read_image(caiwei::media::ImageFrame& frame, const char* path) {
-    int width, height, channels;
-    auto* data = stbi_load(path, &width, &height, &channels, STBI_default);
-    std::vector<uint8_t> vector(width * height * channels);
-    std::copy(data, data + width * height * channels, vector.begin());
-    frame.width    = width;
-    frame.height   = height;
-    frame.channels = channels;
-    frame.data = std::move(vector);
-    stbi_image_free(data);
+void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
+    assert(ptr != nullptr);
+    for (const auto& value : ptr->run(request)) {
+        if (!value.finish_reason.empty()) {
+            CW_LOG_I("完成: %s", value.finish_reason.c_str());
+        }
+    }
 }
 
+[[maybe_unused]]
 void test_vlm() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(caiwei::text::CompletionsRequestMessage {
@@ -43,17 +41,17 @@ void test_vlm() {
     });
     caiwei::media::ImageFrame frame1;
     caiwei::media::ImageFrame frame2;
-    read_image(frame1, "./acgist.jpg");
-    read_image(frame2, "./caiwei.jpg");
+    frame1.load_from_file("./acgist.jpg");
+    frame2.load_from_file("./caiwei.jpg");
     request.messages.back().image_data.emplace_back(std::move(frame1));
     request.messages.back().image_data.emplace_back(std::move(frame2));
     std::vector<caiwei::media::VideoFrame> video_frames;
-    int frame_index = 0;
+    size_t frame_index = 0;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp4");
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [](caiwei::media::AudioFrame& frame) {
+        [](caiwei::media::AudioFrame& /* frame */) {
             return true;
         },
         [&video_frames, &frame_index](caiwei::media::VideoFrame& frame) {
@@ -66,20 +64,14 @@ void test_vlm() {
     request.messages.back().video_data.emplace_back(std::move(video_frames));
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
-    for (const auto& value : ptr->run(request)) {
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
+    vlm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     request.max_completion_tokens = 2;
-    for (const auto& value : ptr->run(request)) {
-        if (!value.finish_reason.empty()) {
-            CW_LOG_I("完成: %s", value.finish_reason.c_str());
-        }
-    }
+    vlm_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
@@ -102,28 +94,23 @@ void test_vlm_for() {
     });
     caiwei::media::ImageFrame frame1;
     caiwei::media::ImageFrame frame2;
-    read_image(frame1, "./acgist.jpg");
-    read_image(frame2, "./caiwei.jpg");
+    frame1.load_from_file("./acgist.jpg");
+    frame2.load_from_file("./caiwei.jpg");
     request.messages.back().image_data.emplace_back(std::move(frame1));
     request.messages.back().image_data.emplace_back(std::move(frame2));
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    vlm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     CAIWEI_FOR_EACH(100)
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    vlm_run(ptr.get(), request);
     CAIWEI_FOR_EACH_END
     caiwei::test::caiwei_wait_enter();
-    for (const auto& value : ptr->run(request)) {
-        // -
-    }
+    vlm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
 }
 
@@ -147,21 +134,20 @@ void test_vlm_thread() {
     });
     caiwei::media::ImageFrame frame1;
     caiwei::media::ImageFrame frame2;
-    read_image(frame1, "./acgist.jpg");
-    read_image(frame2, "./caiwei.jpg");
+    frame1.load_from_file("./acgist.jpg");
+    frame2.load_from_file("./caiwei.jpg");
     request.messages.back().image_data.emplace_back(std::move(frame1));
     request.messages.back().image_data.emplace_back(std::move(frame2));
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
+        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread([&]() {
             CAIWEI_FOR_EACH(100)
-            for (const auto& value : ptr->run(request)) {
-                // -
-            }
+            vlm_run(ptr.get(), request);
             CAIWEI_FOR_EACH_END
         }));
     }

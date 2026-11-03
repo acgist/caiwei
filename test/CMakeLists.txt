@@ -57,6 +57,7 @@ set(
     test_runtime_manager
     test_runtime_request
     test_runtime_runtime
+    test_runtime_session
 )
 
 foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)

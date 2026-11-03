@@ -71,9 +71,9 @@ struct CompletionsRequestMessage {
     std::optional<std::string> tool_call_id;
     std::optional<CompletionsRequestMessageContent> content;
     std::optional<std::vector<CompletionsRequestMessageToolCall>> tool_calls;
-    CW_TRANSIENT std::vector<caiwei::media::AudioFrame>              audio_data;
-    CW_TRANSIENT std::vector<caiwei::media::ImageFrame>              image_data;
-    CW_TRANSIENT std::vector<std::vector<caiwei::media::VideoFrame>> video_data;
+    CW_TRANSIENT std::vector<caiwei::media::AudioFrame>              audio_data = {};
+    CW_TRANSIENT std::vector<caiwei::media::ImageFrame>              image_data = {};
+    CW_TRANSIENT std::vector<std::vector<caiwei::media::VideoFrame>> video_data = {};
 };
 
 struct CompletionsRequestToolFunction {
