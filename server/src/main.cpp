@@ -13,7 +13,7 @@
 #include <csignal>
 #include <cstring>
 
-volatile static std::sig_atomic_t caiwei_signal = 0;
+static std::atomic<int> caiwei_signal{ 0 };
 
 #if CAIWEI_OS_WIN
 BOOL WINAPI on_signal(DWORD type) {
@@ -41,10 +41,10 @@ static void install_signal_handler() {
     struct sigaction sa{};
     sa.sa_flags   = SA_RESTART;
     sa.sa_handler = on_signal;
-    std::sigemptyset(&sa.sa_mask);
-    std::sigaction(SIGHUP,  &sa, nullptr);
-    std::sigaction(SIGINT,  &sa, nullptr);
-    std::sigaction(SIGTERM, &sa, nullptr);
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGHUP,  &sa, nullptr);
+    sigaction(SIGINT,  &sa, nullptr);
+    sigaction(SIGTERM, &sa, nullptr);
 #endif
 }
 
