@@ -54,11 +54,11 @@ bool caiwei::rest::open() {
         CW_LOG_I("请求日志: %s - %s - %s", request.method.c_str(), request.path.c_str(), request.remote_addr.c_str());
     });
     CW_LOG_I("启动REST服务: %s - %d => %d - %d", host.c_str(), port, min_pool, max_pool);
-    caiwei::rest::server->listen(host, port);
+    bool ret = caiwei::rest::server->listen(host, port);
     delete caiwei::rest::server;
     caiwei::rest::server = nullptr;
     CW_LOG_I("结束REST服务: %s - %d", host.c_str(), port);
-    return true;
+    return ret;
 }
 
 void caiwei::rest::stop() {

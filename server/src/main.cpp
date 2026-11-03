@@ -1,5 +1,5 @@
-#include "caiwei/log.hpp"
 #include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
 #if ENABLE_CAIWEI_REST
 #include "caiwei/rest.hpp"
 #endif
@@ -13,21 +13,38 @@
 #include <csignal>
 #include <cstring>
 
-volatile std::sig_atomic_t caiwei_signal = 0;
+volatile static std::sig_atomic_t caiwei_signal = 0;
 
-void on_signal(int signal) {
-    CW_LOG_D("收到信号: %d", signal);
-    caiwei_signal = signal;
-}
-
-void install_signal_handler() {
 #if CAIWEI_OS_WIN
-    std::signal(SIGINT,  on_signal);
-    std::signal(SIGTERM, on_signal);
+BOOL WINAPI on_signal(DWORD type) {
+    switch (type) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+        caiwei_signal = 1;
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
 #else
-    std::signal(SIGHUP,  on_signal);
-    std::signal(SIGINT,  on_signal);
-    std::signal(SIGTERM, on_signal);
+static void on_signal(int sig) {
+    caiwei_signal = sig;
+}
+#endif
+
+static void install_signal_handler() {
+#if CAIWEI_OS_WIN
+    SetConsoleCtrlHandler(on_signal, TRUE);
+#else
+    struct sigaction sa{};
+    sa.sa_flags   = SA_RESTART;
+    sa.sa_handler = on_signal;
+    std::sigemptyset(&sa.sa_mask);
+    std::sigaction(SIGHUP,  &sa, nullptr);
+    std::sigaction(SIGINT,  &sa, nullptr);
+    std::sigaction(SIGTERM, &sa, nullptr);
 #endif
 }
 
@@ -40,6 +57,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     install_signal_handler();
+    CW_LOG_W("系统启动");
     caiwei::init();
     if (caiwei_signal != 0) {
         caiwei::stop();
@@ -50,16 +68,17 @@ int main(int argc, char* argv[]) {
 #if ENABLE_CAIWEI_REST
     std::thread server_thread([&running, &success]() {
         try {
-            success.store(caiwei::rest::open());
+            success.store(caiwei::rest::open(), std::memory_order_release);
         } catch (...) {
-            success.store(false);
+            CW_LOG_E("REST服务注册异常");
+            success.store(false, std::memory_order_release);
         }
-        running.store(true, std::memory_order_release);
+        running.store(false, std::memory_order_release);
     });
     while (caiwei_signal == 0 && running.load(std::memory_order_acquire)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
-    if (caiwei_signal != 0) {
+    if (running.load(std::memory_order_acquire)) {
         caiwei::rest::stop();
     }
     if (server_thread.joinable()) {
@@ -67,5 +86,6 @@ int main(int argc, char* argv[]) {
     }
 #endif
     caiwei::stop();
-    return success ? 0 : 1;
+    CW_LOG_W("系统关闭");
+    return success.load(std::memory_order_acquire) ? 0 : 1;
 }
