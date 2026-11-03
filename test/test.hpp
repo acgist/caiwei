@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cassert>
+#include <numeric>
 #include <iostream>
 
 #if CAIWEI_OS_WIN

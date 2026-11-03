@@ -10,14 +10,13 @@
 
 const static int USER_EVENT_VIDEO_FRAME = 1;
 
-struct PlayerState {
+static struct PlayerState {
     bool running       = false;
     bool audio_running = false;
     bool video_running = false;
-    bool video_pending = false;
     int  video_width   = 0;
     int  video_height  = 0;
-    std::mutex player_mutex;
+    std::mutex  player_mutex;
     std::thread player_thread;
     std::condition_variable player_cv;
     SDL_mutex   *     mutex      = nullptr;
@@ -27,9 +26,7 @@ struct PlayerState {
     SDL_GLContext     context    = nullptr;
     SDL_AudioDeviceID audio_id   = 0;
     SDL_AudioSpec     audio_spec = {};
-};
-
-static PlayerState player_state = {};
+} player_state;
 
 static bool init_audio_player();
 static bool init_video_player();
@@ -37,6 +34,13 @@ static void stop_audio_player();
 static void stop_video_player();
 
 bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_width, int video_height) {
+    {
+        std::lock_guard<std::mutex> lock(player_state.player_mutex);
+        if (player_state.running) {
+            return player_state.running;
+        }
+        player_state.running = true;
+    }
     player_state.audio_spec = {
         .freq     = sample_rate,
         .format   = AUDIO_S16,
@@ -44,7 +48,7 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
         .silence  = 0,
         .samples  = 4800,
         .padding  = 0,
-        .size     = 9600,
+        .size     = 4800 * sizeof(int16_t),
         .callback = nullptr,
         .userdata = nullptr,
     };
@@ -57,13 +61,18 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
         int ret = SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
         if(ret != 0) {
             CW_LOG_W("加载播放器失败: %s", SDL_GetError());
+            {
+                std::lock_guard<std::mutex> lock(player_state.player_mutex);
+                player_state.running = false;
+                player_state.player_cv.notify_one();
+            }
             return;
         }
         if(init_audio_player() && init_video_player()) {
             CW_LOG_I("打开播放器成功");
-            player_state.running = true;
             {
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
+                player_state.running = true;
                 player_state.player_cv.notify_one();
             }
             SDL_Event event;
@@ -77,7 +86,10 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
                     break;
                 } else if (event.type == SDL_KEYUP) {
                     if (event.key.keysym.sym == SDLK_q) {
+                        CW_LOG_I("退出播放器");
                         break;
+                    } else {
+                        // -
                     }
                 } else if (event.type == SDL_USEREVENT) {
                     if (event.user.code == USER_EVENT_VIDEO_FRAME) {
@@ -93,7 +105,6 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
                                     SDL_RenderPresent(player_state.renderer);
                                 }
                             }
-                            player_state.video_pending = false;
                             SDL_UnlockMutex(player_state.mutex);
                         }
                     } else {
@@ -103,10 +114,15 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
                     // -
                 }
             }
+            {
+                std::lock_guard<std::mutex> lock(player_state.player_mutex);
+                player_state.running = false;
+            }
         } else {
             CW_LOG_W("打开播放器失败");
             {
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
+                player_state.running = false;
                 player_state.player_cv.notify_one();
             }
         }
@@ -114,8 +130,10 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
         stop_video_player();
         SDL_Quit();
     });
-    std::unique_lock<std::mutex> lock(player_state.player_mutex);
-    player_state.player_cv.wait_for(lock, std::chrono::seconds(10));
+    {
+        std::unique_lock<std::mutex> lock(player_state.player_mutex);
+        player_state.player_cv.wait_for(lock, std::chrono::seconds(10));
+    }
     return player_state.running;
 }
 
@@ -126,6 +144,10 @@ void caiwei::player::stop_player() {
         event.type = SDL_QUIT;
         int ret = SDL_PushEvent(&event);
         CW_LOG_I("关闭播放器: %d", ret);
+    }
+    {
+        std::unique_lock<std::mutex> lock(player_state.player_mutex);
+        player_state.running = false;
     }
     if (player_state.player_thread.joinable()) {
         player_state.player_thread.join();
@@ -148,22 +170,24 @@ bool caiwei::player::play_video(const void* data, int len) {
     if(player_state.running && player_state.video_running) {
         if(SDL_LockMutex(player_state.mutex) != 0) {
             CW_LOG_W("视频加锁失败: %s", SDL_GetError());
+            return false;
         } else {
-            bool push = false;
             if(SDL_UpdateTexture(player_state.texture, nullptr, data, len) != 0) {
                 CW_LOG_W("视频更新失败: %s", SDL_GetError());
+                SDL_UnlockMutex(player_state.mutex);
+                return false;
             } else {
-                if (!player_state.video_pending) {
-                    push = true;
-                    player_state.video_pending = true;
+                SDL_UnlockMutex(player_state.mutex);
+                SDL_Event event_drop;
+                while (SDL_PeepEvents(&event_drop, 1, SDL_GETEVENT, SDL_USEREVENT, SDL_USEREVENT) > 0) {
+                    // -
                 }
-            }
-            SDL_UnlockMutex(player_state.mutex);
-            if (push) {
                 SDL_Event event;
                 event.type = SDL_USEREVENT;
                 event.user.code = USER_EVENT_VIDEO_FRAME;
-                SDL_PushEvent(&event);
+                if (SDL_PushEvent(&event) != 1) {
+                    CW_LOG_W("视频事件推送失败: %s", SDL_GetError());
+                }
             }
         }
         return true;
@@ -179,6 +203,7 @@ static bool init_audio_player() {
     player_state.audio_id = SDL_OpenAudioDevice(nullptr, 0, &player_state.audio_spec, nullptr, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
     if(player_state.audio_id == 0) {
         CW_LOG_W("打开音频失败: %s", SDL_GetError());
+        stop_audio_player();
         return false;
     }
     SDL_PauseAudioDevice(player_state.audio_id, 0);
@@ -194,26 +219,31 @@ static bool init_video_player() {
     player_state.mutex = SDL_CreateMutex();
     if(!player_state.mutex) {
         CW_LOG_W("打开互斥失败: %s", SDL_GetError());
+        stop_video_player();
         return false;
     }
     player_state.window = SDL_CreateWindow("Caiwei Player", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, player_state.video_width, player_state.video_height, SDL_WINDOW_OPENGL);
     if(!player_state.window) {
         CW_LOG_W("打开窗口失败: %s", SDL_GetError());
+        stop_video_player();
         return false;
     }
     player_state.renderer = SDL_CreateRenderer(player_state.window, -1, 0);
     if(!player_state.renderer) {
         CW_LOG_W("打开渲染失败: %s", SDL_GetError());
+        stop_video_player();
         return false;
     }
     player_state.texture = SDL_CreateTexture(player_state.renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, player_state.video_width, player_state.video_height);
     if(!player_state.texture) {
         CW_LOG_W("打开纹理失败: %s", SDL_GetError());
+        stop_video_player();
         return false;
     }
     player_state.context = SDL_GL_CreateContext(player_state.window);
     if(!player_state.context) {
         CW_LOG_W("打开OpenGL失败: %s", SDL_GetError());
+        stop_video_player();
         return false;
     }
     player_state.video_running = true;

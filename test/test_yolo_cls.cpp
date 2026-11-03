@@ -47,6 +47,7 @@ void cls_image_thread() {
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::thread([&]() {
+            // 独占模型非线程安全每个线程独立一个模型实例
             auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
             if (ptr == nullptr) {
                 CW_LOG_W("模型加载失败");

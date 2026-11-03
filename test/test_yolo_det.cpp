@@ -69,6 +69,7 @@ void det_image_thread() {
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::thread([&]() {
+            // 独占模型非线程安全每个线程独立一个模型实例
             auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
             if (ptr == nullptr) {
                 CW_LOG_W("模型加载失败");

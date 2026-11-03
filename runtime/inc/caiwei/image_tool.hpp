@@ -233,7 +233,6 @@ inline void hwc_to_chw_u8_i8(const uint8_t* __restrict hwc, int8_t* __restrict c
 }
 
 inline void hwc_to_chw_u8_f32(const uint8_t* __restrict hwc, float* __restrict chw, const int H, const int W, const int C, const float scale) {
-    const float inv_scale = 1.0F / scale;
     const size_t plane_size = static_cast<size_t>(H) * W;
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
@@ -243,7 +242,7 @@ inline void hwc_to_chw_u8_f32(const uint8_t* __restrict hwc, float* __restrict c
             #pragma GCC unroll 3
             #endif
             for (int c = 0; c < C; ++c) {
-                chw[c * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[c]) * inv_scale;
+                chw[c * plane_size + pixel_idx] = static_cast<float>(hwc_pixel[c]) / scale;
             }
         }
     }

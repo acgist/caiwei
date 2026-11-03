@@ -1,10 +1,6 @@
 #include "test.hpp"
 
 #include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
-
-#include <cassert>
-#include <numeric>
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 #include "rga/im2d.h"
@@ -35,7 +31,9 @@ void test_resize() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
@@ -54,7 +52,9 @@ void test_resize_rga() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     rga_buffer_t src_img = wrapbuffer_virtualaddr(data,       width, height, RK_FORMAT_RGB_888);
@@ -75,7 +75,9 @@ void test_resize_ffmpeg() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     SwsContext* sws = sws_getContext(
         width, height, AV_PIX_FMT_RGB24,
@@ -84,6 +86,7 @@ void test_resize_ffmpeg() {
         SWS_FAST_BILINEAR,
         nullptr, nullptr, nullptr
     );
+    assert(sws != nullptr);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     int src_stride = width * 3;
     int dst_stride = dst_w * 3;
@@ -104,7 +107,9 @@ void test_resize_pad() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(    w *     h * channels, caiwei::image::DEFAULT_PADDING);
@@ -126,7 +131,9 @@ void test_resize_pad_rga() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> pad(w * h * channels, caiwei::image::DEFAULT_PADDING);
     rga_buffer_t src_img = wrapbuffer_virtualaddr(data,       width, height, RK_FORMAT_RGB_888);
@@ -171,21 +178,6 @@ void test_nms_boxes() {
 }
 
 [[maybe_unused]]
-void test_min_max_loc() {
-    float scores[128];
-    std::iota(scores, scores + 128, 1.0F);
-    scores[100] = 10000.0F;
-    int   max_index;
-    float max_score;
-    caiwei::image::max_loc(scores, 128, max_score, max_index);
-    assert(max_score == 10000.0F);
-    assert(max_index == 100);
-    CAIWEI_FOR_EACH(1000)
-    caiwei::image::max_loc(scores, 128, max_score, max_index);
-    CAIWEI_FOR_EACH_END
-}
-
-[[maybe_unused]]
 void test_transpose() {
     uint8_t* src = new uint8_t[84 * 8400];
     uint8_t* dst = new uint8_t[84 * 8400];
@@ -207,9 +199,12 @@ void test_transpose() {
 [[maybe_unused]]
 void test_hwc_to_chw() {
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
-    std::vector<float> hwc(width * height * channels);
-    std::vector<float> chw(width * height * channels);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
+    std::vector<float>  hwc   (width * height * channels);
+    std::vector<float>  chw   (width * height * channels);
+    std::vector<int8_t> chw_i8(width * height * channels);
     caiwei::type::u8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
     caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
     caiwei::image::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
@@ -217,6 +212,11 @@ void test_hwc_to_chw() {
     {
         CAIWEI_FOR_EACH(1000)
         caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
+        CAIWEI_FOR_EACH_END
+    }
+    {
+        CAIWEI_FOR_EACH(1000)
+        caiwei::image::hwc_to_chw_u8_i8(data, chw_i8.data(), height, width, channels);
         CAIWEI_FOR_EACH_END
     }
     {
@@ -234,12 +234,14 @@ void test_image() {
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
     int width, height, channels;
-    auto data = stbi_load(image_path, &width, &height, &channels, STBI_default);
+    auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
+    assert(data != nullptr);
+    channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
-    std::vector<uint8_t> dst(width * height * channels);
-    std::vector<uint8_t> pad(w * h * channels);
-    std::vector<float>   hwc(w * h * channels);
-    std::vector<float>   chw(w * h * channels);
+    std::vector<uint8_t> dst(dst_w * dst_h * channels);
+    std::vector<uint8_t> pad(w     * h     * channels);
+    std::vector<float>   hwc(w     * h     * channels);
+    std::vector<float>   chw(w     * h     * channels);
     {
         CAIWEI_FOR_EACH(1000)
         caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
@@ -275,7 +277,6 @@ int main(int argc, char* argv[]) {
     test_resize_pad_rga();
     #endif
     test_nms_boxes();
-    test_min_max_loc();
     test_transpose();
     test_hwc_to_chw();
     test_image();

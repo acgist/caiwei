@@ -4,24 +4,29 @@ import asyncio
 from mcp import ClientSession
 from openai import AsyncOpenAI
 from uvicorn import Server, Config
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from mcp.client.sse import sse_client
 from sse_starlette.sse import EventSourceResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-openai = AsyncOpenAI(api_key = "api-key", base_url = "https://api.deepseek.com", timeout=120)
+openai = AsyncOpenAI(
+    api_key="api-key",
+    base_url="http://localhost:8888/v1",
+    timeout=120,
+)
+
 
 class MCPServer:
     async def init_mcp_server(self, url):
         print(f"加载MCP Server: {url}")
-        self.url     = url
-        self.client  = sse_client(url)
+        self.url = url
+        self.client = sse_client(url)
         self.streams = await self.client.__aenter__()
         self.session = ClientSession(*self.streams)
         self.context = await self.session.__aenter__()
         await self.context.initialize()
-        tools     = await self.context.list_tools()
-        prompts   = await self.context.list_prompts()
+        tools = await self.context.list_tools()
+        prompts = await self.context.list_prompts()
         resources = await self.context.list_resources()
         print(f"tool: {[tool.name for tool in tools.tools]}")
         print(f"prompt: {[prompt.name for prompt in prompts.prompts]}")
@@ -34,22 +39,26 @@ class MCPServer:
         if self.client:
             await self.client.__aexit__(None, None, None)
 
+
 class MCPClient:
-    async def init_mcp_server(self, urls = []):
-        self.tools   = []
+    async def init_mcp_server(self, urls=[]):
+        self.tools = []
         self.servers = []
         self.mapping = {}
         for url in urls:
             mcpServer = MCPServer()
             await mcpServer.init_mcp_server(url)
             for tool in (await mcpServer.context.list_tools()).tools:
-                self.tools.append({
-                    "type"    : "function",
-                    "function": {
-                        "name"       : tool.name,
-                        "parameters" : tool.input_schema,
-                        "description": tool.description,
-                    }})
+                self.tools.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": tool.name,
+                            "parameters": tool.input_schema,
+                            "description": tool.description,
+                        },
+                    }
+                )
                 self.mapping[tool.name] = mcpServer
             self.servers.append(mcpServer)
         print(f"加载MCP Server完成: {len(self.servers)}")
@@ -73,36 +82,44 @@ class MCPClient:
                 print(f"调用工具没有映射: {tool}")
                 continue
             try:
-                params   = json.loads(tool.function.arguments) if tool.function.arguments else "{}"
-                response = await asyncio.wait_for(self.mapping[tool.function.name].context.call_tool(tool.function.name, params), timeout=120)
-                content  = "".join(list(map(lambda v: v.text, response.content)))
+                arguments = (
+                    json.loads(tool.function.arguments)
+                    if tool.function.arguments
+                    else {}
+                )
+                response = await asyncio.wait_for(
+                    self.mapping[tool.function.name].context.call_tool(
+                        tool.function.name,
+                        arguments,
+                    ),
+                    timeout=120,
+                )
+                content = "".join(list(map(lambda v: v.text, response.content)))
                 print(f"调用工具: {tool} - {content}")
-                messages.extend([
-                    {
-                        "role"      : "assistant",
-                        "content"   : None,
-                        "tool_calls": [tool]
-                    },
-                    {
-                        "role"        : "tool",
-                        "content"     : content,
-                        "tool_call_id": tool.id,
-                    }
-                ])
+                messages.extend(
+                    [
+                        {"role": "assistant", "content": None, "tool_calls": [tool]},
+                        {
+                            "role": "tool",
+                            "content": content,
+                            "tool_call_id": tool.id,
+                        },
+                    ]
+                )
             except Exception as e:
                 print(f"调用工具异常: {tool} - {e}")
         return messages
 
-    async def chat(self, stream, messages):
+    async def chat(self, model, stream, messages):
         params = {
-            "model"   : "deepseek-chat",
-            "tools"   : self.tools,
-            "stream"  : stream,
+            "model": model,
+            "tools": self.tools,
+            "stream": stream,
             "messages": messages,
         }
         print(f"会话请求: {params}")
-        text         = ""
-        response     = None
+        text = ""
+        response = None
         tools_params = {}
         try:
             response = await openai.chat.completions.create(**params)
@@ -111,7 +128,7 @@ class MCPClient:
                     if chunk and chunk.choices:
                         print(f"会话响应: {chunk}")
                         for choice in chunk.choices:
-                            delta  = choice.delta
+                            delta = choice.delta
                             reason = choice.finish_reason
                             if delta.content:
                                 text += delta.content
@@ -124,19 +141,31 @@ class MCPClient:
                                         tools_params[tool.index].id = tool.id
                                     if tool.function:
                                         if tool.function.name:
-                                            tools_params[tool.index].function.name = tool.function.name
+                                            tools_params[tool.index].function.name = (
+                                                tool.function.name
+                                            )
                                         if tool.function.arguments:
-                                            tools_params[tool.index].function.arguments += tool.function.arguments
+                                            tools_params[
+                                                tool.index
+                                            ].function.arguments += (
+                                                tool.function.arguments
+                                            )
                             if reason:
                                 print(f"会话完成: {reason} = {text}")
                                 if reason == "stop":
-                                    messages.append({
-                                        "role"   : "assistant",
-                                        "content": text,
-                                    })
+                                    messages.append(
+                                        {
+                                            "role": "assistant",
+                                            "content": text,
+                                        }
+                                    )
                                 elif reason == "tool_calls":
-                                    messages = await self.call_tool(tools_params, messages)
-                                    async for recursion_chunk in self.chat(stream, messages):
+                                    messages = await self.call_tool(
+                                        tools_params, messages
+                                    )
+                                    async for recursion_chunk in self.chat(
+                                        model, stream, messages
+                                    ):
                                         yield recursion_chunk
                                     break
                                 else:
@@ -145,20 +174,22 @@ class MCPClient:
                 for choice in response.choices:
                     print(f"会话响应: {choice}")
                     message = choice.message
-                    reason  = choice.finish_reason
+                    reason = choice.finish_reason
                     if message.content:
                         text += message.content
                     if message.tool_calls:
                         for tool in message.tool_calls:
                             tools_params[tool.index] = tool
                     if reason == "stop":
-                        messages.append({
-                            "role"   : "assistant",
-                            "content": text,
-                        })
+                        messages.append(
+                            {
+                                "role": "assistant",
+                                "content": text,
+                            }
+                        )
                     elif reason == "tool_calls":
                         messages = await self.call_tool(tools_params, messages)
-                        async for recursion_chunk in self.chat(stream, messages):
+                        async for recursion_chunk in self.chat(model, stream, messages):
                             text += recursion_chunk
                     else:
                         print(f"其他结束原因: {reason}")
@@ -170,37 +201,52 @@ class MCPClient:
             if stream and response:
                 await response.close()
 
+
 mcpClient = MCPClient()
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"],
-    allow_methods = ["*"],
-    allow_headers = ["*"],
-    allow_credentials = True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
 )
 
+
 @app.get("/chat")
-async def chat(message: str, stream: bool = True):
+async def chat(model: str, message: str, stream: bool = True):
     messages = [
         {
-            "role"   : "system",
-            "content": "你是一个中文AI助手！"
+            "role": "system",
+            "content": "你是一个中文AI助手",
         },
         {
-            "role"   : "user",
-            "content": message
-        }
+            "role": "user",
+            "content": message,
+        },
     ]
-    return EventSourceResponse(mcpClient.chat(stream, messages))
+    if stream:
+        return EventSourceResponse(mcpClient.chat(model, stream, messages))
+    else:
+        content = ""
+        async for value in mcpClient.chat(model, stream, messages):
+            content += value
+        return content
+
 
 async def main():
     await mcpClient.init_mcp_server(["http://localhost:19091/sse"])
-    config = Config(app, host = "0.0.0.0", port = 18081)
+    config = Config(app, host="0.0.0.0", port=18081)
     server = Server(config)
-    await server.serve()
-    await mcpClient.close_mcp_server()
+    try:
+        await server.serve()
+    finally:
+        await mcpClient.close_mcp_server()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+# 查询广州天气
+# 今天广州出门搭乘什么交通工具

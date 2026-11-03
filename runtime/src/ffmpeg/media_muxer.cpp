@@ -18,27 +18,35 @@ static SwsContext* init_video_sws(caiwei::media::VideoInfo& in, caiwei::media::V
 static void sws_free(SwsContext** sws);
 
 caiwei::media::MediaMuxer::MediaMuxer(
-    AudioInfo in_audio_info,
     AudioInfo out_audio_info,
-    VideoInfo in_video_info,
     VideoInfo out_video_info,
-    PacketCallback packet_callback
-) : in_audio_info(in_audio_info),
-    out_audio_info(out_audio_info),
-    in_video_info(in_video_info),
+    PacketCallback packet_callback,
+    MediaFormat* media_format
+) : out_audio_info(out_audio_info),
     out_video_info(out_video_info),
-    packet_callback(packet_callback) {
+    packet_callback(packet_callback),
+    media_format(media_format) {
 }
 
 caiwei::media::MediaMuxer::~MediaMuxer() {
     this->stop();
 }
 
-bool caiwei::media::MediaMuxer::open() {
+bool caiwei::media::MediaMuxer::open(AudioInfo in_audio_info, VideoInfo in_video_info) {
+    this->in_audio_info = in_audio_info;
+    this->in_video_info = in_video_info;
     if (this->audio_codec_ctx != nullptr && this->video_codec_ctx != nullptr) {
         this->stop();
     }
-    return this->open_audio() && this->open_video();
+    if (this->open_audio() && this->open_video()) {
+        if (this->media_format != nullptr) {
+            return this->media_format->open(this->audio_codec_ctx, this->video_codec_ctx);
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
 }
 
 bool caiwei::media::MediaMuxer::open_audio() {

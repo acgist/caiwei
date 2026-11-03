@@ -112,20 +112,19 @@ private:
     VideoInfo in_video_info;  // 输入视频
     VideoInfo out_video_info; // 输出视频
     PacketCallback packet_callback; // 编码数据回调
-public:
+    MediaFormat* media_format{ nullptr };
     AVCodecContext* audio_codec_ctx{ nullptr }; // 音频编码器上下文
     AVCodecContext* video_codec_ctx{ nullptr }; // 视频编码器上下文
 public:
     MediaMuxer(
-        AudioInfo in_audio_info,
         AudioInfo out_audio_info,
-        VideoInfo in_video_info,
         VideoInfo out_video_info,
-        PacketCallback packet_callback
+        PacketCallback packet_callback,
+        MediaFormat* media_format = nullptr
     );
     ~MediaMuxer();
 public:
-    bool open();
+    bool open(AudioInfo in_audio_info, VideoInfo in_video_info);
     bool stop();
     bool on_audio(const AudioFrame& frame);
     bool on_video(const VideoFrame& frame);
@@ -143,15 +142,17 @@ private:
     volatile bool running; // 是否运行
     std::string type; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
     std::string url ; // 媒体地址
+    MediaMuxer * media_muxer { nullptr };
+    MediaFormat* media_format{ nullptr };
 public:
-    MediaDemuxer(const std::string& type, const std::string& url);
+    MediaDemuxer(const std::string& type, const std::string& url, MediaMuxer* media_muxer = nullptr, MediaFormat* media_format = nullptr);
 public:
     bool open(
         AudioInfo audio_info,
         VideoInfo video_info,
         AudioCallback audio_callback,
         VideoCallback video_callback,
-        MediaFormat* media_format = nullptr
+        PacketCallback packet_callback = nullptr
     );
     bool stop();
 };

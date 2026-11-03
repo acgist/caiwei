@@ -34,25 +34,16 @@ bool caiwei::session::VideoPlaySession::media_codec() {
         }
     });
     caiwei::media::MediaMuxer media_muxer(
-        caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::AUDIO_INFO_ENCODE,
-        caiwei::media::VIDEO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_ENCODE,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
             return media_format.send(type, packet);
-        }
+        },
+        &media_format
     );
-    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url);
-    if (!media_muxer.open()) {
-        CW_LOG_W("视频编码器上下文创建失败");
-        return false;
-    }
-    if (!media_format.open(media_muxer.audio_codec_ctx, media_muxer.video_codec_ctx)) {
-        CW_LOG_W("视频格式化上下文创建失败");
-        return false;
-    }
+    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, &media_muxer);
     CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
-    if (!media_demuxer.open(
+    bool ret = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [&media_muxer](caiwei::media::AudioFrame& frame) {
@@ -61,12 +52,9 @@ bool caiwei::session::VideoPlaySession::media_codec() {
         [&media_muxer](caiwei::media::VideoFrame& frame) {
             return media_muxer.on_video(frame);
         }
-    )) {
-        CW_LOG_W("视频解码器上下文创建失败");
-        return false;
-    }
+    );
     CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
-    return true;
+    return ret;
 }
 
 bool caiwei::session::VideoPlaySession::media_forward() {
@@ -79,7 +67,7 @@ bool caiwei::session::VideoPlaySession::media_forward() {
             return false;
         }
     });
-    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url);
+    caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, nullptr, &media_format);
     CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
     bool ret = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
@@ -90,7 +78,9 @@ bool caiwei::session::VideoPlaySession::media_forward() {
         [](caiwei::media::VideoFrame& frame) {
             return true;
         },
-        &media_format
+        [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
+            return media_format.send(type, packet);
+        }
     );
     CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
     return ret;

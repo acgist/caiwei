@@ -139,7 +139,9 @@ void from_json(const nlohmann::json& json, CompletionsRequestMessageContentItem&
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessageContent& content) {
-    if (json.is_string()) {
+    if (json.is_null()) {
+        // -
+    } else if (json.is_string()) {
         content = json.get<std::string>();
     } else if (json.is_array()) {
         std::vector<CompletionsRequestMessageContentItem> vector = json;

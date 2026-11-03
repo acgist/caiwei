@@ -119,6 +119,7 @@ void test_asr_thread() {
         }
     });
     request.messages.back().audio_data.push_back(std::move(audio_frame));
+    // 共享模型线程安全所有线程共享一个模型实例
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
         CW_LOG_W("模型加载失败");
