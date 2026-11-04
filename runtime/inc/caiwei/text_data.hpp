@@ -38,99 +38,99 @@ inline constexpr const char* CONTENT_TYPE_HTTP  = "http:";
 inline constexpr const char* CONTENT_TYPE_HTTPS = "https:";
 
 struct CompletionsRequestMessageContentItemUrl {
-    std::optional<std::string> url;
+    std::optional<std::string> url = std::nullopt;
 };
 
 struct CompletionsRequestMessageContentItem {
-    std::optional<std::string> type;
-    std::optional<std::string> text;
-    std::optional<std::string> audio;
-    std::optional<std::string> image;
-    std::optional<std::string> video;
-    std::optional<CompletionsRequestMessageContentItemUrl> audio_url;
-    std::optional<CompletionsRequestMessageContentItemUrl> image_url;
-    std::optional<CompletionsRequestMessageContentItemUrl> video_url;
+    std::optional<std::string> type  = std::nullopt;
+    std::optional<std::string> text  = std::nullopt;
+    std::optional<std::string> audio = std::nullopt;
+    std::optional<std::string> image = std::nullopt;
+    std::optional<std::string> video = std::nullopt;
+    std::optional<CompletionsRequestMessageContentItemUrl> audio_url = std::nullopt;
+    std::optional<CompletionsRequestMessageContentItemUrl> image_url = std::nullopt;
+    std::optional<CompletionsRequestMessageContentItemUrl> video_url = std::nullopt;
 };
 
 using CompletionsRequestMessageContent = std::variant<std::string, std::vector<CompletionsRequestMessageContentItem>>;
 
 struct CompletionsRequestMessageToolCallFunction {
-    std::optional<std::string> name;
-    std::optional<std::string> arguments;
+    std::optional<std::string> name      = std::nullopt;
+    std::optional<std::string> arguments = std::nullopt;
 };
 
 struct CompletionsRequestMessageToolCall {
-    std::optional<std::string> id;
-    std::optional<std::string> type;
-    std::optional<CompletionsRequestMessageToolCallFunction> function;
+    std::optional<std::string> id   = std::nullopt;
+    std::optional<std::string> type = std::nullopt;
+    std::optional<CompletionsRequestMessageToolCallFunction> function = std::nullopt;
 };
 
 struct CompletionsRequestMessage {
-    std::optional<std::string> role;
-    std::optional<std::string> name;
-    std::optional<std::string> tool_call_id;
-    std::optional<CompletionsRequestMessageContent> content;
-    std::optional<std::vector<CompletionsRequestMessageToolCall>> tool_calls;
+    std::optional<std::string> role         = std::nullopt;
+    std::optional<std::string> name         = std::nullopt;
+    std::optional<std::string> tool_call_id = std::nullopt;
+    std::optional<CompletionsRequestMessageContent>               content    = std::nullopt;
+    std::optional<std::vector<CompletionsRequestMessageToolCall>> tool_calls = std::nullopt;
     CW_TRANSIENT std::vector<caiwei::media::AudioFrame>              audio_data = {};
     CW_TRANSIENT std::vector<caiwei::media::ImageFrame>              image_data = {};
     CW_TRANSIENT std::vector<std::vector<caiwei::media::VideoFrame>> video_data = {};
 };
 
 struct CompletionsRequestToolFunction {
-    std::optional<std::string> name;
-    std::optional<std::string> description;
-    std::optional<nlohmann::json> parameters;
+    std::optional<std::string>    name        = std::nullopt;
+    std::optional<std::string>    description = std::nullopt;
+    std::optional<nlohmann::json> parameters  = std::nullopt;
 };
 
 struct CompletionsRequestTool {
-    std::optional<std::string> type;
-    std::optional<CompletionsRequestToolFunction> function;
+    std::optional<std::string> type = std::nullopt;
+    std::optional<CompletionsRequestToolFunction> function = std::nullopt;
 };
 
 struct CompletionsRequest {
-    bool stream = false;
-    std::string model;
-    std::vector<CompletionsRequestMessage> messages;
-    std::optional<int>   seed;
-    std::optional<int>   top_k          = 10;
-    std::optional<float> top_p          = 0.95F;
-    std::optional<float> temperature    = 0.8F;
-    std::optional<float> repeat_penalty = 1.04F;
+    bool        stream{};
+    std::string model {};
+    std::vector<CompletionsRequestMessage> messages{};
+    std::optional<int>   seed              = std::nullopt;
+    std::optional<int>   top_k             = 10;
+    std::optional<float> top_p             = 0.95F;
+    std::optional<float> temperature       = 0.8F;
+    std::optional<float> repeat_penalty    = 1.04F;
     std::optional<float> presence_penalty  = 0.0F;
     std::optional<float> frequency_penalty = 0.0F;
-    std::optional<uint32_t> max_completion_tokens;
-    std::optional<std::vector<CompletionsRequestTool>> tools;
+    std::optional<uint32_t> max_completion_tokens = std::nullopt;
+    std::optional<std::vector<CompletionsRequestTool>> tools = std::nullopt;
     // 扩展字段
     std::optional<int> video_fps   = 8;      // 视频识别间隔帧数: VLM/YOLO
     std::optional<int> asr_samples = 32000;  // ASR采样队列数量: 16000 * 1 * 16 *  1 / 8 = 32000
     std::optional<int> vlm_frames  = 8;      // VLM帧数队列数量
     std::optional<bool> drop_on_full    = false; // 队列满时是否丢弃数据
     std::optional<bool> enable_thinking = false; // 是否开启思考模式
-    std::optional<std::string> media_url;  // 持续识别视频文件地址
-    std::optional<std::string> media_type; // 持续识别视频文件类型
-    std::optional<std::vector<std::string>> model_list;
-    CW_TRANSIENT std::string id;
-    CW_TRANSIENT uint32_t    created;
+    std::optional<std::string> media_url  = std::nullopt; // 持续识别视频文件地址
+    std::optional<std::string> media_type = std::nullopt; // 持续识别视频文件类型
+    std::optional<std::vector<std::string>> model_list = std::nullopt; // 模型列表
+    CW_TRANSIENT std::string id     {};
+    CW_TRANSIENT uint32_t    created{};
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {
-    std::optional<std::string> name;
-    std::optional<std::string> arguments;
+    std::optional<std::string> name      = std::nullopt;
+    std::optional<std::string> arguments = std::nullopt;
 };
 
 struct CompletionsResponseChoiceMessageToolCall {
-    std::optional<std::string> id;
-    std::optional<std::string> type;
-    std::optional<uint32_t>    index;
-    std::optional<CompletionsResponseChoiceMessageToolCallFunction> function;
+    std::optional<std::string> id    = std::nullopt;
+    std::optional<std::string> type  = std::nullopt;
+    std::optional<uint32_t>    index = std::nullopt;
+    std::optional<CompletionsResponseChoiceMessageToolCallFunction> function = std::nullopt;
 };
 
 struct CompletionsResponseChoiceMessage {
-    std::optional<std::string> role;
-    std::optional<std::string> content;
-    std::optional<std::string> refusal;
-    std::optional<std::string> reasoning_content;
-    std::optional<std::vector<CompletionsResponseChoiceMessageToolCall>> tool_calls;
+    std::optional<std::string> role              = std::nullopt;
+    std::optional<std::string> content           = std::nullopt;
+    std::optional<std::string> refusal           = std::nullopt;
+    std::optional<std::string> reasoning_content = std::nullopt;
+    std::optional<std::vector<CompletionsResponseChoiceMessageToolCall>> tool_calls = std::nullopt;
 };
 
 struct CompletionsResponseChoice {
@@ -146,8 +146,8 @@ struct CompletionsResponseUsage {
 };
 
 struct CompletionsResponse {
-    uint32_t    created;
     std::string id;
+    uint32_t    created;
     std::string model;
     std::string object = "chat.completion";
     std::vector<CompletionsResponseChoice> choices;
@@ -155,23 +155,23 @@ struct CompletionsResponse {
 };
 
 struct CompletionsChunkChoiceMessageToolCallFunction {
-    std::optional<std::string> name;
-    std::optional<std::string> arguments;
+    std::optional<std::string> name      = std::nullopt;
+    std::optional<std::string> arguments = std::nullopt;
 };
 
 struct CompletionsChunkChoiceMessageToolCall {
-    std::optional<std::string> id;
-    std::optional<std::string> type;
-    std::optional<uint32_t>    index;
-    std::optional<CompletionsChunkChoiceMessageToolCallFunction> function;
+    std::optional<std::string> id    = std::nullopt;
+    std::optional<std::string> type  = std::nullopt;
+    std::optional<uint32_t>    index = std::nullopt;
+    std::optional<CompletionsChunkChoiceMessageToolCallFunction> function = std::nullopt;
 };
 
 struct CompletionsChunkDelta {
-    std::optional<std::string> role;
-    std::optional<std::string> content;
-    std::optional<std::string> refusal;
-    std::optional<std::string> reasoning_content;
-    std::optional<std::vector<CompletionsChunkChoiceMessageToolCall>> tool_calls;
+    std::optional<std::string> role              = std::nullopt;
+    std::optional<std::string> content           = std::nullopt;
+    std::optional<std::string> refusal           = std::nullopt;
+    std::optional<std::string> reasoning_content = std::nullopt;
+    std::optional<std::vector<CompletionsChunkChoiceMessageToolCall>> tool_calls = std::nullopt;
 };
 
 struct CompletionsChunkChoice {
@@ -187,8 +187,8 @@ struct CompletionsChunkUsage {
 };
 
 struct CompletionsChunk {
-    uint32_t    created;
     std::string id;
+    uint32_t    created;
     std::string model;
     std::string object = "chat.completion.chunk";
     std::vector<CompletionsChunkChoice> choices;

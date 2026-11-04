@@ -16,12 +16,13 @@
 static std::atomic<int> caiwei_signal{ 0 };
 
 #if CAIWEI_OS_WIN
-BOOL WINAPI on_signal(DWORD type) {
+static BOOL WINAPI on_signal(DWORD type) {
     switch (type) {
     case CTRL_C_EVENT:
     case CTRL_BREAK_EVENT:
     case CTRL_CLOSE_EVENT:
     case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
         caiwei_signal = 1;
         return TRUE;
     default:
@@ -57,7 +58,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     install_signal_handler();
-    CW_LOG_W("系统启动");
     caiwei::init();
     if (caiwei_signal != 0) {
         caiwei::stop();
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
         try {
             success.store(caiwei::rest::open(), std::memory_order_release);
         } catch (...) {
-            CW_LOG_E("REST服务注册异常");
+            CW_LOG_E("注册REST服务异常");
             success.store(false, std::memory_order_release);
         }
         running.store(false, std::memory_order_release);
@@ -86,6 +86,5 @@ int main(int argc, char* argv[]) {
     }
 #endif
     caiwei::stop();
-    CW_LOG_W("系统关闭");
     return success.load(std::memory_order_acquire) ? 0 : 1;
 }

@@ -5,6 +5,7 @@
 #include "caiwei/media_tool.hpp"
 
 void caiwei::init() {
+    CW_LOG_I("系统启动");
     caiwei::media::init();
     caiwei::context::init();
     caiwei::runtime::init();
@@ -16,4 +17,5 @@ void caiwei::stop() {
     caiwei::context::stop();
     caiwei::runtime::stop();
     caiwei::manager::stop();
+    CW_LOG_I("系统关闭");
 }

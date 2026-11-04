@@ -358,8 +358,8 @@ void to_json(nlohmann::json& json, const RerankingsResponseUsage& usage) {
 
 std::string caiwei::text::to_json(const CompletionsResponse& response) {
     nlohmann::json json;
-    json["created"] = response.created;
     json["id"]      = response.id;
+    json["created"] = response.created;
     json["model"]   = response.model;
     json["object"]  = response.object;
     json["choices"] = response.choices;
@@ -371,8 +371,8 @@ std::string caiwei::text::to_json(const CompletionsResponse& response) {
 
 std::string caiwei::text::to_json(const CompletionsChunk& chunk) {
     nlohmann::json json;
-    json["created"] = chunk.created;
     json["id"]      = chunk.id;
+    json["created"] = chunk.created;
     json["model"]   = chunk.model;
     json["object"]  = chunk.object;
     json["choices"] = chunk.choices;

@@ -52,8 +52,8 @@ std::string caiwei::session::CompletionsSession::get_sync() {
     caiwei::env::check_nullptr(context_info, "模型无效");
     caiwei::text::CompletionsResponse response;
     response.id      = request.id;
-    response.model   = request.model;
     response.created = request.created;
+    response.model   = request.model;
     fill_media_request(request);
     if (context_info->type == caiwei::context::Type::CLS) {
         sync_cls(request, response);
@@ -444,8 +444,8 @@ template <typename T>
 inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* ptr, caiwei::session::Callback& callback) {
     caiwei::text::CompletionsChunk chunk;
     chunk.id      = request.id;
-    chunk.model   = request.model;
     chunk.created = request.created;
+    chunk.model   = request.model;
     int index = 0;
     for (const auto& message : request.messages) {
         if (message.role != caiwei::text::ROLE_USER) {
@@ -469,8 +469,8 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
     for (const auto& result : generator) {
         caiwei::text::CompletionsChunk chunk;
         chunk.id      = request.id;
-        chunk.model   = request.model;
         chunk.created = request.created;
+        chunk.model   = request.model;
         caiwei::text::CompletionsChunkChoice choice;
         choice.index = 0;
         choice.delta.role = caiwei::text::ROLE_ASSISTANT;

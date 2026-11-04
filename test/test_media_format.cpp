@@ -45,10 +45,10 @@ void test_format_fwd_file() {
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [](caiwei::media::AudioFrame& frame) {
+        [](caiwei::media::AudioFrame& /* frame */) {
             return true;
         },
-        [](caiwei::media::VideoFrame& frame) {
+        [](caiwei::media::VideoFrame& /* frame */) {
             return true;
         },
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
@@ -70,10 +70,10 @@ void test_format_fwd_callback() {
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [](caiwei::media::AudioFrame& frame) {
+        [](caiwei::media::AudioFrame& /* frame */) {
             return true;
         },
-        [](caiwei::media::VideoFrame& frame) {
+        [](caiwei::media::VideoFrame& /* frame */) {
             return true;
         },
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {

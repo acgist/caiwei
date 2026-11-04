@@ -43,7 +43,7 @@ void test_log_mel_spectrogram() {
     stbi_write_hdr("./log_mel_spectrogram.hdr", n_frame, n_mels, 1, audio_feature.data());
 }
 
-int main(int argc, char* argv[]) {
+int main() {
     caiwei::test::init_test();
     test_log_mel_spectrogram();
     caiwei::test::stop_test();

@@ -228,8 +228,8 @@ void test_json_to_rerankings() {
 [[maybe_unused]]
 void test_completions_response_to_json() {
     caiwei::text::CompletionsResponse response;
-    response.created = 1694502400;
     response.id      = "123456";
+    response.created = 1694502400;
     response.model   = "qwen3";
     response.choices = std::vector<caiwei::text::CompletionsResponseChoice> {
         {
@@ -248,8 +248,8 @@ void test_completions_response_to_json() {
 [[maybe_unused]]
 void test_completions_chunk_to_json() {
     caiwei::text::CompletionsChunk chunk;
-    chunk.created = 1694502400;
     chunk.id      = "123456";
+    chunk.created = 1694502400;
     chunk.model   = "qwen3";
     chunk.choices = std::vector<caiwei::text::CompletionsChunkChoice> {
         {
