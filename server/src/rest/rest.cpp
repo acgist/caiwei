@@ -144,8 +144,13 @@ static void get_favicon() {
 
 static void get_shutdown() {
     caiwei::rest::server->Get("/shutdown", [](const httplib::Request& /* request */, httplib::Response& response) {
+        #if CAIWEI_DEBUG
         response.set_content(caiwei::json::buildResponse("正在关机..."), caiwei::rest::content::type::JSON);
         caiwei::rest::stop();
+        #else
+        response.status = httplib::StatusCode::NotFound_404;
+        response.set_content(caiwei::json::buildResponse("1404", "没有接口"), caiwei::rest::content::type::JSON);
+        #endif
     });
 }
 

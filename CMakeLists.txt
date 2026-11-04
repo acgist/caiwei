@@ -231,7 +231,6 @@ endif()
 
 if(ENABLE_CAIWEI_CPPHTTPLIB)
     message(STATUS "Enable cpp-httplib")
-    add_definitions(-DENABLE_CAIWEI_REST=1)
     if(CMAKE_HOST_UNIX)
     # -
     elseif(CMAKE_HOST_WIN32)

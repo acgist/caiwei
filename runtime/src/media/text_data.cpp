@@ -4,6 +4,10 @@
 
 #include "nlohmann/json.hpp"
 
+extern "C" {
+#include "libavformat/avformat.h"
+}
+
 static std::vector<std::string> suffix = {
     ".jpg",  ".JPG",
     ".jpeg", ".JPEG",
@@ -535,8 +539,8 @@ bool caiwei::text::check_security(const CompletionsRequest& request) {
         if (std::holds_alternative<std::string>(message.content.value())) {
             continue;
         }
-        auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
-        for (auto& item : items) {
+        const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+        for (const auto& item : items) {
             std::string url;
             if (item.type == "audio" && item.audio.has_value()) {
                 url = item.audio.value();
@@ -570,11 +574,22 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         return false;
     } else if (check_type != type) {
         return false;
-    } else {
-        // -
+    } else if (!caiwei::env::allow_media_type.empty()) {
+        const auto& allow_media_type = caiwei::env::allow_media_type;
+        if (std::find(allow_media_type.begin(), allow_media_type.end(), type) == allow_media_type.end()) {
+            return false;
+        }
     }
     if (type == "file") {
-        std::filesystem::path path(url);
+        std::string_view url_view(url);
+        if (url_view.starts_with("file:///")) {
+            url_view.remove_prefix(8);
+        } else if (url_view.starts_with("file://")) {
+            url_view.remove_prefix(7);
+        } else if (url_view.starts_with("file:")) {
+            url_view.remove_prefix(5);
+        }
+        std::filesystem::path path(url_view);
         if (!std::filesystem::exists(path)) {
             return false;
         }
@@ -587,15 +602,27 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         if (std::find(suffix.begin(), suffix.end(), path.extension().string()) == suffix.end()) {
             return false;
         }
-        // TODO: 白名单目录检查
-    } else if (type == "http") {
-        // TODO: 白名单地址检查
-    } else if (type == "rtmp") {
-        // TODO: 白名单地址检查
-    } else if (type == "rtsp") {
-        // TODO: 白名单地址检查
-    } else if (type == "device") {
-        // TODO: 白名单设备检查
+        if (!caiwei::env::allow_path.empty()) {
+            const auto& allow_path = caiwei::env::allow_path;
+            if (
+                std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
+                    return url_view.starts_with(value);
+                }) == allow_path.end()
+            ) {
+                return false;
+            }
+        }
+    } else if (type == "http" || type == "rtmp" || type == "rtsp") {
+        if (!caiwei::env::allow_host.empty()) {
+            std::string host;
+            host.resize(256);
+            av_url_split(nullptr, 0, nullptr, 0, host.data(), host.size(), nullptr, nullptr, 0, url.c_str());
+            host.resize(std::strlen(host.c_str()));
+            const auto& allow_host = caiwei::env::allow_host;
+            if (std::find(allow_host.begin(), allow_host.end(), host) == allow_host.end()) {
+                return false;
+            }
+        }
     } else {
         // 其他直接通过
     }

@@ -1,3 +1,4 @@
+#include "caiwei/env.hpp"
 #include "caiwei/caiwei.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
@@ -6,6 +7,7 @@
 
 void caiwei::init() {
     CW_LOG_I("系统启动");
+    caiwei::env::init();
     caiwei::media::init();
     caiwei::context::init();
     caiwei::runtime::init();

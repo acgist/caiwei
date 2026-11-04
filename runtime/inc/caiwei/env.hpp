@@ -10,6 +10,7 @@
 #include <atomic>
 #include <chrono>
 #include <string>
+#include <vector>
 #include <stdexcept>
 
 namespace caiwei {
@@ -53,15 +54,21 @@ const int max_id_index = 10000;
 
 extern std::atomic_uint32_t id_index;
 
+extern std::vector<std::string> allow_path;
+extern std::vector<std::string> allow_host;
+extern std::vector<std::string> allow_media_type;
+
 std::string get       (const std::string& name);
 int         get_int   (const std::string& name);
 int64_t     get_long  (const std::string& name);
 bool        get_bool  (const std::string& name);
 float       get_float (const std::string& name);
 std::string get_string(const std::string& name);
+std::vector<std::string> get_vector(const std::string& name);
 
 void set(const std::string& name, const std::string& value);
 
+void init();
 void print_all_env();
 
 inline size_t timestamp() {

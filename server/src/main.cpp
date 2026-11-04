@@ -1,8 +1,6 @@
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#if ENABLE_CAIWEI_REST
 #include "caiwei/rest.hpp"
-#endif
 #include "caiwei/caiwei.hpp"
 
 #if CAIWEI_OS_WIN
@@ -65,7 +63,6 @@ int main(int argc, char* argv[]) {
     }
     std::atomic<bool> running{ true };
     std::atomic<bool> success{ true };
-#if ENABLE_CAIWEI_REST
     std::thread server_thread([&running, &success]() {
         try {
             success.store(caiwei::rest::open(), std::memory_order_release);
@@ -84,7 +81,6 @@ int main(int argc, char* argv[]) {
     if (server_thread.joinable()) {
         server_thread.join();
     }
-#endif
     caiwei::stop();
     return success.load(std::memory_order_acquire) ? 0 : 1;
 }
