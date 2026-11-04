@@ -345,9 +345,6 @@ template <typename T>
 inline void sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     int index = 0;
     for (const auto& message : request.messages) {
-        if (message.role != caiwei::text::ROLE_USER) {
-            continue;
-        }
         for (const auto& value : message.image_data) {
             auto ret = ptr->run(value);
             caiwei::text::CompletionsResponseChoice choice;
@@ -448,9 +445,6 @@ inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* ptr, caiwei
     chunk.model   = request.model;
     int index = 0;
     for (const auto& message : request.messages) {
-        if (message.role != caiwei::text::ROLE_USER) {
-            continue;
-        }
         for (const auto& value : message.image_data) {
             auto ret = ptr->run(value);
             caiwei::text::CompletionsChunkChoice choice;
@@ -636,9 +630,6 @@ static void fill_media_request(caiwei::text::CompletionsRequest& request) {
     const int asr_samples = std::clamp(request.asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
     const int vlm_frames  = std::clamp(request.vlm_frames.value_or(8), 1, 16);
     for (auto& message : request.messages) {
-        if (message.role != caiwei::text::ROLE_USER) {
-            continue;
-        }
         if (!message.content.has_value()) {
             continue;
         }
@@ -667,14 +658,8 @@ static void fill_media_request(caiwei::text::CompletionsRequest& request) {
 }
 
 static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message, const std::string& audio_url, int samples) {
-    std::string type;
-    if (audio_url.starts_with(caiwei::text::CONTENT_TYPE_DATA)) {
-        type = "data";
-    } else if (audio_url.starts_with(caiwei::text::CONTENT_TYPE_FILE) || std::filesystem::exists(audio_url)) {
-        type = "file";
-    } else if (audio_url.starts_with(caiwei::text::CONTENT_TYPE_HTTP) || audio_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
-        type = "http";
-    } else {
+    std::string type = caiwei::text::get_content_type(audio_url);
+    if (type == caiwei::text::CONTENT_TYPE_NONE) {
         CW_LOG_W("不支持的媒体地址: %s", audio_url.c_str());
         return;
     }
@@ -688,12 +673,16 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
             audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
             return audio_frame.data.size() < samples;
         },
-        [&](caiwei::media::VideoFrame& frame) {
+        [&](caiwei::media::VideoFrame& /* frame */) {
             return true;
         }
     );
     if (!ret) {
         CW_LOG_W("媒体解析失败: %s", audio_url.c_str());
+    }
+    if (audio_frame.data.empty()) {
+        CW_LOG_W("加载音频失败: %s", audio_url.c_str());
+        return;
     }
     if (audio_frame.data.size() > samples) {
         audio_frame.data.resize(samples);
@@ -702,8 +691,13 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
 }
 
 static void fill_image_message(caiwei::text::CompletionsRequestMessage& message, const std::string& image_url) {
-    caiwei::media::ImageFrame frame;
-    if (image_url.starts_with(caiwei::text::CONTENT_TYPE_DATA)) {
+    std::string type = caiwei::text::get_content_type(image_url);
+    caiwei::media::ImageFrame image_frame;
+    if (type == caiwei::text::CONTENT_TYPE_NONE) {
+        CW_LOG_W("不支持的媒体地址: %s", image_url.c_str());
+        return;
+    }
+    if (type == caiwei::text::CONTENT_TYPE_DATA) {
         auto pos = image_url.find(',');
         if (pos == std::string::npos) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
@@ -714,18 +708,18 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        if (!frame.load_from_memory((const uint8_t*) image_data.data(), image_data.size())) {
+        if (!image_frame.load_from_memory((const uint8_t*) image_data.data(), image_data.size())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-    } else if (image_url.starts_with(caiwei::text::CONTENT_TYPE_FILE) || std::filesystem::exists(image_url)) {
-        if (!frame.load_from_file(image_url.c_str())) {
+    } else if (type == caiwei::text::CONTENT_TYPE_FILE) {
+        if (!image_frame.load_from_file(image_url.c_str())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-    } else if (image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTP) || image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
+    } else if (type == caiwei::text::CONTENT_TYPE_HTTP) {
         #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
-        if (image_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
+        if (image_url.starts_with("https://")) {
             CW_LOG_W("不支持的媒体地址: %s", image_url.c_str());
             return;
         }
@@ -751,26 +745,40 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        if (!frame.load_from_memory((const uint8_t*) response->body.data(), response->body.size())) {
+        if (!image_frame.load_from_memory((const uint8_t*) response->body.data(), response->body.size())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
     } else {
-        CW_LOG_W("不支持的媒体地址: %s", image_url.c_str());
-        return;
+        caiwei::media::MediaDemuxer media_demuxer(type, image_url);
+        bool ret = media_demuxer.open(
+            caiwei::media::AUDIO_INFO_DECODE,
+            caiwei::media::VIDEO_INFO_DECODE,
+            [&](caiwei::media::AudioFrame& /* frame */) {
+                return true;
+            },
+            [&](caiwei::media::VideoFrame& frame) {
+                image_frame.width    = frame.width;
+                image_frame.height   = frame.height;
+                image_frame.channels = frame.channels;
+                image_frame.data.swap(frame.data);
+                return false;
+            }
+        );
+        if (!ret) {
+            CW_LOG_W("媒体解析失败: %s", image_url.c_str());
+        }
+        if (image_frame.data.empty()) {
+            CW_LOG_W("加载图片失败: %s", image_url.c_str());
+            return;
+        }
     }
-    message.image_data.push_back(std::move(frame));
+    message.image_data.push_back(std::move(image_frame));
 }
 
 static void fill_video_message(caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames) {
-    std::string type;
-    if (video_url.starts_with(caiwei::text::CONTENT_TYPE_DATA)) {
-        type = "data";
-    } else if (video_url.starts_with(caiwei::text::CONTENT_TYPE_FILE) || std::filesystem::exists(video_url)) {
-        type = "file";
-    } else if (video_url.starts_with(caiwei::text::CONTENT_TYPE_HTTP) || video_url.starts_with(caiwei::text::CONTENT_TYPE_HTTPS)) {
-        type = "http";
-    } else {
+    std::string type = caiwei::text::get_content_type(video_url);
+    if (type == caiwei::text::CONTENT_TYPE_NONE) {
         CW_LOG_W("不支持的媒体地址: %s", video_url.c_str());
         return;
     }
@@ -780,7 +788,7 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
     bool ret = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [&](caiwei::media::AudioFrame& frame) {
+        [&](caiwei::media::AudioFrame& /* frame */) {
             return true;
         },
         [&](caiwei::media::VideoFrame& frame) {
@@ -793,6 +801,10 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
     );
     if (!ret) {
         CW_LOG_W("媒体解析失败: %s", video_url.c_str());
+    }
+    if (video_frames.empty()) {
+        CW_LOG_W("加载视频失败: %s", video_url.c_str());
+        return;
     }
     if (video_frames.size() > frames) {
         video_frames.resize(frames);

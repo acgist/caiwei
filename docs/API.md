@@ -3,7 +3,6 @@
 ## 状态编码
 
 * 0000: 成功
-* 0xxx: 系统错误
 * 1xxx: 网关错误（REST）
 * 2xxx: 媒体错误（MEDIA）
 * 3xxx: 推理错误（RUNTIME）
@@ -14,7 +13,7 @@
 ## GET /v1/video/play
 
 * `url` : 视频地址
-* `type`: 媒体类型(`rtp|sdp|file|http|rtmp|rtsp|device`)
+* `type`: 媒体类型(`rtp|data|file|http|rtmp|rtsp|device`)
 
 ## POST /v1/embeddings
 

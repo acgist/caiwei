@@ -76,54 +76,12 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
 caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
     mtmd::bitmaps bitmaps;
     for (const auto& message : request.messages) {
-        if (message.role != caiwei::text::ROLE_USER) {
-            continue;
+        for (const auto& image : message.image_data) {
+            bitmaps.entries.emplace_back(fill_media(image.width, image.height, image.channels, image.data));
         }
-        if (!message.content.has_value()) {
-            continue;
-        }
-        if (std::holds_alternative<std::string>(message.content.value())) {
-            continue;
-        }
-        const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
-        auto iter = items.begin();
-        size_t image_index = 0;
-        size_t video_index = 0;
-        while (iter != items.end()) {
-            if (iter->type == "text") {
-                // -
-            } else if (iter->type == "image" || iter->type == "image_url") {
-                if (image_index < message.image_data.size()) {
-                    const auto& image = message.image_data[image_index];
-                    bitmaps.entries.emplace_back(fill_media(image.width, image.height, image.channels, image.data));
-                    image_index++;
-                }
-            } else if (iter->type == "video" || iter->type == "video_url") {
-                if (video_index < message.video_data.size()) {
-                    const auto& video = message.video_data[video_index];
-                    bitmaps.entries.emplace_back(fill_media(video));
-                    mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
-                    video_index++;
-                }
-            } else {
-                CW_LOG_W("未知类型: %s", iter->type.value_or("-").c_str());
-            }
-            iter++;
-        }
-        if (image_index < message.image_data.size()) {
-            for (; image_index < message.image_data.size();) {
-                const auto& image = message.image_data[image_index];
-                bitmaps.entries.emplace_back(fill_media(image.width, image.height, image.channels, image.data));
-                image_index++;
-            }
-        }
-        if (video_index < message.video_data.size()) {
-            for (; video_index < message.video_data.size();) {
-                const auto& video = message.video_data[video_index];
-                bitmaps.entries.emplace_back(fill_media(video));
-                mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
-                video_index++;
-            }
+        for (const auto& video : message.video_data) {
+            bitmaps.entries.emplace_back(fill_media(video));
+            mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
         }
     }
     prompt = this->chat_template.apply(this->special_token, request, this->special_token.media_marker, this->special_token.media_marker, this->special_token.media_marker);

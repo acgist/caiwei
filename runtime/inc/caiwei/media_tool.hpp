@@ -140,7 +140,7 @@ private:
 class MediaDemuxer {
 private:
     volatile bool running; // 是否运行
-    std::string type; // 媒体类型: rtp|sdp|file|http|rtmp|rtsp|device
+    std::string type; // 媒体类型: rtp|data|file|http|rtmp|rtsp|device
     std::string url ; // 媒体地址
     MediaMuxer * media_muxer { nullptr };
     MediaFormat* media_format{ nullptr };
@@ -156,14 +156,6 @@ public:
     );
     bool stop();
 };
-
-bool check_file_security(const std::string& file, std::initializer_list<std::string> suffix = {
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".mp3",
-    ".mp4",
-});
 
 } // media
 } // caiwei

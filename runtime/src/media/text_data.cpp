@@ -4,6 +4,17 @@
 
 #include "nlohmann/json.hpp"
 
+static std::vector<std::string> suffix = {
+    ".jpg",  ".JPG",
+    ".jpeg", ".JPEG",
+    ".png",  ".PNG",
+    ".mp3",  ".MP3",
+    ".wav",  ".WAV",
+    ".ts",   ".TS",
+    ".mp4",  ".MP4",
+    ".mkv",  ".MKV",
+};
+
 caiwei::text::CompletionResult::CompletionResult(
     bool thinking,
     bool toolcall,
@@ -466,9 +477,127 @@ void caiwei::text::SpecialToken::load_reranking() {
     this->instruction_prompt = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_PROMPT");
 }
 
+std::string caiwei::text::get_content_type(const std::string& url) {
+    if (url.starts_with("v=0")) {
+        return CONTENT_TYPE_RTP;
+    } else if (
+        url.starts_with("data:audio") ||
+        url.starts_with("data:image") ||
+        url.starts_with("data:video")
+    ) {
+        return CONTENT_TYPE_DATA;
+    } else if (url.starts_with("file:")) {
+        return CONTENT_TYPE_FILE;
+    } else if (
+        url.starts_with("http://") ||
+        url.starts_with("https://")
+    ) {
+        return CONTENT_TYPE_HTTP;
+    } else if (url.starts_with("rtmp://")) {
+        return CONTENT_TYPE_RTMP;
+    } else if (url.starts_with("rtsp://")) {
+        return CONTENT_TYPE_RTSP;
+    } else if (
+        url.starts_with("hw:")    ||
+        url.starts_with("/dev/")  ||
+        url.starts_with("audio=") ||
+        url.starts_with("video=")
+    ) {
+        return CONTENT_TYPE_DEVICE;
+    } else {
+        std::filesystem::path path(url);
+        if (!std::filesystem::exists(path)) {
+            return CONTENT_TYPE_NONE;
+        }
+        if (!std::filesystem::is_regular_file(path)) {
+            return CONTENT_TYPE_NONE;
+        }
+        if (!path.has_extension()) {
+            return CONTENT_TYPE_NONE;
+        }
+        if (std::find(suffix.begin(), suffix.end(), path.extension().string()) == suffix.end()) {
+            return CONTENT_TYPE_NONE;
+        }
+        return CONTENT_TYPE_FILE;
+    }
+}
+
 bool caiwei::text::check_security(const CompletionsRequest& request) {
-    // TODO 校验文件安全
-    // TODO 校验请求地址
-    // TODO 校验数据安全
+    if (request.media_url.has_value() && request.media_type.has_value()) {
+        if (!check_security(request.media_url.value(), request.media_type.value())) {
+            return false;
+        }
+    }
+    for (const auto& message : request.messages) {
+        if (!message.content.has_value()) {
+            continue;
+        }
+        if (std::holds_alternative<std::string>(message.content.value())) {
+            continue;
+        }
+        auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
+        for (auto& item : items) {
+            std::string url;
+            if (item.type == "audio" && item.audio.has_value()) {
+                url = item.audio.value();
+            } else if (item.type == "image" && item.image.has_value()) {
+                url = item.image.value();
+            } else if (item.type == "video" && item.video.has_value()) {
+                url = item.video.value();
+            } else if (item.type == "audio_url" && item.audio_url.has_value() && item.audio_url->url.has_value()) {
+                url = item.audio_url->url.value();
+            } else if (item.type == "image_url" && item.image_url.has_value() && item.image_url->url.has_value()) {
+                url = item.image_url->url.value();
+            } else if (item.type == "video_url" && item.video_url.has_value() && item.video_url->url.has_value()) {
+                url = item.video_url->url.value();
+            } else {
+                // -
+            }
+            if (!url.empty()) {
+                std::string type = get_content_type(url);
+                if (!check_security(url, type)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool caiwei::text::check_security(const std::string& url, const std::string& type) {
+    std::string check_type = get_content_type(url);
+    if (check_type == CONTENT_TYPE_NONE) {
+        return false;
+    } else if (check_type != type) {
+        return false;
+    } else {
+        // -
+    }
+    if (type == "file") {
+        std::filesystem::path path(url);
+        if (!std::filesystem::exists(path)) {
+            return false;
+        }
+        if (!std::filesystem::is_regular_file(path)) {
+            return false;
+        }
+        if (!path.has_extension()) {
+            return false;
+        }
+        if (std::find(suffix.begin(), suffix.end(), path.extension().string()) == suffix.end()) {
+            return false;
+        }
+        // TODO: 白名单目录检查
+    } else if (type == "http") {
+        // TODO: 白名单地址检查
+    } else if (type == "rtmp") {
+        // TODO: 白名单地址检查
+    } else if (type == "rtsp") {
+        // TODO: 白名单地址检查
+    } else if (type == "device") {
+        // TODO: 白名单设备检查
+    } else {
+        // 其他直接通过
+    }
     return true;
 }

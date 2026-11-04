@@ -22,7 +22,7 @@ static std::string base64_file(const std::string& type, const std::string& path)
 
 [[maybe_unused]]
 static std::string get_url(const char* type) {
-    if (std::strcmp(type, "rtp") == 0 || std::strcmp(type, "sdp") == 0) {
+    if (std::strcmp(type, "rtp") == 0) {
         // 注意端口必须分开
         // ffmpeg -re -i caiwei.mp4 -c:a pcm_alaw -ar 8000 -ac 1 -vn -f rtp -payload_type  8 -ssrc 1000 rtp://127.0.0.1:44444 > audio.sdp
         // ffmpeg -re -i caiwei.mp4 -c:v libx264                 -an -f rtp -payload_type 96 -ssrc 2000 rtp://127.0.0.1:44446 > video.sdp
@@ -68,7 +68,7 @@ a=recvonly)";
 
 [[maybe_unused]]
 void test_demuxer() {
-    // rtp|sdp|data|file|http|rtmp|rtsp|device
+    // rtp|data|file|http|rtmp|rtsp|device
     auto type = "file";
     auto url  = get_url(type);
     if (url.empty()) {

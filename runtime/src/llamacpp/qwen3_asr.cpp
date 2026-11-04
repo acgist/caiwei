@@ -29,12 +29,6 @@ caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inp
         .append(caiwei::text::ROLE_USER)
         .append("\n");
     for (const auto& message : request.messages) {
-        if (message.role != caiwei::text::ROLE_USER) {
-            continue;
-        }
-        if (message.audio_data.empty()) {
-            continue;
-        }
         for (const auto& audio : message.audio_data) {
             const int num_frames = audio.data.size() * sizeof(uint8_t) / sizeof(int16_t);
             std::vector<float> audio_data(num_frames);

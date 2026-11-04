@@ -142,7 +142,7 @@ bool caiwei::media::MediaDemuxer::open(
     av_dict_set(&opts, "buffer_size",       "262144",                                          0);
     av_dict_set(&opts, "thread_queue_size", "2048",                                            0);
     av_dict_set(&opts, "protocol_whitelist", "tcp,tls,udp,rtp,data,file,http,https,rtmp,rtsp", 0);
-    if (this->type == "rtp" || this->type == "sdp") {
+    if (this->type == "rtp") {
         av_dict_set(&opts, "timeout",                     "10000000",               0);
         av_dict_set(&opts, "rw_timeout",                  "10000000",               0);
         av_dict_set(&opts, "fflags",                      "+genpts+discardcorrupt", 0);
@@ -171,7 +171,6 @@ bool caiwei::media::MediaDemuxer::open(
         av_dict_set(&opts, "rw_timeout", "10000000", 0);
         ret = avformat_open_input(&fmt_ctx, this->url.c_str(), nullptr, &opts);
     } else if (this->type == "device") {
-        #if CAIWEI_OS_WIN
         std::lock_guard<std::mutex> lock(device_mutex);
         if (device_open) {
             CW_LOG_W("设备已经打开: %s - %s", this->type.c_str(), this->url.c_str());
@@ -186,12 +185,27 @@ bool caiwei::media::MediaDemuxer::open(
             av_dict_set(&opts, "sample_rate",       "48000",    0);
             av_dict_set(&opts, "sample_size",       "16",       0);
             av_dict_set(&opts, "audio_buffer_size", "100",      0);
-            const AVInputFormat* format = av_find_input_format("dshow");
-            ret = avformat_open_input(&fmt_ctx, this->url.c_str(), format, &opts);
+            #if CAIWEI_OS_WIN
+            if (this->url.starts_with("audio=") || this->url.starts_with("video=")) {
+                const AVInputFormat* format = av_find_input_format("dshow");
+                ret = avformat_open_input(&fmt_ctx, this->url.c_str(), format, &opts);
+            } else {
+                ret = AVERROR_PROTOCOL_NOT_FOUND;
+            }
+            #elif CAIWEI_OS_UNIX
+            if (this->url.starts_with("hw:")) {
+                const AVInputFormat* format = av_find_input_format("alsa");
+                ret = avformat_open_input(&fmt_ctx, this->url.c_str(), format, &opts);
+            } else if (this->url.starts_with("/dev/")) {
+                const AVInputFormat* format = av_find_input_format("v4l2");
+                ret = avformat_open_input(&fmt_ctx, this->url.c_str(), format, &opts);
+            } else {
+                ret = AVERROR_PROTOCOL_NOT_FOUND;
+            }
+            #else
+            ret = AVERROR_PROTOCOL_NOT_FOUND;
+            #endif
         }
-        #else
-        ret = AVERROR_PROTOCOL_NOT_FOUND;
-        #endif
     } else {
         CW_LOG_W("不支持的协议: %s - %s", this->type.c_str(), this->url.c_str());
         ret = AVERROR_PROTOCOL_NOT_FOUND;
@@ -416,7 +430,7 @@ bool caiwei::media::MediaDemuxer::open(
             device_open = false;
         }
     }
-    if ((this->type == "rtp" || this->type == "sdp") && std::filesystem::exists(sdp_file)) {
+    if (this->type == "rtp" && std::filesystem::exists(sdp_file)) {
         std::filesystem::remove(sdp_file);
     }
     CW_LOG_I("媒体接收线程结束: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);

@@ -13,7 +13,7 @@
     </el-select>
     <el-select v-model="type" style="width:6rem;margin-right:1rem;" @change="changeType">
       <el-option value="rtp"    label="rtp"   ></el-option>
-      <el-option value="sdp"    label="sdp"   ></el-option>
+      <el-option value="data"   label="data"  ></el-option>
       <el-option value="file"   label="file"  ></el-option>
       <el-option value="http"   label="http"  ></el-option>
       <el-option value="rtmp"   label="rtmp"  ></el-option>
@@ -59,20 +59,7 @@ a=rtcp:44447
 a=rtpmap:96 H264/90000
 a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
 a=recvonly`,
-        sdp: `v=0
-c=IN IP4 0.0.0.0
-o=- 0 0 IN IP4 0.0.0.0
-s=caiwei rtp capture
-t=0 0
-m=audio 44444 RTP/AVP 8
-a=rtcp:44445
-a=rtpmap:8 PCMA/8000/1
-a=recvonly
-m=video 44446 RTP/AVP 96
-a=rtcp:44447
-a=rtpmap:96 H264/90000
-a=fmtp:96 profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1
-a=recvonly`,
+        data  : "data:...",
         file  : "./caiwei.mp4",
         http  : "http://localhost:9999/caiwei.mp4",
         rtmp  : "rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid",

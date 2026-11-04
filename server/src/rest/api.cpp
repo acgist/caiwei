@@ -5,6 +5,8 @@
 #include "caiwei/session.hpp"
 #include "caiwei/text_data.hpp"
 
+#include <cstring>
+
 #include "httplib.h"
 
 static void get_health();
@@ -37,7 +39,6 @@ static void get_models() {
             body.push_back({
                 {"type", value.type_name},
                 {"name", value.name     },
-                {"path", value.path     }
             });
         }
         response.set_content(caiwei::json::buildResponse(body), caiwei::rest::content::type::JSON);
@@ -46,18 +47,27 @@ static void get_models() {
 
 static void get_video_play() {
     caiwei::rest::server->Get("/v1/video/play", [](const httplib::Request& request, httplib::Response& response) {
-        response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [&](size_t /*offset*/, httplib::DataSink& sink) {
-            auto url   = request.get_param_value("url");
-            auto type  = request.get_param_value("type");
-            auto codec = request.get_param_value("codec");
+        auto url   = request.get_param_value("url");
+        auto type  = request.get_param_value("type");
+        auto codec = request.get_param_value("codec");
+        if (!caiwei::text::check_security(url, type)) {
+            response.status = httplib::StatusCode::BadRequest_400;
+            response.set_content(caiwei::json::buildResponse("1400", "数据错误"), caiwei::rest::content::type::JSON);
+            return;
+        }
+        response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [
+            url   = std::move(url),
+            type  = std::move(type),
+            codec = std::move(codec)
+        ](size_t /* offset */, httplib::DataSink& sink) mutable -> bool {
             caiwei::session::VideoPlaySession session(std::move(url), std::move(type), codec == "true", [&sink](const char* data, int length) {
                 const bool writable = sink.is_writable();
                 if (writable) {
-                    if (data == nullptr || length == 0) {
+                    if (data == nullptr) {
                         return writable;
                     } else {
                         sink.write("data: ", 6);
-                        if (length < 0) {
+                        if (length <= 0) {
                             length = std::strlen(data);
                         }
                         sink.write(data, length);
@@ -68,7 +78,7 @@ static void get_video_play() {
             });
             session.get().get();
             sink.done();
-            return true;
+            return false;
         });
     });
 }
@@ -93,16 +103,19 @@ static void post_chat_completions() {
     caiwei::rest::server->Post("/v1/chat/completions", [](const httplib::Request& request, httplib::Response& response) {
         auto completions = caiwei::text::json_to_completions(request.body);
         if (!caiwei::text::check_security(completions)) {
-            response.set_content(caiwei::json::buildResponse("请求失败"), caiwei::rest::content::type::JSON);
+            response.status = httplib::StatusCode::BadRequest_400;
+            response.set_content(caiwei::json::buildResponse("1400", "数据错误"), caiwei::rest::content::type::JSON);
             return;
         }
         if (completions.stream) {
-            response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [req = std::move(completions)](size_t /*offset*/, httplib::DataSink& sink) mutable -> bool {
+            response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [
+                completions = std::move(completions)
+            ](size_t /* offset */, httplib::DataSink& sink) mutable -> bool {
                 auto mutex = std::make_shared<std::mutex>();
-                caiwei::session::CompletionsSession session(req, [&sink, mutex](const char* data, int length) {
+                caiwei::session::CompletionsSession session(completions, [&sink, mutex](const char* data, int length) {
                     const bool writable = sink.is_writable();
                     if (writable) {
-                        if (data == nullptr || length == 0) {
+                        if (data == nullptr) {
                             return writable;
                         } else {
                             std::lock_guard<std::mutex> lock(*mutex);
@@ -121,7 +134,7 @@ static void post_chat_completions() {
                     sink.write("data: [DONE]\n\n", 14);
                 }
                 sink.done();
-                return true;
+                return false;
             });
         } else {
             caiwei::session::CompletionsSession session(completions);

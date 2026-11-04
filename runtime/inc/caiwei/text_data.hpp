@@ -32,10 +32,14 @@ inline constexpr const char* FINISH_REASON_STOP       = "stop";
 inline constexpr const char* FINISH_REASON_LENGTH     = "length";
 inline constexpr const char* FINISH_REASON_TOOL_CALLS = "tool_calls";
 
-inline constexpr const char* CONTENT_TYPE_DATA  = "data:";
-inline constexpr const char* CONTENT_TYPE_FILE  = "file:";
-inline constexpr const char* CONTENT_TYPE_HTTP  = "http:";
-inline constexpr const char* CONTENT_TYPE_HTTPS = "https:";
+inline constexpr const char* CONTENT_TYPE_RTP    = "rtp";
+inline constexpr const char* CONTENT_TYPE_DATA   = "data";
+inline constexpr const char* CONTENT_TYPE_FILE   = "file";
+inline constexpr const char* CONTENT_TYPE_HTTP   = "http";
+inline constexpr const char* CONTENT_TYPE_RTMP   = "rtmp";
+inline constexpr const char* CONTENT_TYPE_RTSP   = "rtsp";
+inline constexpr const char* CONTENT_TYPE_DEVICE = "device";
+inline constexpr const char* CONTENT_TYPE_NONE   = "none";
 
 struct CompletionsRequestMessageContentItemUrl {
     std::optional<std::string> url = std::nullopt;
@@ -330,7 +334,9 @@ std::string to_json(const CompletionsChunk   & chunk);
 std::string to_json(const EmbeddingsResponse & response);
 std::string to_json(const RerankingsResponse & response);
 
+std::string get_content_type(const std::string& url);
 bool check_security(const CompletionsRequest& request);
+bool check_security(const std::string& url, const std::string& type);
 
 } // text
 } // caiwei

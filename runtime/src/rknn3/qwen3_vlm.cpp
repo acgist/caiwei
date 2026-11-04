@@ -199,58 +199,14 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
         return {};
     }
     for (const auto& message : request.messages) {
-        if (message.role != caiwei::text::ROLE_USER) {
-            continue;
+        for (const auto& image : message.image_data) {
+            data_list.emplace_back(&image, nullptr);
+            image_count++;
         }
-        if (!message.content.has_value()) {
-            continue;
-        }
-        if (std::holds_alternative<std::string>(message.content.value())) {
-            continue;
-        }
-        const auto& items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
-        auto iter = items.begin();
-        uint64_t image_index = 0;
-        uint64_t video_index = 0;
-        while (iter != items.end()) {
-            if (iter->type == "text") {
-                // -
-            } else if (iter->type == "image" || iter->type == "image_url") {
-                if (image_index < message.image_data.size()) {
-                    const auto& image = message.image_data[image_index];
-                    data_list.emplace_back(&image, nullptr);
-                    image_index++;
-                    image_count++;
-                }
-            } else if (iter->type == "video" || iter->type == "video_url") {
-                if (video_index < message.video_data.size()) {
-                    const auto& video = message.video_data[video_index];
-                    data_list.emplace_back(nullptr, &video);
-                    frame_count += video.size();
-                    video_index++;
-                    video_count++;
-                }
-            } else {
-                CW_LOG_W("未知类型: %s", iter->type.value_or("-").c_str());
-            }
-            iter++;
-        }
-        if (image_index < message.image_data.size()) {
-            for (; image_index < message.image_data.size();) {
-                const auto& image = message.image_data[image_index];
-                data_list.emplace_back(&image, nullptr);
-                image_index++;
-                image_count++;
-            }
-        }
-        if (video_index < message.video_data.size()) {
-            for (; video_index < message.video_data.size();) {
-                const auto& video = message.video_data[video_index];
-                data_list.emplace_back(nullptr, &video);
-                frame_count += video.size();
-                video_index++;
-                video_count++;
-            }
+        for (const auto& video : message.video_data) {
+            data_list.emplace_back(nullptr, &video);
+            frame_count += video.size();
+            video_count++;
         }
     }
     CW_LOG_D("图片数量: %d 视频数量: %d 视频帧数: %d", image_count, video_count, frame_count);
