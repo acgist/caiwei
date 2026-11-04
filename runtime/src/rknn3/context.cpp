@@ -513,9 +513,10 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
         };
         inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
         inputs[0].llm_input  = tensor;
-        rknn3_llm_infer_param llm_infer_param;
+        rknn3_llm_infer_param llm_infer_param{};
         llm_infer_param.keep_history   = 0;
         llm_infer_param.max_new_tokens = 1; // 不能是零
+        llm_infer_param.prefill_only   = true;
         auto b_time = std::chrono::steady_clock::now();
         int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
         auto e_time = std::chrono::steady_clock::now();
@@ -560,7 +561,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         co_return;
     }
     CW_LOG_D("提示词: %s", prompt.c_str());
-    rknn3_llm_infer_param llm_infer_param;
+    rknn3_llm_infer_param llm_infer_param{};
     llm_infer_param.keep_history   = 0;
     llm_infer_param.max_new_tokens = request.max_completion_tokens.value_or(this->max_token_length);
     b_time = std::chrono::steady_clock::now();

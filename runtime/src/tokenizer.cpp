@@ -284,12 +284,12 @@ void caiwei::context::normalize_l2(const float* embd, float* out, int size, bool
         return;
     }
     double sum = 0.0;
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; ++i) {
         sum += embd[i] * embd[i];
     }
     sum = std::sqrt(sum);
     const float norm = sum > 0.0 ? 1.0F / sum : 0.0F;
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; ++i) {
         out[i] = embd[i] * norm;
     }
 }

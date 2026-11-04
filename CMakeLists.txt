@@ -48,8 +48,8 @@ elseif(CMAKE_HOST_WIN32)
     if(MSVC)
         add_definitions(-DCAIWEI_OS_WIN=1)
         add_compile_options(
-            $<$<COMPILE_LANGUAGE:C>:/W3>
-            $<$<COMPILE_LANGUAGE:CXX>:/W3>
+            $<$<COMPILE_LANGUAGE:C>:/W2>
+            $<$<COMPILE_LANGUAGE:CXX>:/W2>
             $<$<COMPILE_LANGUAGE:C>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>
