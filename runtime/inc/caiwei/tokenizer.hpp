@@ -38,6 +38,8 @@ private:
 public:
     Tokenizer();
     ~Tokenizer();
+private:
+    void release();
 public:
     bool load(const std::string& path);
     bool is_eog(llama_token token_id);
@@ -55,7 +57,7 @@ public:
     std::string detokenize(llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
 };
 
-void normalize_l2(const float* embd, float* out, int size);
+void normalize_l2(const float* embd, float* out, int size, bool normalize_single = true);
 
 } // context
 } // caiwei

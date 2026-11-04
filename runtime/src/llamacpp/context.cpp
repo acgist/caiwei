@@ -41,6 +41,10 @@ caiwei::context::LlamaCPPContext::LlamaCPPContext(
 
 caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
     CW_LOG_I("释放LlamaCPPContext: %s", this->path.c_str());
+    if (this->vocab) {
+        CW_LOG_D("释放LlamaCPPContext vocab");
+        this->vocab = nullptr;
+    }
     if (this->model) {
         CW_LOG_D("释放LlamaCPPContext model");
         llama_model_free(this->model);
