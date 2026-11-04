@@ -65,14 +65,14 @@ bool caiwei::context::RKNN2Context::load_model() {
         CW_LOG_W("核心掩码设置失败: %d = %s", ret, this->path.c_str());
         return false;
     }
-    rknn_sdk_version version;
+    rknn_sdk_version version{};
     ret = rknn_query(this->context, RKNN_QUERY_SDK_VERSION, &version, sizeof(rknn_sdk_version));
     if (ret != RKNN_SUCC) {
         CW_LOG_W("模型版本查询失败: %d = %s", ret, this->path.c_str());
         return false;
     }
     CW_LOG_I("模型加载成功: %s = %s - %s", this->path.c_str(), version.api_version, version.drv_version);
-    rknn_input_output_num io_num;
+    rknn_input_output_num io_num{};
     ret = rknn_query(this->context, RKNN_QUERY_IN_OUT_NUM, &io_num, sizeof(io_num));
     if (ret != RKNN_SUCC) {
         CW_LOG_W("模型参数查询失败: %d - %s", ret, this->path.c_str());

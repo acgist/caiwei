@@ -250,7 +250,7 @@ static void init_rknn2() {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 static void init_rknn3() {
-    rknn3_devices devs;
+    rknn3_devices devs{};
     int ret = rknn3_find_devices(&devs);
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("RKNN3设备无效");

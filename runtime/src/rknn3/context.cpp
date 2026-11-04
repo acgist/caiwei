@@ -98,7 +98,7 @@ bool caiwei::context::RKNN3Context::load_model(
     if (user_mem_internal) {
         config.user_mem_internal = 1;
     }
-    rknn3_devices devs;
+    rknn3_devices devs{};
     int ret = rknn3_find_devices(&devs);
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("设备查找失败: %d", ret);
@@ -127,7 +127,7 @@ bool caiwei::context::RKNN3Context::load_model(
         CW_LOG_W("模型加载失败: %d = %s", ret, model_path.c_str());
         return false;
     }
-    rknn3_sdk_version version;
+    rknn3_sdk_version version{};
     ret = rknn3_query(context, RKNN3_QUERY_SDK_VERSION, &version, sizeof(rknn3_sdk_version));
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("模型版本查询失败: %d = %s", ret, model_path.c_str());
@@ -219,7 +219,7 @@ bool caiwei::context::RKNN3Context::init_media_tensors() {
         return true;
     }
     this->release_media_tensors();
-    rknn3_input_output_num io_num;
+    rknn3_input_output_num io_num{};
     int ret = rknn3_query(this->media_context, RKNN3_QUERY_IN_OUT_NUM, &io_num, sizeof(rknn3_input_output_num));
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("模型输入输出查询失败: %d = %s", ret, this->media_model_path.c_str());
@@ -515,7 +515,7 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
         inputs[0].llm_input  = tensor;
         rknn3_llm_infer_param llm_infer_param{};
         llm_infer_param.keep_history   = 0;
-        llm_infer_param.max_new_tokens = 1; // 不能是零
+        llm_infer_param.max_new_tokens = 1; // 即使prefill_only也不能零
         llm_infer_param.prefill_only   = true;
         auto b_time = std::chrono::steady_clock::now();
         int ret = rknn3_session_run(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
