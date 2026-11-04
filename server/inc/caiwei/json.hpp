@@ -7,22 +7,25 @@ namespace caiwei {
 namespace json   {
 
 inline std::string buildResponse(nlohmann::json body = {}) {
-    nlohmann::json response;
-    nlohmann::json header;
-    header["code"]     = "0000";
-    header["message"]  = "成功";
-    response["header"] = header;
-    response["body"]   = body;
-    return response.dump();
+    nlohmann::json response = {
+        {"header", {
+            {"code",    "0000"   },
+            {"message", "success"},
+        }},
+        {"body", std::move(body)},
+    };
+    return response.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
-inline std::string buildResponse(const std::string& code, const std::string& message) {
-    nlohmann::json response;
-    nlohmann::json header;
-    header["code"]     = code;
-    header["message"]  = message;
-    response["header"] = header;
-    return response.dump();
+inline std::string buildResponse(std::string code, std::string message, nlohmann::json body = {}) {
+    nlohmann::json response = {
+        {"header", {
+            {"code",    std::move(code)   },
+            {"message", std::move(message)},
+        }},
+        {"body", std::move(body)},
+    };
+    return response.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
 } // json

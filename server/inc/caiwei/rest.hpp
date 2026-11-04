@@ -13,9 +13,9 @@ namespace rest   {
 namespace content {
 namespace type    {
 
-    inline constexpr const char* HTML  = "text/html";
+    inline constexpr const char* HTML  = "text/html; charset=utf-8";
     inline constexpr const char* ICON  = "image/x-icon";
-    inline constexpr const char* JSON  = "application/json";
+    inline constexpr const char* JSON  = "application/json; charset=utf-8";
     inline constexpr const char* EVENT = "text/event-stream";
 
 }; // type

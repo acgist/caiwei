@@ -5,24 +5,24 @@
 
 #include <verrsrc.h>
 
-IDI_ICON1 ICON DISCARDABLE "logo.ico"
+IDI_ICON1 ICON "logo.ico"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     1,0,0,0
 PRODUCTVERSION  1,0,0,0
 FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
-#ifndef CAIWEI_DEBUG
+#if CAIWEI_DEBUG
 FILEFLAGS       VS_FF_DEBUG
 #else
-FILEFLAGS       VS_FF_SPECIALBUILD
+FILEFLAGS       0x0L
 #endif
-FILEOS          VOS__WINDOWS32
-FILETYPE        (VFT_APP | VFT_DLL | VFT_STATIC_LIB)
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
 FILESUBTYPE     VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904E4"
+        BLOCK "080404B0"
         BEGIN
             VALUE "CompanyName",      "acgist"
             VALUE "FileDescription",  "采薇"
@@ -32,11 +32,11 @@ BEGIN
             VALUE "LegalTrademarks",  "caiwei"
             VALUE "OriginalFilename", "caiwei-server.exe"
             VALUE "ProductName",      "采薇"
-            VALUE "ProductVersion",   "1.0.0"
+            VALUE "ProductVersion",   "1.0.0.0"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x804, 1252
+        VALUE "Translation", 0x804, 0x04B0
     END
 END

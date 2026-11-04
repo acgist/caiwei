@@ -381,7 +381,7 @@ std::string caiwei::text::to_json(const CompletionsResponse& response) {
     if (response.usage.has_value()) {
         json["usage"] = response.usage.value();
     }
-    return json.dump();
+    return json.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
 std::string caiwei::text::to_json(const CompletionsChunk& chunk) {
@@ -394,7 +394,7 @@ std::string caiwei::text::to_json(const CompletionsChunk& chunk) {
     if (chunk.usage.has_value()) {
         json["usage"] = chunk.usage.value();
     }
-    return json.dump();
+    return json.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
 std::string caiwei::text::to_json(const EmbeddingsResponse& response) {
@@ -405,7 +405,7 @@ std::string caiwei::text::to_json(const EmbeddingsResponse& response) {
     if (response.usage.has_value()) {
         json["usage"] = response.usage.value();
     }
-    return json.dump();
+    return json.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
 std::string caiwei::text::to_json(const RerankingsResponse& response) {
@@ -416,7 +416,7 @@ std::string caiwei::text::to_json(const RerankingsResponse& response) {
     if (response.usage.has_value()) {
         json["usage"] = response.usage.value();
     }
-    return json.dump();
+    return json.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
 void caiwei::text::SpecialToken::load_asr() {
