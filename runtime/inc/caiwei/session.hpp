@@ -19,9 +19,13 @@ namespace session {
     
 class Session {
 public:
-    std::string id;
+    const std::string id;
 public:
     Session();
+    Session(const Session&)            = delete;
+    Session& operator=(const Session&) = delete;
+    Session(Session&&)                 = default;
+    Session& operator=(Session&&)      = default;
     virtual ~Session();
 };
 
@@ -61,7 +65,7 @@ private:
 public:
     EmbeddingsSession(caiwei::text::EmbeddingsRequest& request);
 public:
-    virtual std::string get() override;
+    std::string get() override;
 };
 
 class RerankingsSession : public StatelessSession {
@@ -70,7 +74,7 @@ private:
 public:
     RerankingsSession(caiwei::text::RerankingsRequest& request);
 public:
-    virtual std::string get() override;
+    std::string get() override;
 };
 
 class CompletionsSession : public StatefulSession {
