@@ -144,6 +144,10 @@ static void init_context_info_map() {
     std::string info = caiwei::env::get("CAIWEI_CONTEXT_INFO");
     std::stringstream stream(info);
     while (std::getline(stream, line)) {
+        line = strip(line);
+        if (line.empty()) {
+            continue;
+        }
         std::string type, vendor, name, path;
         std::stringstream info_stream(line);
         std::getline(info_stream, type,   ',');

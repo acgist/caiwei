@@ -1,4 +1,6 @@
 #include <map>
+#include <mutex>
+#include <atomic>
 #include <cstring>
 #include <sstream>
 #include <shared_mutex>
@@ -7,6 +9,7 @@
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 
+static std::atomic<bool> initialized{ false };
 static std::shared_mutex mutex;
 static std::once_flag env_map_once_flag;
 static std::unordered_map<std::string, std::string> env_map;
@@ -218,13 +221,15 @@ std::vector<std::string> caiwei::env::get_vector(const std::string& name, const 
 
 void caiwei::env::set(const std::string& name, const std::string& value) {
     if (
-        name == "CAIWEI_ALLOW_PATH"   ||
-        name == "CAIWEI_ALLOW_HOST"   ||
-        name == "CAIWEI_CONTEXT_INFO" ||
-        name == "CAIWEI_ALLOW_MEDIA_TYPE"
+        name == "CAIWEI_ALLOW_PATH"       ||
+        name == "CAIWEI_ALLOW_HOST"       ||
+        name == "CAIWEI_ALLOW_MEDIA_TYPE" ||
+        name == "CAIWEI_CONTEXT_INFO"
     ) {
-        CW_LOG_W("配置禁止动态修改: %s", name.c_str());
-        return;
+        if (initialized) {
+            CW_LOG_W("配置禁止动态修改: %s", name.c_str());
+            return;
+        }
     }
     {
         std::lock_guard<std::shared_mutex> lock(mutex);
@@ -238,6 +243,7 @@ void caiwei::env::set(const std::string& name, const std::string& value) {
 }
 
 void caiwei::env::init() {
+    initialized = true;
     std::call_once(env_map_once_flag, []() {
         caiwei::env::allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
         caiwei::env::allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
