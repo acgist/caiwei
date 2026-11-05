@@ -56,7 +56,11 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     install_signal_handler();
-    caiwei::init();
+    if (caiwei::init()) {
+        // -
+    } else {
+        return 1;
+    }
     if (caiwei_signal != 0) {
         caiwei::stop();
         return 0;

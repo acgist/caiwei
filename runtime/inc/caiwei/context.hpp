@@ -9,12 +9,12 @@
 #ifndef CAIWEI_RUNTIME_CONTEXT_HPP
 #define CAIWEI_RUNTIME_CONTEXT_HPP
 
-#include <map>
 #include <mutex>
 #include <atomic>
 #include <chrono>
 #include <vector>
 #include <generator>
+#include <unordered_map>
 
 #include "caiwei/text_data.hpp"
 #include "caiwei/audio_data.hpp"
@@ -49,17 +49,13 @@ struct ContextInfo {
     std::string name;
     std::string path;
     std::string vendor;
-    std::vector<std::string> paths;
+    std::vector<std::string> path_list;
 };
-
-extern std::vector<ContextInfo> context_info_list;
-
-const ContextInfo* get_context_info(const std::string& name);
 
 class Context {
 public:
     const std::string id;
-    std::atomic_int32_t ref_count = 0;
+    std::atomic_int32_t ref_count;
     std::chrono::steady_clock::time_point last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
@@ -67,7 +63,7 @@ public:
     Context(caiwei::runtime::Runtime* runtime);
     virtual ~Context();
 public:
-    virtual bool load();
+    virtual bool load() = 0;
 };
 
 class ClsContext : public Context {
@@ -156,6 +152,9 @@ public:
 
 void init();
 void stop();
+
+const ContextInfo* get_context_info(const std::string& name);
+std::vector<const ContextInfo*> get_all_context_info();
 
 template<typename F>
 struct RaiiGuard {

@@ -367,10 +367,11 @@ static void runtime_optimize_timer() {
     }
     runtime_optimize_thread = std::jthread([](std::stop_token token) {
         CW_LOG_D("定时优化runtime线程启动");
+        const int interval = caiwei::env::get_int("CAIWEI_RUNTIME_INTERVAL");
         while (!token.stop_requested()) {
             {
                 std::unique_lock<std::mutex> lock(runtime_optimize_mutex);
-                runtime_optimize_cv.wait_for(lock, std::chrono::seconds(30));
+                runtime_optimize_cv.wait_for(lock, std::chrono::seconds(interval));
                 if (token.stop_requested()) {
                     break;
                 }

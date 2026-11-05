@@ -1,13 +1,14 @@
 #include <map>
-#include <mutex>
 #include <cstring>
 #include <sstream>
+#include <shared_mutex>
 #include <unordered_map>
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 
-static std::mutex mutex;
+static std::shared_mutex mutex;
+static std::once_flag env_map_once_flag;
 static std::unordered_map<std::string, std::string> env_map;
 
 std::atomic_uint32_t caiwei::env::id_index = 0;
@@ -17,7 +18,7 @@ std::vector<std::string> caiwei::env::allow_host;
 std::vector<std::string> caiwei::env::allow_media_type;
 
 static std::map<std::string, std::string> default_config = {
-    {"CAIWEI_VERSION",          "1.0.0"  }, // 版本号
+    {"CAIWEI_VERSION",          "1.0.0"  }, // 版本信息
     {"CAIWEI_CUDA_ID",          "0"      }, // CUDA ID
     {"CAIWEI_RKNN_ID",          "0"      }, // RKNN ID
     {"CAIWEI_SERVER_HOST",      "0.0.0.0"}, // 监听主机
@@ -28,18 +29,19 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_USERNAME",         "admin"  }, // 接口账号
     {"CAIWEI_PASSWORD",         "admin"  }, // 接口密码
     #ifdef CAIWEI_DEBUG
-    {"CAIWEI_SECURITY",         "OFF"    }, // 安全验证
-    {"CAIWEI_ALLOW_PATH",       ""       }, // 允许路径
-    {"CAIWEI_ALLOW_HOST",       ""       }, // 允许地址
-    {"CAIWEI_ALLOW_MEDIA_TYPE", ""       }, // 允许媒体类型
+    {"CAIWEI_SECURITY",         "OFF"}, // 安全验证
+    {"CAIWEI_ALLOW_PATH",       ""   }, // 允许路径
+    {"CAIWEI_ALLOW_HOST",       ""   }, // 允许地址
+    {"CAIWEI_ALLOW_MEDIA_TYPE", ""   }, // 允许媒体类型
     #else
-    {"CAIWEI_SECURITY",         "ON"     }, // 安全验证
-    {"CAIWEI_ALLOW_PATH",       "/data/" }, // 允许路径
-    {"CAIWEI_ALLOW_HOST",       ""       }, // 允许地址
-    {"CAIWEI_ALLOW_MEDIA_TYPE", "file"   }, // 允许媒体类型
+    {"CAIWEI_SECURITY",         "ON"       }, // 安全验证
+    {"CAIWEI_ALLOW_PATH",       "/data/"   }, // 允许路径
+    {"CAIWEI_ALLOW_HOST",       ""         }, // 允许地址
+    {"CAIWEI_ALLOW_MEDIA_TYPE", "data,file"}, // 允许媒体类型
     #endif
     // 运行配置
     {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
+    {"CAIWEI_RUNTIME_INTERVAL",     "30" },
     {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},
     // 共享配置
     {"CAIWEI_RKNN2_SHARE",          "false"},
@@ -146,81 +148,108 @@ RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B-Q4_K_M.gguf
 };
 
 std::string caiwei::env::get(const std::string& name) {
-    std::lock_guard<std::mutex> lock(mutex);
-    if (auto iter = env_map.find(name); iter != env_map.end()) {
-        return iter->second;
-    }
-    const char* value = std::getenv(name.c_str());
-    if (value == nullptr || std::strlen(value) == 0) {
-        auto iterator = default_config.find(name);
-        if (iterator == default_config.end()) {
-            CW_LOG_W("不支持的环境配置: %s", name.c_str());
-            value = "";
-        } else {
-            value = iterator->second.c_str();
+    {
+        std::shared_lock<std::shared_mutex> lock(mutex);
+        if (auto iter = env_map.find(name); iter != env_map.end()) {
+            return iter->second;
         }
     }
-    env_map.emplace(name, value);
-    return value;
-}
-
-int caiwei::env::get_int(const std::string& name) {
-    return std::stoi(caiwei::env::get(name));
-}
-
-int64_t caiwei::env::get_long(const std::string& name) {
-    return std::stoll(caiwei::env::get(name));
+    {
+        std::unique_lock<std::shared_mutex> lock(mutex);
+        if (auto iter = env_map.find(name); iter != env_map.end()) {
+            return iter->second;
+        }
+        const char* value = std::getenv(name.c_str());
+        if (value == nullptr || std::strlen(value) == 0) {
+            auto iterator = default_config.find(name);
+            if (iterator == default_config.end()) {
+                CW_LOG_W("不支持的环境配置: %s", name.c_str());
+                value = "";
+            } else {
+                value = iterator->second.c_str();
+            }
+        }
+        env_map.emplace(name, value);
+        return value;
+    }
 }
 
 bool caiwei::env::get_bool(const std::string& name) {
-    return caiwei::env::get(name) == "ON" || caiwei::env::get(name) == "true";
+    std::string value = caiwei::env::get(name);
+    return value == "ON" || value == "yes" || value == "true";
+}
+
+int caiwei::env::get_int(const std::string& name) {
+    std::string value = caiwei::env::get(name);
+    try {
+        return std::stoi(value);
+    } catch (...) {
+        CW_LOG_W("配置错误: %s => %s", name.c_str(), value.c_str());
+    }
+    return 0;
 }
 
 float caiwei::env::get_float(const std::string& name) {
-    return std::stof(caiwei::env::get(name));
+    std::string value = caiwei::env::get(name);
+    try {
+        return std::stof(value);
+    } catch (...) {
+        CW_LOG_W("配置错误: %s => %s", name.c_str(), value.c_str());
+    }
+    return 0.0F;
 }
 
-std::string caiwei::env::get_string(const std::string& name) {
-    return caiwei::env::get(name);
-}
-
-std::vector<std::string> caiwei::env::get_vector(const std::string& name) {
+std::vector<std::string> caiwei::env::get_vector(const std::string& name, const char delim, const bool skip_empty) {
     std::string value = caiwei::env::get(name);
     if (value.empty()) {
         return {};
     }
+    std::string line;
     std::vector<std::string> vector;
     std::stringstream stream(value);
-    std::string line;
-    while (std::getline(stream, line, ',')) {
+    while (std::getline(stream, line, delim)) {
+        if (skip_empty && line.empty()) {
+            continue;
+        }
         vector.push_back(std::move(line));
     }
     return vector;
 }
 
 void caiwei::env::set(const std::string& name, const std::string& value) {
-    CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-        env_map.insert_or_assign(name, value);
-    }
     if (
-        name == "CAIWEI_ALLOW_PATH" ||
-        name == "CAIWEI_ALLOW_HOST" ||
+        name == "CAIWEI_ALLOW_PATH"   ||
+        name == "CAIWEI_ALLOW_HOST"   ||
+        name == "CAIWEI_CONTEXT_INFO" ||
         name == "CAIWEI_ALLOW_MEDIA_TYPE"
     ) {
-        caiwei::env::init();
+        CW_LOG_W("配置禁止动态修改: %s", name.c_str());
+        return;
+    }
+    {
+        std::lock_guard<std::shared_mutex> lock(mutex);
+        if (!default_config.contains(name)) {
+            CW_LOG_W("不支持的环境配置: %s", name.c_str());
+            return;
+        }
+        CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
+        env_map.insert_or_assign(name, value);
     }
 }
 
 void caiwei::env::init() {
-    allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
-    allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
-    allow_media_type = caiwei::env::get_vector("CAIWEI_ALLOW_MEDIA_TYPE");
+    std::call_once(env_map_once_flag, []() {
+        caiwei::env::allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
+        caiwei::env::allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
+        caiwei::env::allow_media_type = caiwei::env::get_vector("CAIWEI_ALLOW_MEDIA_TYPE");
+    });
+}
+
+void caiwei::env::stop() {
 }
 
 void caiwei::env::print_all_env() {
-    for (auto& pair : default_config) {
-        CW_LOG_I("%-48s = %s", pair.first.c_str(), caiwei::env::get(pair.first).c_str());
+    for (const auto& [k, _] : default_config) {
+        CW_LOG_I("%-36s = %s", k.c_str(), get(k).c_str());
     }
 }

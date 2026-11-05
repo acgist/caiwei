@@ -3,7 +3,7 @@
 
 namespace caiwei {
 
-void init();
+bool init();
 void stop();
 
 } // caiwei

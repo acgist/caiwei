@@ -34,11 +34,11 @@ static void get_health() {
 static void get_models() {
     caiwei::rest::server->Get("/v1/models", [](const httplib::Request& /* request */, httplib::Response& response) {
         nlohmann::json body;
-        const auto& list = caiwei::context::context_info_list;
+        auto list = caiwei::context::get_all_context_info();
         for (const auto& value : list) {
             body.push_back({
-                {"type", value.type_name},
-                {"name", value.name     },
+                {"type", value->type_name},
+                {"name", value->name     },
             });
         }
         response.set_content(caiwei::json::buildResponse(body), caiwei::rest::content::type::JSON);

@@ -67,9 +67,9 @@ int main() {
     caiwei::env::set("CAIWEI_ONNXRUNTIME_MIN_POOL", "2");
     caiwei::env::set("CAIWEI_ONNXRUNTIME_MAX_POOL", "4");
     caiwei::test::init_test();
-    // test_manager();
-    // test_manager_init();
-    // test_manager_optimize();
+    test_manager();
+    test_manager_init();
+    test_manager_optimize();
     test_log();
     caiwei::test::stop_test();
     return 0;

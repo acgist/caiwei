@@ -30,13 +30,13 @@ caiwei::runtime::LlamaCPPRuntime::~LlamaCPPRuntime() {
 }
 
 std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::get_asr_context(const caiwei::context::ContextInfo* info) {
-    std::vector<std::string> paths = info->paths;
-    if (paths.size() != 2) {
+    const auto& path_list = info->path_list;
+    if (path_list.size() != 2) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string model_path  = paths[0];
-    const std::string mmproj_path = paths[1];
+    const std::string& model_path  = path_list[0];
+    const std::string& mmproj_path = path_list[1];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;
@@ -63,13 +63,13 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::g
 }
 
 std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::get_vlm_context(const caiwei::context::ContextInfo* info) {
-    std::vector<std::string> paths = info->paths;
-    if (paths.size() != 2) {
+    const auto& path_list = info->path_list;
+    if (path_list.size() != 2) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string model_path  = paths[0];
-    const std::string mmproj_path = paths[1];
+    const std::string& model_path  = path_list[0];
+    const std::string& mmproj_path = path_list[1];
     if (!std::filesystem::exists(model_path)) {
         CW_LOG_W("模型无效: %s", model_path.c_str());
         return nullptr;

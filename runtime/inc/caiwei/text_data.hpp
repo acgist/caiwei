@@ -39,7 +39,7 @@ inline constexpr const char* CONTENT_TYPE_HTTP   = "http";
 inline constexpr const char* CONTENT_TYPE_RTMP   = "rtmp";
 inline constexpr const char* CONTENT_TYPE_RTSP   = "rtsp";
 inline constexpr const char* CONTENT_TYPE_DEVICE = "device";
-inline constexpr const char* CONTENT_TYPE_NONE   = "none";
+inline constexpr const char* CONTENT_TYPE_NONE   = "";
 
 struct CompletionsRequestMessageContentItemUrl {
     std::optional<std::string> url = std::nullopt;
