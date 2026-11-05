@@ -1,17 +1,11 @@
 #include "caiwei/manager.hpp"
 
-#include <mutex>
-
-bool caiwei::manager::available = false;
-
-static std::mutex mutex;
+std::atomic<bool> caiwei::manager::available{ false };
 
 void caiwei::manager::init() {
-    std::lock_guard<std::mutex> lock(mutex);
-    caiwei::manager::available = true;
+    caiwei::manager::available.store(true, std::memory_order_release);
 }
 
 void caiwei::manager::stop() {
-    std::lock_guard<std::mutex> lock(mutex);
-    caiwei::manager::available = false;
+    caiwei::manager::available.store(false, std::memory_order_release);
 }

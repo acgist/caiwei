@@ -1,11 +1,11 @@
 #include "caiwei/log.hpp"
 
+#include <array>
 #include <ctime>
-#include <mutex>
 #include <string>
-#include <vector>
 #include <cstdarg>
-#include <string_view>
+#include <cstring>
+#include <cinttypes>
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>
@@ -15,12 +15,13 @@
 #else
 #endif
 
-static std::mutex mutex;
 #ifdef CAIWEI_LOG_LEVEL
 static caiwei::log::Level level = caiwei::log::Level::CAIWEI_LOG_LEVEL;
 #else
 static caiwei::log::Level level = caiwei::log::Level::D;
 #endif
+
+inline constexpr int MESSAGE_SIZE = 2048;
 
 inline uint64_t thread_id() {
 #if CAIWEI_OS_WIN
@@ -50,46 +51,54 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
     if (level < ::level) {
         return;
     }
-    std::lock_guard<std::mutex> lock(::mutex);
     // 日志时间
-    static char        time_buf[16] = {};
-    static std::time_t time_cached  = 0;
-    time_t time_tt = std::time(nullptr);
-    if (time_tt != time_cached) {
-        time_cached = time_tt;
-        struct tm time_tm;
+    thread_local char        time_buf[16] = {};
+    thread_local std::time_t time_old     = 0;
+    time_t time_now = std::time(nullptr);
+    if (time_now != time_old) {
+        time_old = time_now;
+        struct tm time_tm{};
         #if CAIWEI_OS_WIN
-        localtime_s(&time_tm, &time_tt);
+        localtime_s(&time_tm, &time_now);
         #else
-        localtime_r(&time_tt, &time_tm);
+        localtime_r(&time_now, &time_tm);
         #endif
         std::strftime(time_buf, sizeof(time_buf), "%m-%d %H:%M:%S", &time_tm);
     }
     // 文件名称
-    const std::string_view file = loc.file_name();
-    const auto             pos  = file.find_last_of("/\\");
-    const std::string_view name = (pos == std::string_view::npos) ? file : file.substr(pos + 1);
+    const char* file = loc.file_name();
+    #if CAIWEI_OS_WIN
+    const char* name = std::strrchr(file, '\\');
+    #else
+    const char* name = std::strrchr(file, '/');
+    #endif
+    if (name == nullptr) {
+        name = file;
+    } else {
+        name++;
+    }
     // 日志内容
-    constexpr int MESSAGE_SIZE = 2048;
-    static std::vector<char> message(MESSAGE_SIZE);
+    thread_local std::array<char, MESSAGE_SIZE> message{};
     va_list ap;
     va_start(ap, fmt);
-    int ret = vsnprintf(message.data(), MESSAGE_SIZE, fmt, ap);
+    int ret = vsnprintf(message.data(), message.size(), fmt, ap);
     va_end(ap);
     if (ret < 0) {
         return;
     }
-    if (ret >= MESSAGE_SIZE) {
-        message[MESSAGE_SIZE - 4] = '.';
-        message[MESSAGE_SIZE - 3] = '.';
-        message[MESSAGE_SIZE - 2] = '.';
-        message[MESSAGE_SIZE - 1] = '\0';
+    if (ret >= message.size()) {
+        message[message.size() - 4] = '.';
+        message[message.size() - 3] = '.';
+        message[message.size() - 2] = '.';
+        message[message.size() - 1] = '\0';
     }
-    if (level == caiwei::log::Level::E || level == caiwei::log::Level::W) {
-        std::fprintf(stderr, "[%s] %s [%llu] %-16.*s:%4d | %s\n", format_level(level), time_buf, thread_id(), static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
-        std::fflush(stderr);
+    #if CAIWEI_DEBUG
+    if (level == caiwei::log::Level::D || level == caiwei::log::Level::I) {
+    #else
+    if (level == caiwei::log::Level::I) {
+    #endif
+        std::fprintf(stdout, "[%s] %s [%" PRIu64 "] %-16s:%4d | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
     } else {
-        std::fprintf(stdout, "[%s] %s [%llu] %-16.*s:%4d | %s\n", format_level(level), time_buf, thread_id(), static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
-        std::fflush(stdout);
+        std::fprintf(stderr, "[%s] %s [%" PRIu64 "] %-16s:%4d | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
     }
 }

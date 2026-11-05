@@ -6,6 +6,11 @@
 #include "caiwei/media_tool.hpp"
 
 void caiwei::init() {
+#if CAIWEI_OS_WIN
+#else
+    std::setvbuf(stdout, nullptr, _IOLBF, 0);
+    std::setvbuf(stderr, nullptr, _IOLBF, 0);
+#endif
     CW_LOG_I("系统启动");
     caiwei::env::init();
     caiwei::media::init();
@@ -20,4 +25,6 @@ void caiwei::stop() {
     caiwei::runtime::stop();
     caiwei::media::stop();
     CW_LOG_I("系统关闭");
+    std::fflush(stdout);
+    std::fflush(stderr);
 }

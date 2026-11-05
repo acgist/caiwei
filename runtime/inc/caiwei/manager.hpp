@@ -17,10 +17,12 @@
 #include "caiwei/runtime/onnxruntime.hpp"
 #endif
 
+#include <atomic>
+
 namespace caiwei  {
 namespace manager {
 
-extern bool available;
+extern std::atomic<bool> available;
 
 void init();
 void stop();
@@ -38,6 +40,8 @@ public:
 public:
     ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~ContextWrapper();
+    ContextWrapper(const ContextWrapper&) = delete;
+    ContextWrapper& operator=(const ContextWrapper&) = delete;
 };
 
 template <typename C>
@@ -49,7 +53,9 @@ caiwei::manager::ContextWrapper<C>::ContextWrapper(
 
 template <typename C>
 caiwei::manager::ContextWrapper<C>::~ContextWrapper() {
-    this->runtime->put_context(this->context);
+    if (this->runtime) {
+        this->runtime->put_context(this->context);
+    }
 }
 
 template <typename C>
@@ -100,7 +106,7 @@ inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::
 
 template <typename C>
 std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
-    if (!available) {
+    if (!available.load(std::memory_order_acquire)) {
         CW_LOG_I("系统还未准备就绪");
         return nullptr;
     }

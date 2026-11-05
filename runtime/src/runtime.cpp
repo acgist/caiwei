@@ -389,6 +389,8 @@ static void runtime_optimize_timer() {
                         }
                     }
                     CW_LOG_D("定时优化runtime结束: %zu", caiwei::runtime::runtime_map.size());
+                } else {
+                    CW_LOG_D("定时优化runtime跳过");
                 }
             }
         }
