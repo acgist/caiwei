@@ -33,18 +33,22 @@ caiwei::media::MediaMuxer::~MediaMuxer() {
 }
 
 bool caiwei::media::MediaMuxer::open(AudioInfo in_audio_info, VideoInfo in_video_info) {
+    this->stop();
     this->in_audio_info = in_audio_info;
     this->in_video_info = in_video_info;
-    if (this->audio_codec_ctx != nullptr && this->video_codec_ctx != nullptr) {
-        this->stop();
-    }
     if (this->open_audio() && this->open_video()) {
         if (this->media_format != nullptr) {
-            return this->media_format->open(this->audio_codec_ctx, this->video_codec_ctx);
+            if (this->media_format->open(this->audio_codec_ctx, this->video_codec_ctx)) {
+                return true;
+            } else {
+                this->stop();
+                return false;
+            }
         } else {
             return true;
         }
     } else {
+        this->stop();
         return false;
     }
 }

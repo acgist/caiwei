@@ -71,14 +71,12 @@ std::string caiwei::session::CompletionsSession::get_sync() {
     return caiwei::text::to_json(response);
 }
 
-std::future<bool> caiwei::session::CompletionsSession::get() {
-    std::promise<bool> promise;
+bool caiwei::session::CompletionsSession::get() {
     if (this->callback == nullptr) {
-        promise.set_value(false);
+        return false;
     } else {
-        promise.set_value(session_stream(this->request, this->callback));
+        return session_stream(this->request, this->callback);
     }
-    return promise.get_future();
 }
 
 static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::session::Callback& callback) {

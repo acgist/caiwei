@@ -6,30 +6,34 @@
 
 caiwei::session::VideoPlaySession::VideoPlaySession(
     std::string url, std::string type, bool codec, Callback callback
-) : StatefulSession(callback), url(std::move(url)), type(std::move(type)), codec(codec) {
+) : StatefulSession(std::move(callback)), url(std::move(url)), type(std::move(type)), codec(codec) {
 }
 
-std::future<bool> caiwei::session::VideoPlaySession::get() {
-    std::promise<bool> promise;
+bool caiwei::session::VideoPlaySession::get() {
     if (this->callback == nullptr) {
-        promise.set_value(false);
+        return false;
     } else {
         if (this->codec) {
-            promise.set_value(this->media_codec());
+            return this->media_codec();
         } else {
-            promise.set_value(this->media_forward());
+            return this->media_forward();
         }
     }
-    return promise.get_future();
 }
 
 bool caiwei::session::VideoPlaySession::media_codec() {
     caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
+        if (this->callback == nullptr) {
+            return false;
+        }
+        if (length == 0 || data == nullptr) {
+            return true;
+        }
         auto output = base64_encode(data, length);
         if (this->callback(output.data(), output.length())) {
             return true;
         } else {
-            CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
+            CW_LOG_I("媒体数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
             return false;
         }
     });
@@ -42,7 +46,7 @@ bool caiwei::session::VideoPlaySession::media_codec() {
         &media_format
     );
     caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, &media_muxer);
-    CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
+    CW_LOG_I("开始播放媒体: %s = %s", this->type.c_str(), this->url.c_str());
     bool ret = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
@@ -53,35 +57,45 @@ bool caiwei::session::VideoPlaySession::media_codec() {
             return media_muxer.on_video(frame);
         }
     );
-    CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
+    if (ret) {
+        CW_LOG_I("媒体播放完成: %s = %s", this->type.c_str(), this->url.c_str());
+    } else {
+        CW_LOG_W("媒体播放失败: %s = %s", this->type.c_str(), this->url.c_str());
+    }
     return ret;
 }
 
 bool caiwei::session::VideoPlaySession::media_forward() {
     caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
+        if (this->callback == nullptr) {
+            return false;
+        }
+        if (length == 0 || data == nullptr) {
+            return true;
+        }
         auto output = base64_encode(data, length);
         if (this->callback(output.data(), output.length())) {
             return true;
         } else {
-            CW_LOG_I("视频数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
+            CW_LOG_I("媒体数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
             return false;
         }
     });
     caiwei::media::MediaDemuxer media_demuxer(this->type, this->url, nullptr, &media_format);
-    CW_LOG_I("开始播放视频: %s = %s", this->type.c_str(), this->url.c_str());
+    CW_LOG_I("开始播放媒体: %s = %s", this->type.c_str(), this->url.c_str());
     bool ret = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [](caiwei::media::AudioFrame& frame) {
-            return true;
-        },
-        [](caiwei::media::VideoFrame& frame) {
-            return true;
-        },
+        nullptr,
+        nullptr,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
             return media_format.send(type, packet);
         }
     );
-    CW_LOG_I("视频播放完成: %s = %s", this->type.c_str(), this->url.c_str());
+    if (ret) {
+        CW_LOG_I("媒体播放完成: %s = %s", this->type.c_str(), this->url.c_str());
+    } else {
+        CW_LOG_W("媒体播放失败: %s = %s", this->type.c_str(), this->url.c_str());
+    }
     return ret;
 }

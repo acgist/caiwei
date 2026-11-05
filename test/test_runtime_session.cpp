@@ -25,7 +25,7 @@ void test_completions_async() {
         CW_LOG_I("completions: %s", data);
         return true;
     });
-    session.get().get();
+    session.get();
 }
 
 [[maybe_unused]]
@@ -50,7 +50,7 @@ void test_video_play() {
         CW_LOG_I("video play: %d kb", length / 1024);
         return true;
     });
-    session.get().get();
+    session.get();
 }
 
 int main() {

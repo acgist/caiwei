@@ -7,7 +7,6 @@
 #ifndef CAIWEI_RUNTIME_SESSION_HPP
 #define CAIWEI_RUNTIME_SESSION_HPP
 
-#include <future>
 #include <string>
 #include <vector>
 #include <functional>
@@ -38,7 +37,7 @@ protected:
 public:
     StatefulSession(Callback callback);
 public:
-    virtual std::future<bool> get() = 0;
+    virtual bool get() = 0;
 };
 
 class VideoPlaySession : public StatefulSession {
@@ -49,7 +48,7 @@ private:
 public:
     VideoPlaySession(std::string url, std::string type, bool codec, Callback callback);
 public:
-    std::future<bool> get() override;
+    bool get() override;
 protected:
     bool media_codec();
     bool media_forward();
@@ -80,7 +79,7 @@ public:
     CompletionsSession(caiwei::text::CompletionsRequest& request, Callback callback = nullptr);
 public:
     std::string get_sync();
-    std::future<bool> get() override;
+    bool get() override;
 };
 
 } // session

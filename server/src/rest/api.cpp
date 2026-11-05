@@ -76,7 +76,9 @@ static void get_video_play() {
                 }
                 return writable;
             });
-            session.get().get();
+            if (!session.get()) {
+                CW_LOG_W("媒体播放失败");
+            }
             sink.done();
             return false;
         });
@@ -129,7 +131,9 @@ static void post_chat_completions() {
                     }
                     return writable;
                 });
-                session.get().get();
+                if (!session.get()) {
+                    CW_LOG_W("会话生成失败");
+                }
                 if (sink.is_writable()) {
                     sink.write("data: [DONE]\n\n", 14);
                 }

@@ -33,44 +33,50 @@ bool caiwei::media::MediaFormat::open(
     const AVRational    * audio_time_base,
     const AVRational    * video_time_base
 ) {
-    if (this->format_ctx != nullptr) {
-        this->stop();
-    }
-    if (!audio_codec_ctx || !video_codec_ctx) {
+    this->stop();
+    if (audio_codec_ctx == nullptr && video_codec_ctx == nullptr) {
         CW_LOG_W("缺少音视频编码器参数");
         return false;
     }
     int ret = AVERROR_UNKNOWN;
     if (audio_time_base != nullptr) {
         this->audio_time_base = new AVRational{ audio_time_base->num, audio_time_base->den };
-    } else {
+    } else if (audio_codec_ctx != nullptr) {
         this->audio_time_base = new AVRational{ audio_codec_ctx->time_base.num, audio_codec_ctx->time_base.den };
+    } else {
+        CW_LOG_D("忽略音频输出");
     }
     if (video_time_base != nullptr) {
         this->video_time_base = new AVRational{ video_time_base->num, video_time_base->den };
-    } else {
+    } else if (video_codec_ctx != nullptr) {
         this->video_time_base = new AVRational{ video_codec_ctx->time_base.num, video_codec_ctx->time_base.den };
-    }
-    this->format_ctx = avformat_alloc_context();
-    if (this->format_ctx == nullptr) {
-        CW_LOG_W("格式化上下文创建失败");
-        return false;
+    } else {
+        CW_LOG_D("忽略视频输出");
     }
     if (!this->filename.empty()) {
         ret = avformat_alloc_output_context2(&this->format_ctx, nullptr, nullptr, this->filename.c_str());
         if (ret < 0) {
             CW_LOG_W("输出格式创建失败: %d", ret);
+            this->stop();
             return false;
         }
         ret = avio_open2(&this->format_ctx->pb, this->filename.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr);
         if (ret < 0) {
             CW_LOG_W("输出句柄创建失败: %d", ret);
+            this->stop();
             return false;
         }
     } else if (this->format_callback != nullptr) {
+        this->format_ctx = avformat_alloc_context();
+        if (this->format_ctx == nullptr) {
+            CW_LOG_W("格式化上下文创建失败");
+            this->stop();
+            return false;
+        }
         this->format_ctx->oformat = av_guess_format("mp4", nullptr, nullptr);
         if (this->format_ctx->oformat == nullptr) {
             CW_LOG_W("输出格式创建失败");
+            this->stop();
             return false;
         }
         this->buffer.resize(1024 * 1024);
@@ -78,34 +84,40 @@ bool caiwei::media::MediaFormat::open(
         this->format_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
         if (this->format_ctx->pb == nullptr) {
             CW_LOG_W("输出句柄创建失败");
+            this->stop();
             return false;
         }
     } else {
         CW_LOG_W("输出类型错误");
+        this->stop();
         return false;
     }
-    {
+    if (audio_codec_ctx != nullptr) {
         this->audio_stream = avformat_new_stream(this->format_ctx, nullptr);
         if (this->audio_stream == nullptr) {
             CW_LOG_W("音频输出文件流创建失败");
+            this->stop();
             return false;
         }
         ret = avcodec_parameters_from_context(this->audio_stream->codecpar, audio_codec_ctx);
         if (ret < 0) {
             CW_LOG_W("音频输出参数拷贝失败: %d", ret);
+            this->stop();
             return false;
         }
         CW_LOG_D("创建音频输出流: %d", this->audio_stream->index);
     }
-    {
+    if (video_codec_ctx != nullptr) {
         this->video_stream = avformat_new_stream(this->format_ctx, nullptr);
         if (this->video_stream == nullptr) {
             CW_LOG_W("视频输出文件流创建失败");
+            this->stop();
             return false;
         }
         ret = avcodec_parameters_from_context(this->video_stream->codecpar, video_codec_ctx);
         if (ret < 0) {
             CW_LOG_W("视频输出参数拷贝失败: %d", ret);
+            this->stop();
             return false;
         }
         CW_LOG_D("创建视频输出流: %d", this->video_stream->index);
@@ -116,8 +128,20 @@ bool caiwei::media::MediaFormat::open(
 bool caiwei::media::MediaFormat::stop() {
     this->send_trailer();
     if (this->format_ctx) {
+        if (this->format_ctx->pb != nullptr) {
+            CW_LOG_I("释放格式化上下文IO");
+            if (!this->filename.empty()) {
+                avio_closep(&this->format_ctx->pb);
+            } else if (this->format_callback != nullptr) {
+                avio_context_free(&this->format_ctx->pb);
+            } else {
+                // -
+            }
+        }
         CW_LOG_I("释放格式化上下文");
         avformat_close_input(&this->format_ctx);
+        this->audio_stream = nullptr;
+        this->video_stream = nullptr;
     }
     if (this->audio_time_base) {
         delete this->audio_time_base;
@@ -135,14 +159,14 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
         CW_LOG_W("格式化上下文未初始化");
         return false;
     }
-    if (type == MediaType::AUDIO) {
+    if (type == MediaType::AUDIO && this->audio_stream != nullptr) {
         av_packet_rescale_ts(packet, *this->audio_time_base, this->audio_stream->time_base);
         packet->stream_index = this->audio_stream->index;
-    } else if (type == MediaType::VIDEO) {
+    } else if (type == MediaType::VIDEO && this->video_stream != nullptr) {
         av_packet_rescale_ts(packet, *this->video_time_base, this->video_stream->time_base);
         packet->stream_index = this->video_stream->index;
     } else {
-        CW_LOG_W("未知媒体类型");
+        CW_LOG_W("媒体没有输出媒体");
         return false;
     }
     int ret = av_interleaved_write_frame(this->format_ctx, packet);

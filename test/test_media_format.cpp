@@ -3,6 +3,12 @@
 #include <thread>
 #include <fstream>
 
+#include "base64/base64.h"
+
+extern "C" {
+#include "libavutil/base64.h"
+}
+
 [[maybe_unused]]
 void test_format() {
     auto type = "file";
@@ -37,6 +43,23 @@ void test_format() {
 }
 
 [[maybe_unused]]
+void test_format_audio() {
+    auto type = "file";
+    auto url  = "./caiwei.mp3";
+    caiwei::media::MediaFormat media_format("./output_fwd_file.mp3");
+    caiwei::media::MediaDemuxer media_demuxer(type, url, nullptr, &media_format);
+    media_demuxer.open(
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
+        nullptr,
+        nullptr,
+        [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
+            return media_format.send(type, packet);
+        }
+    );
+}
+
+[[maybe_unused]]
 void test_format_fwd_file() {
     auto type = "file";
     auto url  = "./caiwei.mp4";
@@ -45,12 +68,8 @@ void test_format_fwd_file() {
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [](caiwei::media::AudioFrame& /* frame */) {
-            return true;
-        },
-        [](caiwei::media::VideoFrame& /* frame */) {
-            return true;
-        },
+        nullptr,
+        nullptr,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
             return media_format.send(type, packet);
         }
@@ -70,12 +89,8 @@ void test_format_fwd_callback() {
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
-        [](caiwei::media::AudioFrame& /* frame */) {
-            return true;
-        },
-        [](caiwei::media::VideoFrame& /* frame */) {
-            return true;
-        },
+        nullptr,
+        nullptr,
         [&media_format](caiwei::media::MediaType type, AVPacket* packet) {
             return media_format.send(type, packet);
         }
@@ -83,11 +98,23 @@ void test_format_fwd_callback() {
     output.close();
 }
 
+[[maybe_unused]]
+void test_base64() {
+    std::vector<uint8_t> buffer(1024ULL * 256);
+    std::vector<char> output(AV_BASE64_SIZE(buffer.size()));
+    CAIWEI_FOR_EACH(1000)
+    // base64_encode(buffer.data(), buffer.size());
+    av_base64_encode(output.data(), output.size(), buffer.data(), buffer.size());
+    CAIWEI_FOR_EACH_END
+}
+
 int main() {
     caiwei::test::init_test();
     test_format();
+    test_format_audio();
     test_format_fwd_file();
     test_format_fwd_callback();
+    // test_base64();
     caiwei::test::stop_test();
     return 0;
 }
