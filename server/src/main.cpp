@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     }
     std::atomic<bool> running{ true };
     std::atomic<bool> success{ true };
-    std::thread server_thread([&running, &success]() {
+    std::jthread server_thread([&running, &success]() {
         try {
             success.store(caiwei::rest::open(), std::memory_order_release);
         } catch (...) {

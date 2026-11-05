@@ -9,15 +9,15 @@ void caiwei::init() {
     CW_LOG_I("系统启动");
     caiwei::env::init();
     caiwei::media::init();
-    caiwei::context::init();
     caiwei::runtime::init();
+    caiwei::context::init();
     caiwei::manager::init();
 }
 
 void caiwei::stop() {
-    caiwei::media::stop();
+    caiwei::manager::stop();
     caiwei::context::stop();
     caiwei::runtime::stop();
-    caiwei::manager::stop();
+    caiwei::media::stop();
     CW_LOG_I("系统关闭");
 }

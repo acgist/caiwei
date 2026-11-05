@@ -4,9 +4,9 @@
 
 [[maybe_unused]]
 void test_manager() {
-    std::vector<std::thread> threads;
+    std::vector<std::jthread> threads;
     for (int i = 0; i < 10; ++i) {
-        threads.push_back(std::thread([i]() {
+        threads.push_back(std::jthread([i]() {
             auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
             if (ptr) {
                 CW_LOG_I("获取context成功: %d", i);
@@ -19,6 +19,14 @@ void test_manager() {
     for (auto& thread : threads) {
         thread.join();
     }
+}
+
+[[maybe_unused]]
+void test_manager_init() {
+    caiwei::runtime::init();
+    caiwei::runtime::init();
+    caiwei::runtime::stop();
+    caiwei::runtime::init();
 }
 
 [[maybe_unused]]
@@ -45,6 +53,7 @@ int main() {
     caiwei::env::set("CAIWEI_ONNXRUNTIME_MAX_POOL", "4");
     caiwei::test::init_test();
     test_manager();
+    test_manager_init();
     test_manager_optimize();
     caiwei::test::stop_test();
     return 0;

@@ -8,10 +8,10 @@
 #define CAIWEI_RUNTIME_RUNTIME_HPP
 
 #include <map>
-#include <mutex>
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <shared_mutex>
 #include <condition_variable>
 
 #include "caiwei/context.hpp"
@@ -120,7 +120,7 @@ public:
 void init();
 void stop();
 
-extern std::mutex runtime_mutex;
+extern std::shared_mutex runtime_mutex;
 extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> runtime_map;
 
 template <typename R>

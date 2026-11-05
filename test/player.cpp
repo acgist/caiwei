@@ -11,13 +11,14 @@
 const static int USER_EVENT_VIDEO_FRAME = 1;
 
 static struct PlayerState {
-    bool running       = false;
-    bool audio_running = false;
-    bool video_running = false;
+    std::atomic<bool> init    = false;
+    std::atomic<bool> success = false;
+    std::atomic<bool> audio_running = false;
+    std::atomic<bool> video_running = false;
     int  video_width   = 0;
     int  video_height  = 0;
-    std::mutex  player_mutex;
-    std::thread player_thread;
+    std::mutex   player_mutex;
+    std::jthread player_thread;
     std::condition_variable player_cv;
     SDL_mutex   *     mutex      = nullptr;
     SDL_Window  *     window     = nullptr;
@@ -36,105 +37,103 @@ static void stop_video_player();
 bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_width, int video_height) {
     {
         std::lock_guard<std::mutex> lock(player_state.player_mutex);
-        if (player_state.running) {
-            return false;
-        }
         if (player_state.player_thread.joinable()) {
             return false;
         }
-        player_state.running = true;
-    }
-    player_state.audio_spec = {
-        .freq     = sample_rate,
-        .format   = AUDIO_S16,
-        .channels = static_cast<uint8_t>(nb_channels),
-        .silence  = 0,
-        .samples  = 4800,
-        .padding  = 0,
-        .size     = 4800 * sizeof(int16_t),
-        .callback = nullptr,
-        .userdata = nullptr,
-    };
-    player_state.video_width  = video_width;
-    player_state.video_height = video_height;
-    player_state.player_thread = std::thread([]() {
-        int ret = SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
-        if (ret != 0) {
-            CW_LOG_W("加载播放器失败: %s", SDL_GetError());
-            {
+        player_state.audio_spec = {
+            .freq     = sample_rate,
+            .format   = AUDIO_S16,
+            .channels = static_cast<uint8_t>(nb_channels),
+            .silence  = 0,
+            .samples  = 4800,
+            .padding  = 0,
+            .size     = static_cast<uint32_t>(4800 * sizeof(int16_t) * nb_channels),
+            .callback = nullptr,
+            .userdata = nullptr,
+        };
+        player_state.init    = false;
+        player_state.success = false;
+        player_state.video_width  = video_width;
+        player_state.video_height = video_height;
+        player_state.player_thread = std::jthread([](std::stop_token token) {
+            int ret = SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
+            if (ret != 0) {
+                CW_LOG_W("加载播放器失败: %s", SDL_GetError());
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
-                player_state.running = false;
+                player_state.init = true;
                 player_state.player_cv.notify_one();
+                return;
             }
-            return;
-        }
-        if (init_audio_player() && init_video_player()) {
-            CW_LOG_I("打开播放器成功");
-            {
-                std::lock_guard<std::mutex> lock(player_state.player_mutex);
-                player_state.running = true;
-                player_state.player_cv.notify_one();
-            }
-            SDL_Event event;
-            while (player_state.running) {
-                int ret_event = SDL_WaitEventTimeout(&event, 1000);
-                if (ret_event == 0) {
-                    continue;
+            player_state.success = init_audio_player() && init_video_player();
+            if (player_state.success) {
+                CW_LOG_I("打开播放器成功");
+                {
+                    std::lock_guard<std::mutex> lock(player_state.player_mutex);
+                    player_state.init = true;
+                    player_state.player_cv.notify_one();
                 }
-                if (event.type == SDL_QUIT) {
-                    CW_LOG_I("退出播放器");
-                    break;
-                } else if (event.type == SDL_KEYUP) {
-                    if (event.key.keysym.sym == SDLK_q) {
+                SDL_Event event;
+                while (!token.stop_requested()) {
+                    int ret_event = SDL_WaitEventTimeout(&event, 1000);
+                    if (ret_event == 0) {
+                        continue;
+                    }
+                    if (event.type == SDL_QUIT) {
                         CW_LOG_I("退出播放器");
                         break;
-                    } else {
-                        // -
-                    }
-                } else if (event.type == SDL_USEREVENT) {
-                    if (event.user.code == USER_EVENT_VIDEO_FRAME) {
-                        if (SDL_LockMutex(player_state.mutex) != 0) {
-                            CW_LOG_W("视频加锁失败: %s", SDL_GetError());
+                    } else if (event.type == SDL_KEYUP) {
+                        if (event.key.keysym.sym == SDLK_q) {
+                            CW_LOG_I("退出播放器");
+                            break;
                         } else {
-                            if (SDL_RenderClear(player_state.renderer) != 0) {
-                                CW_LOG_W("视频清除失败: %s", SDL_GetError());
+                            // -
+                        }
+                    } else if (event.type == SDL_USEREVENT) {
+                        if (event.user.code == USER_EVENT_VIDEO_FRAME) {
+                            if (SDL_LockMutex(player_state.mutex) != 0) {
+                                CW_LOG_W("视频加锁失败: %s", SDL_GetError());
                             } else {
-                                if (SDL_RenderCopy(player_state.renderer, player_state.texture, nullptr, nullptr) != 0) {
-                                    CW_LOG_W("视频拷贝失败: %s", SDL_GetError());
+                                if (SDL_RenderClear(player_state.renderer) != 0) {
+                                    CW_LOG_W("视频清除失败: %s", SDL_GetError());
                                 } else {
-                                    SDL_RenderPresent(player_state.renderer);
+                                    if (SDL_RenderCopy(player_state.renderer, player_state.texture, nullptr, nullptr) != 0) {
+                                        CW_LOG_W("视频拷贝失败: %s", SDL_GetError());
+                                    } else {
+                                        SDL_RenderPresent(player_state.renderer);
+                                    }
                                 }
+                                SDL_UnlockMutex(player_state.mutex);
                             }
-                            SDL_UnlockMutex(player_state.mutex);
+                        } else {
+                            // -
                         }
                     } else {
                         // -
                     }
-                } else {
-                    // -
                 }
-            }
-            {
+                {
+                    std::lock_guard<std::mutex> lock(player_state.player_mutex);
+                    player_state.init = true;
+                    player_state.player_cv.notify_one();
+                }
+            } else {
+                CW_LOG_W("打开播放器失败");
                 std::lock_guard<std::mutex> lock(player_state.player_mutex);
-                player_state.running = false;
-            }
-        } else {
-            CW_LOG_W("打开播放器失败");
-            {
-                std::lock_guard<std::mutex> lock(player_state.player_mutex);
-                player_state.running = false;
+                player_state.init = true;
                 player_state.player_cv.notify_one();
             }
-        }
-        stop_audio_player();
-        stop_video_player();
-        SDL_Quit();
-    });
+            stop_audio_player();
+            stop_video_player();
+            SDL_Quit();
+        });
+    }
     {
         std::unique_lock<std::mutex> lock(player_state.player_mutex);
-        player_state.player_cv.wait_for(lock, std::chrono::seconds(10));
+        player_state.player_cv.wait_for(lock, std::chrono::seconds(10), []() {
+            return player_state.init.load();
+        });
     }
-    return player_state.running;
+    return player_state.success.load();
 }
 
 void caiwei::player::stop_player() {
@@ -145,17 +144,21 @@ void caiwei::player::stop_player() {
         int ret = SDL_PushEvent(&event);
         CW_LOG_I("关闭播放器: %d", ret);
     }
+    std::jthread thread;
     {
-        std::unique_lock<std::mutex> lock(player_state.player_mutex);
-        player_state.running = false;
+        std::lock_guard<std::mutex> lock(player_state.player_mutex);
+        if (player_state.player_thread.joinable()) {
+            player_state.player_thread.request_stop();
+            thread = std::move(player_state.player_thread);
+        }
     }
-    if (player_state.player_thread.joinable()) {
-        player_state.player_thread.join();
+    if (thread.joinable()) {
+        thread.join();
     }
 }
 
 bool caiwei::player::play_audio(const void* data, int len) {
-    if (player_state.running && player_state.audio_running) {
+    if (player_state.audio_running) {
         int ret = SDL_QueueAudio(player_state.audio_id, data, len);
         if (ret != 0) {
             CW_LOG_W("音频播放失败: %s", SDL_GetError());
@@ -167,7 +170,7 @@ bool caiwei::player::play_audio(const void* data, int len) {
 }
 
 bool caiwei::player::play_video(const void* data, int len) {
-    if (player_state.running && player_state.video_running) {
+    if (player_state.video_running) {
         if (SDL_LockMutex(player_state.mutex) != 0) {
             CW_LOG_W("视频加锁失败: %s", SDL_GetError());
             return false;

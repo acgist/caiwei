@@ -125,9 +125,9 @@ void test_asr_thread() {
         CW_LOG_W("模型加载失败");
         return;
     }
-    std::vector<std::thread> threads;
+    std::vector<std::jthread> threads;
     for (int i = 0; i < 2; ++i) {
-        threads.push_back(std::thread([&]() {
+        threads.push_back(std::jthread([&]() {
             CAIWEI_FOR_EACH(100)
             asr_run(ptr.get(), request);
             CAIWEI_FOR_EACH_END

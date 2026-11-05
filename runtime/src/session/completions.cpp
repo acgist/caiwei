@@ -19,9 +19,9 @@ using TokenCallback = std::function<void(const std::string& token)>;
 
 static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::session::Callback& callback);
 
-static void asr_thread_session (caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::atomic<bool>& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer);
-static void vlm_thread_session (caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::atomic<bool>& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
-static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::atomic<bool>& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
+static void asr_thread_session (std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer);
+static void vlm_thread_session (std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
+static void yolo_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
 
 static void sync_cls(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
 static void sync_det(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
@@ -129,9 +129,9 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         std::mutex asr_mutex;
         std::mutex vlm_mutex;
         std::mutex yolo_mutex;
-        std::thread asr_thread;
-        std::thread vlm_thread;
-        std::thread yolo_thread;
+        std::jthread asr_thread;
+        std::jthread vlm_thread;
+        std::jthread yolo_thread;
         std::condition_variable asr_cv;
         std::condition_variable vlm_cv;
         std::condition_variable yolo_cv;
@@ -153,13 +153,11 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         audio_frame_buffer.reserve(ASR_QUEUE_SIZE);
         image_frame_buffer.resize(YOLO_QUEUE_SIZE);
         video_frame_buffer.resize(vlm_frames);
-        std::atomic<bool> media_stop = false;
         if (enable_asr) {
-            asr_thread = std::thread(
+            asr_thread = std::jthread(
                 asr_thread_session,
                 request,
                 std::ref(callback),
-                std::ref(media_stop),
                 std::ref(asr_mutex),
                 std::ref(asr_cv),
                 asr_ptr.get(),
@@ -167,11 +165,10 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             );
         }
         if (enable_vlm) {
-            vlm_thread = std::thread(
+            vlm_thread = std::jthread(
                 vlm_thread_session,
                 request,
                 std::ref(callback),
-                std::ref(media_stop),
                 std::ref(vlm_mutex),
                 std::ref(vlm_cv),
                 vlm_ptr.get(),
@@ -180,11 +177,10 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
             );
         }
         if (enable_yolo) {
-            yolo_thread = std::thread(
+            yolo_thread = std::jthread(
                 yolo_thread_session,
                 request,
                 std::ref(callback),
-                std::ref(media_stop),
                 std::ref(yolo_mutex),
                 std::ref(yolo_cv),
                 cls_ptr.get(),
@@ -308,14 +304,16 @@ static bool session_stream(caiwei::text::CompletionsRequest& request, caiwei::se
         if (!ret) {
             CW_LOG_W("媒体解析失败: %s = %s", type.c_str(), url.c_str());
         }
-        media_stop = true;
         if (asr_thread.joinable()) {
+            asr_thread.request_stop();
             asr_thread.join();
         }
         if (vlm_thread.joinable()) {
+            vlm_thread.request_stop();
             vlm_thread.join();
         }
         if (yolo_thread.joinable()) {
+            yolo_thread.request_stop();
             yolo_thread.join();
         }
         CW_LOG_I("视频解析完成: %s = %s", type.c_str(), url.c_str());
@@ -529,7 +527,7 @@ static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager
     return async_generator(request, wrapper->run(request), callback);
 }
 
-static void asr_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::atomic<bool>& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer) {
+static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer) {
     std::string ret;
     std::string old;
     auto& message = request.messages.back();
@@ -537,7 +535,7 @@ static void asr_thread_session(caiwei::text::CompletionsRequest request, caiwei:
     auto& audio_data = message.audio_data[0];
     audio_data.data.reserve(ASR_QUEUE_SIZE);
     bool callable = true;
-    while (callable && !media_stop) {
+    while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
@@ -563,14 +561,14 @@ static void asr_thread_session(caiwei::text::CompletionsRequest request, caiwei:
     }
 }
 
-static void vlm_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::atomic<bool>& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size) {
+static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size) {
     const int vlm_frames = std::clamp(request.vlm_frames.value_or(8), 1, 16);
     auto& message = request.messages.back();
     message.video_data.resize(1);
     auto& video_data = message.video_data[0];
     video_data.resize(vlm_frames);
     bool callable = true;
-    while (callable && !media_stop) {
+    while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
@@ -587,7 +585,7 @@ static void vlm_thread_session(caiwei::text::CompletionsRequest request, caiwei:
     }
 }
 
-static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::atomic<bool>& media_stop, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
+static void yolo_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
     auto& message = request.messages.back();
     message.image_data.resize(1);
     auto& image_data = message.image_data[0];
@@ -595,7 +593,7 @@ static void yolo_thread_session(caiwei::text::CompletionsRequest request, caiwei
     image_copy.resize(YOLO_QUEUE_SIZE);
     size_t image_copy_size = 0;
     bool callable = true;
-    while (callable && !media_stop) {
+    while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));

@@ -20,6 +20,8 @@
 namespace caiwei  {
 namespace manager {
 
+extern bool available;
+
 void init();
 void stop();
 
@@ -63,21 +65,26 @@ typename C::O caiwei::manager::ContextWrapper<C>::run(const I& input) {
 
 template <typename R>
 inline std::shared_ptr<R> get_runtime_impl(caiwei::runtime::Type type) {
-    auto iter = caiwei::runtime::runtime_map.find(type);
-    if (iter != caiwei::runtime::runtime_map.end()) {
-        return std::static_pointer_cast<R>(iter->second);
+    {
+        std::shared_lock<std::shared_mutex> lock(caiwei::runtime::runtime_mutex);
+        auto iter = caiwei::runtime::runtime_map.find(type);
+        if (iter != caiwei::runtime::runtime_map.end()) {
+            return std::static_pointer_cast<R>(iter->second);
+        }
     }
-    std::lock_guard<std::mutex> lock(caiwei::runtime::runtime_mutex);
-    iter = caiwei::runtime::runtime_map.find(type);
-    if (iter != caiwei::runtime::runtime_map.end()) {
-        return std::static_pointer_cast<R>(iter->second);
+    {
+        std::lock_guard<std::shared_mutex> lock(caiwei::runtime::runtime_mutex);
+        auto iter = caiwei::runtime::runtime_map.find(type);
+        if (iter != caiwei::runtime::runtime_map.end()) {
+            return std::static_pointer_cast<R>(iter->second);
+        }
+        auto runtime = caiwei::runtime::get_runtime<R>(type);
+        if (runtime) {
+            caiwei::runtime::runtime_map.emplace(type, runtime);
+            return runtime;
+        }
+        return nullptr;
     }
-    auto runtime = caiwei::runtime::get_runtime<R>(type);
-    if (runtime) {
-        caiwei::runtime::runtime_map.emplace(type, runtime);
-        return runtime;
-    }
-    return nullptr;
 }
 
 template <typename R>
@@ -93,6 +100,10 @@ inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::
 
 template <typename C>
 std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    if (!available) {
+        CW_LOG_I("系统还未准备就绪");
+        return nullptr;
+    }
     const auto* info = caiwei::context::get_context_info(name);
     if (info == nullptr) {
         CW_LOG_D("没有模型配置信息: %s", name.c_str());
@@ -134,6 +145,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         }
     }
     #endif
+    CW_LOG_W("获取context失败: %s", info->name.c_str());
     return nullptr;
 }
 

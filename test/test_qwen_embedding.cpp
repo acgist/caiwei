@@ -85,9 +85,9 @@ void test_embedding_thread() {
         return;
     }
     const auto true_ret = ptr->run(request);
-    std::vector<std::thread> threads;
+    std::vector<std::jthread> threads;
     for (int i = 0; i < 4; ++i) {
-        threads.push_back(std::thread([&]() {
+        threads.push_back(std::jthread([&]() {
             CAIWEI_FOR_EACH(100)
             auto ret = ptr->run(request);
             assert(ret.result == true_ret.result);

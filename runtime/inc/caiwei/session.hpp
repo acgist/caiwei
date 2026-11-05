@@ -22,10 +22,6 @@ public:
     const std::string id;
 public:
     Session();
-    Session(const Session&)            = delete;
-    Session& operator=(const Session&) = delete;
-    Session(Session&&)                 = default;
-    Session& operator=(Session&&)      = default;
     virtual ~Session();
 };
 

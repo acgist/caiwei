@@ -7,12 +7,30 @@
 #include <cstdarg>
 #include <string_view>
 
+#if CAIWEI_OS_WIN
+#include <Windows.h>
+#elif CAIWEI_OS_UNIX
+#include <unistd.h>
+#include <sys/syscall.h>
+#else
+#endif
+
 static std::mutex mutex;
 #ifdef CAIWEI_LOG_LEVEL
 static caiwei::log::Level level = caiwei::log::Level::CAIWEI_LOG_LEVEL;
 #else
 static caiwei::log::Level level = caiwei::log::Level::D;
 #endif
+
+inline uint64_t thread_id() {
+#if CAIWEI_OS_WIN
+    return static_cast<uint64_t>(GetCurrentThreadId());
+#elif CAIWEI_OS_UNIX
+    return static_cast<uint64_t>(syscall(SYS_gettid));
+#else
+    return 0;
+#endif
+}
 
 inline const char* format_level(caiwei::log::Level level) {
     switch (level) {
@@ -68,10 +86,10 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
         message[MESSAGE_SIZE - 1] = '\0';
     }
     if (level == caiwei::log::Level::E || level == caiwei::log::Level::W) {
-        std::fprintf(stderr, "[%s] %s %-16.*s:%4d | %s\n", format_level(level), time_buf, static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
+        std::fprintf(stderr, "[%s] %s [%llu] %-16.*s:%4d | %s\n", format_level(level), time_buf, thread_id(), static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
         std::fflush(stderr);
     } else {
-        std::fprintf(stdout, "[%s] %s %-16.*s:%4d | %s\n", format_level(level), time_buf, static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
+        std::fprintf(stdout, "[%s] %s [%llu] %-16.*s:%4d | %s\n", format_level(level), time_buf, thread_id(), static_cast<int>(name.size()), name.data(), loc.line(), message.data()); 
         std::fflush(stdout);
     }
 }
