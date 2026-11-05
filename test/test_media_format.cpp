@@ -3,12 +3,6 @@
 #include <thread>
 #include <fstream>
 
-#include "base64/base64.h"
-
-extern "C" {
-#include "libavutil/base64.h"
-}
-
 [[maybe_unused]]
 void test_format() {
     auto type = "file";
@@ -98,23 +92,12 @@ void test_format_fwd_callback() {
     output.close();
 }
 
-[[maybe_unused]]
-void test_base64() {
-    std::vector<uint8_t> buffer(1024ULL * 256);
-    std::vector<char> output(AV_BASE64_SIZE(buffer.size()));
-    CAIWEI_FOR_EACH(1000)
-    // base64_encode(buffer.data(), buffer.size());
-    av_base64_encode(output.data(), output.size(), buffer.data(), buffer.size());
-    CAIWEI_FOR_EACH_END
-}
-
 int main() {
     caiwei::test::init_test();
     test_format();
     test_format_audio();
     test_format_fwd_file();
     test_format_fwd_callback();
-    // test_base64();
     caiwei::test::stop_test();
     return 0;
 }

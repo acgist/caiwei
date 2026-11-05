@@ -91,7 +91,7 @@ a=recvonly`,
         this.media.addEventListener("sourceopen", async () => {
           this.buffer = this.media.addSourceBuffer('video/mp4; codecs="avc1.42C020, mp4a.40.2"');
           this.buffer.addEventListener("updateend", () => {
-            if (this.buffer.updating) {
+            if (this.buffer == null || this.buffer.updating) {
               return;
             }
             const buffered = this.buffer.buffered;
@@ -139,7 +139,7 @@ a=recvonly`,
           blob[index] = raw.charCodeAt(index);
         }
         this.queue.push(blob);
-        if (this.buffer.updating) {
+        if (this.buffer == null || this.buffer.updating) {
           return;
         }
         if (this.queue.length === 1) {

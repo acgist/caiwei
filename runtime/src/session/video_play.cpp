@@ -2,7 +2,9 @@
 #include "caiwei/session.hpp"
 #include "caiwei/media_tool.hpp"
 
-#include "base64/base64.h"
+extern "C" {
+#include "libavutil/base64.h"
+}
 
 caiwei::session::VideoPlaySession::VideoPlaySession(
     std::string url, std::string type, bool codec, Callback callback
@@ -22,15 +24,21 @@ bool caiwei::session::VideoPlaySession::get() {
 }
 
 bool caiwei::session::VideoPlaySession::media_codec() {
-    caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
+    std::string output;
+    output.resize(1024 * 1024);
+    caiwei::media::MediaFormat media_format([this, &output](uint32_t length, const uint8_t* data) {
         if (this->callback == nullptr) {
             return false;
         }
         if (length == 0 || data == nullptr) {
             return true;
         }
-        auto output = base64_encode(data, length);
-        if (this->callback(output.data(), output.length())) {
+        const auto len = AV_BASE64_SIZE(length);
+        if (output.size() < len) {
+            output.resize(len);
+        }
+        char* ret = av_base64_encode(output.data(), len, data, length);
+        if (ret != nullptr && this->callback(ret, len - 1)) {
             return true;
         } else {
             CW_LOG_I("媒体数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
@@ -66,15 +74,21 @@ bool caiwei::session::VideoPlaySession::media_codec() {
 }
 
 bool caiwei::session::VideoPlaySession::media_forward() {
-    caiwei::media::MediaFormat media_format([this](uint32_t length, const uint8_t* data) {
+    std::string output;
+    output.resize(1024 * 1024);
+    caiwei::media::MediaFormat media_format([this, &output](uint32_t length, const uint8_t* data) {
         if (this->callback == nullptr) {
             return false;
         }
         if (length == 0 || data == nullptr) {
             return true;
         }
-        auto output = base64_encode(data, length);
-        if (this->callback(output.data(), output.length())) {
+        const auto len = AV_BASE64_SIZE(length);
+        if (output.size() < len) {
+            output.resize(len);
+        }
+        char* ret = av_base64_encode(output.data(), len, data, length);
+        if (ret != nullptr && this->callback(ret, len - 1)) {
             return true;
         } else {
             CW_LOG_I("媒体数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());

@@ -4,7 +4,10 @@
 #include <condition_variable>
 
 #include "httplib.h"
-#include "base64/base64.h"
+
+extern "C" {
+#include "libavutil/base64.h"
+}
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
@@ -699,12 +702,16 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        auto image_data = base64_decode(image_url.substr(pos + 1));
-        if (image_data.empty()) {
+        std::string base64_data = image_url.substr(pos + 1);
+        const auto len = AV_BASE64_DECODE_SIZE(base64_data.size());
+        std::vector<uint8_t> image_data(len);
+        const auto ret = av_base64_decode(image_data.data(), base64_data.c_str(), len);
+        if (ret <= 0) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
-        if (!image_frame.load_from_memory((const uint8_t*) image_data.data(), image_data.size())) {
+        image_data.resize(ret);
+        if (!image_frame.load_from_memory(image_data.data(), image_data.size())) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }

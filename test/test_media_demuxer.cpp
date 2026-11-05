@@ -4,7 +4,9 @@
 #include <fstream>
 #include <filesystem>
 
-#include "base64/base64.h"
+extern "C" {
+#include "libavutil/base64.h"
+}
 
 [[maybe_unused]]
 static std::string base64_file(const std::string& type, const std::string& path) {
@@ -17,7 +19,12 @@ static std::string base64_file(const std::string& type, const std::string& path)
     data.resize(std::filesystem::file_size(path));
     stream.read(data.data(), data.size());
     stream.close();
-    return type + base64_encode(data, false);
+    std::string output;
+    const auto len = AV_BASE64_SIZE(data.size());
+    output.resize(len);
+    av_base64_encode(output.data(), len, (const uint8_t*) data.data(), data.size());
+    output.resize(len - 1);
+    return type + output;
 }
 
 [[maybe_unused]]

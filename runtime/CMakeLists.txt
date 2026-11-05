@@ -22,7 +22,6 @@ set(
     src/session/embeddings.cpp
     src/session/rerankings.cpp
     src/session/completions.cpp
-    third_party/base64/base64.cpp
 )
 
 list(

@@ -1,8 +1,16 @@
+import base64
+
 from openai import OpenAI
 
 stream = True
 api_key = "api-key"
 base_url = "http://127.0.0.1:8888/v1"
+
+
+def base64_file(file_path: str) -> str:
+    with open(file_path, "rb") as stream:
+        data = stream.read()
+        return base64.b64encode(data).decode("utf-8")
 
 
 def print_resp(stream, resp):
@@ -44,6 +52,7 @@ def test_cls():
                     {
                         "type": "image_url",
                         "image_url": {"url": "./samoyed.jpg"},
+                        # "image_url": {"url": f"data:image/jpeg;base64,{base64_file('./samoyed.jpg')}"},
                     },
                 ],
             },
