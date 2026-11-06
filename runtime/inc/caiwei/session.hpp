@@ -7,6 +7,7 @@
 #ifndef CAIWEI_RUNTIME_SESSION_HPP
 #define CAIWEI_RUNTIME_SESSION_HPP
 
+#include <mutex>
 #include <string>
 #include <vector>
 #include <functional>
@@ -33,6 +34,7 @@ using Callback = std::function<bool(const char* data, int length)>;
 
 class StatefulSession : public Session {
 protected:
+    std::mutex mutex;
     Callback callback;
 public:
     StatefulSession(Callback callback);

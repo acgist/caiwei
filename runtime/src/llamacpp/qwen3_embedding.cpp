@@ -25,14 +25,12 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(con
         const auto& item = std::get<std::string>(request.input);
         inputs.push_back(caiwei::context::tokenize(this->vocab, item, true, true));
         prompt_tokens += inputs.back().size();
-    } else if (std::holds_alternative<std::vector<std::string>>(request.input)) {
+    } else {
         const auto& items = std::get<std::vector<std::string>>(request.input);
         for (const auto& item : items) {
             inputs.push_back(caiwei::context::tokenize(this->vocab, item, true, true));
             prompt_tokens += inputs.back().size();
         }
-    } else {
-        CW_LOG_W("不支持的输入类型");
     }
     caiwei::text::EmbeddingResult result;
     result.result = this->pooling(inputs);

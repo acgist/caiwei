@@ -32,14 +32,11 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
     if (std::holds_alternative<std::string>(request.input)) {
         const auto& item = std::get<std::string>(request.input);
         prompt_list.push_back(&item);
-    } else if (std::holds_alternative<std::vector<std::string>>(request.input)) {
+    } else {
         const auto& items = std::get<std::vector<std::string>>(request.input);
         for (const auto& item : items) {
             prompt_list.emplace_back(&item);
         }
-    } else {
-        CW_LOG_W("不支持的输入类型");
-        return {};
     }
     uint32_t prompt_tokens = 0;
     caiwei::text::EmbeddingResult result;

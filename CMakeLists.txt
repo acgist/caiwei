@@ -24,8 +24,6 @@ option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2"  OFF) # 瑞芯微: RK3
 option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3"  OFF) # 瑞芯微: RK1820/RK1828
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"       ON)  # 跨平台
 option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # 跨平台
-option(ENABLE_CAIWEI_FFMPEG              "FFmpeg"          ON)  # FFmpeg
-option(ENABLE_CAIWEI_CPPHTTPLIB          "cpp-httplib"     ON)  # cpp-httplib
 
 # TODO 升级 23
 set(CMAKE_C_STANDARD 17)
@@ -196,57 +194,51 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     list(APPEND CAIWEI_RUNTIME_LIBS ${ONNXRUNTIME_LIBS})
 endif()
 
-if(ENABLE_CAIWEI_FFMPEG)
-    message(STATUS "Enable FFmpeg")
-    if(CMAKE_HOST_UNIX)
-        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-            list(
-                APPEND CAIWEI_RUNTIME_LIBS
-                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
-                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
-                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
-                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
-                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
-                ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
-            )
-        else()
-            list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
-        endif()
-    elseif(CMAKE_HOST_WIN32)
-        set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
-        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${FFMPEG_PATH})
-        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/debug/bin/*.dll")
-        else()
-            file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/bin/*.dll")
-        endif()
-        find_package(FFMPEG REQUIRED)
-        list(APPEND CAIWEI_RUNTIME_DLLS ${FFMPEG_DLLS})
-        list(APPEND CAIWEI_RUNTIME_INCS ${FFMPEG_INCLUDE_DIRS})
-        list(APPEND CAIWEI_RUNTIME_LIBS ${FFMPEG_LIBRARIES})
+if(CMAKE_HOST_UNIX)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        list(
+            APPEND CAIWEI_RUNTIME_LIBS
+            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
+            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
+            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
+            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
+            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
+            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
+        )
     else()
-    # -
+        list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
     endif()
+elseif(CMAKE_HOST_WIN32)
+    set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${FFMPEG_PATH})
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/debug/bin/*.dll")
+    else()
+        file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/bin/*.dll")
+    endif()
+    find_package(FFMPEG REQUIRED)
+    list(APPEND CAIWEI_RUNTIME_DLLS ${FFMPEG_DLLS})
+    list(APPEND CAIWEI_RUNTIME_INCS ${FFMPEG_INCLUDE_DIRS})
+    list(APPEND CAIWEI_RUNTIME_LIBS ${FFMPEG_LIBRARIES})
+else()
+# -
 endif()
 
-if(ENABLE_CAIWEI_CPPHTTPLIB)
-    message(STATUS "Enable cpp-httplib")
-    if(CMAKE_HOST_UNIX)
-    # -
-    elseif(CMAKE_HOST_WIN32)
-        set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
-        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CPP_HTTPLIB_PATH})
-        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
-        else()
-            file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
-        endif()
-        find_package(httplib REQUIRED)
-        list(APPEND CAIWEI_RUNTIME_DLLS ${CPP_HTTPLIB_DLLS})
-        list(APPEND CAIWEI_RUNTIME_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
+if(CMAKE_HOST_UNIX)
+# -
+elseif(CMAKE_HOST_WIN32)
+    set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CPP_HTTPLIB_PATH})
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
     else()
-    # -
+        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
     endif()
+    find_package(httplib REQUIRED)
+    list(APPEND CAIWEI_RUNTIME_DLLS ${CPP_HTTPLIB_DLLS})
+    list(APPEND CAIWEI_RUNTIME_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
+else()
+# -
 endif()
 
 add_subdirectory(runtime)

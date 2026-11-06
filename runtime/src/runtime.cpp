@@ -30,16 +30,6 @@ static std::condition_variable runtime_optimize_cv;
 
 static void runtime_optimize_timer();
 
-static const char* get_type_name(caiwei::runtime::Type type) {
-    switch (type) {
-    case caiwei::runtime::Type::RKNN2:       return "RKNN2";
-    case caiwei::runtime::Type::RKNN3:       return "RKNN3";
-    case caiwei::runtime::Type::LLAMACPP:    return "LLAMACPP";
-    case caiwei::runtime::Type::ONNXRUNTIME: return "ONNXRuntime";
-    default: return "UNKNOWN";
-    }
-}
-
 caiwei::runtime::Runtime::Runtime(
     int min_pool,
     int max_pool,

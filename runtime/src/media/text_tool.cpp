@@ -93,7 +93,7 @@ std::string caiwei::text::ChatTemplate::apply(
         if (message.content.has_value()) {
             if (std::holds_alternative<std::string>(message.content.value())) {
                 message_json["content"] = std::get<std::string>(message.content.value());
-            } else if (std::holds_alternative<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value())) {
+            } else {
                 int audio_index = 0;
                 int image_index = 0;
                 int video_index = 0;
@@ -165,8 +165,6 @@ std::string caiwei::text::ChatTemplate::apply(
                     }
                 }
                 message_json["content"] = std::move(message_content_items_json);
-            } else {
-                CW_LOG_W("没有适配消息内容");
             }
         }
         if (message.tool_calls.has_value()) {

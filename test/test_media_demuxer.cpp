@@ -22,7 +22,11 @@ static std::string base64_file(const std::string& type, const std::string& path)
     std::string output;
     const auto len = AV_BASE64_SIZE(data.size());
     output.resize(len);
-    av_base64_encode(output.data(), len, (const uint8_t*) data.data(), data.size());
+    char* ret = av_base64_encode(output.data(), len, (const uint8_t*) data.data(), data.size());
+    if (ret == nullptr) {
+        CW_LOG_W("编码失败: %s", path.c_str());
+        return "";
+    }
     output.resize(len - 1);
     return type + output;
 }

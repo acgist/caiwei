@@ -18,6 +18,10 @@ set(
     src/media/image_tool.cpp
     src/media/media_data.cpp
     src/media/media_tool.cpp
+    src/ffmpeg/media_muxer.cpp
+    src/ffmpeg/media_ffmpeg.cpp
+    src/ffmpeg/media_format.cpp
+    src/ffmpeg/media_demuxer.cpp
     src/session/video_play.cpp
     src/session/embeddings.cpp
     src/session/rerankings.cpp
@@ -29,16 +33,6 @@ list(
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party
 )
-
-if(ENABLE_CAIWEI_FFMPEG)
-    list(
-        APPEND CAIWEI_RUNTIME_SRCS
-        src/ffmpeg/media_muxer.cpp
-        src/ffmpeg/media_ffmpeg.cpp
-        src/ffmpeg/media_format.cpp
-        src/ffmpeg/media_demuxer.cpp
-    )
-endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     list(

@@ -1,27 +1,22 @@
 enable_testing()
 
-option(ENABLE_CAIWEI_SDL2 "SDL2 Player" ON)
-
-if(ENABLE_CAIWEI_SDL2)
-    message(STATUS "Enable SDL2 Player")
-    if(CMAKE_HOST_UNIX)
-    # -
-    elseif(CMAKE_HOST_WIN32)
-        set(SDL2_PATH "${CMAKE_SOURCE_DIR}/deps/sdl2" CACHE STRING "SDL2 Path")
-        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${SDL2_PATH})
-        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            file(GLOB SDL2_DLLS "${SDL2_PATH}/debug/bin/*.dll")
-        else()
-            file(GLOB SDL2_DLLS "${SDL2_PATH}/bin/*.dll")
-        endif()
-        list(APPEND CAIWEI_TEST_DLLS ${SDL2_DLLS})
+if(CMAKE_HOST_UNIX)
+# -
+elseif(CMAKE_HOST_WIN32)
+    set(SDL2_PATH "${CMAKE_SOURCE_DIR}/deps/sdl2" CACHE STRING "SDL2 Path")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${SDL2_PATH})
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        file(GLOB SDL2_DLLS "${SDL2_PATH}/debug/bin/*.dll")
     else()
-    # -
+        file(GLOB SDL2_DLLS "${SDL2_PATH}/bin/*.dll")
     endif()
-    find_package(SDL2 REQUIRED)
-    list(APPEND CAIWEI_TEST_LIBS $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
-    list(APPEND CAIWEI_TEST_LIBS $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
+    list(APPEND CAIWEI_TEST_DLLS ${SDL2_DLLS})
+else()
+# -
 endif()
+find_package(SDL2 REQUIRED)
+list(APPEND CAIWEI_TEST_LIBS $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
+list(APPEND CAIWEI_TEST_LIBS $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
 
 set(
     CAIWEI_TEST_SRCS

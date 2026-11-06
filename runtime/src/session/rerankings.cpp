@@ -11,6 +11,7 @@ std::string caiwei::session::RerankingsSession::get() {
     auto result = ptr->run(this->request);
     caiwei::text::RerankingsResponse response;
     response.model = request.model;
+    caiwei::env::check_ne(this->request.documents.size(), result.result.size(), "推理失败");
     for (size_t i = 0; i < result.result.size(); ++i) {
         caiwei::text::RerankingsResponseData data;
         data.index = i;

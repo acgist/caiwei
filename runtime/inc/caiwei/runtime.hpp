@@ -35,6 +35,17 @@ enum class Type {
     NONE,
 };
 
+inline const char* get_type_name(Type type) {
+    switch (type) {
+    case caiwei::runtime::Type::RKNN2:       return "RKNN2";
+    case caiwei::runtime::Type::RKNN3:       return "RKNN3";
+    case caiwei::runtime::Type::LLAMACPP:    return "LLAMACPP";
+    case caiwei::runtime::Type::ONNXRUNTIME: return "ONNXRuntime";
+    case caiwei::runtime::Type::NONE:        return "NONE";
+    default: return "UNKNOWN";
+    }
+}
+
 class Runtime {
 private:
     int min_pool  = 4;

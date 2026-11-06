@@ -3,6 +3,8 @@ project(caiwei-server VERSION 1.0.0)
 set(
     CAIWEI_SERVER_SRCS
     src/main.cpp
+    src/rest/api.cpp
+    src/rest/rest.cpp
 )
 
 list(
@@ -14,14 +16,6 @@ list(
     APPEND CAIWEI_SERVER_LIBS
     caiwei-runtime
 )
-
-if(ENABLE_CAIWEI_CPPHTTPLIB)
-    list(
-        APPEND CAIWEI_SERVER_SRCS
-        src/rest/api.cpp
-        src/rest/rest.cpp
-    )
-endif()
 
 if(CMAKE_HOST_UNIX)
 # -

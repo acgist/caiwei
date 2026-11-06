@@ -11,6 +11,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <concepts>
 #include <stdexcept>
 
 namespace caiwei {
@@ -26,20 +27,44 @@ public:
 };
 
 template<typename T>
-inline void check_empty(const T& value, const std::string& message = "容器不能为空", const std::string& code = "9999") {
-    if (value.empty()) {
+concept Comparable = requires(T a, T z) {
+    { a <  z } -> std::convertible_to<bool>;
+    { a >  z } -> std::convertible_to<bool>;
+    { a == z } -> std::convertible_to<bool>;
+    { a != z } -> std::convertible_to<bool>;
+};
+
+template<Comparable T>
+inline void check_eq(T src, T dst, const std::string& message = "数据错误", const std::string& code = "9999") {
+    if (src == dst) {
+        throw MessageCodeException(code, message);
+    }
+}
+
+template<Comparable T>
+inline void check_ne(T src, T dst, const std::string& message = "数据错误", const std::string& code = "9999") {
+    if (src != dst) {
+        throw MessageCodeException(code, message);
+    }
+}
+
+template<Comparable T>
+inline void check_in(T val, T min, T max, const std::string& message = "数据错误", const std::string& code = "9999") {
+    if (val >= min && val <= max) {
+        throw MessageCodeException(code, message);
+    }
+}
+
+template<Comparable T>
+inline void check_out(T val, T min, T max, const std::string& message = "数据错误", const std::string& code = "9999") {
+    if (val < min || val > max) {
         throw MessageCodeException(code, message);
     }
 }
 
 template<typename T>
-concept Comparable = requires(T a, T z) {
-    { a < z } -> std::convertible_to<bool>;
-    { a > z } -> std::convertible_to<bool>;
-};
-template<Comparable T>
-inline void check_range(T val, T min, T max, const std::string& message = "数据范围错误", const std::string& code = "9999") {
-    if (val < min || val > max) {
+inline void check_empty(const T& value, const std::string& message = "数据错误", const std::string& code = "9999") {
+    if (value.empty()) {
         throw MessageCodeException(code, message);
     }
 }

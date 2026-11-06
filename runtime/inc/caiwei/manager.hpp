@@ -106,6 +106,7 @@ inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::
 
 template <typename C>
 std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+    static_assert(requires { C::TYPE; }, "子类没有指定类型");
     if (!available.load(std::memory_order_acquire)) {
         CW_LOG_I("系统还未准备就绪");
         return nullptr;
@@ -113,6 +114,10 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
     const auto* info = caiwei::context::get_context_info(name);
     if (info == nullptr) {
         CW_LOG_D("没有模型配置信息: %s", name.c_str());
+        return nullptr;
+    }
+    if (info->type != C::TYPE) {
+        CW_LOG_W("模型类型错误: %s = %s != %s", name.c_str(), caiwei::context::get_type_name(info->type), caiwei::context::get_type_name(C::TYPE));
         return nullptr;
     }
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2

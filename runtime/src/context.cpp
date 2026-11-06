@@ -13,8 +13,10 @@ static void init_context_info_map();
 inline constexpr const char* empty_char = " \t\r\n";
 
 caiwei::context::Context::Context(
+    Type type,
     caiwei::runtime::Runtime* runtime
-) : id(caiwei::env::id()),
+) : type(type),
+    id(caiwei::env::id()),
     ref_count(0),
     last_run_time(std::chrono::steady_clock::now()),
     runtime(runtime) {
@@ -39,7 +41,7 @@ caiwei::context::ClsContext::ClsContext(
     class_size(class_size),
     top_k(top_k),
     confidence_threshold(confidence_threshold),
-    Context(runtime) {
+    Context(Type::CLS, runtime) {
 }
 
 caiwei::context::ClsContext::~ClsContext() {
@@ -59,37 +61,47 @@ caiwei::context::DetContext::DetContext(
     class_size(class_size),
     iou_threshold(iou_threshold),
     confidence_threshold(confidence_threshold),
-    Context(runtime) {
+    Context(Type::DET, runtime) {
 }
 
 caiwei::context::DetContext::~DetContext() {
 }
 
-caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
+caiwei::context::ASRContext::ASRContext(
+    caiwei::runtime::Runtime* runtime
+) : Context(Type::ASR, runtime) {
 }
 
 caiwei::context::ASRContext::~ASRContext() {
 }
 
-caiwei::context::LLMContext::LLMContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
+caiwei::context::LLMContext::LLMContext(
+    caiwei::runtime::Runtime* runtime
+) : Context(Type::LLM, runtime) {
 }
 
 caiwei::context::LLMContext::~LLMContext() {
 }
 
-caiwei::context::VLMContext::VLMContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
+caiwei::context::VLMContext::VLMContext(
+    caiwei::runtime::Runtime* runtime
+) : Context(Type::VLM, runtime) {
 }
 
 caiwei::context::VLMContext::~VLMContext() {
 }
 
-caiwei::context::EmbeddingContext::EmbeddingContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
+caiwei::context::EmbeddingContext::EmbeddingContext(
+    caiwei::runtime::Runtime* runtime
+) : Context(Type::EMBEDDING, runtime) {
 }
 
 caiwei::context::EmbeddingContext::~EmbeddingContext() {
 }
 
-caiwei::context::RerankingContext::RerankingContext(caiwei::runtime::Runtime* runtime) : Context(runtime) {
+caiwei::context::RerankingContext::RerankingContext(
+    caiwei::runtime::Runtime* runtime
+) : Context(Type::RERANKING, runtime) {
 }
 
 caiwei::context::RerankingContext::~RerankingContext() {

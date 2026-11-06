@@ -43,6 +43,20 @@ enum class Type {
     NONE,
 };
 
+inline const char* get_type_name(Type type) {
+    switch (type) {
+    case Type::CLS:       return "CLS";
+    case Type::DET:       return "DET";
+    case Type::ASR:       return "ASR";
+    case Type::LLM:       return "LLM";
+    case Type::VLM:       return "VLM";
+    case Type::EMBEDDING: return "EMBEDDING";
+    case Type::RERANKING: return "RERANKING";
+    case Type::NONE:      return "NONE";
+    default: return "UNKNOWN";
+    }
+}
+
 struct ContextInfo {
     Type type;
     std::string type_name;
@@ -54,13 +68,14 @@ struct ContextInfo {
 
 class Context {
 public:
+    const Type type;
     const std::string id;
     std::atomic_int32_t ref_count;
     std::chrono::steady_clock::time_point last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
 public:
-    Context(caiwei::runtime::Runtime* runtime);
+    Context(Type type, caiwei::runtime::Runtime* runtime);
     virtual ~Context();
 public:
     virtual bool load() = 0;
@@ -78,6 +93,7 @@ public:
     ClsContext(int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsContext();
 public:
+    static constexpr Type TYPE = Type::CLS;
     using I = caiwei::media::ImageFrame;
     using O = std::vector<caiwei::image::Cls>;
     virtual O run(const I& image) = 0;
@@ -95,6 +111,7 @@ public:
     DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~DetContext();
 public:
+    static constexpr Type TYPE = Type::DET;
     using I = caiwei::media::ImageFrame;
     using O = std::vector<caiwei::image::Box>;
     virtual O run(const I& image) = 0;
@@ -105,6 +122,7 @@ public:
     ASRContext(caiwei::runtime::Runtime* runtime);
     ~ASRContext();
 public:
+    static constexpr Type TYPE = Type::ASR;
     using I = caiwei::text::CompletionsRequest;
     using O = std::generator<caiwei::text::CompletionResult>;
     virtual O run(const I& request) = 0;
@@ -115,6 +133,7 @@ public:
     LLMContext(caiwei::runtime::Runtime* runtime);
     ~LLMContext();
 public:
+    static constexpr Type TYPE = Type::LLM;
     using I = caiwei::text::CompletionsRequest;
     using O = std::generator<caiwei::text::CompletionResult>;
     virtual O run(const I& request) = 0;
@@ -125,6 +144,7 @@ public:
     VLMContext(caiwei::runtime::Runtime* runtime);
     ~VLMContext();
 public:
+    static constexpr Type TYPE = Type::VLM;
     using I = caiwei::text::CompletionsRequest;
     using O = std::generator<caiwei::text::CompletionResult>;
     virtual O run(const I& request) = 0;
@@ -135,6 +155,7 @@ public:
     EmbeddingContext(caiwei::runtime::Runtime* runtime);
     ~EmbeddingContext();
 public:
+    static constexpr Type TYPE = Type::EMBEDDING;
     using I = caiwei::text::EmbeddingsRequest;
     using O = caiwei::text::EmbeddingResult;
     virtual O run(const I& request) = 0;
@@ -145,6 +166,7 @@ public:
     RerankingContext(caiwei::runtime::Runtime* runtime);
     ~RerankingContext();
 public:
+    static constexpr Type TYPE = Type::RERANKING;
     using I = caiwei::text::RerankingsRequest;
     using O = caiwei::text::RerankingResult;
     virtual O run(const I& request) = 0;

@@ -113,14 +113,12 @@ static void post_chat_completions() {
             response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [
                 completions = std::move(completions)
             ](size_t /* offset */, httplib::DataSink& sink) mutable -> bool {
-                auto mutex = std::make_shared<std::mutex>();
-                caiwei::session::CompletionsSession session(completions, [&sink, mutex](const char* data, int length) {
+                caiwei::session::CompletionsSession session(completions, [&sink](const char* data, int length) {
                     const bool writable = sink.is_writable();
                     if (writable) {
                         if (data == nullptr) {
                             return writable;
                         } else {
-                            std::lock_guard<std::mutex> lock(*mutex);
                             sink.write("data: ", 6);
                             if (length < 0) {
                                 length = std::strlen(data);

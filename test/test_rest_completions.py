@@ -136,19 +136,20 @@ def test_vlm():
 def test_media():
     client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
     resp = client.chat.completions.create(
-        # model="qwen3-asr",
+        model="qwen3-asr",
         # model="qwen3-vlm",
         # model="yolo26n-cls",
-        model="yolo26n-det",
+        # model="yolo26n-det",
         stream=True,  # 必须使用stream模式
         extra_body={
             # "media_url": "./caiwei.mp3",
             "media_url": "./caiwei.mp4",
             "media_type": "file",
             "asr_samples": 32000,
-            "vlm_frames": 1,
+            "vlm_frames": 8,
             "drop_on_full": False,
-            "model_list": ["qwen3-vlm"],
+            # "model_list": ["qwen3-asr"],
+            # "model_list": ["qwen3-vlm"],
             # "model_list": ["qwen3-asr", "qwen3-vlm"],
         },
         messages=[
