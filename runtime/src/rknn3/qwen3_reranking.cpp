@@ -32,7 +32,6 @@ caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const 
     for (const auto& document : request.documents) {
         std::string prompt = caiwei::text::get_reranking_prompt(document, request, this->special_token);
         document_list.emplace_back(std::move(prompt));
-        // 不能直接取址
     }
     std::vector<const std::string*> prompt_list;
     for (const auto& document: document_list) {

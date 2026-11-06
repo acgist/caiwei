@@ -33,6 +33,10 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LLMRKNN3Context:
 
 std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* /* context_session */, const caiwei::text::CompletionsRequest& request) {
     prompt = this->chat_template.apply(this->special_token, request);
+    if (prompt.empty()) {
+        CW_LOG_W("提示词为空");
+        return {};
+    }
     rknn3_llm_tensor tensor{
         .name     = "input_embeds",
         .prompt   = prompt.c_str(),

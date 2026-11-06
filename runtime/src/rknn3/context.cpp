@@ -436,7 +436,11 @@ std::vector<rknn3_llm_input> caiwei::context::RKNN3Context::get_inputs(std::stri
     return {};
 }
 
-std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t& prompt_tokens, std::vector<const std::string*> prompt_list, bool add_special, bool parse_special) {
+std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t& prompt_tokens, const std::vector<const std::string*>& prompt_list, bool add_special, bool parse_special) {
+    if (prompt_list.empty()) {
+        CW_LOG_W("输入为空");
+        return {};
+    }
     ContextSession context_session;
     context_session.context        = this->context;
     context_session.media_context  = this->media_context;
@@ -496,6 +500,10 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& request) {
+    if (request.messages.empty()) {
+        CW_LOG_W("输入为空");
+        co_return;
+    }
     ContextSession context_session;
     context_session.context        = this->context;
     context_session.media_context  = this->media_context;

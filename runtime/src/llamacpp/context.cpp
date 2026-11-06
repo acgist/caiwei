@@ -254,6 +254,10 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
 }
 
 std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const std::vector<std::vector<llama_token>>& inputs) const {
+    if (inputs.empty()) {
+        CW_LOG_W("输入为空");
+        return {};
+    }
     llama_context_ptr context{ this->get_context(true) };
     const int n_batch = llama_n_batch(context.get());
     const int n_prompts = inputs.size();
@@ -324,6 +328,10 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) const {
+    if (request.messages.empty()) {
+        CW_LOG_W("输入为空为空");
+        co_return;
+    }
     llama_context_ptr context{ this->get_context()        };
     llama_sampler_ptr sampler{ this->get_sampler(request) };
     if (context == nullptr || sampler == nullptr) {

@@ -23,8 +23,8 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LLMLlamaCPPConte
 }
 
 caiwei::context::caiwei_llama_batch caiwei::context::LLMLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
-    caiwei_llama_batch caiwei_batch;
     prompt = this->chat_template.apply(this->special_token, request);
+    caiwei_llama_batch caiwei_batch{};
     if (prompt.empty()) {
         CW_LOG_W("提示词为空");
         caiwei_batch.success = false;

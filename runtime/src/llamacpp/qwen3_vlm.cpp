@@ -74,6 +74,14 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
 }
 
 caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+    prompt = this->chat_template.apply(this->special_token, request, this->special_token.media_marker, this->special_token.media_marker, this->special_token.media_marker);
+    caiwei_llama_batch caiwei_batch{};
+    if (prompt.empty()) {
+        CW_LOG_W("提示词为空");
+        caiwei_batch.success = false;
+        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        return caiwei_batch;
+    }
     mtmd::bitmaps bitmaps;
     for (const auto& message : request.messages) {
         for (const auto& image : message.image_data) {
@@ -84,8 +92,6 @@ caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inp
             mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
         }
     }
-    prompt = this->chat_template.apply(this->special_token, request, this->special_token.media_marker, this->special_token.media_marker, this->special_token.media_marker);
-    caiwei_llama_batch caiwei_batch{};
     if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
         caiwei_batch.success = true;
         return caiwei_batch;

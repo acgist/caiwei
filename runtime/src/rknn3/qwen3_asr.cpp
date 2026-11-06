@@ -2,14 +2,12 @@
 #include "caiwei/audio_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
-#include <mutex>
-
 #define N_FFT 400
 #define HOP_LENGTH 160
 #define DOWN_SAMPLE_RATE 8
 
-static std::mutex media_mutex;
-
+static int get_n_per_window_token(int window_size);
+static int get_n_left_token(int window_size, int n_frame);
 static int get_n_audio(int window_size, int n_frame);
 
 caiwei::context::ASRRKNN3Context::ASRRKNN3Context(
@@ -70,18 +68,55 @@ bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
         this->suffix_token.resize(-n_suffix_token);
         n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, true);
     }
+    if (n_prefix_token <= 0) {
+        CW_LOG_W("音频开始提示词编码失败: %d", n_prefix_token);
+        return false;
+    }
+    if (n_suffix_token <= 0) {
+        CW_LOG_W("音频结束提示词编码失败: %d", n_suffix_token);
+        return false;
+    }
     CW_LOG_I("音频开始提示词词元数量: %d", n_prefix_token);
     CW_LOG_I("音频结束提示词词元数量: %d", n_suffix_token);
     return true;
 }
 
 bool caiwei::context::ASRRKNN3Context::load() {
-    return
-    this->load_model(true)            &&
-    this->load_media_model(true)      &&
-    this->init_internal_tensor_mems() &&
-    this->load_mel_filters()          &&
-    this->init_prompt_token();
+    if (!(
+        this->load_model(true)       &&
+        this->load_media_model(true) &&
+        this->init_internal_tensor_mems()
+    )) {
+        return false;
+    }
+    if (
+        this->media_input.empty() ||
+        this->media_output.empty()
+    ) {
+        CW_LOG_W("模型没有加载成功");
+        return false;
+    }
+    if (
+        this->media_input[0].attr->n_dims  != 4 ||
+        this->media_output[0].attr->n_dims != 2
+    ) {
+        CW_LOG_W("模型维度错误: %d - %d", this->media_input[0].attr->n_dims, this->media_output[0].attr->n_dims);
+        return false;
+    }
+    const int chunk_length = this->media_output[0].attr->shape[1];
+    if (chunk_length != this->embedding_dim) {
+        CW_LOG_W("模型维度错误: %d != %d", chunk_length, this->embedding_dim);
+        return false;
+    }
+    const int batch_size    = this->media_input[0].attr->shape[0];
+    const int window_size   = this->media_input[0].attr->shape[3];
+    const int chunk_size    = batch_size * get_n_per_window_token(window_size);
+    const int n_chunk_token = this->media_output[0].attr->shape[0];
+    if (chunk_size != n_chunk_token) {
+        CW_LOG_W("模型维度错误: %d != %d", chunk_size, n_chunk_token);
+        return false;
+    }
+    return this->load_mel_filters() && this->init_prompt_token();
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
@@ -118,6 +153,10 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
     const int n_prefix_token = this->prefix_token.size();
     const int n_suffix_token = this->suffix_token.size();
     n_tokens = n_audio + n_prefix_token + n_suffix_token;
+    if (n_tokens > this->max_token_length) {
+        CW_LOG_W("音频数据词元数量超过限制: %d > %d", n_tokens, this->max_token_length);
+        return false;
+    }
     audio_embeds.resize(chunk_length * n_tokens);
     for(int chunk = 0; chunk * batch_size * window_size < n_frame; ++chunk) {
         int chunk_data_size = n_chunk_token;
@@ -125,7 +164,7 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         float* dst_data = (float*) this->media_input[0].mem->virt_addr;    
         if (chunk_data_length < batch_size * window_size) {
             std::memset(dst_data, 0, n_mels * batch_size * window_size * sizeof(float));
-            chunk_data_size = chunk_data_length / window_size * std::ceil(1.0 * window_size / DOWN_SAMPLE_RATE) + std::ceil(1.0 * (chunk_data_length % window_size) / DOWN_SAMPLE_RATE);
+            chunk_data_size = chunk_data_length / window_size * get_n_per_window_token(window_size) + get_n_left_token(window_size, chunk_data_length);
         }
         for (int batch = 0; batch < batch_size; ++batch) {
             int dst_pos = n_mels * batch * window_size;
@@ -159,7 +198,7 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
             }
         }
         std::memcpy(
-            audio_embeds.data() + ((chunk * n_chunk_token + n_prefix_token) * chunk_length),
+            audio_embeds.data() + (chunk * n_chunk_token + n_prefix_token) * chunk_length,
             this->media_output[0].mem->virt_addr,
             chunk_data_size * chunk_length * sizeof(float16)
         );
@@ -173,7 +212,7 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
     }
     for (size_t i = 0; i < this->suffix_token.size(); ++i) {
         std::memcpy(
-            audio_embeds.data() + chunk_length * (n_audio + n_prefix_token + i),
+            audio_embeds.data() + (n_audio + n_prefix_token + i) * chunk_length,
             this->embedding_data + this->suffix_token[i] * this->embedding_dim,
             this->embedding_dim * sizeof(float16)
         );
@@ -182,10 +221,6 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
 }
 
 std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::string& /* prompt */, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
-    if (request.messages.empty()) {
-        CW_LOG_W("音频数据为空");
-        return {};
-    }
     std::vector<uint8_t> audio_data;
     for (const auto& message : request.messages) {
         for (const auto& audio : message.audio_data) {
@@ -199,7 +234,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
     int n_frames;
     int n_tokens;
     {
-        std::lock_guard<std::mutex> lock(media_mutex);
+        std::lock_guard<std::mutex> lock(this->media_mutex);
         if (!this->fill_media(n_frames, n_tokens, context_session->audio_embeds, audio_data)) {
             return {};
         }
@@ -219,8 +254,16 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
     return inputs;
 }
 
+static int get_n_per_window_token(int window_size) {
+    return std::ceil(1.0 * window_size / DOWN_SAMPLE_RATE);
+}
+
+static int get_n_left_token(int window_size, int n_frame) {
+    return std::ceil(1.0 * (n_frame % window_size) / DOWN_SAMPLE_RATE);
+}
+
 static int get_n_audio(int window_size, int n_frame) {
-    const int n_left_token = std::ceil(1.0 * (n_frame % window_size) / DOWN_SAMPLE_RATE);
-    const int n_per_window_token = std::ceil(1.0 * window_size / DOWN_SAMPLE_RATE);
+    const int n_left_token = get_n_left_token(window_size, n_frame);
+    const int n_per_window_token = get_n_per_window_token(window_size);
     return std::floor(n_frame / window_size) * n_per_window_token + n_left_token;
 }

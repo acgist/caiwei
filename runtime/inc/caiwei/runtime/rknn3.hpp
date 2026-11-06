@@ -79,6 +79,7 @@ protected:
     const std::string media_model_path;
     const std::string media_weight_path;
           int32_t     max_token_length;
+    std::mutex media_mutex;
     rknn3_context context       = 0;
     rknn3_context media_context = 0;
            int      vocab_size;
@@ -104,7 +105,7 @@ protected:
     void release_internal_tensor_mems();
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
     virtual std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
-    std::vector<std::vector<float>> pooling(uint32_t& prompt_tokens, std::vector<const std::string*> prompt_list, bool add_special = false, bool parse_special = true);
+    std::vector<std::vector<float>> pooling(uint32_t& prompt_tokens, const std::vector<const std::string*>& prompt_list, bool add_special = false, bool parse_special = true);
     std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(

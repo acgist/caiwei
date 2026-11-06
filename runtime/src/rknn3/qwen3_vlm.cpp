@@ -1,4 +1,3 @@
-#include <mutex>
 #include <tuple>
 #include <cstddef>
 
@@ -9,8 +8,6 @@
 #include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
-
-static std::mutex media_mutex;
 
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     std::string model_path,
@@ -144,6 +141,11 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
 }
 
 std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    prompt = this->chat_template.apply(this->special_token, request, this->special_token.audio_marker, this->special_token.image_marker, this->special_token.video_marker);
+    if (prompt.empty()) {
+        CW_LOG_W("提示词为空");
+        return {};
+    }
     if (this->media_input.size() != 1 || this->media_output.size() != 4) {
         CW_LOG_W("模型没有加载完成");
         return {};
@@ -191,7 +193,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
     int deepstack_i = 0;
     uint64_t per_video_frame = 0;
     {
-        std::lock_guard<std::mutex> lock(media_mutex);
+        std::lock_guard<std::mutex> lock(this->media_mutex);
         for (const auto& [image_ptr, video_ptr] : data_list) {
             if (image_ptr != nullptr) {
                 if (!this->fill_media(
@@ -241,7 +243,6 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
             }
         }
     }
-    prompt = this->chat_template.apply(this->special_token, request, this->special_token.audio_marker, this->special_token.image_marker, this->special_token.video_marker);
     rknn3_llm_multimodal_tensor tensor{};
     tensor.name     = "input_embeds";
     tensor.prompt   = prompt.c_str();
