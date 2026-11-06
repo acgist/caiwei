@@ -1,4 +1,5 @@
 #include <sstream>
+#include <filesystem>
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
@@ -132,6 +133,34 @@ std::vector<const caiwei::context::ContextInfo*> caiwei::context::get_all_contex
     return ret;
 }
 
+bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
+    if (info == nullptr) {
+        return false;
+    }
+    if (size == 0) {
+        if (!std::filesystem::exists(info->path)) {
+            CW_LOG_W("模型文件无效: %s", info->path.c_str());
+            return false;
+        }
+        return true;
+    } else if (size > 0) {
+        if (info->path_list.size() != size) {
+            CW_LOG_W("模型文件配置错误: %d => %s", size, info->path.c_str());
+            return false;
+        }
+        for (const auto& path : info->path_list) {
+            if (!std::filesystem::exists(path)) {
+                CW_LOG_W("模型文件无效: %s", path.c_str());
+                return false;
+            }
+        }
+        return true;
+    } else {
+        CW_LOG_W("模型文件访问错误: %d", size);
+        return false;
+    }
+}
+
 inline static std::string strip(const std::string& value) {
     auto pos_a = value.find_first_not_of(empty_char);
     if (pos_a == std::string_view::npos) {
@@ -185,8 +214,7 @@ static void init_context_info_map() {
         while (std::getline(path_stream, path_item, '|')) {
             path_list.push_back(std::move(path_item));
         }
-        CW_LOG_I("模型配置: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());
-        map.insert_or_assign(name, caiwei::context::ContextInfo{
+        auto ret = map.insert_or_assign(name, caiwei::context::ContextInfo{
             iter->second,
             type,
             name,
@@ -194,6 +222,11 @@ static void init_context_info_map() {
             vendor,
             std::move(path_list)
         });
+        if (ret.second) {
+            CW_LOG_I("模型配置成功: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());
+        } else {
+            CW_LOG_I("模型配置重复: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());
+        }
     }
     context_info_map.swap(map);
 }

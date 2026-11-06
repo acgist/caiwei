@@ -128,8 +128,8 @@ public:
     bool stop();
     bool on_audio(const AudioFrame& frame);
     bool on_video(const VideoFrame& frame);
-    bool on_audio(const int nb_samples,                                  const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t** data);
-    bool on_video(const int width, const int height, const int channels, const size_t msec, const size_t frames, const uint32_t data_length, const uint8_t*  data);
+    bool on_audio(const int nb_samples,                                  const size_t frames, const uint32_t data_length, const uint8_t** data);
+    bool on_video(const int width, const int height, const int channels, const size_t frames, const uint32_t data_length, const uint8_t*  data);
 private:
     bool open_audio();
     bool open_video();

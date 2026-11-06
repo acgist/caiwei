@@ -2,9 +2,13 @@
 #include "caiwei/audio_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
+#include <mutex>
+
 #define N_FFT 400
 #define HOP_LENGTH 160
 #define DOWN_SAMPLE_RATE 8
+
+static std::mutex media_mutex;
 
 static int get_n_audio(int window_size, int n_frame);
 
@@ -84,29 +88,17 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::ASRRKNN3Context:
     return this->generate(request);
 }
 
-std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::string& /* prompt */, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
-    if (request.messages.empty()) {
-        CW_LOG_W("音频数据为空");
-        return {};
-    }
-    std::vector<uint8_t> audio_data_full;
-    for (const auto& message : request.messages) {
-        for (const auto& audio : message.audio_data) {
-            audio_data_full.insert(audio_data_full.end(), audio.data.begin(), audio.data.end());
-        }
-    }
-    if (audio_data_full.empty()) {
-        CW_LOG_W("音频数据为空");
-        return {};
-    }
-    const int n_prefix_token = this->prefix_token.size();
-    const int n_suffix_token = this->suffix_token.size();
-    const int n_frames = audio_data_full.size() * sizeof(uint8_t) / sizeof(int16_t);
+bool caiwei::context::ASRRKNN3Context::fill_media(
+    int& n_frames,
+    int& n_tokens,
+    std::vector<float16>& audio_embeds,
+    const std::vector<uint8_t>& audio_data
+) {
+    n_frames = audio_data.size() * sizeof(uint8_t) / sizeof(int16_t);
     if (n_frames < (N_FFT + HOP_LENGTH) * 2) {
         CW_LOG_W("音频数据长度不足: %d", n_frames);
-        return {};
+        return false;
     }
-    context_session->audio_frames = n_frames;
     int ret = 0;
     const int batch_size  = this->media_input[0].attr->shape[0];
     const int n_mels      = this->media_input[0].attr->shape[2];
@@ -116,15 +108,17 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
     const int n_chunk_token = this->media_output[0].attr->shape[0];
     const int chunk_length  = this->media_output[0].attr->shape[1];
     CW_LOG_D("音频数据长度: %d => %d : %d", n_frames, n_frame, n_audio);
-    std::vector<float> audio_data(n_frames);
-    const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio_data_full.data());
-    std::transform(audio_data_ptr, audio_data_ptr + n_frames, audio_data.data(), [](int16_t v) {
+    std::vector<float> audio_data_f32(n_frames);
+    const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio_data.data());
+    std::transform(audio_data_ptr, audio_data_ptr + n_frames, audio_data_f32.data(), [](int16_t v) {
         return static_cast<float>(v) / 32768.0F;
     });
     std::vector<float> audio_feature(n_mels * n_frame, 0.0F);
-    caiwei::audio::log_mel_spectrogram(audio_data.data(), audio_data.size(), this->mel_filters.data(), N_FFT, HOP_LENGTH, n_mels, n_frame * HOP_LENGTH, audio_feature);
-    const uint64_t n_tokens = n_audio + n_prefix_token + n_suffix_token;
-    this->audio_embeds.resize(chunk_length * n_tokens);
+    caiwei::audio::log_mel_spectrogram(audio_data_f32.data(), audio_data_f32.size(), this->mel_filters.data(), N_FFT, HOP_LENGTH, n_mels, n_frame * HOP_LENGTH, audio_feature);
+    const int n_prefix_token = this->prefix_token.size();
+    const int n_suffix_token = this->suffix_token.size();
+    n_tokens = n_audio + n_prefix_token + n_suffix_token;
+    audio_embeds.resize(chunk_length * n_tokens);
     for(int chunk = 0; chunk * batch_size * window_size < n_frame; ++chunk) {
         int chunk_data_size = n_chunk_token;
         int chunk_data_length = std::min(batch_size * window_size, n_frame - chunk * batch_size * window_size);
@@ -149,45 +143,72 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
             ret = rknn3_mem_sync(this->media_context, v.mem, RKNN3_MEMORY_SYNC_TO_DEVICE);
             if (ret != RKNN3_SUCCESS) {
                 CW_LOG_W("输入失败: %d", ret);
-                return {};
+                return false;
             }
         }
         ret = rknn3_run(this->media_context, this->media_input.data(), this->media_input.size(), this->media_output.data(), this->media_output.size());
         if (ret != RKNN3_SUCCESS) {
             CW_LOG_W("计算失败: %d", ret);
-            return {};
+            return false;
         }
         for (auto& v : this->media_output) {
             ret = rknn3_mem_sync(this->media_context, v.mem, RKNN3_MEMORY_SYNC_FROM_DEVICE);
             if (ret != RKNN3_SUCCESS) {
                 CW_LOG_W("输出失败: %d", ret);
-                return {};
+                return false;
             }
         }
         std::memcpy(
-            this->audio_embeds.data() + ((chunk * n_chunk_token + n_prefix_token) * chunk_length),
+            audio_embeds.data() + ((chunk * n_chunk_token + n_prefix_token) * chunk_length),
             this->media_output[0].mem->virt_addr,
             chunk_data_size * chunk_length * sizeof(float16)
         );
     }
     for (size_t i = 0; i < this->prefix_token.size(); ++i) {
         std::memcpy(
-            this->audio_embeds.data() + i * chunk_length,
+            audio_embeds.data() + i * chunk_length,
             this->embedding_data + this->prefix_token[i] * this->embedding_dim,
             this->embedding_dim * sizeof(float16)
         );
     }
     for (size_t i = 0; i < this->suffix_token.size(); ++i) {
         std::memcpy(
-            this->audio_embeds.data() + chunk_length * (n_audio + n_prefix_token + i),
+            audio_embeds.data() + chunk_length * (n_audio + n_prefix_token + i),
             this->embedding_data + this->suffix_token[i] * this->embedding_dim,
             this->embedding_dim * sizeof(float16)
         );
     }
+    return true;
+}
+
+std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::string& /* prompt */, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+    if (request.messages.empty()) {
+        CW_LOG_W("音频数据为空");
+        return {};
+    }
+    std::vector<uint8_t> audio_data;
+    for (const auto& message : request.messages) {
+        for (const auto& audio : message.audio_data) {
+            audio_data.insert(audio_data.end(), audio.data.begin(), audio.data.end());
+        }
+    }
+    if (audio_data.empty()) {
+        CW_LOG_W("音频数据为空");
+        return {};
+    }
+    int n_frames;
+    int n_tokens;
+    {
+        std::lock_guard<std::mutex> lock(media_mutex);
+        if (!this->fill_media(n_frames, n_tokens, context_session->audio_embeds, audio_data)) {
+            return {};
+        }
+        context_session->audio_frames = n_frames;
+    }
     rknn3_llm_tensor tensor = {
         .name     = "input_embeds",
         .prompt   = nullptr,
-        .embed    = this->audio_embeds.data(),
+        .embed    = context_session->audio_embeds.data(),
         .tokens   = nullptr,
         .n_tokens = n_tokens,
         .enable_thinking = request.enable_thinking.value_or(false)

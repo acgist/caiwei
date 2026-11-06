@@ -177,6 +177,7 @@ void stop();
 
 const ContextInfo* get_context_info(const std::string& name);
 std::vector<const ContextInfo*> get_all_context_info();
+bool check_model_path(const ContextInfo* info, int size = 0);
 
 template<typename F>
 struct RaiiGuard {

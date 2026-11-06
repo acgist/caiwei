@@ -24,7 +24,7 @@ caiwei::context::RerankingRKNN3Context::~RerankingRKNN3Context() {
 }
 
 bool caiwei::context::RerankingRKNN3Context::load() {
-    return this->load_model() && this->init_output_tensors();
+    return this->load_model();
 }
 
 caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const caiwei::text::RerankingsRequest& request) {

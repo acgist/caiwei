@@ -1,5 +1,3 @@
-#include <filesystem>
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
@@ -29,7 +27,7 @@ static void onnxruntime_log(
 template<>
 std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
     if (type != caiwei::runtime::Type::ONNXRUNTIME) {
-        CW_LOG_W("类型无效: %d", type);
+        CW_LOG_W("类型无效: %s", get_type_name(type));
         return nullptr;
     }
     const int  min_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MIN_POOL");
@@ -57,7 +55,7 @@ caiwei::runtime::ONNXRuntimeRuntime::~ONNXRuntimeRuntime() {
 }
 
 std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime::get_cls_context(const caiwei::context::ContextInfo* info) {
-    if (!std::filesystem::exists(info->path)) {
+    if (!caiwei::context::check_model_path(info)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
@@ -71,7 +69,7 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
-    if (!std::filesystem::exists(info->path)) {
+    if (!caiwei::context::check_model_path(info)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }

@@ -35,7 +35,6 @@ public:
 
 class AudioFrame : public Frame {
 public:
-    uint64_t msec;
     uint64_t frames;
     uint32_t samples;
 public:
@@ -58,7 +57,6 @@ public:
 
 class VideoFrame : public ImageFrame {
 public:
-    uint64_t msec;
     uint64_t frames;
 public:
     VideoFrame(uint32_t size);

@@ -1,5 +1,3 @@
-#include <filesystem>
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
@@ -8,7 +6,7 @@
 template<>
 std::shared_ptr<caiwei::runtime::RKNN3Runtime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
     if (type != caiwei::runtime::Type::RKNN3) {
-        CW_LOG_W("类型无效: %d", type);
+        CW_LOG_W("类型无效: %s", get_type_name(type));
         return nullptr;
     }
     const int  min_pool  = caiwei::env::get_int("CAIWEI_RKNN3_MIN_POOL");
@@ -30,181 +28,106 @@ caiwei::runtime::RKNN3Runtime::~RKNN3Runtime() {
 }
 
 std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_asr_context(const caiwei::context::ContextInfo* info) {
-    const auto& path_list = info->path_list;
-    if (path_list.size() != 6) {
+    if (!caiwei::context::check_model_path(info, 6)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string& model_path        = path_list[0];
-    const std::string& weight_path       = path_list[1];
-    const std::string& embedding_path    = path_list[2];
-    const std::string& tokenizer_path    = path_list[3];
-    const std::string& media_model_path  = path_list[4];
-    const std::string& media_weight_path = path_list[5];
-    if (!std::filesystem::exists(model_path)) {
-        CW_LOG_W("模型无效: %s", model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(weight_path)) {
-        CW_LOG_W("模型无效: %s", weight_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(embedding_path)) {
-        CW_LOG_W("模型无效: %s", embedding_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(tokenizer_path)) {
-        CW_LOG_W("模型无效: %s", tokenizer_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(media_model_path)) {
-        CW_LOG_W("模型无效: %s", media_model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(media_weight_path)) {
-        CW_LOG_W("模型无效: %s", media_weight_path.c_str());
-        return nullptr;
-    }
+    const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_asr();
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::ASRRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::ASRRKNN3Context>(
+        path_list[0],
+        path_list[1],
+        path_list[2],
+        path_list[3],
+        path_list[4],
+        path_list[5],
+        max_token_length,
+        std::move(special_token),
+        this
+    );
 }
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_llm_context(const caiwei::context::ContextInfo* info) {
-    const auto& path_list = info->path_list;
-    if (path_list.size() != 4) {
+    if (!caiwei::context::check_model_path(info, 4)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string& model_path     = path_list[0];
-    const std::string& weight_path    = path_list[1];
-    const std::string& embedding_path = path_list[2];
-    const std::string& tokenizer_path = path_list[3];
-    if (!std::filesystem::exists(model_path)) {
-        CW_LOG_W("模型无效: %s", model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(weight_path)) {
-        CW_LOG_W("模型无效: %s", weight_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(embedding_path)) {
-        CW_LOG_W("模型无效: %s", embedding_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(tokenizer_path)) {
-        CW_LOG_W("模型无效: %s", tokenizer_path.c_str());
-        return nullptr;
-    }
+    const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_llm();
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::LLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::LLMRKNN3Context>(
+        path_list[0],
+        path_list[1],
+        path_list[2],
+        path_list[3],
+        max_token_length,
+        std::move(special_token),
+        this
+    );
 }
 
 
 std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_vlm_context(const caiwei::context::ContextInfo* info) {
-    const auto& path_list = info->path_list;
-    if (path_list.size() != 6) {
+    if (!caiwei::context::check_model_path(info, 6)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string& model_path        = path_list[0];
-    const std::string& weight_path       = path_list[1];
-    const std::string& embedding_path    = path_list[2];
-    const std::string& tokenizer_path    = path_list[3];
-    const std::string& media_model_path  = path_list[4];
-    const std::string& media_weight_path = path_list[5];
-    if (!std::filesystem::exists(model_path)) {
-        CW_LOG_W("模型无效: %s", model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(weight_path)) {
-        CW_LOG_W("模型无效: %s", weight_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(embedding_path)) {
-        CW_LOG_W("模型无效: %s", embedding_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(tokenizer_path)) {
-        CW_LOG_W("模型无效: %s", tokenizer_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(media_model_path)) {
-        CW_LOG_W("模型无效: %s", media_model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(media_weight_path)) {
-        CW_LOG_W("模型无效: %s", media_weight_path.c_str());
-        return nullptr;
-    }
+    const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_vlm();
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::VLMRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, media_model_path, media_weight_path, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::VLMRKNN3Context>(
+        path_list[0],
+        path_list[1],
+        path_list[2],
+        path_list[3],
+        path_list[4],
+        path_list[5],
+        max_token_length,
+        std::move(special_token),
+        this
+    );
 }
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime::get_embedding_context(const caiwei::context::ContextInfo* info) {
-    const auto& path_list = info->path_list;
-    if (path_list.size() != 4) {
+    if (!caiwei::context::check_model_path(info, 4)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string& model_path     = path_list[0];
-    const std::string& weight_path    = path_list[1];
-    const std::string& embedding_path = path_list[2];
-    const std::string& tokenizer_path = path_list[3];
-    if (!std::filesystem::exists(model_path)) {
-        CW_LOG_W("模型无效: %s", model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(weight_path)) {
-        CW_LOG_W("模型无效: %s", weight_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(embedding_path)) {
-        CW_LOG_W("模型无效: %s", embedding_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(tokenizer_path)) {
-        CW_LOG_W("模型无效: %s", tokenizer_path.c_str());
-        return nullptr;
-    }
+    const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
+    special_token.load_embedding();
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(
+        path_list[0],
+        path_list[1],
+        path_list[2],
+        path_list[3],
+        max_token_length,
+        std::move(special_token),
+        this
+    );
 }
 
 std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime::get_reranking_context(const caiwei::context::ContextInfo* info) {
-    const auto& path_list = info->path_list;
-    if (path_list.size() != 4) {
+    if (!caiwei::context::check_model_path(info, 4)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
-    const std::string& model_path     = path_list[0];
-    const std::string& weight_path    = path_list[1];
-    const std::string& embedding_path = path_list[2];
-    const std::string& tokenizer_path = path_list[3];
-    if (!std::filesystem::exists(model_path)) {
-        CW_LOG_W("模型无效: %s", model_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(weight_path)) {
-        CW_LOG_W("模型无效: %s", weight_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(embedding_path)) {
-        CW_LOG_W("模型无效: %s", embedding_path.c_str());
-        return nullptr;
-    }
-    if (!std::filesystem::exists(tokenizer_path)) {
-        CW_LOG_W("模型无效: %s", tokenizer_path.c_str());
-        return nullptr;
-    }
+    const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_reranking();
     uint32_t max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
-    return std::make_shared<caiwei::context::RerankingRKNN3Context>(model_path, weight_path, embedding_path, tokenizer_path, max_token_length, special_token, this);
+    return std::make_shared<caiwei::context::RerankingRKNN3Context>(
+        path_list[0],
+        path_list[1],
+        path_list[2],
+        path_list[3],
+        max_token_length,
+        std::move(special_token),
+        this
+    );
 }

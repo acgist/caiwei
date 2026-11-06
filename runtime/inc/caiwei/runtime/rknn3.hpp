@@ -30,7 +30,7 @@ inline auto rknn3_session_deleter = [](rknn3_session* session) {
 
 using rknn3_session_ptr = std::unique_ptr<rknn3_session, decltype(rknn3_session_deleter)>;
 
-struct alignas(16) ContextSession {
+struct ContextSession {
     bool stop     = false;
     bool thinking = false;
     bool toolcall = false;
@@ -47,6 +47,8 @@ struct alignas(16) ContextSession {
     float feature_ms           = 0;
     float prefill_ms           = 0;
     float generate_ms          = 0;
+    rknn3_context context       = 0;
+    rknn3_context media_context = 0;
     std::mutex mutex;
     std::condition_variable condition;
     int        embedding_dim;
@@ -56,6 +58,16 @@ struct alignas(16) ContextSession {
     caiwei::text::ToolcallSession toolcall_session;
     std::vector<std::vector<float>> pool_result{};
     std::vector<caiwei::text::CompletionResult> token_result{};
+    std::vector<float16> audio_embeds{};
+    std::vector<float16> image_embeds{};
+    std::vector<float16> video_embeds{};
+    std::vector<rknn3_tensor> output_tensors{};
+    std::vector<rknn3_aux_tensor> deepstack_tensors{};
+    bool init_output_tensors(int n_output_tensors = 1);
+    void release_output_tensors();
+    bool init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length, int size = 3);
+    void release_deepstack_tensors();
+    ~ContextSession();
 };
 
 class RKNN3Context {
@@ -79,7 +91,6 @@ protected:
     caiwei::text::SpecialToken special_token;
     std::vector<rknn3_tensor> media_input   {};
     std::vector<rknn3_tensor> media_output  {};
-    std::vector<rknn3_tensor> output_tensors{};
     std::vector<rknn3_tensor_mem*> internal_tensor_mems{};
 protected:
     bool load_model(rknn3_context& context, const std::string& model_path, const std::string& weight_path, bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
@@ -89,8 +100,6 @@ protected:
     bool load_embedding();
     bool init_media_tensors();
     void release_media_tensors();
-    bool init_output_tensors(int n_output_tensors = 1);
-    void release_output_tensors();
     bool init_internal_tensor_mems();
     void release_internal_tensor_mems();
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
@@ -122,10 +131,15 @@ public:
 class ASRRKNN3Context : public ASRContext, public RKNN3Context {
 private:
     std::vector<float>   mel_filters {};
-    std::vector<float16> audio_embeds{};
     std::vector<int32_t> prefix_token{};
     std::vector<int32_t> suffix_token{};
 private:
+    bool fill_media(
+        int& n_frames,
+        int& n_tokens,
+        std::vector<float16>& audio_embeds,
+        const std::vector<uint8_t>& audio_data
+    );
     bool load_mel_filters();
     bool init_prompt_token();
 protected:
@@ -169,12 +183,18 @@ public:
 
 class VLMRKNN3Context : public VLMContext, public RKNN3Context {
 private:
-    std::vector<float16> image_embeds{};
-    std::vector<float16> video_embeds{};
-    std::vector<rknn3_aux_tensor> deepstack_tensors{};
-private:
-    bool fill_media(int media_i, int deepstack_i, std::vector<float16>& embeds, int width, int height, int channels, const std::vector<uint8_t>& data, std::vector<rknn3_aux_tensor>& deepstack_tensors);
-    bool init_deepstack_tensors(int length, int size = 3);
+    bool fill_media(
+        int media_i,
+        int deepstack_i,
+        int width,
+        int height,
+        int channels,
+        int image_width,
+        int image_height,
+        std::vector<float16>& embeds,
+        std::vector<rknn3_aux_tensor>& deepstack_tensors,
+        const std::vector<uint8_t>& media_data
+    );
 protected:
     std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:

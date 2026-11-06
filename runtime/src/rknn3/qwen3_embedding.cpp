@@ -24,7 +24,7 @@ caiwei::context::EmbeddingRKNN3Context::~EmbeddingRKNN3Context() {
 }
 
 bool caiwei::context::EmbeddingRKNN3Context::load() {
-    return this->load_model() && this->init_output_tensors();
+    return this->load_model();
 }
 
 caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const caiwei::text::EmbeddingsRequest& request) {

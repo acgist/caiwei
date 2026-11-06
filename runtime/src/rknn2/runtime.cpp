@@ -1,5 +1,3 @@
-#include <filesystem>
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/runtime.hpp"
@@ -8,7 +6,7 @@
 template<>
 std::shared_ptr<caiwei::runtime::RKNN2Runtime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
     if (type != caiwei::runtime::Type::RKNN2) {
-        CW_LOG_W("类型无效: %d", type);
+        CW_LOG_W("类型无效: %s", get_type_name(type));
         return nullptr;
     }
     const int  min_pool  = caiwei::env::get_int("CAIWEI_RKNN2_MIN_POOL");
@@ -30,7 +28,7 @@ caiwei::runtime::RKNN2Runtime::~RKNN2Runtime() {
 }
 
 std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::RKNN2Runtime::get_cls_context(const caiwei::context::ContextInfo* info) {
-    if (!std::filesystem::exists(info->path)) {
+    if (!caiwei::context::check_model_path(info)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
@@ -44,7 +42,7 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::RKNN2Runtime::get_
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::RKNN2Runtime::get_det_context(const caiwei::context::ContextInfo* info) {
-    if (!std::filesystem::exists(info->path)) {
+    if (!caiwei::context::check_model_path(info)) {
         CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }

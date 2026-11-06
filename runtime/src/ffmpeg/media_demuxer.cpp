@@ -38,7 +38,6 @@ caiwei::media::MediaDemuxer::MediaDemuxer(
 }
 
 inline bool recv_audio_frame(
-    const size_t msec,
     const size_t audio_frames,
     SwrContext* swr_ctx,
     const AVFrame* frame,
@@ -57,7 +56,6 @@ inline bool recv_audio_frame(
         CW_LOG_W("音频重采样失败: %d", nb_samples);
         return false;
     }
-    audio_frame.msec    = msec;
     audio_frame.frames  = audio_frames;
     audio_frame.samples = nb_samples;
     audio_frame.data.resize(nb_samples * audio_info.channels * audio_info.bytes_per_sample);
@@ -65,7 +63,6 @@ inline bool recv_audio_frame(
 }
 
 inline bool recv_video_frame(
-    const size_t msec,
     const size_t video_frames,
     SwsContext* sws_ctx,
     const AVFrame* frame,
@@ -86,7 +83,6 @@ inline bool recv_video_frame(
     }
     video_frame.width  = video_info.width;
     video_frame.height = dst_height;
-    video_frame.msec   = msec;
     video_frame.frames = video_frames;
     return true;
 }
@@ -102,7 +98,6 @@ bool caiwei::media::MediaDemuxer::open(
     bool success = true;
     bool open_device = false;
     std::string sdp_file;
-    int64_t msec = 0;
     size_t audio_frames  = 0;
     size_t video_frames  = 0;
     int audio_stream_idx = -1;
@@ -122,7 +117,6 @@ bool caiwei::media::MediaDemuxer::open(
     AVFormatContext* fmt_ctx = avformat_alloc_context();
     AVCodecContext * audio_decoder_ctx = nullptr;
     AVCodecContext * video_decoder_ctx = nullptr;
-    const AVRational msec_time_base{ 1, 1000 };
     AVRational audio_time_base;
     AVRational video_time_base;
     auto timeout = caiwei::env::get_int("CAIWEI_TIMEOUT"); // 超时时间
@@ -312,7 +306,6 @@ bool caiwei::media::MediaDemuxer::open(
                     }
                 }
                 if (audio_callback) {
-                    msec = av_rescale_q(decoder_packet->pts, audio_time_base, msec_time_base);
                     ret = avcodec_send_packet(audio_decoder_ctx, decoder_packet);
                     while (ret == 0 && this->running) {
                         ret = avcodec_receive_frame(audio_decoder_ctx, decoder_frame);
@@ -344,7 +337,7 @@ bool caiwei::media::MediaDemuxer::open(
                                     goto close_all;
                                 }
                             }
-                            if (recv_audio_frame(msec, audio_frames, swr_ctx, decoder_frame, audio_info, audio_frame)) {
+                            if (recv_audio_frame(audio_frames, swr_ctx, decoder_frame, audio_info, audio_frame)) {
                                 if (audio_callback) {
                                     if (audio_callback(audio_frame)) {
                                         last_send_time = std::chrono::steady_clock::now();
@@ -373,7 +366,6 @@ bool caiwei::media::MediaDemuxer::open(
                     }
                 }
                 if (video_callback) {
-                    msec = av_rescale_q(decoder_packet->pts, video_time_base, msec_time_base);
                     ret = avcodec_send_packet(video_decoder_ctx, decoder_packet);
                     while (ret == 0 && this->running) {
                         ret = avcodec_receive_frame(video_decoder_ctx, decoder_frame);
@@ -405,7 +397,7 @@ bool caiwei::media::MediaDemuxer::open(
                                     goto close_all;
                                 }
                             }
-                            if (recv_video_frame(msec, video_frames, sws_ctx, decoder_frame, video_info, video_frame)) {
+                            if (recv_video_frame(video_frames, sws_ctx, decoder_frame, video_info, video_frame)) {
                                 if (video_callback) {
                                     if (video_callback(video_frame)) {
                                         last_send_time = std::chrono::steady_clock::now();
