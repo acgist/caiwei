@@ -24,7 +24,7 @@ caiwei::context::LLMRKNN3Context::~LLMRKNN3Context() {
 }
 
 bool caiwei::context::LLMRKNN3Context::load() {
-    return this->load_model();
+    return this->load_model() && this->load_template();
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {

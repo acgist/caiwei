@@ -52,13 +52,18 @@ caiwei::text::ChatTemplate::ChatTemplate() {
 caiwei::text::ChatTemplate::~ChatTemplate() {
 }
 
-void caiwei::text::ChatTemplate::set_template(const char* template_text, const std::string& bos, const std::string& eos) {
+bool caiwei::text::ChatTemplate::set_template(const char* template_text, const std::string& bos, const std::string& eos) {
     if (template_text == nullptr || std::strlen(template_text) == 0) {
-        CW_LOG_I("模板为空");
-        return;
+        CW_LOG_W("模板为空");
+        return false;
     }
     CW_LOG_D("设置模板: %s - %s -> %s", bos.c_str(), eos.c_str(), template_text);
-    this->chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
+    try {
+        this->chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
+    } catch (...) {
+        CW_LOG_E("设置模板异常: %s", template_text);
+    }
+    return this->chat_template != nullptr;
 }
 
 std::string caiwei::text::ChatTemplate::apply(
@@ -69,8 +74,8 @@ std::string caiwei::text::ChatTemplate::apply(
     const std::string& video_marker,
     bool add_vision_id
 ) const {
-    if (!this->chat_template) {
-        CW_LOG_W("没有设置模板");
+    if (this->chat_template == nullptr) {
+        CW_LOG_W("模板为空");
         return "";
     }
     nlohmann::json messages_json;

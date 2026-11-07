@@ -2,8 +2,6 @@
 #include <fstream>
 #include <filesystem>
 
-#include "rga/im2d.hpp"
-
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
 #include "caiwei/image_tool.hpp"
@@ -138,6 +136,9 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(T* blob, const s
 }
 
 caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, const int w, const caiwei::media::ImageFrame& image) {
+    if (image.width % 16 != 0) {
+        CW_LOG_W("RGA图片宽度必须是16的倍数");
+    }
     if (this->src_w != image.width || this->src_h != image.height) {
         this->src_w = image.width;
         this->src_h = image.height;
@@ -151,15 +152,7 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
         this->chw_u8.resize (          w *           h * image.channels);
         this->dst_f16.resize(          w *           h * image.channels);
     }
-    rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) image.data.data(), image.width, image.height, RK_FORMAT_RGB_888);
-    rga_buffer_t dst_img = wrapbuffer_virtualaddr(this->pad.data(),          w,           h,            RK_FORMAT_RGB_888);
-    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr,                   0,           0,            0                );
-    im_rect src_rect = { 0,           0,           image.width, image.height };
-    im_rect dst_rect = { this->pad_w, this->pad_h, this->dst_w, this->dst_h  };
-    im_rect pat_rect = { 0,           0,           0,           0            };
-    const auto status = improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
-    if (status != IM_STATUS_SUCCESS) {
-        CW_LOG_W("图片处理失败: %d", status);
+    if (!caiwei::image::resize(image.data.data(), this->pad.data(), image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h)) {
         return {};
     }
     const auto& input_attr = this->input_attrs[0];

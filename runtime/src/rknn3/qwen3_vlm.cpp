@@ -1,8 +1,6 @@
 #include <tuple>
 #include <cstddef>
 
-#include "rga/im2d.hpp"
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
@@ -39,7 +37,7 @@ bool caiwei::context::VLMRKNN3Context::load() {
     return
     this->load_model(true)       &&
     this->load_media_model(true) &&
-    this->init_internal_tensor_mems();
+    this->load_template();
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
@@ -62,6 +60,9 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
         CW_LOG_W("模型没有配置成功");
         return false;
     }
+    if (width % 16 != 0) {
+        CW_LOG_W("RGA图片宽度必须是16的倍数");
+    }
     const int w = caiwei::env::get_int("CAIWEI_VLM_WIDTH");
     const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
     if (w != image_width || h != image_height) {
@@ -72,15 +73,7 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
     int dst_w, dst_h, pad_w, pad_h;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> pad(w * h * channels);
-    rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) media_data.data(), width, height, RK_FORMAT_RGB_888);
-    rga_buffer_t dst_img = wrapbuffer_virtualaddr(pad.data(),                w,     h,      RK_FORMAT_RGB_888);
-    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr,                   0,     0,      0                );
-    im_rect src_rect = { 0,     0,     width, height };
-    im_rect dst_rect = { pad_w, pad_h, dst_w, dst_h  };
-    im_rect pat_rect = { 0,     0,     0,     0      };
-    const auto status = improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
-    if (status != IM_STATUS_SUCCESS) {
-        CW_LOG_W("图片处理失败: %d", status);
+    if (!caiwei::image::resize(media_data.data(), pad.data(), width, height, w, h, dst_w, dst_h, pad_w, pad_h)) {
         return false;
     }
     auto& tensor = this->media_input[0];
@@ -153,7 +146,6 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
     uint64_t image_count = 0;
     uint64_t video_count = 0;
     uint64_t frame_count = 0;
-    std::vector<std::tuple<const caiwei::media::ImageFrame*, const std::vector<caiwei::media::VideoFrame>*>> data_list;
     auto& input_tensor  = this->media_input[0];
     auto& output_tensor = this->media_output[0];
     uint32_t image_width  = 0;
@@ -168,6 +160,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
         CW_LOG_W("不支持的输入布局: %s", rknn3_get_layout_string(input_tensor.attr->layout));
         return {};
     }
+    std::vector<std::tuple<const caiwei::media::ImageFrame*, const std::vector<caiwei::media::VideoFrame>*>> data_list;
     for (const auto& message : request.messages) {
         for (const auto& image : message.image_data) {
             data_list.emplace_back(&image, nullptr);

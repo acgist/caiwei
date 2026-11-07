@@ -73,12 +73,12 @@ caiwei::context::RKNN3Context::~RKNN3Context() {
     }
     if (this->embedding_data != MAP_FAILED && this->embedding_data != nullptr) {
         CW_LOG_I("释放RKNN3Context embedding_data");
-        munmap((void*) this->embedding_data, this->embedding_stat.st_size);
+        ::munmap((void*) this->embedding_data, this->embedding_stat.st_size);
         this->embedding_data = nullptr;
     }
     if (this->embedding_fd != -1) {
         CW_LOG_I("释放RKNN3Context embedding_fd");
-        close(this->embedding_fd);
+        ::close(this->embedding_fd);
         this->embedding_fd = -1;
     }
 }
@@ -104,7 +104,7 @@ bool caiwei::context::RKNN3Context::load_model(
         return false;
     }
     if (devs.n_devices <= 0) {
-        CW_LOG_W("没有设备");
+        CW_LOG_W("没有可用设备");
         return false;
     }
     const int rknn_id = std::max(0, std::min(caiwei::env::get_int("CAIWEI_RKNN_ID"), (int) devs.n_devices - 1));
@@ -115,7 +115,7 @@ bool caiwei::context::RKNN3Context::load_model(
         CW_LOG_W("设备加载失败: %d", ret);
         return false;
     }
-    CW_LOG_I("加载设备: %d => %s", rknn_id, extend.device_id);
+    CW_LOG_I("加载设备成功: %d => %s", rknn_id, extend.device_id);
     ret = rknn3_load_model_from_path(context, model_path.c_str(), weight_path.c_str());
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("模型读取失败: %d = %s", ret, model_path.c_str());
@@ -137,9 +137,7 @@ bool caiwei::context::RKNN3Context::load_model(
 }
 
 bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t core_mask) {
-    if (this->context != 0) {
-        return true;
-    }
+    // TODO 幂等
     if (!this->load_model(this->context, this->model_path, this->weight_path, user_mem_internal, core_mask)) {
         return false;
     }
@@ -155,31 +153,45 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
         CW_LOG_W("模型配置查询失败: %d = %s", ret, this->model_path.c_str());
         return false;
     }
-    this->chat_template.set_template(llm_config.chat_template, this->special_token.bos, this->special_token.eos);
     const int32_t max_ctx_len = llm_config.max_ctx_len;
     const int32_t min_ctx_len = std::min(this->max_token_length, max_ctx_len);
-    CW_LOG_I("模型最大输入长度: min(%d/%d) = %d", this->max_token_length, max_ctx_len, min_ctx_len);
+    CW_LOG_I("模型最大输入长度: min(%d, %d) = %d", this->max_token_length, max_ctx_len, min_ctx_len);
     this->max_token_length = min_ctx_len;
     return true;
 }
 
 bool caiwei::context::RKNN3Context::load_media_model(bool user_mem_internal, uint32_t core_mask) {
-    if (this->media_context != 0) {
-        return true;
-    }
+    // TODO 幂等
     if (!this->load_model(this->media_context, this->media_model_path, this->media_weight_path, user_mem_internal, core_mask)) {
         return false;
     }
     if (!this->init_media_tensors()) {
         return false;
     }
+    if (!this->init_internal_tensor_mems()) {
+        return false;
+    }
     return true;
 }
 
-bool caiwei::context::RKNN3Context::load_tokenizer() {
-    if (this->tokenizer != nullptr) {
-        return true;
+bool caiwei::context::RKNN3Context::load_template() {
+    // TODO 幂等
+    rknn3_llm_config llm_config{};
+    int ret = rknn3_query(this->context, RKNN3_QUERY_LLM_CONFIG, &llm_config, sizeof(rknn3_llm_config));
+    if (ret != RKNN3_SUCCESS) {
+        CW_LOG_W("模型配置查询失败: %d = %s", ret, this->model_path.c_str());
+        return false;
     }
+    if (this->chat_template.set_template(llm_config.chat_template, this->special_token.bos, this->special_token.eos)) {
+        return true;
+    } else {
+        CW_LOG_W("模板加载失败: %s", this->model_path.c_str());
+        return false;
+    }
+}
+
+bool caiwei::context::RKNN3Context::load_tokenizer() {
+    // TODO 幂等
     this->tokenizer = new Tokenizer();
     if (!this->tokenizer->load(this->tokenizer_path)) {
         CW_LOG_W("分词模型加载失败: %s", this->tokenizer_path.c_str());
@@ -191,24 +203,22 @@ bool caiwei::context::RKNN3Context::load_tokenizer() {
 }
 
 bool caiwei::context::RKNN3Context::load_embedding() {
-    if (this->embedding_data != nullptr) {
-        return true;
-    }
-    this->embedding_fd = open(this->embedding_path.c_str(), O_RDONLY);
+    // TODO 幂等
+    this->embedding_fd = ::open(this->embedding_path.c_str(), O_RDONLY);
     if (this->embedding_fd == -1) {
         CW_LOG_W("嵌入文件打开失败: %s", this->embedding_path.c_str());
         return false;
     }
-    if (fstat(this->embedding_fd, &this->embedding_stat) == -1) {
+    if (::fstat(this->embedding_fd, &this->embedding_stat) == -1) {
         CW_LOG_W("嵌入文件查询失败: %s", this->embedding_path.c_str());
         return false;
     }
-    this->embedding_data = (float16*) mmap(nullptr, this->embedding_stat.st_size, PROT_READ, MAP_PRIVATE, this->embedding_fd, 0);
+    this->embedding_data = (float16*) ::mmap(nullptr, this->embedding_stat.st_size, PROT_READ, MAP_PRIVATE, this->embedding_fd, 0);
     if (this->embedding_data == MAP_FAILED) {
         CW_LOG_W("嵌入文件映射失败: %s", this->embedding_path.c_str());
         return false;
     }
-    this->embedding_dim = (this->embedding_stat.st_size / this->vocab_size) / sizeof(float16);
+    this->embedding_dim = this->embedding_stat.st_size / this->vocab_size / sizeof(float16);
     CW_LOG_I("嵌入文件加载成功: %s = %d", this->embedding_path.c_str(), this->embedding_dim);
     return true;
 }
@@ -387,7 +397,6 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(ContextSession* contex
         sampling_params.frequency_penalty = request->frequency_penalty.value_or(0.0F);
         sampling_params.presence_penalty  = request->presence_penalty.value_or(0.0F);
     }
-    const int n_params = 1;
     rknn3_llm_param llm_params{};
     llm_params.logits_name            = "logits";
     llm_params.sampling_param         = sampling_params;
@@ -411,7 +420,7 @@ rknn3_session* caiwei::context::RKNN3Context::get_session(ContextSession* contex
         callback.output_tensors   = context_session->output_tensors.data();
         callback.n_output_tensors = context_session->output_tensors.size();
     }
-    rknn3_session* session = rknn3_session_init(this->context, &llm_params, n_params);
+    rknn3_session* session = rknn3_session_init(this->context, &llm_params, 1);
     if (!session) {
         CW_LOG_W("会话创建失败");
         return nullptr;
@@ -544,22 +553,29 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
         #endif
     });
     while (true) {
-        std::unique_lock<std::mutex> lock(context_session.mutex);
-        if (!context_session.token_result.empty()) {
-            if (context_session.prefill_ms == 0) {
-                e_time = std::chrono::steady_clock::now();
-                context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
-                // 此处不要刷新时间
+        bool stop = false;
+        std::vector<caiwei::text::CompletionResult> batch;
+        {
+            std::unique_lock<std::mutex> lock(context_session.mutex);
+            if (context_session.token_result.empty() && !context_session.stop) {
+                context_session.condition.wait_for(lock, std::chrono::seconds(8));
             }
-            for (auto& result : context_session.token_result) {
-                co_yield std::move(result);
+            if (!context_session.token_result.empty()) {
+                if (context_session.prefill_ms == 0) {
+                    e_time = std::chrono::steady_clock::now();
+                    context_session.prefill_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
+                    // 此处不要刷新时间
+                }
+                batch.swap(context_session.token_result);
             }
-            context_session.token_result.clear();
+            stop = context_session.stop;
         }
-        if (context_session.stop) {
+        for (auto& result : batch) {
+            co_yield std::move(result);
+        }
+        if (stop) {
             break;
         }
-        context_session.condition.wait_for(lock, std::chrono::seconds(8));
     }
     e_time = std::chrono::steady_clock::now();
     context_session.generate_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
@@ -814,21 +830,22 @@ void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::c
     CW_LOG_I("会话完成: %d=%d | %d=%d", state.n_prefill_tokens, context_session->n_prefill_tokens, state.n_decode_tokens, context_session->n_generate_tokens);
     context_session->n_prefill_tokens  = state.n_prefill_tokens;
     context_session->n_generate_tokens = state.n_decode_tokens;
-    std::printf("\n--------------------------------------------------------------------------------------\n");
+    std::printf("\n");
+    std::printf("--------------------------------------------------------------------------------------\n");
     std::printf(" %-12s  %-15s  %-8s  %-23s  %-23s\n", "Stage", "Total Time (ms)", "Tokens", "Time per Token (ms)", "Tokens per Second");
     std::printf("--------------------------------------------------------------------------------------\n");
     const float prefill_ms = context_session->prefill_ms;
     const uint32_t prefill_n_tokens = context_session->n_prefill_tokens;
     if (prefill_n_tokens > 0 && prefill_ms > 0.0F) {
-        const float prefill_tpt = prefill_n_tokens == 0 ? 0.0F :        prefill_ms / prefill_n_tokens;
-        const float prefill_tps = prefill_n_tokens == 0 ? 0.0F : 1e3F / prefill_ms * prefill_n_tokens;
+        const float prefill_tpt =        prefill_ms / prefill_n_tokens;
+        const float prefill_tps = 1e3F / prefill_ms * prefill_n_tokens;
         std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Prefill", prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
     }
     const float generate_ms = context_session->generate_ms;
     const uint32_t generate_n_tokens = context_session->n_generate_tokens;
     if (generate_n_tokens > 0 && generate_ms > 0.0F) {
-        const float generate_tpt = generate_n_tokens == 0 ? 0.0F :        generate_ms / generate_n_tokens;
-        const float generate_tps = generate_n_tokens == 0 ? 0.0F : 1e3F / generate_ms * generate_n_tokens;
+        const float generate_tpt =        generate_ms / generate_n_tokens;
+        const float generate_tps = 1e3F / generate_ms * generate_n_tokens;
         std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", generate_ms, generate_n_tokens, generate_tpt, generate_tps);
     }
     const float feature_ms = context_session->feature_ms;
@@ -844,7 +861,8 @@ void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::c
         const float fps = image_frames * 1000.0F / feature_ms;
         std::printf(" Image latency = %.2f ms, FPS = %.2f\n", feature_ms, fps);
     }
-    std::printf("--------------------------------------------------------------------------------------\n\n");
+    std::printf("--------------------------------------------------------------------------------------\n");
+    std::printf("\n");
 }
 
 void caiwei::context::rknn3_dump_tensor_attr(const char* name, rknn3_tensor_attr* attr) {

@@ -15,7 +15,7 @@ caiwei::context::LLMLlamaCPPContext::~LLMLlamaCPPContext() {
 }
 
 bool caiwei::context::LLMLlamaCPPContext::load() {
-    return this->load_model();
+    return this->load_model() && this->load_template();
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::LLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {

@@ -50,6 +50,7 @@ public:
 public:
     bool load_model();
     bool load_mtmd_model();
+    bool load_template();
 };
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {

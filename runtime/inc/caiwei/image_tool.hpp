@@ -248,6 +248,21 @@ inline void hwc_to_chw_u8_f32(const uint8_t* __restrict hwc, float* __restrict c
     }
 }
 
+#if defined(ENABLE_CAIWEI_RUNTIME_RKNN2) || defined(ENABLE_CAIWEI_RUNTIME_RKNN3)
+bool resize(
+    const uint8_t* src,
+          uint8_t* dst,
+    const int width,
+    const int height,
+    const int w,
+    const int h,
+    const int dst_w,
+    const int dst_h,
+    const int pad_w,
+    const int pad_h
+);
+#endif
+
 } // image
 } // caiwei
 

@@ -93,16 +93,21 @@ protected:
     std::vector<rknn3_tensor> media_input   {};
     std::vector<rknn3_tensor> media_output  {};
     std::vector<rknn3_tensor_mem*> internal_tensor_mems{};
-protected:
+private:
     bool load_model(rknn3_context& context, const std::string& model_path, const std::string& weight_path, bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
-    bool load_model      (bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
-    bool load_media_model(bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
     bool load_tokenizer();
     bool load_embedding();
     bool init_media_tensors();
     void release_media_tensors();
     bool init_internal_tensor_mems();
     void release_internal_tensor_mems();
+    // void unload_model();
+    // void unload_media_model();
+    // void unload_template();
+protected:
+    bool load_model      (bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
+    bool load_media_model(bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
+    bool load_template();
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
     virtual std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
     std::vector<std::vector<float>> pooling(uint32_t& prompt_tokens, const std::vector<const std::string*>& prompt_list, bool add_special = false, bool parse_special = true);
@@ -131,6 +136,11 @@ public:
 
 class ASRRKNN3Context : public ASRContext, public RKNN3Context {
 private:
+    int batch_size    = 0;
+    int n_mels        = 0;
+    int window_size   = 0;
+    int n_chunk_token = 0;
+    int chunk_length  = 0;
     std::vector<float>   mel_filters {};
     std::vector<int32_t> prefix_token{};
     std::vector<int32_t> suffix_token{};
