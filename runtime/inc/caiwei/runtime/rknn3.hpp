@@ -98,16 +98,12 @@ private:
     bool load_tokenizer();
     bool load_embedding();
     bool init_media_tensors();
-    void release_media_tensors();
     bool init_internal_tensor_mems();
-    void release_internal_tensor_mems();
-    // void unload_model();
-    // void unload_media_model();
-    // void unload_template();
 protected:
     bool load_model      (bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
     bool load_media_model(bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
     bool load_template();
+    void release();
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
     virtual std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
     std::vector<std::vector<float>> pooling(uint32_t& prompt_tokens, const std::vector<const std::string*>& prompt_list, bool add_special = false, bool parse_special = true);

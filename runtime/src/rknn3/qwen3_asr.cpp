@@ -81,20 +81,21 @@ bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
 }
 
 bool caiwei::context::ASRRKNN3Context::load() {
-    if (!(
-        this->load_model(true) &&
-        this->load_media_model(true)
-    )) {
+    this->release();
+    if (!(this->load_model(true) && this->load_media_model(true))) {
+        this->release();
         return false;
     }
     if (this->media_input.empty() || this->media_output.empty()) {
         CW_LOG_W("模型没有加载成功");
+        this->release();
         return false;
     }
     auto& input_tensor  = this->media_input[0];
     auto& output_tensor = this->media_output[0];
     if (input_tensor.attr->n_dims != 4 || output_tensor.attr->n_dims != 2) {
         CW_LOG_W("模型维度错误: %d != 4 || %d != 2", input_tensor.attr->n_dims, output_tensor.attr->n_dims);
+        this->release();
         return false;
     }
     this->batch_size    = input_tensor.attr->shape[0];
@@ -104,14 +105,20 @@ bool caiwei::context::ASRRKNN3Context::load() {
     this->chunk_length  = output_tensor.attr->shape[1];
     if (this->chunk_length != this->embedding_dim) {
         CW_LOG_W("模型维度错误: %d != %d", this->chunk_length, this->embedding_dim);
+        this->release();
         return false;
     }
     const int batch_n_chunk_token = this->batch_size * get_n_per_window_token(this->window_size);
     if (batch_n_chunk_token != this->n_chunk_token) {
         CW_LOG_W("模型维度错误: %d != %d", batch_n_chunk_token, this->n_chunk_token);
+        this->release();
         return false;
     }
-    return this->load_mel_filters() && this->init_prompt_token();
+    if (!(this->load_mel_filters() && this->init_prompt_token())) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {

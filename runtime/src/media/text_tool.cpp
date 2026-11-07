@@ -52,6 +52,10 @@ caiwei::text::ChatTemplate::ChatTemplate() {
 caiwei::text::ChatTemplate::~ChatTemplate() {
 }
 
+void caiwei::text::ChatTemplate::reset() {
+    this->chat_template = nullptr;
+}
+
 bool caiwei::text::ChatTemplate::set_template(const char* template_text, const std::string& bos, const std::string& eos) {
     if (template_text == nullptr || std::strlen(template_text) == 0) {
         CW_LOG_W("模板为空");

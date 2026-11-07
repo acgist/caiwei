@@ -24,7 +24,12 @@ caiwei::context::RerankingRKNN3Context::~RerankingRKNN3Context() {
 }
 
 bool caiwei::context::RerankingRKNN3Context::load() {
-    return this->load_model();
+    this->release();
+    if (!this->load_model()) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const caiwei::text::RerankingsRequest& request) {

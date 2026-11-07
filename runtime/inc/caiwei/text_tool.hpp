@@ -27,6 +27,7 @@ public:
 private:
     std::unique_ptr<minja::chat_template> chat_template{ nullptr };
 public:
+    void reset();
     bool set_template(const char* template_text, const std::string& bos, const std::string& eos);
     std::string apply(
         const SpecialToken& special_token,

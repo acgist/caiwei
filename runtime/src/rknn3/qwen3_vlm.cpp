@@ -34,10 +34,12 @@ caiwei::context::VLMRKNN3Context::~VLMRKNN3Context() {
 }
 
 bool caiwei::context::VLMRKNN3Context::load() {
-    return
-    this->load_model(true)       &&
-    this->load_media_model(true) &&
-    this->load_template();
+    this->release();
+    if (!(this->load_model(true) && this->load_media_model(true) && this->load_template())) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
