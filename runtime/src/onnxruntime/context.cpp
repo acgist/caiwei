@@ -1,4 +1,5 @@
 #include <thread>
+#include <unordered_map>
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
@@ -12,7 +13,7 @@ OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LO
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO;
 #endif
 
-static void print_tensor_info(const char* title, const size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape);
+static void print_tensor_info(const char* title, const size_t index, const char* name, const std::vector<int64_t>& shape);
 
 caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(
     std::string path,
@@ -74,14 +75,24 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     this->session = new Ort::Session(*env, this->path.c_str(), options);
     #endif
     Ort::AllocatorWithDefaultOptions allocator;
-    const size_t inputNodeCount  = this->session->GetInputCount();
-    const size_t outputNodeCount = this->session->GetOutputCount();
-    this->input_node_dims.resize(inputNodeCount);
-    for(size_t index = 0; index < inputNodeCount; ++index) {
+    const size_t input_node_count  = this->session->GetInputCount();
+    const size_t output_node_count = this->session->GetOutputCount();
+    if (input_node_count <= 0 || output_node_count <= 0) {
+        CW_LOG_W("模型输入输出错误: %zu - %zu", input_node_count, output_node_count);
+        this->release();
+        return false;
+    }
+    this->input_node_dims.resize(input_node_count);
+    for(size_t index = 0; index < input_node_count; ++index) {
         Ort::AllocatedStringPtr name = this->session->GetInputNameAllocated(index, allocator);
-        auto info  = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
-        auto shape = info.GetShape();
+        auto info = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
+        if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
+            CW_LOG_W("输入节点数据类型错误: %d", info.GetElementType());
+            this->release();
+            return false;
+        }
         auto& node_dims = this->input_node_dims[index];
+        auto shape = info.GetShape();
         if (shape.size() == 0) {
             shape.assign(node_dims.begin(), node_dims.end());
         } else if (shape.size() == node_dims.size()) {
@@ -100,9 +111,14 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         print_tensor_info("ONNXRuntimeContext输入节点", index, name.get(), shape);
         this->input_node_names.push_back(std::move(name));
     }
-    for(size_t index = 0; index < outputNodeCount; ++ index) {
+    for(size_t index = 0; index < output_node_count; ++ index) {
         Ort::AllocatedStringPtr name = this->session->GetOutputNameAllocated(index, allocator);
-        auto info  = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
+        auto info = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
+        if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
+            CW_LOG_W("输入节点数据类型错误: %d", info.GetElementType());
+            this->release();
+            return false;
+        }
         auto shape = info.GetShape();
         print_tensor_info("ONNXRuntimeContext输出节点", index, name.get(), shape);
         this->output_node_names.push_back(std::move(name));
@@ -160,7 +176,7 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(float* blob, co
     return io_binding.GetOutputValues();
 }
 
-static void print_tensor_info(const char* title, const size_t index, const char* name, const Ort::ShapeInferContext::Ints& shape) {
+static void print_tensor_info(const char* title, const size_t index, const char* name, const std::vector<int64_t>& shape) {
     std::string shape_info = "(";
     if (shape.empty()) {
         shape_info += "-";

@@ -32,10 +32,14 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     if (output.empty()) {
         return {};
     }
-    const float* output_data = output.front().GetTensorMutableData<float>();
     const auto&  output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
+    if (output_dims.size() != 3) {
+        CW_LOG_W("模型输出维度错误: %zu", output_dims.size());
+        return {};
+    }
     const int64_t result_length = output_dims[1];
     const int64_t stride_length = output_dims[2];
+    const float* output_data = output.front().GetTensorData<float>();
     std::vector<caiwei::image::Box> ret;
     if (stride_length == CAIWEI_END2END_STRIDE_LENGTH) {
         const float* data = output_data;

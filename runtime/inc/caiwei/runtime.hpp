@@ -56,6 +56,7 @@ private:
     caiwei::runtime::Type type;
     std::mutex mutex;
     std::condition_variable condition;
+protected:
     std::map<std::string, std::vector<std::shared_ptr<caiwei::context::Context>>> context_map;
 public:
     const std::string id;

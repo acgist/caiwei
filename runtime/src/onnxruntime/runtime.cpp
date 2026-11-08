@@ -42,11 +42,13 @@ caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(
     int min_pool, int max_pool, int timeout, int keepalive, bool share
 ) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::ONNXRUNTIME) {
     CW_LOG_I("创建ONNXRuntimeRuntime");
+    // TODO 改为智能指针
     this->env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei", onnxruntime_log, nullptr);
 }
 
 caiwei::runtime::ONNXRuntimeRuntime::~ONNXRuntimeRuntime() {
     CW_LOG_I("释放ONNXRuntimeRuntime");
+    this->context_map.clear();
     if (this->env != nullptr) {
         CW_LOG_I("释放ONNXRuntimeRuntime env");
         delete this->env;

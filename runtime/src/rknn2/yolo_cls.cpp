@@ -34,6 +34,10 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
         return {};
     }
     const int64_t out_dst_length = output_attr.dims[1];
+    if (out_dst_length != this->class_size) {
+        CW_LOG_W("类型数量错误: %llu != %d", out_dst_length, this->class_size);
+        return {};
+    }
     if (out_dst_length != this->out_dst.size()) {
         this->out_dst.resize(out_dst_length);
     }

@@ -82,6 +82,11 @@ bool caiwei::context::RKNN2Context::load_model() {
         this->release();
         return false;
     }
+    if (io_num.n_input <= 0 || io_num.n_output <= 0) {
+        CW_LOG_W("模型输入输出错误: %u - %u = %s", io_num.n_input, io_num.n_output, this->path.c_str());
+        this->release();
+        return false;
+    }
     this->input_attrs.resize(io_num.n_input);
     for (uint32_t i = 0; i < io_num.n_input; ++i) {
         auto& input_attr = this->input_attrs[i];
