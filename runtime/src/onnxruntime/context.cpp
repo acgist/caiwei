@@ -47,6 +47,10 @@ void caiwei::context::ONNXRuntimeContext::release() {
 }
 
 bool caiwei::context::ONNXRuntimeContext::load_model() {
+    if (this->env == nullptr) {
+        CW_LOG_W("没有ONNXRuntime环境");
+        return false;
+    }
     this->release();
     Ort::SessionOptions options;
     options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
@@ -56,10 +60,11 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     options.SetIntraOpNumThreads(1);
     options.SetInterOpNumThreads(1);
     Ort::CUDAProviderOptions cudaOptions;
-    const std::string cuda_id = caiwei::env::get("CAIWEI_CUDA_ID");
+    const std::string cuda_id  = caiwei::env::get("CAIWEI_CUDA_ID");
+    const std::string cuda_mem = std::to_string(1024ULL * 1024 * caiwei::env::get_int("CAIWEI_CUDA_MEM"));
     std::unordered_map<std::string, std::string> opts = {
-        {"device_id",     cuda_id     },
-        {"gpu_mem_limit", "1073741824"},
+        {"device_id",     cuda_id  },
+        {"gpu_mem_limit", cuda_mem },
     };
     cudaOptions.Update(opts);
     options.AppendExecutionProvider_CUDA_V2(*cudaOptions);
@@ -115,7 +120,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         Ort::AllocatedStringPtr name = this->session->GetOutputNameAllocated(index, allocator);
         auto info = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
         if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
-            CW_LOG_W("输入节点数据类型错误: %d", info.GetElementType());
+            CW_LOG_W("输出节点数据类型错误: %d", info.GetElementType());
             this->release();
             return false;
         }

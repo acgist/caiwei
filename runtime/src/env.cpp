@@ -23,6 +23,7 @@ std::vector<std::string> caiwei::env::allow_media_type;
 static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VERSION",          "1.0.0"  }, // 版本信息
     {"CAIWEI_CUDA_ID",          "0"      }, // CUDA ID
+    {"CAIWEI_CUDA_MEM",         "1024"   }, // CUDA MEM
     {"CAIWEI_RKNN_ID",          "0"      }, // RKNN ID
     {"CAIWEI_SERVER_HOST",      "0.0.0.0"}, // 监听主机
     {"CAIWEI_SERVER_PORT",      "8888"   }, // 监听端口
