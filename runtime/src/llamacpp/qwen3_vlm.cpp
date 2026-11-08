@@ -29,11 +29,15 @@ static mtmd_bitmap* fill_media(int width, int height, int channels, const std::v
     const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return nullptr;
+    }
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(    w *     h * channels);
-    caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
+    if (!caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h, channels)) {
+        return nullptr;
+    }
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h, channels);
     return mtmd_bitmap_init(w, h, pad.data());
 }
 
@@ -62,11 +66,15 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
             const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
             float scale;
             int dst_w, dst_h, pad_w, pad_h;
-            caiwei::image::resize(frame.width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+            if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+                return -1;
+            }
             std::vector<uint8_t> dst(dst_w * dst_h * channels);
             std::vector<uint8_t> pad(    w *     h * channels);
-            caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h);
-            caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
+            if (!caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h, channels)) {
+                return -1;
+            }
+            caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h, channels);
             *out_bitmap = mtmd_bitmap_init(w, h, pad.data());
             return 0;
         } 

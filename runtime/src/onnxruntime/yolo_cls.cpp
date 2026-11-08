@@ -24,6 +24,9 @@ bool caiwei::context::ClsONNXRuntimeContext::load() {
 
 std::vector<caiwei::image::Cls> caiwei::context::ClsONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
+    if (output.empty()) {
+        return {};
+    }
     const float*  output_data = output.front().GetTensorMutableData<float>();
     const auto&   output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     const int64_t data_length = output_dims[1];

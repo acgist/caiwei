@@ -62,9 +62,6 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
         CW_LOG_W("模型没有配置成功");
         return false;
     }
-    if (width % 16 != 0) {
-        CW_LOG_W("RGA图片宽度必须是16的倍数");
-    }
     const int w = caiwei::env::get_int("CAIWEI_VLM_WIDTH");
     const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
     if (w != image_width || h != image_height) {
@@ -73,9 +70,11 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
     }
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return false;
+    }
     std::vector<uint8_t> pad(w * h * channels);
-    if (!caiwei::image::resize(media_data.data(), pad.data(), width, height, w, h, dst_w, dst_h, pad_w, pad_h)) {
+    if (!caiwei::image::resize(media_data.data(), pad.data(), width, height, w, h, dst_w, dst_h, pad_w, pad_h, channels)) {
         return false;
     }
     auto& tensor = this->media_input[0];

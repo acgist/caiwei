@@ -38,10 +38,10 @@ caiwei::runtime::Runtime::Runtime(
     bool share,
     caiwei::runtime::Type type
 ) : id(caiwei::env::id()),
-    min_pool(std::clamp(min_pool, 0, max_pool)),
-    max_pool(std::clamp(max_pool, 1, max_pool)),
-    timeout(timeout),
-    keepalive(keepalive),
+    min_pool(std::clamp(min_pool, 0, 128)),
+    max_pool(std::clamp(max_pool, 1, 128)),
+    timeout(std::clamp(timeout, 10, 60)),
+    keepalive(std::clamp(keepalive, 60, 3600)),
     share(share),
     type(type) {
     CW_LOG_I("创建runtime: %s => %s", get_type_name(this->type), id.c_str());

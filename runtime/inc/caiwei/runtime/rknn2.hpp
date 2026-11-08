@@ -35,6 +35,7 @@ protected:
 private:
     uint32_t src_w = 0;
     uint32_t src_h = 0;
+    uint32_t src_c = 0;
     std::vector<uint8_t>  dst;
     std::vector<uint8_t>  pad;
     std::vector<float>    hwc;
@@ -46,6 +47,8 @@ private:
 public:
     RKNN2Context(std::string path, int c, int h, int w);
     virtual ~RKNN2Context();
+private:
+    void release();
 public:
     bool load_model();
     RKNN2Result run(const int h, const int w, const caiwei::media::ImageFrame& image);

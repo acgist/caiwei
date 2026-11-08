@@ -819,7 +819,7 @@ static bool init_tensor(rknn3_context& context, rknn3_tensor& tensor, int i, rkn
         CW_LOG_W("%s参数查询失败: %d = %d", name, i, ret);
         return false;
     }
-    rknn3_dump_tensor_attr(name, tensor.attr);
+    caiwei::context::rknn3_dump_tensor_attr(name, tensor.attr);
     if (size_override == 0) {
         tensor.mem = rknn3_create_mem(context, tensor.attr->aligned_size, tensor.attr->core_id, RKNN3_FLAG_MEMORY_CACHEABLE);
     } else {
@@ -829,18 +829,18 @@ static bool init_tensor(rknn3_context& context, rknn3_tensor& tensor, int i, rkn
         CW_LOG_W("%s内存创建失败: %d", name, i);
         return false;
     }
-    CW_LOG_I("%s内存创建成功: %d = %lld", name, i, tensor.mem->size);
+    CW_LOG_D("%s内存创建成功: %d = %lld", name, i, tensor.mem->size);
     return true;
 }
 
 static void release_tensor(rknn3_context& context, rknn3_tensor& tensor, const char* name) {
     if (tensor.mem) {
-        CW_LOG_I("释放%s内存: %p", name, tensor.mem);
+        CW_LOG_D("释放%s内存: %p", name, tensor.mem);
         rknn3_destroy_mem(context, tensor.mem);
         tensor.mem = nullptr;
     }
     if (tensor.attr) {
-        CW_LOG_I("释放%s参数: %p", name, tensor.attr);
+        CW_LOG_D("释放%s参数: %p", name, tensor.attr);
         delete tensor.attr;
         tensor.attr = nullptr;
     }

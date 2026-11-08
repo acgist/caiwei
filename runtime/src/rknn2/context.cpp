@@ -27,6 +27,10 @@ caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int 
 
 caiwei::context::RKNN2Context::~RKNN2Context() {
     CW_LOG_I("释放RKNN2Context: %s", this->path.c_str());
+    this->release();
+}
+
+void caiwei::context::RKNN2Context::release() {
     if (this->context != 0) {
         CW_LOG_I("释放RKNN2Context context");
         rknn_destroy(this->context);
@@ -35,9 +39,7 @@ caiwei::context::RKNN2Context::~RKNN2Context() {
 }
 
 bool caiwei::context::RKNN2Context::load_model() {
-    if (this->context != 0) {
-        return true;
-    }
+    this->release();
     std::fstream stream(this->path, std::ios::binary | std::ios::in);
     if (!stream.is_open()) {
         CW_LOG_W("模型打开失败: %s", this->path.c_str());
@@ -52,21 +54,24 @@ bool caiwei::context::RKNN2Context::load_model() {
         return false;
     }
     stream.close();
-    int ret = rknn_init(&this->context, data.data(), size, RKNN_FLAG_PRIOR_HIGH, nullptr);
+    int ret = rknn_init(&this->context, data.data(), data.size(), RKNN_FLAG_PRIOR_HIGH, nullptr);
     if (ret != RKNN_SUCC) {
         CW_LOG_W("模型加载失败: %d = %s", ret, this->path.c_str());
+        this->release();
         return false;
     }
     rknn_core_mask mask = RKNN_NPU_CORE_ALL;
     ret = rknn_set_core_mask(this->context, mask);
     if (ret != RKNN_SUCC) {
-        CW_LOG_W("核心掩码设置失败: %d = %s", ret, this->path.c_str());
+        CW_LOG_W("模型核心设置失败: %d = %s", ret, this->path.c_str());
+        this->release();
         return false;
     }
     rknn_sdk_version version{};
     ret = rknn_query(this->context, RKNN_QUERY_SDK_VERSION, &version, sizeof(rknn_sdk_version));
     if (ret != RKNN_SUCC) {
         CW_LOG_W("模型版本查询失败: %d = %s", ret, this->path.c_str());
+        this->release();
         return false;
     }
     CW_LOG_I("模型加载成功: %s = %s - %s", this->path.c_str(), version.api_version, version.drv_version);
@@ -74,6 +79,7 @@ bool caiwei::context::RKNN2Context::load_model() {
     ret = rknn_query(this->context, RKNN_QUERY_IN_OUT_NUM, &io_num, sizeof(io_num));
     if (ret != RKNN_SUCC) {
         CW_LOG_W("模型参数查询失败: %d - %s", ret, this->path.c_str());
+        this->release();
         return false;
     }
     this->input_attrs.resize(io_num.n_input);
@@ -83,6 +89,7 @@ bool caiwei::context::RKNN2Context::load_model() {
         ret = rknn_query(this->context, RKNN_QUERY_INPUT_ATTR, &input_attr, sizeof(rknn_tensor_attr));
         if (ret != RKNN_SUCC) {
             CW_LOG_W("输入参数查询失败: %u - %d - %s", i, ret, this->path.c_str());
+            this->release();
             return false;
         }
         print_tensor_info("输入参数", input_attr);
@@ -94,6 +101,7 @@ bool caiwei::context::RKNN2Context::load_model() {
         ret = rknn_query(this->context, RKNN_QUERY_OUTPUT_ATTR, &output_attr, sizeof(rknn_tensor_attr));
         if (ret != RKNN_SUCC) {
             CW_LOG_W("输出参数查询失败: %u - %d - %s", i, ret, this->path.c_str());
+            this->release();
             return false;
         }
         print_tensor_info("输出参数", output_attr);
@@ -102,7 +110,7 @@ bool caiwei::context::RKNN2Context::load_model() {
 }
 
 template<typename T>
-caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(T* blob, const size_t size, const int batch) {
+caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(T* blob, const size_t /* size */, const int /* batch */) {
     std::vector<rknn_input>  inputs (this->input_attrs.size());
     std::vector<rknn_output> outputs(this->output_attrs.size());
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -136,13 +144,28 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(T* blob, const s
 }
 
 caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, const int w, const caiwei::media::ImageFrame& image) {
-    if (image.width % 16 != 0) {
-        CW_LOG_W("RGA图片宽度必须是16的倍数");
-    }
-    if (this->src_w != image.width || this->src_h != image.height) {
+    const auto& input_attr = this->input_attrs[0];
+    if (this->src_w != image.width || this->src_h != image.height || this->src_c != image.channels) {
+        if (input_attr.fmt == RKNN_TENSOR_NCHW) {
+            if (input_attr.dims[1] != image.channels || input_attr.dims[2] != h || input_attr.dims[3] != w) {
+                CW_LOG_W("图片大小和模型输入大小不匹配");
+                return {};
+            }
+        } else if (input_attr.fmt == RKNN_TENSOR_NHWC) {
+            if (input_attr.dims[3] != image.channels || input_attr.dims[1] != h || input_attr.dims[2] != w) {
+                CW_LOG_W("图片大小和模型输入大小不匹配");
+                return {};
+            }
+        } else {
+            CW_LOG_W("不支持的输入格式: %s", get_format_string(input_attr.fmt));
+            return {};
+        }
         this->src_w = image.width;
         this->src_h = image.height;
-        caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale);
+        this->src_c = image.channels;
+        if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
+            return {};
+        }
         this->dst.resize    (this->dst_w * this->dst_h * image.channels);
         this->pad.resize    (          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
         this->hwc.resize    (          w *           h * image.channels);
@@ -152,10 +175,9 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
         this->chw_u8.resize (          w *           h * image.channels);
         this->dst_f16.resize(          w *           h * image.channels);
     }
-    if (!caiwei::image::resize(image.data.data(), this->pad.data(), image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h)) {
+    if (!caiwei::image::resize(image.data.data(), this->pad.data(), image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, image.channels)) {
         return {};
     }
-    const auto& input_attr = this->input_attrs[0];
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
             caiwei::image::hwc_to_chw_u8_i8(this->pad.data(), this->chw_i8.data(), h, w, image.channels);

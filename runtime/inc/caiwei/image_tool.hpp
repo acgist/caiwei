@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <algorithm>
 
+#include "caiwei/log.hpp"
+
 #include "stb/stb_image.h"
 #include "stb/stb_image_resize2.h"
 
@@ -18,7 +20,7 @@ namespace image  {
 
 inline constexpr uint8_t DEFAULT_PADDING = 114;
 
-inline void resize(
+inline bool resize(
     const int src_w,
     const int src_h,
     const int w,
@@ -29,14 +31,23 @@ inline void resize(
     int& pad_h,
     float& scale
 ) {
+    if (src_w <= 0 || src_h <= 0 || w <= 0 || h <= 0) {
+        CW_LOG_W("图片尺寸错误: %dx%d -> %dx%d", src_w, src_h, w, h);
+        return false;
+    }
     scale = std::min(static_cast<float>(w) / src_w, static_cast<float>(h) / src_h);
     dst_w = static_cast<int>(std::lround(src_w * scale)) / 2 * 2;
     dst_h = static_cast<int>(std::lround(src_h * scale)) / 2 * 2;
     pad_w = (w - dst_w) / 2;
     pad_h = (h - dst_h) / 2;
+    if (dst_w <= 0 || dst_h <= 0 || pad_w < 0 || pad_h < 0) {
+        CW_LOG_W("图片尺寸错误: %dx%d -> %dx%d", src_w, src_h, w, h);
+        return false;
+    }
+    return true;
 }
 
-inline void resize(
+inline bool resize(
     const uint8_t* __restrict src,
           uint8_t* __restrict dst,
     const int src_w,
@@ -48,8 +59,16 @@ inline void resize(
     if (src_h == dst_h && src_w == dst_w) {
         std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, dst);
     } else {
-        stbir_resize_uint8_linear(src, src_w, src_h, 0, dst, dst_w, dst_h, 0, STBIR_RGB);
+        if (channels == 3) {
+            stbir_resize_uint8_linear(src, src_w, src_h, 0, dst, dst_w, dst_h, 0, STBIR_RGB);
+        } else if (channels == 4) {
+            stbir_resize_uint8_linear(src, src_w, src_h, 0, dst, dst_w, dst_h, 0, STBIR_RGBA);
+        } else {
+            CW_LOG_W("不支持的图片通道: %d", channels);
+            return false;
+        }
     }
+    return true;
 }
 
 inline void padding(
@@ -259,7 +278,8 @@ bool resize(
     const int dst_w,
     const int dst_h,
     const int pad_w,
-    const int pad_h
+    const int pad_h,
+    const int channels = 3
 );
 #endif
 

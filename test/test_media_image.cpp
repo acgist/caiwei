@@ -36,10 +36,10 @@ void test_resize() {
     channels = caiwei::media::IMAGE_CHANNELS;
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
-    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
+    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h, channels);
     stbi_write_jpg("./image_resize.jpg", dst_w, dst_h, channels, dst.data(), 80);
     CAIWEI_FOR_EACH(1000)
-    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
+    caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h, channels);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -113,12 +113,12 @@ void test_resize_pad() {
     caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(    w *     h * channels, caiwei::image::DEFAULT_PADDING);
-    caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h);
+    caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h, channels);
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h, channels);
     stbi_write_jpg("./image_resize_pad.jpg", w, h, channels, pad.data(), 80);
     CAIWEI_FOR_EACH(1000)
-    caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h);
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h);
+    caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h, channels);
+    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h,  pad_w, pad_h, w, h, channels);
     CAIWEI_FOR_EACH_END
     stbi_image_free(data);
 }
@@ -244,16 +244,16 @@ void test_image() {
     std::vector<float>   chw(w     * h     * channels);
     {
         CAIWEI_FOR_EACH(1000)
-        caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
-        caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
+        caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h, channels);
+        caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h, channels);
         caiwei::type::u8_to_f32(pad.data(), w * h * channels, hwc.data(), 255.0F);
         caiwei::image::hwc_to_chw(hwc.data(), chw.data(), h, w, channels);
         CAIWEI_FOR_EACH_END
     }
     {
         CAIWEI_FOR_EACH(1000)
-        caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h);
-        caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h);
+        caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h, channels);
+        caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h, channels);
         caiwei::image::hwc_to_chw_u8_f32(pad.data(), chw.data(), h, w, channels, 255.0F);
         CAIWEI_FOR_EACH_END
     }

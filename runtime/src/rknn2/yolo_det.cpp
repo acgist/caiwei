@@ -31,6 +31,10 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
     const auto& output_attr = this->output_attrs[0];
     const int64_t result_length = output_attr.dims[1];
     const int64_t stride_length = output_attr.dims[2];
+    if (result_length != this->class_size + 4) {
+        CW_LOG_W("输出长度错误: %lld - %d", result_length, this->class_size);
+        return {};
+    }
     std::vector<caiwei::image::Box> ret;
     if (output_attr.type == RKNN_TENSOR_INT8) {
         if (result_length * stride_length != this->out_dst_i8.size()) {
@@ -39,27 +43,22 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         const auto* out_buf = reinterpret_cast<int8_t*>(output.outputs[0].buf);
         int8_t* data = this->out_dst_i8.data();
         caiwei::image::transpose(out_buf, data, result_length, stride_length);
-        const int8_t confidence_threshold_i8 = caiwei::type::qnt_affine_to_i8(this->confidence_threshold, output_attr.zp, output_attr.scale);
+        const int32_t zp    = output_attr.zp;
+        const float   scale = output_attr.scale;
+        const int8_t confidence_threshold_i8 = caiwei::type::qnt_affine_to_i8(this->confidence_threshold, zp, scale);
         for (int64_t index = 0; index < stride_length; ++index) {
             int    max_class;
             int8_t max_score;
             const int8_t* scores = data + 4;
             caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
             if(max_score > confidence_threshold_i8) {
-                const float box_x = (caiwei::type::deqnt_affine_to_f32(data[0], output_attr.zp, output_attr.scale) * this->w - this->pad_w) / (float) this->dst_w;
-                const float box_y = (caiwei::type::deqnt_affine_to_f32(data[1], output_attr.zp, output_attr.scale) * this->h - this->pad_h) / (float) this->dst_h;
-                const float box_w = (caiwei::type::deqnt_affine_to_f32(data[2], output_attr.zp, output_attr.scale) * this->w              ) / (float) this->dst_w;
-                const float box_h = (caiwei::type::deqnt_affine_to_f32(data[3], output_attr.zp, output_attr.scale) * this->h              ) / (float) this->dst_h;
-                ret.emplace_back(
-                    caiwei::image::Box(
-                        std::clamp(box_x - box_w / 2.0F, 0.0F, 1.0F),
-                        std::clamp(box_y - box_h / 2.0F, 0.0F, 1.0F),
-                        std::clamp(box_x + box_w / 2.0F, 0.0F, 1.0F),
-                        std::clamp(box_y + box_h / 2.0F, 0.0F, 1.0F),
-                        max_class,
-                        caiwei::type::deqnt_affine_to_f32(max_score, output_attr.zp, output_attr.scale)
-                    )
-                );
+                // I8坐标归一化到[0,1]需要乘以高宽还原
+                const float box_x = (caiwei::type::deqnt_affine_to_f32(data[0], zp, scale) * this->w - this->pad_w) / (float) this->dst_w;
+                const float box_y = (caiwei::type::deqnt_affine_to_f32(data[1], zp, scale) * this->h - this->pad_h) / (float) this->dst_h;
+                const float box_w = (caiwei::type::deqnt_affine_to_f32(data[2], zp, scale) * this->w              ) / (float) this->dst_w;
+                const float box_h = (caiwei::type::deqnt_affine_to_f32(data[3], zp, scale) * this->h              ) / (float) this->dst_h;
+                const float max_score = caiwei::type::deqnt_affine_to_f32(max_score, zp, scale);
+                ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;
         }
@@ -81,20 +80,12 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
             const float* scores = data + 4;
             caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
             if(max_score > this->confidence_threshold) {
+                // F16坐标没有归一化到[0,1]直接使用
                 const float box_x = (data[0] - this->pad_w) / (float) this->dst_w;
                 const float box_y = (data[1] - this->pad_h) / (float) this->dst_h;
                 const float box_w = (data[2]              ) / (float) this->dst_w;
                 const float box_h = (data[3]              ) / (float) this->dst_h;
-                ret.emplace_back(
-                    caiwei::image::Box(
-                        std::clamp(box_x - box_w / 2.0F, 0.0F, 1.0F),
-                        std::clamp(box_y - box_h / 2.0F, 0.0F, 1.0F),
-                        std::clamp(box_x + box_w / 2.0F, 0.0F, 1.0F),
-                        std::clamp(box_y + box_h / 2.0F, 0.0F, 1.0F),
-                        max_class,
-                        max_score
-                    )
-                );
+                ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;
         }

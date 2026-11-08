@@ -27,6 +27,10 @@ caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(
 
 caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
     CW_LOG_D("释放ONNXRuntimeContext: %s", this->path.c_str());
+    this->release();
+}
+
+void caiwei::context::ONNXRuntimeContext::release() {
     if(this->run_options) {
         CW_LOG_D("释放ONNXRuntimeContext run_options");
         delete this->run_options;
@@ -37,12 +41,12 @@ caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
         delete this->session;
         this->session = nullptr;
     }
+    this->input_node_names.clear();
+    this->output_node_names.clear();
 }
 
 bool caiwei::context::ONNXRuntimeContext::load_model() {
-    if (this->session != nullptr) {
-        return true;
-    }
+    this->release();
     Ort::SessionOptions options;
     options.SetLogSeverityLevel(static_cast<int>(caiwei::context::onnxruntime_log_level));
     options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
@@ -77,13 +81,21 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         Ort::AllocatedStringPtr name = this->session->GetInputNameAllocated(index, allocator);
         auto info  = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
         auto shape = info.GetShape();
+        auto& node_dims = this->input_node_dims[index];
         if (shape.size() == 0) {
-            shape.assign(this->input_node_dims[index].begin(), this->input_node_dims[index].end());
-        } else {
-            this->input_node_dims[index].clear();
-            for (const auto& dim : shape) {
-                this->input_node_dims[index].push_back(dim);
+            shape.assign(node_dims.begin(), node_dims.end());
+        } else if (shape.size() == node_dims.size()) {
+            for (size_t i = 0; i < shape.size(); ++i) {
+                if (shape[i] != -1 && shape[i] != node_dims[i]) {
+                    CW_LOG_W("输入节点维度错误: %lld != %lld", node_dims[i], shape[i]);
+                    this->release();
+                    return false;
+                }
             }
+        } else {
+            CW_LOG_W("输入节点维度错误: %zu != %zu", shape.size(), node_dims.size());
+            this->release();
+            return false;
         }
         print_tensor_info("ONNXRuntimeContext输入节点", index, name.get(), shape);
         this->input_node_names.push_back(std::move(name));
@@ -101,17 +113,27 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
 }
 
 std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(const int h, const int w, const caiwei::media::ImageFrame& image) {
-    if (this->src_w != image.width || this->src_h != image.height) {
+    if (this->src_w != image.width || this->src_h != image.height || this->src_c != image.channels) {
+        auto& node_dims = this->input_node_dims[0];
+        if (node_dims[1] != image.channels || node_dims[2] != h || node_dims[3] != w) {
+            CW_LOG_W("图片大小和模型输入大小不匹配");
+            return {};
+        }
         this->src_w = image.width;
         this->src_h = image.height;
-        caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale);
+        this->src_c = image.channels;
+        if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
+            return {};
+        }
         this->dst.resize(this->dst_w * this->dst_h * image.channels);
         this->pad.resize(          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
         this->hwc.resize(          w *           h * image.channels);
         this->chw.resize(          w *           h * image.channels);
     }
-    caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h);
-    caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h);
+    if (!caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h, image.channels)) {
+        return {};
+    }
+    caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h, image.channels);
     caiwei::image::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
     return this->run(this->chw.data(), this->chw.size());
 }
