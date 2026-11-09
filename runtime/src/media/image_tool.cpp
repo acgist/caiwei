@@ -42,7 +42,7 @@ bool caiwei::image::resize(
     if (width % 16 != 0) {
         CW_LOG_D("图片宽度必须是16的倍数: %d", width);
         thread_local std::vector<uint8_t> v;
-        v.resize(dst_w * dst_h * channels);
+        v.resize(static_cast<size_t>(dst_w) * dst_h * channels);
         if (!caiwei::image::resize(src, v.data(), width, height, dst_w, dst_h, channels)) {
             return false;
         }

@@ -86,21 +86,23 @@ else()
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
-# 编译FFMPEG需要提前打开编译开关
-# h264_qsv
-# hevc_qsv
-# h264_cuvid
-# hevc_cuvid
-# h264_rkmpp
-# hevc_rkmpp
-# h264_vaapi
-# hevc_vaapi
-# 指定优先使用解码器
-# add_definitions(-DCAIWEI_AUDIO_DECODER=)
-# add_definitions(-DCAIWEI_VIDEO_DECODER=)
-# 指定优先使用编码器
-# add_definitions(-DCAIWEI_AUDIO_ENCODER=)
-# add_definitions(-DCAIWEI_VIDEO_ENCODER=)
+set(CAIWEI_AUDIO_DECODER "" CACHE STRING "优先使用的音频解码器名: aac/opus")
+set(CAIWEI_VIDEO_DECODER "" CACHE STRING "优先使用的视频解码器名: h264_rkmpp/h264_cuvid/h264_qsv/hevc_rkmpp/hevc_cuvid/hevc_qsv")
+set(CAIWEI_AUDIO_ENCODER "" CACHE STRING "优先使用的音频编码器名: aac/opus")
+set(CAIWEI_VIDEO_ENCODER "" CACHE STRING "优先使用的视频编码器名: h264_rkmpp/h264_cuvid/h264_qsv/hevc_rkmpp/hevc_cuvid/hevc_qsv")
+
+if(NOT CAIWEI_AUDIO_DECODER STREQUAL "")
+    add_compile_definitions(CAIWEI_AUDIO_DECODER="${CAIWEI_AUDIO_DECODER}")
+endif()
+if(NOT CAIWEI_VIDEO_DECODER STREQUAL "")
+    add_compile_definitions(CAIWEI_VIDEO_DECODER="${CAIWEI_VIDEO_DECODER}")
+endif()
+if(NOT CAIWEI_AUDIO_ENCODER STREQUAL "")
+    add_compile_definitions(CAIWEI_AUDIO_ENCODER="${CAIWEI_AUDIO_ENCODER}")
+endif()
+if(NOT CAIWEI_VIDEO_ENCODER STREQUAL "")
+    add_compile_definitions(CAIWEI_VIDEO_ENCODER="${CAIWEI_VIDEO_ENCODER}")
+endif()
 
 if(ENABLE_CAIWEI_TEST)
     message(STATUS "编译测试")

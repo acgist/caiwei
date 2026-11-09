@@ -1,3 +1,5 @@
+#include <climits>
+
 #include "caiwei/log.hpp"
 #include "caiwei/media_data.hpp"
 
@@ -27,7 +29,7 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
         return false;
     }
     channels = IMAGE_CHANNELS;
-    this->data.assign(data, data + width * height * channels);
+    this->data.assign(data, data + static_cast<size_t>(width) * height * channels);
     stbi_image_free(data);
     this->width    = width;
     this->height   = height;
@@ -36,7 +38,7 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
 }
 
 bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const size_t size) {
-    if (buffer == nullptr || size == 0) {
+    if (buffer == nullptr || size == 0 || size > INT_MAX) {
         CW_LOG_W("图片加载失败: 数据为空");
         return false;
     }
@@ -47,7 +49,7 @@ bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const si
         return false;
     }
     channels = IMAGE_CHANNELS;
-    this->data.assign(data, data + width * height * channels);
+    this->data.assign(data, data + static_cast<size_t>(width) * height * channels);
     stbi_image_free(data);
     this->width    = width;
     this->height   = height;

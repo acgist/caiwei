@@ -173,14 +173,14 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
         if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
             return {};
         }
-        this->dst.resize    (this->dst_w * this->dst_h * image.channels);
-        this->pad.resize    (          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
-        this->hwc.resize    (          w *           h * image.channels);
-        this->chw.resize    (          w *           h * image.channels);
-        this->hwc_i8.resize (          w *           h * image.channels);
-        this->chw_i8.resize (          w *           h * image.channels);
-        this->chw_u8.resize (          w *           h * image.channels);
-        this->dst_f16.resize(          w *           h * image.channels);
+        this->dst.resize    (static_cast<size_t>(this->dst_w) * this->dst_h * image.channels);
+        this->pad.resize    (static_cast<size_t>(          w) *           h * image.channels, caiwei::image::DEFAULT_PADDING);
+        this->hwc.resize    (static_cast<size_t>(          w) *           h * image.channels);
+        this->chw.resize    (static_cast<size_t>(          w) *           h * image.channels);
+        this->hwc_i8.resize (static_cast<size_t>(          w) *           h * image.channels);
+        this->chw_i8.resize (static_cast<size_t>(          w) *           h * image.channels);
+        this->chw_u8.resize (static_cast<size_t>(          w) *           h * image.channels);
+        this->dst_f16.resize(static_cast<size_t>(          w) *           h * image.channels);
     }
     if (!caiwei::image::resize(image.data.data(), this->pad.data(), image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, image.channels)) {
         return {};

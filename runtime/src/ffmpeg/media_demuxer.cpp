@@ -49,7 +49,7 @@ inline bool recv_audio_frame(
         CW_LOG_W("音频重采样失败: %d", nb_samples);
         return false;
     }
-    audio_frame.data.resize(nb_samples * audio_info.channels * audio_info.bytes_per_sample);
+    audio_frame.data.resize(static_cast<size_t>(nb_samples) * audio_info.channels * audio_info.bytes_per_sample);
     uint8_t* dst_data = audio_frame.data.data();
     nb_samples = swr_convert(swr_ctx, &dst_data, nb_samples, (const uint8_t**) frame->data, frame->nb_samples);
     if (nb_samples < 0) {
@@ -58,7 +58,7 @@ inline bool recv_audio_frame(
     }
     audio_frame.frames  = audio_frames;
     audio_frame.samples = nb_samples;
-    audio_frame.data.resize(nb_samples * audio_info.channels * audio_info.bytes_per_sample);
+    audio_frame.data.resize(static_cast<size_t>(nb_samples) * audio_info.channels * audio_info.bytes_per_sample);
     return true;
 }
 
@@ -70,7 +70,7 @@ inline bool recv_video_frame(
     caiwei::media::VideoFrame& video_frame
 ) {
     const int dst_stride = video_info.width * video_frame.channels;
-    video_frame.data.resize(video_info.width * video_info.height * video_frame.channels);
+    video_frame.data.resize(static_cast<size_t>(video_info.width) * video_info.height * video_frame.channels);
     uint8_t* dst_data = video_frame.data.data();
     const int dst_height = sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, &dst_data, &dst_stride);
     if (dst_height < 0) {
@@ -560,11 +560,11 @@ static bool init_decoder_ctx(const std::string& type, const std::string& url, AV
     const AVCodec* decoder = nullptr;
     if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
         #ifdef CAIWEI_AUDIO_DECODER
-        decoder = avcodec_find_decoder(CAIWEI_AUDIO_DECODER);
+        decoder = avcodec_find_decoder_by_name(CAIWEI_AUDIO_DECODER);
         #endif
     } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         #ifdef CAIWEI_VIDEO_DECODER
-        decoder = avcodec_find_decoder(CAIWEI_VIDEO_DECODER);
+        decoder = avcodec_find_decoder_by_name(CAIWEI_VIDEO_DECODER);
         #endif
     } else {
         // -

@@ -47,17 +47,17 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
             int   max_class = data[5];
             float max_score = data[4];
             if(max_score > this->confidence_threshold) {
-                const float box_x1 = (data[0] - this->pad_w) / (float) this->dst_w;
-                const float box_y1 = (data[1] - this->pad_h) / (float) this->dst_h;
-                const float box_x2 = (data[2] - this->pad_w) / (float) this->dst_w;
-                const float box_y2 = (data[3] - this->pad_h) / (float) this->dst_h;
+                const float box_x1 = (data[0] - this->pad_w) / static_cast<float>(this->dst_w);
+                const float box_y1 = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
+                const float box_x2 = (data[2] - this->pad_w) / static_cast<float>(this->dst_w);
+                const float box_y2 = (data[3] - this->pad_h) / static_cast<float>(this->dst_h);
                 ret.emplace_back(caiwei::image::to_box_end2end(box_x1, box_y1, box_x2, box_y2, max_class, max_score));
             }
             data += stride_length;
         }
         return ret;
     } else if (result_length == this->class_size + 4) {
-        const size_t total = result_length * stride_length;
+        const size_t total = static_cast<size_t>(result_length) * stride_length;
         if (total != this->out_dst.size()) {
             this->out_dst.resize(total);
         }
@@ -69,10 +69,10 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
             const float* scores = data + 4;
             caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
             if(max_score > this->confidence_threshold) {
-                const float box_x = (data[0] - this->pad_w) / (float) this->dst_w;
-                const float box_y = (data[1] - this->pad_h) / (float) this->dst_h;
-                const float box_w = (data[2]              ) / (float) this->dst_w;
-                const float box_h = (data[3]              ) / (float) this->dst_h;
+                const float box_x = (data[0] - this->pad_w) / static_cast<float>(this->dst_w);
+                const float box_y = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
+                const float box_w = (data[2]              ) / static_cast<float>(this->dst_w);
+                const float box_h = (data[3]              ) / static_cast<float>(this->dst_h);
                 ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;

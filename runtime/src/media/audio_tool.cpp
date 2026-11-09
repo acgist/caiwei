@@ -229,7 +229,7 @@ void caiwei::audio::log_mel_spectrogram(
         CW_LOG_W("参数错误");
         return;
     }
-    mel_spec.resize(n_mels * max_audio_length / hop_length, 0.0F);
+    mel_spec.resize(static_cast<size_t>(n_mels) * max_audio_length / hop_length, 0.0F);
     std::vector<float> audio_data(max_audio_length);
     std::copy(audio, audio + max_audio_length, audio_data.begin());
     ::log_mel_spectrogram(audio_data.data(), max_audio_length, mel_filters, n_fft, hop_length, n_mels, mel_spec);

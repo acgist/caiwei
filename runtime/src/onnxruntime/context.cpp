@@ -146,10 +146,10 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(const int h, co
         if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
             return {};
         }
-        this->dst.resize(this->dst_w * this->dst_h * image.channels);
-        this->pad.resize(          w *           h * image.channels, caiwei::image::DEFAULT_PADDING);
-        this->hwc.resize(          w *           h * image.channels);
-        this->chw.resize(          w *           h * image.channels);
+        this->dst.resize(static_cast<size_t>(this->dst_w) * this->dst_h * image.channels);
+        this->pad.resize(static_cast<size_t>(          w) *           h * image.channels, caiwei::image::DEFAULT_PADDING);
+        this->hwc.resize(static_cast<size_t>(          w) *           h * image.channels);
+        this->chw.resize(static_cast<size_t>(          w) *           h * image.channels);
     }
     if (!caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h, image.channels)) {
         return {};
