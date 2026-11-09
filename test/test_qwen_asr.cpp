@@ -40,7 +40,7 @@ void test_asr() {
             }
         }
     });
-    request.messages.back().audio_data.push_back(std::move(audio_frame));
+    request.messages.back().audio_data.push_back(audio_frame);
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
         CW_LOG_W("模型加载失败");
@@ -49,6 +49,38 @@ void test_asr() {
     asr_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     request.max_completion_tokens = 2;
+    asr_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
+    request.max_completion_tokens = 1024;
+    request.messages.back().audio_data.push_back(audio_frame);
+    CW_LOG_I(
+        "测试多一个音频: %zu - %zu",
+        request.messages.back().audio_data.size(),
+        std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(request.messages.back().content.value()).size()
+    );
+    asr_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
+    request.messages.back().audio_data.pop_back();
+    request.messages.back().content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "audio",
+        },
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "audio",
+        }
+    };
+    CW_LOG_I(
+        "测试少一个音频: %zu - %zu",
+        request.messages.back().audio_data.size(),
+        std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(request.messages.back().content.value()).size()
+    );
+    asr_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
+    request.messages.clear();
+    CW_LOG_I(
+        "测试空数据: %zu",
+        request.messages.size()
+    );
     asr_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
 }

@@ -72,6 +72,53 @@ void test_vlm() {
     request.max_completion_tokens = 2;
     vlm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
+    request.max_completion_tokens = 1024;
+    request.messages.back().video_data.clear();
+    request.messages.back().content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "text",
+            .text = "描述图片内容"
+        },
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "image",
+        },
+    };
+    CW_LOG_I(
+        "测试多一个图片: %zu - %zu - %zu",
+        request.messages.back().image_data.size(),
+        request.messages.back().video_data.size(),
+        std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(request.messages.back().content.value()).size()
+    );
+    vlm_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
+    request.messages.back().image_data.pop_back();
+    request.messages.back().content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "text",
+            .text = "描述图片内容"
+        },
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "image",
+        },
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type = "image",
+        },
+    };
+    CW_LOG_I(
+        "测试少一个图片: %zu - %zu - %zu",
+        request.messages.back().image_data.size(),
+        request.messages.back().video_data.size(),
+        std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(request.messages.back().content.value()).size()
+    );
+    vlm_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
+    request.messages.clear();
+    CW_LOG_I(
+        "测试空数据: %zu",
+        request.messages.size()
+    );
+    vlm_run(ptr.get(), request);
+    caiwei::test::caiwei_wait_enter();
 }
 
 [[maybe_unused]]
