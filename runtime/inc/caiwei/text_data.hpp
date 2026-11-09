@@ -138,7 +138,7 @@ struct CompletionsResponseChoiceMessage {
 };
 
 struct CompletionsResponseChoice {
-    uint32_t index;
+    uint32_t    index;
     std::string finish_reason;
     CompletionsResponseChoiceMessage message;
 };
@@ -179,7 +179,7 @@ struct CompletionsChunkDelta {
 };
 
 struct CompletionsChunkChoice {
-    uint32_t index;
+    uint32_t    index;
     std::string finish_reason;
     CompletionsChunkDelta delta;
 };
@@ -289,6 +289,7 @@ struct ToolcallSession {
     uint32_t    toolcall_index;
     std::string token;
     std::string content;
+    std::string name;
     std::string arguments;
     
     ToolcallSession();

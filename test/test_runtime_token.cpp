@@ -88,6 +88,10 @@ void test_chat_template() {
             .type  = "video",
             .video = "测试"
         },
+        caiwei::text::CompletionsRequestMessageContentItem {
+            .type  = "text",
+            .text = "测试"
+        },
     }});
     request.messages.push_back({.role = "assistant", .content = "北京"});
     request.messages.push_back({.role = "user", .content = "北京"});
@@ -103,17 +107,77 @@ void test_chat_template() {
         }
     };
     const caiwei::text::SpecialToken special_token;
+    const std::string prompt = chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
+    CW_LOG_I("prompt: %s", prompt.c_str());
     CAIWEI_FOR_EACH(1000)
     chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
     CAIWEI_FOR_EACH_END
-    const std::string prompt = chat_template.apply(special_token, request, "<audio>", "<image>", "<video>");
-    CW_LOG_I("prompt: %s", prompt.c_str());
+}
+
+[[maybe_unused]] void print_name_arguments(caiwei::text::ToolcallSession& session) {
+    std::string name = session.get_name();
+    CW_LOG_I("name: %s", name.c_str());
+    std::string arguments = session.get_arguments();
+    CW_LOG_I("arguments: %s", arguments.c_str());
+}
+
+[[maybe_unused]]
+void test_tool_call() {
+    caiwei::text::ToolcallSession session;
+    // -
+    session.put_token(R"({"name": "get_weather", "arguments": {"city":"北京"}})");
+    print_name_arguments(session);
+    session.finish();
+    print_name_arguments(session);
+    // -
+    session.reset();
+    session.put_token(R"({"name":"get_weather","arguments":{"city":"北京"}})");
+    print_name_arguments(session);
+    session.finish();
+    print_name_arguments(session);
+    // -
+    session.reset();
+    session.put_token(R"({"arguments":{"city":"北京"},"name":"get_weather"})");
+    print_name_arguments(session);
+    session.finish();
+    print_name_arguments(session);
+    // -
+    session.reset();
+    session.put_token(R"({"nam)");
+    print_name_arguments(session);
+    session.put_token(R"(e": "g)");
+    print_name_arguments(session);
+    session.put_token(R"(et_weather", "arg)");
+    print_name_arguments(session);
+    session.put_token(R"(uments": {"city":")");
+    print_name_arguments(session);
+    session.put_token(R"(北)");
+    print_name_arguments(session);
+    session.put_token(R"(京)");
+    print_name_arguments(session);
+    session.put_token(R"("}})");
+    session.finish();
+    print_name_arguments(session);
+    // -
+    session.reset();
+    session.put_token(R"({"nam)");
+    print_name_arguments(session);
+    session.put_token(R"(e":"g)");
+    print_name_arguments(session);
+    session.put_token(R"(et_weather","arg)");
+    print_name_arguments(session);
+    session.put_token(R"(uments":{"city":")");
+    print_name_arguments(session);
+    session.put_token(R"(北京"}})");
+    session.finish();
+    print_name_arguments(session);
 }
 
 int main() {
     caiwei::test::init_test();
-    test_tokenizer();
-    test_chat_template();
+    // test_tokenizer();
+    // test_chat_template();
+    test_tool_call();
     caiwei::test::stop_test();
     return 0;
 }

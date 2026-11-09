@@ -124,6 +124,13 @@ bool caiwei::media::MediaDemuxer::open(
     auto last_send_time = std::chrono::steady_clock::now(); // 最后发送时间
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::VideoFrame video_frame;
+    const auto* pix_fmt = av_pix_fmt_desc_get((AVPixelFormat) video_info.format);
+    if (pix_fmt == nullptr) {
+        CW_LOG_W("视频格式错误: %d", video_info.format);
+        success = false;
+        goto close_all;
+    }
+    video_frame.channels = pix_fmt->nb_components;
     if (decoder_frame == nullptr) {
         CW_LOG_W("解码器帧创建失败");
         success = false;
@@ -286,8 +293,6 @@ bool caiwei::media::MediaDemuxer::open(
             goto close_all;
         }
     }
-    audio_info.bytes_per_sample = av_get_bytes_per_sample((AVSampleFormat) audio_info.format);
-    video_frame.channels = av_pix_fmt_desc_get((AVPixelFormat) video_info.format)->nb_components;
     while (this->running) {
         ret = av_read_frame(fmt_ctx, decoder_packet);
         if (ret == 0) {

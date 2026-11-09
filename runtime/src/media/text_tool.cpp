@@ -85,20 +85,18 @@ std::string caiwei::text::ChatTemplate::apply(
     nlohmann::json messages_json;
     nlohmann::json tools_json;
     nlohmann::json extra_context_json;
+    int audio_count = 0;
+    int image_count = 0;
+    int video_count = 0;
     for (const auto& message : request.messages) {
         nlohmann::json message_json;
-        if (message.role.has_value()) {
-            message_json["role"] = message.role.value_or("");
-        }
+        message_json["role"] = message.role.value_or(caiwei::text::ROLE_USER);
         if (message.name.has_value()) {
             message_json["name"] = message.name.value_or("");
         }
         if (message.tool_call_id.has_value()) {
             message_json["tool_call_id"] = message.tool_call_id.value_or("");
         }
-        int audio_count = 0;
-        int image_count = 0;
-        int video_count = 0;
         if (message.content.has_value()) {
             if (std::holds_alternative<std::string>(message.content.value())) {
                 message_json["content"] = std::get<std::string>(message.content.value());
@@ -149,32 +147,45 @@ std::string caiwei::text::ChatTemplate::apply(
                         CW_LOG_W("没有设置消息类型");
                     }
                 }
-                if (audio_index < message.audio_data.size()) {
-                    for (int i = audio_index; i < message.audio_data.size(); i++) {
-                        message_content_items_json.emplace_back(nlohmann::json({
-                            {"type", "text"},
-                            {"text", audio_marker}
-                        }));
-                    }
+                for (size_t i = audio_index; i < message.audio_data.size(); ++i) {
+                    audio_count++;
+                    message_content_items_json.emplace_back(nlohmann::json({
+                        {"type", "text"},
+                        {"text", audio_marker}
+                    }));
                 }
-                if (image_index < message.image_data.size()) {
-                    for (int i = image_index; i < message.image_data.size(); i++) {
-                        message_content_items_json.emplace_back(nlohmann::json({
-                            {"type", "text"},
-                            {"text", image_marker}
-                        }));
+                for (size_t i = image_index; i < message.image_data.size(); ++i) {
+                    image_count++;
+                    std::string text;
+                    if (add_vision_id) {
+                        text += "Picture ";
+                        text += std::to_string(image_count);
+                        text += ": ";
                     }
+                    text += image_marker;
+                    message_content_items_json.emplace_back(nlohmann::json({
+                        {"type", "text"         },
+                        {"text", std::move(text)}
+                    }));
                 }
-                if (video_index < message.video_data.size()) {
-                    for (int i = video_index; i < message.video_data.size(); i++) {
-                        message_content_items_json.emplace_back(nlohmann::json({
-                            {"type", "text"},
-                            {"text", video_marker}
-                        }));
+                for (size_t i = video_index; i < message.video_data.size(); ++i) {
+                    video_count++;
+                    std::string text;
+                    if (add_vision_id) {
+                        text += "Video ";
+                        text += std::to_string(video_count);
+                        text += ": ";
                     }
+                    text += video_marker;
+                    message_content_items_json.emplace_back(nlohmann::json({
+                        {"type", "text"         },
+                        {"text", std::move(text)}
+                    }));
                 }
                 message_json["content"] = std::move(message_content_items_json);
             }
+        } else {
+            message_json["content"] = "";
         }
         if (message.tool_calls.has_value()) {
             nlohmann::json message_tool_calls_json;
@@ -200,7 +211,7 @@ std::string caiwei::text::ChatTemplate::apply(
                 }
                 message_tool_calls_json.push_back(message_tool_call_json);
             }
-            message_json["tool_calls"] = message_tool_calls_json;
+            message_json["tool_calls"] = std::move(message_tool_calls_json);
         }
         messages_json.push_back(std::move(message_json));
     }
@@ -228,20 +239,23 @@ std::string caiwei::text::ChatTemplate::apply(
             tools_json.push_back(std::move(tool_json));
         }
     }
+    extra_context_json["add_vision_id"] = add_vision_id;
     if (special_token.enable_thinking.empty()) {
-        CW_LOG_D("没有配置思考字段关闭思考模式");
+        extra_context_json["enable_thinking"] = request.enable_thinking.value_or(true);
     } else {
         extra_context_json[special_token.enable_thinking] = request.enable_thinking.value_or(true);
     }
-    if (add_vision_id) {
-        extra_context_json["add_vision_id"] = true;
-    } else {
-        CW_LOG_D("没有添加视觉ID");
+    try {
+        return this->chat_template->apply(minja::chat_template_inputs{
+            .messages              = messages_json,
+            .tools                 = tools_json,
+            .add_generation_prompt = true,
+            .extra_context         = extra_context_json
+        });
+    } catch(const std::exception& e) {
+        CW_LOG_E("模板渲染异常: %s", e.what());
+    } catch (...)  {
+        CW_LOG_E("模板渲染异常");
     }
-    return this->chat_template->apply(minja::chat_template_inputs{
-        .messages              = messages_json,
-        .tools                 = tools_json,
-        .add_generation_prompt = true,
-        .extra_context         = extra_context_json
-    });
+    return "";
 }

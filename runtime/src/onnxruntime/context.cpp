@@ -113,7 +113,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
             this->release();
             return false;
         }
-        print_tensor_info("ONNXRuntimeContext输入节点", index, name.get(), shape);
+        print_tensor_info("输入节点", index, name.get(), shape);
         this->input_node_names.push_back(std::move(name));
     }
     for(size_t index = 0; index < output_node_count; ++ index) {
@@ -125,7 +125,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
             return false;
         }
         auto shape = info.GetShape();
-        print_tensor_info("ONNXRuntimeContext输出节点", index, name.get(), shape);
+        print_tensor_info("输出节点", index, name.get(), shape);
         this->output_node_names.push_back(std::move(name));
     }
     this->run_options = new Ort::RunOptions(nullptr);

@@ -76,25 +76,52 @@ void caiwei::text::ToolcallSession::reset() {
     this->toolcall_index += 1;
     this->token     = "";
     this->content   = "";
+    this->name      = "";
     this->arguments = "";
 }
 
 void caiwei::text::ToolcallSession::finish() {
-    this->arguments += this->token;
-    const auto pos = this->arguments.rfind("}");
-    if (pos != std::string::npos) {
-        this->arguments = this->arguments.substr(0, pos);
+    if (this->name_return && this->arguments_return) {
+        this->arguments += this->token;
+        const auto pos = this->arguments.rfind("}");
+        if (pos != std::string::npos) {
+            this->token.clear();
+            this->arguments_return = true;
+            this->arguments = this->arguments.substr(0, pos);
+        } else {
+            CW_LOG_W("格式错误: %s", this->content.c_str());
+        }
     } else {
-        CW_LOG_W("格式错误: %s", this->content.c_str());
+        try {
+            auto json = nlohmann::json::parse(this->content);
+            if (!this->name_return) {
+                auto name = json["name"];
+                if (name.is_string()) {
+                    this->name = name.get<std::string>();
+                } else {
+                    this->name = name.dump();
+                }
+            }
+            if (!this->arguments_return) {
+                auto arguments = json["arguments"];
+                if (arguments.is_string()) {
+                    this->token.clear();
+                    this->arguments_return = true;
+                    this->arguments = arguments.get<std::string>();
+                } else {
+                    this->token.clear();
+                    this->arguments_return = true;
+                    this->arguments = arguments.dump();
+                }
+            }
+        } catch (...) {
+            CW_LOG_E("方法解析异常: %s", this->content.c_str());
+        }
     }
-    this->token.clear();
 }
 
 void caiwei::text::ToolcallSession::put_token(std::string token) {
-    this->token = token;
-    if (this->name_return && this->arguments_return) {
-        return;
-    }
+    this->token += token;
     this->content += token;
 }
 
@@ -102,9 +129,13 @@ std::string caiwei::text::ToolcallSession::get_name() {
     if (this->name_return) {
         return "";
     }
+    if (!this->name.empty()) {
+        this->name_return = true;
+        return std::move(this->name);
+    }
     const auto a = this->content.find(R"("name": ")");
     const auto z = this->content.find(R"(", "arguments": )");
-    if (a != std::string::npos && z != std::string::npos) {
+    if (a != std::string::npos && z != std::string::npos && a < z) {
         this->name_return = true;
         return this->content.substr(a + 9, z - a - 9);
     }
@@ -121,8 +152,10 @@ std::string caiwei::text::ToolcallSession::get_arguments() {
     }
     const auto pos = this->content.find(R"("arguments": )");
     if (pos != std::string::npos) {
+        this->token.clear();
         this->arguments_return = true;
-        return this->content.substr(pos + 13);
+        this->arguments = this->content.substr(pos + 13);
+        return "";
     }
     return "";
 }
@@ -219,10 +252,10 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     set_opt(data, request.video_fps,       "video_fps");
     set_opt(data, request.asr_samples,     "asr_samples");
     set_opt(data, request.vlm_frames,      "vlm_frames");
-    set_opt(data, request.media_url,       "media_url");
-    set_opt(data, request.media_type,      "media_type");
     set_opt(data, request.drop_on_full,    "drop_on_full");
     set_opt(data, request.enable_thinking, "enable_thinking");
+    set_opt(data, request.media_url,       "media_url");
+    set_opt(data, request.media_type,      "media_type");
     set_opt(data, request.model_list,      "model_list");
     request.id      = caiwei::env::id();
     request.created = caiwei::env::unix_timestamp();
@@ -574,7 +607,14 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         return false;
     } else if (check_type != type) {
         return false;
-    } else if (!caiwei::env::allow_media_type.empty()) {
+    }
+    if (caiwei::env::allow_media_type.empty()) {
+        #if CAIWEI_DEBUG
+        #else
+        CW_LOG_W("未配置白名单媒体类型");
+        return false;
+        #endif
+    } else {
         const auto& allow_media_type = caiwei::env::allow_media_type;
         if (std::find(allow_media_type.begin(), allow_media_type.end(), type) == allow_media_type.end()) {
             return false;
@@ -589,7 +629,7 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         } else if (url_view.starts_with("file:")) {
             url_view.remove_prefix(5);
         }
-        std::filesystem::path path(url_view);
+        std::filesystem::path path = url_view;
         if (!std::filesystem::exists(path)) {
             return false;
         }
@@ -602,18 +642,31 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         if (std::find(suffix.begin(), suffix.end(), path.extension().string()) == suffix.end()) {
             return false;
         }
-        if (!caiwei::env::allow_path.empty()) {
+        if (caiwei::env::allow_path.empty()) {
+            #if CAIWEI_DEBUG
+            #else
+            CW_LOG_W("未配置白名单文件路径");
+            return false;
+            #endif
+        } else {
+            std::string real_path = std::filesystem::canonical(path).string();
             const auto& allow_path = caiwei::env::allow_path;
             if (
                 std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
-                    return url_view.starts_with(value);
+                    return real_path.starts_with(value);
                 }) == allow_path.end()
             ) {
                 return false;
             }
         }
     } else if (type == "http" || type == "rtmp" || type == "rtsp") {
-        if (!caiwei::env::allow_host.empty()) {
+        if (caiwei::env::allow_host.empty()) {
+            #if CAIWEI_DEBUG
+            #else
+            CW_LOG_W("未配置白名单主机地址");
+            return false;
+            #endif
+        } else {
             std::string host;
             host.resize(256);
             av_url_split(nullptr, 0, nullptr, 0, host.data(), host.size(), nullptr, nullptr, 0, url.c_str());

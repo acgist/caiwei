@@ -32,7 +32,8 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_TIMEOUT",          "30000"  }, // 超时时间
     {"CAIWEI_USERNAME",         "admin"  }, // 接口账号
     {"CAIWEI_PASSWORD",         "admin"  }, // 接口密码
-    #ifdef CAIWEI_DEBUG
+    {"CAIWEI_MEL_FILTERS",      "mel_128_filters.txt"}, // 梅尔滤波器文件
+    #if CAIWEI_DEBUG
     {"CAIWEI_SECURITY",         "OFF"}, // 安全验证
     {"CAIWEI_ALLOW_PATH",       ""   }, // 允许路径
     {"CAIWEI_ALLOW_HOST",       ""   }, // 允许地址

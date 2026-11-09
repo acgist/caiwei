@@ -8,11 +8,21 @@
 namespace caiwei {
 namespace media  {
 
-inline constexpr const int AUDIO_CHANNELS    = 1;
-inline constexpr const int AUDIO_SAMPLE_RATE = 16000;
-inline constexpr const int IMAGE_WIDTH       = 640;
-inline constexpr const int IMAGE_HEIGHT      = 360;
-inline constexpr const int IMAGE_CHANNELS    = 3;
+inline constexpr const int AUDIO_CHANNELS     = 1;
+inline constexpr const int AUDIO_SAMPLE_RATE  = 16000;
+inline constexpr const int IMAGE_WIDTH        = 640;
+inline constexpr const int IMAGE_HEIGHT       = 360;
+inline constexpr const int IMAGE_CHANNELS     = 3;
+inline constexpr const int AUDIO_MIN_CHANNELS = 1;
+inline constexpr const int AUDIO_MAX_CHANNELS = 2;
+inline constexpr const int AUDIO_MIN_SAMPLE_RATE = 16000;
+inline constexpr const int AUDIO_MAX_SAMPLE_RATE = 48000;
+inline constexpr const int VIDEO_MIN_FPS = 1;
+inline constexpr const int VIDEO_MAX_FPS = 120;
+inline constexpr const int VIDEO_MIN_WIDTH = 128;
+inline constexpr const int VIDEO_MAX_WIDTH = 2560;
+inline constexpr const int VIDEO_MIN_HEIGHT = 0;
+inline constexpr const int VIDEO_MAX_HEIGHT = 2560;
 
 enum class MediaType {
     AUDIO,

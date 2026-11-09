@@ -1,3 +1,4 @@
+#include "caiwei/log.hpp"
 #include "caiwei/media_data.hpp"
 
 #include "stb/stb_image.h"
@@ -22,6 +23,7 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
     int width, height, channels;
     auto* data = stbi_load(path, &width, &height, &channels, STBI_rgb);
     if (data == nullptr) {
+        CW_LOG_W("图片加载失败: %s", path);
         return false;
     }
     channels = IMAGE_CHANNELS;
@@ -35,11 +37,13 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
 
 bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const size_t size) {
     if (buffer == nullptr || size == 0) {
+        CW_LOG_W("图片加载失败: 数据为空");
         return false;
     }
     int width, height, channels;
     auto* data = stbi_load_from_memory(buffer, static_cast<int>(size), &width, &height, &channels, STBI_rgb);
     if (data == nullptr) {
+        CW_LOG_W("图片加载失败: %zu", size);
         return false;
     }
     channels = IMAGE_CHANNELS;

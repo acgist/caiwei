@@ -27,21 +27,20 @@ void init();
 void stop();
 
 struct AudioInfo {
-    int channels;
-    int sample_rate;
-    int bytes_per_sample;
-    int format;
+    int channels         = 0;
+    int sample_rate      = 0;
+    int format           = 0;
+    int bytes_per_sample = 0;
 
     AudioInfo() = default;
-    AudioInfo(int channels, int sample_rate,                       int format);
-    AudioInfo(int channels, int sample_rate, int bytes_per_sample, int format);
+    AudioInfo(int channels, int sample_rate, int format);
 };
 
 struct VideoInfo {
-    int fps;
-    int width;
-    int height;
-    int format;
+    int fps    = 0;
+    int width  = 0;
+    int height = 0;
+    int format = 0;
 
     VideoInfo() = default;
     VideoInfo(         int width, int height, int format);
