@@ -84,9 +84,13 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
     int ret = vsnprintf(message.data(), message.size(), fmt, ap);
     va_end(ap);
     if (ret < 0) {
-        return;
-    }
-    if (ret >= message.size()) {
+        message[0] = 'E';
+        message[1] = 'R';
+        message[2] = 'R';
+        message[3] = 'O';
+        message[4] = 'R';
+        message[5] = '\0';
+    } else if (static_cast<size_t>(ret) >= message.size()) {
         message[message.size() - 4] = '.';
         message[message.size() - 3] = '.';
         message[message.size() - 2] = '.';

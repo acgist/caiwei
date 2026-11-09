@@ -21,7 +21,9 @@ caiwei::context::RKNN2Result::~RKNN2Result() {
     }
 }
 
-caiwei::context::RKNN2Context::RKNN2Context(std::string path, int c, int h, int w) : path(std::move(path)) {
+caiwei::context::RKNN2Context::RKNN2Context(
+    std::string path, int /* c */, int /* h */, int /* w */
+) : path(std::move(path)) {
     CW_LOG_I("创建RKNN2Context: %s", this->path.c_str());
 }
 
@@ -45,11 +47,11 @@ bool caiwei::context::RKNN2Context::load_model() {
         CW_LOG_W("模型打开失败: %s", this->path.c_str());
         return false;
     }
-    const auto size = std::filesystem::file_size(this->path);
+    const uintmax_t size = std::filesystem::file_size(this->path);
     std::vector<char> data;
     data.resize(size);
     stream.read(data.data(), size);
-    if (stream.gcount() != size) {
+    if (static_cast<uintmax_t>(stream.gcount()) != size) {
         CW_LOG_W("模型读取失败: %s", this->path.c_str());
         return false;
     }
@@ -152,12 +154,12 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
     const auto& input_attr = this->input_attrs[0];
     if (this->src_w != image.width || this->src_h != image.height || this->src_c != image.channels) {
         if (input_attr.fmt == RKNN_TENSOR_NCHW) {
-            if (input_attr.dims[1] != image.channels || input_attr.dims[2] != h || input_attr.dims[3] != w) {
+            if (input_attr.dims[1] != image.channels || input_attr.dims[2] != static_cast<uint32_t>(h) || input_attr.dims[3] != static_cast<uint32_t>(w)) {
                 CW_LOG_W("图片大小和模型输入大小不匹配");
                 return {};
             }
         } else if (input_attr.fmt == RKNN_TENSOR_NHWC) {
-            if (input_attr.dims[3] != image.channels || input_attr.dims[1] != h || input_attr.dims[2] != w) {
+            if (input_attr.dims[3] != image.channels || input_attr.dims[1] != static_cast<uint32_t>(h) || input_attr.dims[2] != static_cast<uint32_t>(w)) {
                 CW_LOG_W("图片大小和模型输入大小不匹配");
                 return {};
             }

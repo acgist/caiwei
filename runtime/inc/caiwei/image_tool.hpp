@@ -165,8 +165,8 @@ inline void min_max_loc(const T* score, const int size, T& min_score, int& min_i
 }
 
 template <typename T, typename R>
-inline std::vector<R> top_k(const T* score, const uint32_t size, const uint32_t top_k, const T confidence_threshold) {
-    if (size == 0 || top_k == 0) {
+inline std::vector<R> top_k(const T* score, const int size, const int top_k, const T confidence_threshold) {
+    if (size <= 0 || top_k <= 0) {
         return {};
     }
     std::vector<R> ret;
@@ -179,7 +179,7 @@ inline std::vector<R> top_k(const T* score, const uint32_t size, const uint32_t 
             });
         }
     }
-    if (ret.size() <= top_k) {
+    if (ret.size() <= static_cast<size_t>(top_k)) {
         std::sort(ret.begin(), ret.end(), [](const R& a, const R& z) {
             return a.score > z.score;
         });

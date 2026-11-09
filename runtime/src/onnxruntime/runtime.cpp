@@ -4,7 +4,7 @@
 #include "caiwei/runtime/onnxruntime.hpp"
 
 static void onnxruntime_log(
-    void* param,
+    void* /* param */,
     OrtLoggingLevel severity,
     const char* category,
     const char* logid,

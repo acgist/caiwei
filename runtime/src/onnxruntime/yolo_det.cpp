@@ -16,8 +16,8 @@ caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(
     float confidence_threshold,
     Ort::Env* env,
     caiwei::runtime::Runtime* runtime
-) : ONNXRuntimeContext(std::move(path), c, h, w, env),
-    DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime) {
+) : DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime),
+    ONNXRuntimeContext(std::move(path), c, h, w, env) {
 }
 
 caiwei::context::DetONNXRuntimeContext::~DetONNXRuntimeContext() {
@@ -57,8 +57,9 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
         }
         return ret;
     } else if (result_length == this->class_size + 4) {
-        if (result_length * stride_length != this->out_dst.size()) {
-            this->out_dst.resize(result_length * stride_length);
+        const size_t total = result_length * stride_length;
+        if (total != this->out_dst.size()) {
+            this->out_dst.resize(total);
         }
         caiwei::image::transpose(output_data, this->out_dst.data(), result_length, stride_length);
         const float* data = this->out_dst.data();

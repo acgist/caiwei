@@ -12,8 +12,8 @@ caiwei::context::DetRKNN2Context::DetRKNN2Context(
     float iou_threshold,
     float confidence_threshold,
     caiwei::runtime::Runtime* runtime
-) : RKNN2Context(std::move(path), c, h, w),
-    DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime) {
+) : DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime),
+    RKNN2Context(std::move(path), c, h, w) {
 }
 
 caiwei::context::DetRKNN2Context::~DetRKNN2Context() {
@@ -37,8 +37,9 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
     }
     std::vector<caiwei::image::Box> ret;
     if (output_attr.type == RKNN_TENSOR_INT8) {
-        if (result_length * stride_length != this->out_dst_i8.size()) {
-            this->out_dst_i8.resize(result_length * stride_length);
+        const size_t total = result_length * stride_length;
+        if (total != this->out_dst_i8.size()) {
+            this->out_dst_i8.resize(total);
         }
         const auto* out_buf = reinterpret_cast<int8_t*>(output.outputs[0].buf);
         int8_t* data = this->out_dst_i8.data();
@@ -48,31 +49,32 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         const int8_t confidence_threshold_i8 = caiwei::type::qnt_affine_to_i8(this->confidence_threshold, zp, scale);
         for (int64_t index = 0; index < stride_length; ++index) {
             int    max_class;
-            int8_t max_score;
+            int8_t max_score_i8;
             const int8_t* scores = data + 4;
-            caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
-            if(max_score > confidence_threshold_i8) {
+            caiwei::image::max_loc(scores, this->class_size, max_score_i8, max_class);
+            if(max_score_i8 > confidence_threshold_i8) {
                 // I8坐标归一化到[0,1]需要乘以高宽还原
                 const float box_x = (caiwei::type::deqnt_affine_to_f32(data[0], zp, scale) * this->w - this->pad_w) / (float) this->dst_w;
                 const float box_y = (caiwei::type::deqnt_affine_to_f32(data[1], zp, scale) * this->h - this->pad_h) / (float) this->dst_h;
                 const float box_w = (caiwei::type::deqnt_affine_to_f32(data[2], zp, scale) * this->w              ) / (float) this->dst_w;
                 const float box_h = (caiwei::type::deqnt_affine_to_f32(data[3], zp, scale) * this->h              ) / (float) this->dst_h;
-                const float max_score = caiwei::type::deqnt_affine_to_f32(max_score, zp, scale);
+                const float max_score = caiwei::type::deqnt_affine_to_f32(max_score_i8, zp, scale);
                 ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;
         }
     } else if (output_attr.type == RKNN_TENSOR_FLOAT16) {
+        const size_t total = result_length * stride_length;
         const auto* out_buf_f16 = reinterpret_cast<uint16_t*>(output.outputs[0].buf);
-        if (result_length * stride_length != this->out_buf_f32.size()) {
-            this->out_buf_f32.resize(result_length * stride_length);
+        if (total != this->out_buf_f32.size()) {
+            this->out_buf_f32.resize(total);
         }
-        if (result_length * stride_length != this->out_dst_f32.size()) {
-            this->out_dst_f32.resize(result_length * stride_length);
+        if (total != this->out_dst_f32.size()) {
+            this->out_dst_f32.resize(total);
         }
         float* out_buf = this->out_buf_f32.data();
         float* data    = this->out_dst_f32.data();
-        caiwei::type::fp16_to_f32(out_buf, out_buf_f16, result_length * stride_length);
+        caiwei::type::fp16_to_f32(out_buf, out_buf_f16, total);
         caiwei::image::transpose(out_buf, data, result_length, stride_length);
         for (int64_t index = 0; index < stride_length; ++index) {
             int   max_class;

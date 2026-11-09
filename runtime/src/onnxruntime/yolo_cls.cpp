@@ -12,8 +12,8 @@ caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(
     float confidence_threshold,
     Ort::Env* env,
     caiwei::runtime::Runtime* runtime
-) : ONNXRuntimeContext(std::move(path), c, h, w, env),
-    ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime) {
+) : ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime),
+    ONNXRuntimeContext(std::move(path), c, h, w, env) {
 }
 
 caiwei::context::ClsONNXRuntimeContext::~ClsONNXRuntimeContext() {

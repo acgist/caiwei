@@ -217,7 +217,7 @@ bool caiwei::session::CompletionsSession::get() {
                             frame.data.begin(),
                             frame.data.end()
                         );
-                        if (audio_frame_buffer.size() >= asr_samples) {
+                        if (audio_frame_buffer.size() >= static_cast<size_t>(asr_samples)) {
                             asr_cv.notify_one();
                         }
                     } else {
@@ -236,11 +236,11 @@ bool caiwei::session::CompletionsSession::get() {
                     while (
                         !drop_on_full             &&
                         callback_safe(nullptr, 0) &&
-                        video_frame_size + 1 > vlm_frames
+                        video_frame_size + 1 > static_cast<size_t>(vlm_frames)
                     ) {
                         vlm_cv.wait_for(lock, std::chrono::milliseconds(100));
                     }
-                    if (video_frame_size + 1 <= vlm_frames) {
+                    if (video_frame_size + 1 <= static_cast<size_t>(vlm_frames)) {
                         auto& data = video_frame_buffer[video_frame_size];
                         if (
                             data.width       != frame.width    ||
@@ -259,7 +259,7 @@ bool caiwei::session::CompletionsSession::get() {
                             frame.data.swap(data.data);
                         }
                         ++video_frame_size;
-                        if (video_frame_size == vlm_frames) {
+                        if (video_frame_size == static_cast<size_t>(vlm_frames)) {
                             vlm_cv.notify_one();
                         }
                     } else {
@@ -372,7 +372,7 @@ inline void sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& 
     }
 }
 
-static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::CompletionResult> generator) {
+static void sync_generator(caiwei::text::CompletionsRequest& /* request */, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::CompletionResult> generator) {
     std::string content;
     std::string thinking;
     std::string toolcall_name;
@@ -557,7 +557,7 @@ static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsR
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
-            if (audio_frame_buffer.empty() || audio_frame_buffer.size() < asr_samples) {
+            if (audio_frame_buffer.empty() || audio_frame_buffer.size() < static_cast<size_t>(asr_samples)) {
                 callable = callback(nullptr, 0);
                 cv.notify_one();
                 continue;
@@ -592,7 +592,7 @@ static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsR
         {
             std::unique_lock<std::mutex> lock(mutex);
             cv.wait_for(lock, std::chrono::seconds(1));
-            if (video_frame_size < vlm_frames) {
+            if (video_frame_size < static_cast<size_t>(vlm_frames)) {
                 callable = callback(nullptr, 0);
                 cv.notify_one();
                 continue;
@@ -601,7 +601,7 @@ static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsR
             video_frame_size = 0;
             cv.notify_one();
         }
-        if (video_data.size() > vlm_frames) {
+        if (video_data.size() > static_cast<size_t>(vlm_frames)) {
             video_data.resize(vlm_frames);
         }
         callable = async_vlm(request, vlm_wrapper, callback);
@@ -692,7 +692,7 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
         caiwei::media::VIDEO_INFO_DECODE,
         [&](caiwei::media::AudioFrame& frame) {
             audio_frame.data.insert(audio_frame.data.end(), frame.data.begin(), frame.data.end());
-            return audio_frame.data.size() < samples;
+            return audio_frame.data.size() < static_cast<size_t>(samples);
         },
         [&](caiwei::media::VideoFrame& /* frame */) {
             return true;
@@ -706,7 +706,7 @@ static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message,
         CW_LOG_W("加载音频失败: %s", audio_url.c_str());
         return;
     }
-    if (audio_frame.data.size() > samples) {
+    if (audio_frame.data.size() > static_cast<size_t>(samples)) {
         audio_frame.data.resize(samples);
     }
     message.audio_data.push_back(std::move(audio_frame));
@@ -823,7 +823,7 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
                 return true;
             }
             video_frames.push_back(std::move(frame));
-            return video_frames.size() < frames;
+            return video_frames.size() < static_cast<size_t>(frames);
         }
     );
     if (!ret) {
@@ -834,7 +834,7 @@ static void fill_video_message(caiwei::text::CompletionsRequestMessage& message,
         CW_LOG_W("加载视频失败: %s", video_url.c_str());
         return;
     }
-    if (video_frames.size() > frames) {
+    if (video_frames.size() > static_cast<size_t>(frames)) {
         video_frames.resize(frames);
     }
     message.video_data.push_back(std::move(video_frames));

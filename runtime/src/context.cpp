@@ -36,13 +36,13 @@ caiwei::context::ClsContext::ClsContext(
     int top_k,
     float confidence_threshold,
     caiwei::runtime::Runtime* runtime
-) : c(c),
+) : Context(Type::CLS, runtime),
+    c(c),
     h(h),
     w(w),
     class_size(class_size),
     top_k(top_k),
-    confidence_threshold(confidence_threshold),
-    Context(Type::CLS, runtime) {
+    confidence_threshold(confidence_threshold) {
 }
 
 caiwei::context::ClsContext::~ClsContext() {
@@ -56,13 +56,13 @@ caiwei::context::DetContext::DetContext(
     float iou_threshold,
     float confidence_threshold,
     caiwei::runtime::Runtime* runtime
-) : c(c),
+) : Context(Type::DET, runtime),
+    c(c),
     h(h),
     w(w),
     class_size(class_size),
     iou_threshold(iou_threshold),
-    confidence_threshold(confidence_threshold),
-    Context(Type::DET, runtime) {
+    confidence_threshold(confidence_threshold) {
 }
 
 caiwei::context::DetContext::~DetContext() {
@@ -144,7 +144,7 @@ bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
         }
         return true;
     } else if (size > 0) {
-        if (info->path_list.size() != size) {
+        if (info->path_list.size() != static_cast<size_t>(size)) {
             CW_LOG_W("模型文件配置错误: %d => %s", size, info->path.c_str());
             return false;
         }

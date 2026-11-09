@@ -252,7 +252,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
         .prompt   = nullptr,
         .embed    = context_session->audio_embeds.data(),
         .tokens   = nullptr,
-        .n_tokens = n_tokens,
+        .n_tokens = static_cast<uint64_t>(n_tokens),
         .enable_thinking = request.enable_thinking.value_or(false)
     };
     std::vector<rknn3_llm_input> inputs(1);

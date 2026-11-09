@@ -56,9 +56,10 @@ bool caiwei::media::MediaMuxer::open(AudioInfo in_audio_info, VideoInfo in_video
 bool caiwei::media::MediaMuxer::open_audio() {
     #ifdef CAIWEI_AUDIO_ENCODER
     this->audio_codec = avcodec_find_encoder_by_name(CAIWEI_AUDIO_ENCODER);
-    #else
-    this->audio_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     #endif
+    if (this->audio_codec == nullptr) {
+        this->audio_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
+    }
     if (this->audio_codec == nullptr) {
         CW_LOG_W("不支持音频编码器");
         return false;
@@ -128,9 +129,10 @@ bool caiwei::media::MediaMuxer::open_audio() {
 bool caiwei::media::MediaMuxer::open_video() {
     #ifdef CAIWEI_VIDEO_ENCODER
     this->video_codec = avcodec_find_encoder_by_name(CAIWEI_VIDEO_ENCODER);
-    #else
-    this->video_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     #endif
+    if (this->video_codec == nullptr) {
+        this->video_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    }
     if (this->video_codec == nullptr) {
         CW_LOG_W("不支持视频编码器");
         return false;

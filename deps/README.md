@@ -40,8 +40,12 @@ PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
 ./configure --enable-gpl --enable-shared --enable-libx264 --enable-nonfree
 make -j4
 sudo make install
-# 配置RKMPP支持
+# 配置RKMPP硬件支持
 --enable-libdrm --enable-rkmpp --enable-version3
+# 配置其他硬件支持
+--enable-cuda --enable-cuvid
+--enable-vaapi
+--enable-libmfx
 ```
 
 ## cpp-httplib

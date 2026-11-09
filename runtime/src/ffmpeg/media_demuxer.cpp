@@ -557,7 +557,21 @@ static void sws_free(SwsContext** sws) {
 }
 
 static bool init_decoder_ctx(const std::string& type, const std::string& url, AVCodecContext** decoder_ctx, AVCodecParameters* codecpar) {
-    const AVCodec* decoder = avcodec_find_decoder(codecpar->codec_id);
+    const AVCodec* decoder = nullptr;
+    if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+        #ifdef CAIWEI_AUDIO_DECODER
+        decoder = avcodec_find_decoder(CAIWEI_AUDIO_DECODER);
+        #endif
+    } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+        #ifdef CAIWEI_VIDEO_DECODER
+        decoder = avcodec_find_decoder(CAIWEI_VIDEO_DECODER);
+        #endif
+    } else {
+        // -
+    }
+    if (decoder == nullptr) {
+        decoder = avcodec_find_decoder(codecpar->codec_id);
+    }
     if (decoder == nullptr) {
         CW_LOG_W("解码器不存在: %s - %s", type.c_str(), url.c_str());
         return false;

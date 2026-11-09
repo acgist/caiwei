@@ -12,8 +12,8 @@ caiwei::context::ClsRKNN2Context::ClsRKNN2Context(
     int top_k,
     float confidence_threshold,
     caiwei::runtime::Runtime* runtime
-) : RKNN2Context(std::move(path), c, h, w),
-    ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime) {
+) : ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime),
+    RKNN2Context(std::move(path), c, h, w) {
 }
 
 caiwei::context::ClsRKNN2Context::~ClsRKNN2Context() {
@@ -38,7 +38,7 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
         CW_LOG_W("类型数量错误: %llu != %d", out_dst_length, this->class_size);
         return {};
     }
-    if (out_dst_length != this->out_dst.size()) {
+    if (static_cast<size_t>(out_dst_length) != this->out_dst.size()) {
         this->out_dst.resize(out_dst_length);
     }
     const auto* out_buf = reinterpret_cast<uint16_t*>(output.outputs[0].buf);

@@ -86,6 +86,22 @@ else()
     message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
+# 编译FFMPEG需要提前打开编译开关
+# h264_qsv
+# hevc_qsv
+# h264_cuvid
+# hevc_cuvid
+# h264_rkmpp
+# hevc_rkmpp
+# h264_vaapi
+# hevc_vaapi
+# 指定优先使用解码器
+# add_definitions(-DCAIWEI_AUDIO_DECODER=)
+# add_definitions(-DCAIWEI_VIDEO_DECODER=)
+# 指定优先使用编码器
+# add_definitions(-DCAIWEI_AUDIO_ENCODER=)
+# add_definitions(-DCAIWEI_VIDEO_ENCODER=)
+
 if(ENABLE_CAIWEI_TEST)
     message(STATUS "编译测试")
     add_definitions(-DENABLE_CAIWEI_TEST=1)

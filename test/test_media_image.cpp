@@ -34,7 +34,9 @@ void test_resize() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
     channels = caiwei::media::IMAGE_CHANNELS;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return;
+    }
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     caiwei::image::resize(data, dst.data(), width, height, dst_w, dst_h, channels);
     stbi_write_jpg("./image_resize.jpg", dst_w, dst_h, channels, dst.data(), 80);
@@ -55,7 +57,9 @@ void test_resize_rga() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
     channels = caiwei::media::IMAGE_CHANNELS;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return;
+    }
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     rga_buffer_t src_img = wrapbuffer_virtualaddr(data,       width, height, RK_FORMAT_RGB_888);
     rga_buffer_t dst_img = wrapbuffer_virtualaddr(dst.data(), dst_w, dst_h,  RK_FORMAT_RGB_888);
@@ -78,7 +82,9 @@ void test_resize_ffmpeg() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
     channels = caiwei::media::IMAGE_CHANNELS;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return;
+    }
     SwsContext* sws = sws_getContext(
         width, height, AV_PIX_FMT_RGB24,
         dst_w, dst_h,  AV_PIX_FMT_RGB24,
@@ -110,7 +116,9 @@ void test_resize_pad() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
     channels = caiwei::media::IMAGE_CHANNELS;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return;
+    }
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(    w *     h * channels, caiwei::image::DEFAULT_PADDING);
     caiwei::image::resize (data,       dst.data(), width, height, dst_w, dst_h, channels);
@@ -134,7 +142,9 @@ void test_resize_pad_rga() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
     channels = caiwei::media::IMAGE_CHANNELS;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return;
+    }
     std::vector<uint8_t> pad(w * h * channels, caiwei::image::DEFAULT_PADDING);
     rga_buffer_t src_img = wrapbuffer_virtualaddr(data,       width, height, RK_FORMAT_RGB_888);
     rga_buffer_t dst_img = wrapbuffer_virtualaddr(pad.data(), w,     h,      RK_FORMAT_RGB_888);
@@ -237,7 +247,9 @@ void test_image() {
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
     channels = caiwei::media::IMAGE_CHANNELS;
-    caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale);
+    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+        return;
+    }
     std::vector<uint8_t> dst(dst_w * dst_h * channels);
     std::vector<uint8_t> pad(w     * h     * channels);
     std::vector<float>   hwc(w     * h     * channels);

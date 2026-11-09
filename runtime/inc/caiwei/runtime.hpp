@@ -47,6 +47,8 @@ inline const char* get_type_name(Type type) {
 }
 
 class Runtime {
+public:
+    const std::string id;
 private:
     int min_pool  = 4;
     int max_pool  = 8;
@@ -58,8 +60,6 @@ private:
     std::condition_variable condition;
 protected:
     std::map<std::string, std::vector<std::shared_ptr<caiwei::context::Context>>> context_map;
-public:
-    const std::string id;
 public:
     Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type);
     virtual ~Runtime();

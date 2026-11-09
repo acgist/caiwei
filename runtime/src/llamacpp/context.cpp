@@ -308,7 +308,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
             llama_batch_free(batch);
             return {};
         }
-        if (batch.n_tokens + n_tokens > static_cast<size_t>(n_batch) || seq_pos >= seq_max) {
+        if (batch.n_tokens + n_tokens > static_cast<size_t>(n_batch) || static_cast<size_t>(seq_pos) >= seq_max) {
             float* out = emb + emb_pos * n_embd_out;
             batch_decode_pooling(context.get(), batch, pooling_type, out, seq_pos, n_embd_out);
             emb_pos += pooling_type == LLAMA_POOLING_TYPE_NONE ? batch.n_tokens : seq_pos;
