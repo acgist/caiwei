@@ -1,6 +1,5 @@
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/image_tool.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
 
 caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(
@@ -10,14 +9,16 @@ caiwei::context::VLMLlamaCPPContext::VLMLlamaCPPContext(
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
 ) : VLMContext(runtime),
-    LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, special_token) {
+    LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, std::move(special_token)) {
 }
 
 caiwei::context::VLMLlamaCPPContext::~VLMLlamaCPPContext() {
 }
 
 bool caiwei::context::VLMLlamaCPPContext::load() {
-    return this->load_model() && this->load_mtmd_model() && this->load_template();
+    const int min_tokens = caiwei::env::get_int("CAIWEI_VLM_IMAGE_MIN_TOKEN");
+    const int max_tokens = caiwei::env::get_int("CAIWEI_VLM_IMAGE_MAX_TOKEN");
+    return this->load_model() && this->load_mtmd_model(min_tokens, max_tokens) && this->load_template();
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::VLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
@@ -25,20 +26,12 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::VLMLlamaCPPConte
 }
 
 static mtmd_bitmap* fill_media(int width, int height, int channels, const std::vector<uint8_t>& data) {
-    const int w = caiwei::env::get_int("CAIWEI_VLM_WIDTH");
-    const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
-    float scale;
-    int dst_w, dst_h, pad_w, pad_h;
-    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+    if (data.empty() || width <= 0 || height <= 0 || channels != 3) {
+        CW_LOG_W("图片格式错误: %d, %d, %d", width, height, channels);
         return nullptr;
     }
-    std::vector<uint8_t> dst(dst_w * dst_h * channels);
-    std::vector<uint8_t> pad(    w *     h * channels);
-    if (!caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h, channels)) {
-        return nullptr;
-    }
-    caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h, channels);
-    return mtmd_bitmap_init(w, h, pad.data());
+    // 不用手动缩放使用使用image_min_tokens/image_max_tokens自动适配
+    return mtmd_bitmap_init(width, height, data.data());
 }
 
 static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& video) {
@@ -58,24 +51,12 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
                 return -1;
             }
             const auto& frame  = video[chunk_idx];
-            const auto& data   = frame.data;
-            const int width    = frame.width;
-            const int height   = frame.height;
-            const int channels = frame.channels;
-            const int w = caiwei::env::get_int("CAIWEI_VLM_WIDTH");
-            const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
-            float scale;
-            int dst_w, dst_h, pad_w, pad_h;
-            if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+            if (frame.data.empty() || frame.width <= 0 || frame.height <= 0 || frame.channels != 3) {
+                CW_LOG_W("视频格式错误: %d, %d, %d", frame.width, frame.height, frame.channels);
                 return -1;
             }
-            std::vector<uint8_t> dst(dst_w * dst_h * channels);
-            std::vector<uint8_t> pad(    w *     h * channels);
-            if (!caiwei::image::resize(data.data(), dst.data(), width, height, dst_w, dst_h, channels)) {
-                return -1;
-            }
-            caiwei::image::padding(dst.data(), pad.data(), dst_w, dst_h, pad_w, pad_h, w, h, channels);
-            *out_bitmap = mtmd_bitmap_init(w, h, pad.data());
+            // 不用手动缩放使用使用image_min_tokens/image_max_tokens自动适配
+            *out_bitmap = mtmd_bitmap_init(frame.width, frame.height, frame.data.data());
             return 0;
         } 
     );
@@ -104,9 +85,10 @@ caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inp
         caiwei_batch.success = true;
         return caiwei_batch;
     } else {
-        CW_LOG_W("图片编码失败");
         caiwei_batch.success = false;
-        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        if (caiwei_batch.finish_reason.empty()) {
+            caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        }
         return caiwei_batch;
     }
 }

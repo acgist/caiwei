@@ -37,7 +37,7 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::g
     const std::string& mmproj_path = path_list[1];
     caiwei::text::SpecialToken special_token;
     special_token.load_asr();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::ASRLlamaCPPContext>(model_path, mmproj_path, max_token_length, special_token, this);
 }
 
@@ -48,7 +48,7 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::g
     }
     caiwei::text::SpecialToken special_token;
     special_token.load_llm();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::LLMLlamaCPPContext>(info->path, max_token_length, special_token, this);
 }
 
@@ -62,7 +62,7 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::g
     const std::string& mmproj_path = path_list[1];
     caiwei::text::SpecialToken special_token;
     special_token.load_vlm();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::VLMLlamaCPPContext>(model_path, mmproj_path, max_token_length, special_token, this);
 }
 
@@ -73,7 +73,7 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::LlamaCPPRunt
     }
     caiwei::text::SpecialToken special_token;
     special_token.load_embedding();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::EmbeddingLlamaCPPContext>(info->path, max_token_length, special_token, this);
 }
 
@@ -84,6 +84,6 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::LlamaCPPRunt
     }
     caiwei::text::SpecialToken special_token;
     special_token.load_reranking();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::RerankingLlamaCPPContext>(info->path, max_token_length, special_token, this);
 }

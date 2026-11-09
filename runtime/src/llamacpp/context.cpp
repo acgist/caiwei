@@ -80,7 +80,7 @@ bool caiwei::context::LlamaCPPContext::load_model() {
     return true;
 }
 
-bool caiwei::context::LlamaCPPContext::load_mtmd_model() {
+bool caiwei::context::LlamaCPPContext::load_mtmd_model(int image_min_tokens, int image_max_tokens) {
     if (this->mtmd_model) {
         return true;
     }
@@ -90,6 +90,14 @@ bool caiwei::context::LlamaCPPContext::load_mtmd_model() {
     }
     mtmd_context_params params = mtmd_context_params_default();
     params.media_marker = this->special_token.media_marker.c_str();
+    if (image_min_tokens > 0) {
+        params.image_min_tokens = image_min_tokens;
+        CW_LOG_I("设置图片最小词元数量: %d", image_min_tokens);
+    }
+    if (image_max_tokens > 0) {
+        params.image_max_tokens = image_max_tokens;
+        CW_LOG_I("设置图片最大词元数量: %d", image_max_tokens);
+    }
     this->mtmd_model = mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params);
     if (this->mtmd_model == nullptr) {
         CW_LOG_W("模型加载失败: %s", this->mtmd_path.c_str());
@@ -191,9 +199,10 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
         CW_LOG_W("分词失败: %zu", n_chunks);
         return false;
     }
-    int32_t   n_batch    = this->max_token_length;
-    llama_pos n_pos      = 0;
+    int32_t   n_batch     = this->max_token_length;
+    llama_pos n_pos       = 0;
     llama_pos n_pos_chunk = 0;
+    const uint32_t n_ctx = llama_n_ctx(context);
     mtmd::batch_ptr mtmd_batch{ nullptr };
     for (size_t i = 0; i < n_chunks; i++) {
         auto* chunk      = mtmd_input_chunks_get(chunks.ptr.get(), i);
@@ -252,6 +261,12 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(caiwei_llama_batch& caiwe
                 return false;
             }
             n_pos = n_pos_chunk;
+        }
+        if (n_pos > n_ctx) {
+            CW_LOG_W("提示词超长: %d > %d", n_pos, n_ctx);
+            caiwei_batch.n_prompt_tokens = n_pos;
+            caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
+            return false;
         }
     }
     caiwei_batch.n_pos = n_pos;

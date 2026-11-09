@@ -51,13 +51,20 @@ caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inp
         .append(caiwei::text::ROLE_ASSISTANT)
         .append("\n");
     caiwei_llama_batch caiwei_batch{};
+    if (bitmaps.entries.empty()) {
+        CW_LOG_W("音频数据为空");
+        caiwei_batch.success = false;
+        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        return caiwei_batch;
+    }
     if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
         caiwei_batch.success = true;
         return caiwei_batch;
     } else {
-        CW_LOG_W("音频编码失败");
         caiwei_batch.success = false;
-        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        if (caiwei_batch.finish_reason.empty()) {
+            caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        }
         return caiwei_batch;
     }
 }

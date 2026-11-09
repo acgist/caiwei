@@ -49,7 +49,7 @@ public:
     virtual ~LlamaCPPContext();
 public:
     bool load_model();
-    bool load_mtmd_model();
+    bool load_mtmd_model(int image_min_tokens = -1, int image_max_tokens = -1);
     bool load_template();
 };
 

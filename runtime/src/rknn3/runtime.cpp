@@ -35,7 +35,7 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
     const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_asr();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_ASR_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::ASRRKNN3Context>(
         path_list[0],
         path_list[1],
@@ -57,7 +57,7 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_
     const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_llm();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_LLM_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::LLMRKNN3Context>(
         path_list[0],
         path_list[1],
@@ -78,7 +78,7 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
     const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_vlm();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_VLM_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::VLMRKNN3Context>(
         path_list[0],
         path_list[1],
@@ -100,7 +100,7 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime
     const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_embedding();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::EmbeddingRKNN3Context>(
         path_list[0],
         path_list[1],
@@ -120,7 +120,7 @@ std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime
     const auto& path_list = info->path_list;
     caiwei::text::SpecialToken special_token;
     special_token.load_reranking();
-    uint32_t max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
+    int max_token_length = caiwei::env::get_int("CAIWEI_RERANKING_MAX_TOKEN_LENGTH");
     return std::make_shared<caiwei::context::RerankingRKNN3Context>(
         path_list[0],
         path_list[1],

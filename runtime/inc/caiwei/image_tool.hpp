@@ -271,8 +271,8 @@ inline void hwc_to_chw_u8_f32(const uint8_t* __restrict hwc, float* __restrict c
 bool resize(
     const uint8_t* src,
           uint8_t* dst,
-    const int width,
-    const int height,
+    const int src_w,
+    const int src_h,
     const int w,
     const int h,
     const int dst_w,

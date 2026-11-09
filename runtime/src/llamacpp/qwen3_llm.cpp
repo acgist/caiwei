@@ -39,9 +39,9 @@ caiwei::context::caiwei_llama_batch caiwei::context::LLMLlamaCPPContext::get_inp
         return caiwei_batch;
     }
     caiwei_batch.n_prompt_tokens = prompt_tokens.size();
-    const uint32_t n_batch = llama_n_batch(context);
-    if (caiwei_batch.n_prompt_tokens > n_batch) {
-        CW_LOG_W("提示词超长: %d > %d", caiwei_batch.n_prompt_tokens, n_batch);
+    const uint32_t n_ctx = llama_n_ctx(context);
+    if (caiwei_batch.n_prompt_tokens > n_ctx) {
+        CW_LOG_W("提示词超长: %d > %d", caiwei_batch.n_prompt_tokens, n_ctx);
         caiwei_batch.success = false;
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
         return caiwei_batch;

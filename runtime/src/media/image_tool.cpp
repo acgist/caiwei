@@ -20,8 +20,8 @@
 bool caiwei::image::resize(
     const uint8_t* src,
           uint8_t* dst,
-    const int width,
-    const int height,
+    const int src_w,
+    const int src_h,
     const int w,
     const int h,
     const int dst_w,
@@ -39,22 +39,22 @@ bool caiwei::image::resize(
         CW_LOG_W("不支持的图片通道: %d", channels);
         return false;
     }
-    if (width % 16 != 0) {
-        CW_LOG_D("图片宽度必须是16的倍数: %d", width);
+    if (src_w % 16 != 0) {
+        CW_LOG_D("图片宽度必须是16的倍数: %d", src_w);
         thread_local std::vector<uint8_t> v;
         v.resize(static_cast<size_t>(dst_w) * dst_h * channels);
-        if (!caiwei::image::resize(src, v.data(), width, height, dst_w, dst_h, channels)) {
+        if (!caiwei::image::resize(src, v.data(), src_w, src_h, dst_w, dst_h, channels)) {
             return false;
         }
         caiwei::image::padding(v.data(), dst, dst_w, dst_h, pad_w, pad_h, w, h, channels);
         return true;
     }
-    rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) src, width, height, image_type);
-    rga_buffer_t dst_img = wrapbuffer_virtualaddr(dst,         w,     h,      image_type);
-    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr,     0,     0,      0         );
-    im_rect src_rect = { 0,     0,     width, height };
-    im_rect dst_rect = { pad_w, pad_h, dst_w, dst_h  };
-    im_rect pat_rect = { 0,     0,     0,     0      };
+    rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) src, src_w, src_h, image_type);
+    rga_buffer_t dst_img = wrapbuffer_virtualaddr(dst,         w,     h,     image_type);
+    rga_buffer_t pat_img = wrapbuffer_virtualaddr(nullptr,     0,     0,     0         );
+    im_rect src_rect = { 0,     0,     src_w, src_h };
+    im_rect dst_rect = { pad_w, pad_h, dst_w, dst_h };
+    im_rect pat_rect = { 0,     0,     0,     0     };
     const auto status = improcess(src_img, dst_img, pat_img, src_rect, dst_rect, pat_rect, IM_SYNC);
     if (status != IM_STATUS_SUCCESS) {
         CW_LOG_W("图片处理失败: %d", status);

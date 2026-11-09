@@ -62,8 +62,8 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
         CW_LOG_W("模型没有配置成功");
         return false;
     }
-    const int w = caiwei::env::get_int("CAIWEI_VLM_WIDTH");
-    const int h = caiwei::env::get_int("CAIWEI_VLM_HEIGHT");
+    const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
+    const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
     if (w != image_width || h != image_height) {
         CW_LOG_W("图片尺寸与模型尺寸不匹配");
         return false;
@@ -73,18 +73,19 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
     if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
         return false;
     }
-    std::vector<uint8_t> pad(w * h * channels);
+    const size_t image_size = static_cast<size_t>(w) * h * channels;
+    std::vector<uint8_t> pad(image_size);
     if (!caiwei::image::resize(media_data.data(), pad.data(), width, height, w, h, dst_w, dst_h, pad_w, pad_h, channels)) {
         return false;
     }
     auto& tensor = this->media_input[0];
     if (tensor.attr->layout == RKNN3_TENSOR_NCHW) {
         if (tensor.attr->dtype == RKNN3_TENSOR_INT8) {
-            std::vector<int8_t> chw(w * h * channels);
+            std::vector<int8_t> chw(image_size);
             caiwei::image::hwc_to_chw_u8_i8(pad.data(), chw.data(), h, w, channels);
             std::memcpy((int8_t*) tensor.mem->virt_addr, chw.data(), chw.size());
         } else if (tensor.attr->dtype == RKNN3_TENSOR_UINT8) {
-            std::vector<uint8_t> chw(w * h * channels);
+            std::vector<uint8_t> chw(image_size);
             caiwei::image::hwc_to_chw(pad.data(), chw.data(), h, w, channels);
             std::memcpy((uint8_t*) tensor.mem->virt_addr, chw.data(), chw.size());
         } else {
@@ -93,7 +94,7 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
         }
     } else if (tensor.attr->layout == RKNN3_TENSOR_NHWC) {
         if (tensor.attr->dtype == RKNN3_TENSOR_INT8) {
-            std::vector<int8_t> pad_i8(w * h * channels);
+            std::vector<int8_t> pad_i8(image_size);
             caiwei::type::u8_to_i8(pad.data(), pad.size(), pad_i8.data());
             std::memcpy((int8_t*) tensor.mem->virt_addr, pad_i8.data(), pad_i8.size());
         } else if (tensor.attr->dtype == RKNN3_TENSOR_UINT8) {

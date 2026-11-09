@@ -119,8 +119,10 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VLM_IMAGE_MARKER",     "<image>"         },
     {"CAIWEI_VLM_VIDEO_MARKER",     "<video>"         },
     {"CAIWEI_VLM_ENABLE_THINKING",  "enable_thinking" },
-    {"CAIWEI_VLM_WIDTH",            "384"             },
-    {"CAIWEI_VLM_HEIGHT",           "384"             },
+    {"CAIWEI_VLM_IMAGE_WIDTH",      "384"             },
+    {"CAIWEI_VLM_IMAGE_HEIGHT",     "384"             },
+    {"CAIWEI_VLM_IMAGE_MIN_TOKEN",  "0"               },
+    {"CAIWEI_VLM_IMAGE_MAX_TOKEN",  "256"             },
     // EMBEDDING
     {"CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH", "8092"},
     // RERANKING
