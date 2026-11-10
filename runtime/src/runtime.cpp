@@ -356,6 +356,7 @@ static void runtime_optimize_timer() {
         return;
     }
     runtime_optimize_thread = std::jthread([](std::stop_token token) {
+        caiwei::env::set_thread_name("rt-optimize");
         CW_LOG_D("定时优化runtime线程启动");
         const int interval = caiwei::env::get_int("CAIWEI_RUNTIME_INTERVAL");
         while (!token.stop_requested()) {

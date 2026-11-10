@@ -15,7 +15,12 @@ caiwei::context::RerankingLlamaCPPContext::~RerankingLlamaCPPContext() {
 }
 
 bool caiwei::context::RerankingLlamaCPPContext::load() {
-    return this->load_model();
+    this->release();
+    if (!this->load_model()) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 caiwei::text::RerankingResult caiwei::context::RerankingLlamaCPPContext::run(const caiwei::text::RerankingsRequest& request) {

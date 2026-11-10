@@ -257,6 +257,9 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     set_opt(data, request.media_url,       "media_url");
     set_opt(data, request.media_type,      "media_type");
     set_opt(data, request.model_list,      "model_list");
+    if (request.max_completion_tokens.has_value()) {
+        caiwei::env::check_out(request.max_completion_tokens.value(), 1, 65536);
+    }
     request.id      = caiwei::env::id();
     request.created = caiwei::env::unix_timestamp();
     return request;

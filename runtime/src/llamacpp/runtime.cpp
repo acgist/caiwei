@@ -29,7 +29,6 @@ caiwei::runtime::LlamaCPPRuntime::~LlamaCPPRuntime() {
 
 std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::get_asr_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 2)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;
@@ -43,7 +42,6 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::LlamaCPPRuntime::g
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::get_llm_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     caiwei::text::SpecialToken special_token;
@@ -54,7 +52,6 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::LlamaCPPRuntime::g
 
 std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::get_vlm_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 2)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;
@@ -68,7 +65,6 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::LlamaCPPRuntime::g
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::LlamaCPPRuntime::get_embedding_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     caiwei::text::SpecialToken special_token;
@@ -79,7 +75,6 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::LlamaCPPRunt
 
 std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::LlamaCPPRuntime::get_reranking_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     caiwei::text::SpecialToken special_token;

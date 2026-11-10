@@ -109,6 +109,8 @@ inline std::string id() {
     return std::to_string(caiwei::env::timestamp() * max_id_index + val);
 }
 
+void set_thread_name(const std::string& name);
+
 } // env
 } // caiwei
 

@@ -29,7 +29,6 @@ caiwei::runtime::RKNN3Runtime::~RKNN3Runtime() {
 
 std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_asr_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 6)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;
@@ -51,7 +50,6 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
 
 std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_llm_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 4)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;
@@ -72,7 +70,6 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_
 
 std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_vlm_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 6)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;
@@ -94,7 +91,6 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
 
 std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime::get_embedding_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 4)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;
@@ -114,7 +110,6 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime
 
 std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime::get_reranking_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 4)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const auto& path_list = info->path_list;

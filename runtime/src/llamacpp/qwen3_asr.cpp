@@ -15,14 +15,19 @@ caiwei::context::ASRLlamaCPPContext::~ASRLlamaCPPContext() {
 }
 
 bool caiwei::context::ASRLlamaCPPContext::load() {
-    return this->load_model() && this->load_mtmd_model();
+    this->release();
+    if (!(this->load_model() && this->load_mtmd_model())) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::ASRLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
-caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const {
     mtmd::bitmaps bitmaps;
     prompt
         .append(this->special_token.bos)
@@ -57,7 +62,7 @@ caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inp
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
         return caiwei_batch;
     }
-    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
+    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, request)) {
         caiwei_batch.success = true;
         return caiwei_batch;
     } else {

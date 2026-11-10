@@ -18,7 +18,6 @@
 #include <iostream>
 
 #if CAIWEI_OS_WIN
-#define NOMINMAX
 #include <Windows.h>
 #endif
 

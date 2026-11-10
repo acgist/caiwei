@@ -102,7 +102,7 @@ struct CompletionsRequest {
     std::optional<float> repeat_penalty    = 1.04F;
     std::optional<float> presence_penalty  = 0.0F;
     std::optional<float> frequency_penalty = 0.0F;
-    std::optional<uint32_t> max_completion_tokens = std::nullopt;
+    std::optional<int> max_completion_tokens = std::nullopt;
     std::optional<std::vector<CompletionsRequestTool>> tools = std::nullopt;
     // 扩展字段
     std::optional<int> video_fps   = 8;      // 视频识别间隔帧数: VLM/YOLO
@@ -115,6 +115,14 @@ struct CompletionsRequest {
     std::optional<std::vector<std::string>> model_list = std::nullopt; // 模型列表
     CW_TRANSIENT std::string id     {};
     CW_TRANSIENT uint32_t    created{};
+
+    inline int get_max_completion_tokens(int max_tokens) const {
+        const int n_tokens = this->max_completion_tokens.value_or(max_tokens);
+        if (n_tokens <= 0) {
+            return max_tokens;
+        }
+        return std::min(n_tokens, max_tokens);
+    }
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {

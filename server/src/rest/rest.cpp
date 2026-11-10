@@ -164,6 +164,7 @@ static void release_server() {
 
 static void register_handler() {
     caiwei::rest::server->set_pre_routing_handler([](const httplib::Request& request, httplib::Response& response) {
+        caiwei::env::set_thread_name("rest-thread");
         response.set_header("Access-Control-Allow-Origin",  "*");
         response.set_header("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE, OPTIONS");
         response.set_header("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-Requested-With");

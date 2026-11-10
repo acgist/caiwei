@@ -15,7 +15,12 @@ caiwei::context::EmbeddingLlamaCPPContext::~EmbeddingLlamaCPPContext() {
 }
 
 bool caiwei::context::EmbeddingLlamaCPPContext::load() {
-    return this->load_model();
+    this->release();
+    if (!this->load_model()){
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(const caiwei::text::EmbeddingsRequest& request) {

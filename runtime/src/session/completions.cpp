@@ -545,6 +545,7 @@ static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager
 }
 
 static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer) {
+    caiwei::env::set_thread_name("asr-thread");
     const int asr_samples = std::clamp(request.asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
     std::string ret;
     std::string old;
@@ -582,6 +583,7 @@ static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsR
 }
 
 static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size) {
+    caiwei::env::set_thread_name("vlm-thread");
     const int vlm_frames = std::clamp(request.vlm_frames.value_or(8), 1, 16);
     auto& message = request.messages.back();
     message.video_data.resize(1);
@@ -609,6 +611,7 @@ static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsR
 }
 
 static void yolo_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
+    caiwei::env::set_thread_name("yolo-thread");
     auto& message = request.messages.back();
     message.image_data.resize(1);
     auto& image_data = message.image_data[0];

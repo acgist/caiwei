@@ -181,6 +181,10 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
         return false;
     }
     const int32_t max_ctx_len = llm_config.max_ctx_len;
+    if (max_ctx_len <= 0 || this->max_token_length <= 0) {
+        CW_LOG_W("模型输入长度无效: %d - %d", max_ctx_len, this->max_token_length);
+        return false;
+    }
     const int32_t min_ctx_len = std::min(this->max_token_length, max_ctx_len);
     CW_LOG_I("模型最大输入长度: min(%d, %d) = %d", this->max_token_length, max_ctx_len, min_ctx_len);
     this->max_token_length = min_ctx_len;
@@ -492,7 +496,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     CW_LOG_D("提示词: %s", prompt.c_str());
     rknn3_llm_infer_param llm_infer_param{};
     llm_infer_param.keep_history   = 0;
-    llm_infer_param.max_new_tokens = request.max_completion_tokens.value_or(this->max_token_length);
+    llm_infer_param.max_new_tokens = request.get_max_completion_tokens(this->max_token_length);
     b_time = std::chrono::steady_clock::now();
     int ret = rknn3_session_run_async(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     if (ret != RKNN3_SUCCESS) {

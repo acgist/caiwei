@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
     std::atomic<bool> running{ true };
     std::atomic<bool> success{ true };
     std::jthread server_thread([&running, &success]() {
+        caiwei::env::set_thread_name("rest-server");
         try {
             success.store(caiwei::rest::open(), std::memory_order_release);
         } catch (...) {

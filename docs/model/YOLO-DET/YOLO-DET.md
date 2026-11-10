@@ -37,15 +37,27 @@ python run_video.py
 ## 性能评估
 
 * 模型`yolo26n`
-* 图片大小: `1280*720`
 * 括号内容表示模型消耗时间
 * `RK3588`数据表示`i8/f16`精度下的性能
 * `RK3588`设置大核`taskset -c 4-7 ./test_yolo_det`(性能更好)
 * `RK3588`设置大核`taskset -c 4-7 ./test_yolo_runtime`(性能更好)
 
+### 640*360
+
 |设备|RKNN|llama.cpp|ONNXRuntime|原版|
 |:--|:--|:--|:--|:--|
-|CPU(i5-1135G7)  |-               |-|40ms(30ms)|52ms|
+|CPU(i5-1135G7)  |-               |-|34ms(30ms)|44ms|
+|RKNN(RK1828)    |-               |-|-         |-   |
+|RKNN(RK3588)    |39/63ms(31/46ms)|-|-         |-   |
+|CUDA(RTX 4060)  |-               |-|-         |-   |
+|CUDA(Tesla L40S)|-               |-|-         |-   |
+|CUDA(Tesla V100)|-               |-|8ms(5ms)  |-   |
+
+### 1280*720
+
+|设备|RKNN|llama.cpp|ONNXRuntime|原版|
+|:--|:--|:--|:--|:--|
+|CPU(i5-1135G7)  |-               |-|35ms(30ms)|56ms|
 |RKNN(RK1828)    |-               |-|-         |-   |
 |RKNN(RK3588)    |39/63ms(31/46ms)|-|-         |-   |
 |CUDA(RTX 4060)  |-               |-|-         |-   |

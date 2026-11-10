@@ -9,6 +9,13 @@
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 
+#if CAIWEI_OS_WIN
+#include <Windows.h>
+#else
+#include <pthread.h>
+#define THREAD_NAME_MAX_LENGTH 15
+#endif
+
 static std::atomic<bool> initialized{ false };
 static std::shared_mutex mutex;
 static std::once_flag env_map_once_flag;
@@ -262,4 +269,18 @@ void caiwei::env::print_all_env() {
     for (const auto& [k, _] : default_config) {
         CW_LOG_I("%-36s = %s", k.c_str(), get(k).c_str());
     }
+}
+
+void caiwei::env::set_thread_name(const std::string& name) {
+    #if CAIWEI_OS_WIN
+    std::wstring thread_name(name.begin(), name.end());
+    SetThreadDescription(GetCurrentThread(), thread_name.c_str());
+#else
+    if (name.size() > THREAD_NAME_MAX_LENGTH) {
+        std::string thread_name = name.substr(0, THREAD_NAME_MAX_LENGTH);
+        pthread_setname_np(pthread_self(), thread_name.c_str());
+    } else {
+        pthread_setname_np(pthread_self(), name.c_str());
+    }
+#endif
 }

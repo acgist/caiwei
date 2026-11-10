@@ -3,10 +3,12 @@
 #include <thread>
 #include <vector>
 
+static const char* image_path = "./acgist.jpg";
+
 [[maybe_unused]]
-void det_draw() {
+void det_image() {
     caiwei::media::ImageFrame frame;
-    if (!frame.load_from_file("./acgist.jpg")) {
+    if (!frame.load_from_file(image_path)) {
         CW_LOG_W("图片加载失败");
         return;
     }
@@ -33,9 +35,9 @@ void det_draw() {
 }
 
 [[maybe_unused]]
-void det_image() {
+void det_image_for() {
     caiwei::media::ImageFrame frame;
-    if (!frame.load_from_file("./acgist.jpg")) {
+    if (!frame.load_from_file(image_path)) {
         CW_LOG_W("图片加载失败");
         return;
     }
@@ -45,12 +47,14 @@ void det_image() {
         return;
     }
     caiwei::test::caiwei_wait_enter();
+    CW_LOG_I("图片大小: %dx%d", frame.width, frame.height);
     {
         CAIWEI_FOR_EACH(1000)
         ptr->run(frame);
         CAIWEI_FOR_EACH_END
     }
     caiwei::test::caiwei_wait_enter();
+    CW_LOG_I("图片大小: %dx%d", frame.width, frame.height);
     {
         CAIWEI_FOR_EACH(1000)
         ptr->run(frame);
@@ -62,7 +66,7 @@ void det_image() {
 [[maybe_unused]]
 void det_image_thread() {
     caiwei::media::ImageFrame frame;
-    if (!frame.load_from_file("./acgist.jpg")) {
+    if (!frame.load_from_file(image_path)) {
         CW_LOG_W("图片加载失败");
         return;
     }
@@ -138,9 +142,14 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);
     }
+    if (argc > 2) {
+        image_path = argv[2];
+    } else {
+        image_path = "./acgist.jpg";
+    }
     caiwei::test::init_test();
-    det_draw();
     det_image();
+    det_image_for();
     // det_image_thread();
     // det_image_thread();
     // det_video();

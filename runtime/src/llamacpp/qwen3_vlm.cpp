@@ -18,7 +18,12 @@ caiwei::context::VLMLlamaCPPContext::~VLMLlamaCPPContext() {
 bool caiwei::context::VLMLlamaCPPContext::load() {
     const int min_tokens = caiwei::env::get_int("CAIWEI_VLM_IMAGE_MIN_TOKEN");
     const int max_tokens = caiwei::env::get_int("CAIWEI_VLM_IMAGE_MAX_TOKEN");
-    return this->load_model() && this->load_mtmd_model(min_tokens, max_tokens) && this->load_template();
+    this->release();
+    if (!(this->load_model() && this->load_mtmd_model(min_tokens, max_tokens) && this->load_template())) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::VLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
@@ -62,7 +67,7 @@ static mtmd_bitmap* fill_media(const std::vector<caiwei::media::VideoFrame>& vid
     );
 }
 
-caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const {
     prompt = this->chat_template.apply(this->special_token, request, this->special_token.media_marker, this->special_token.media_marker, this->special_token.media_marker);
     caiwei_llama_batch caiwei_batch{};
     if (prompt.empty()) {
@@ -74,14 +79,18 @@ caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inp
     mtmd::bitmaps bitmaps;
     for (const auto& message : request.messages) {
         for (const auto& image : message.image_data) {
-            bitmaps.entries.emplace_back(fill_media(image.width, image.height, image.channels, image.data));
+            mtmd_bitmap* bitmap = fill_media(image.width, image.height, image.channels, image.data);
+            if (bitmap == nullptr) {
+                continue;
+            }
+            bitmaps.entries.emplace_back(bitmap);
         }
         for (const auto& video : message.video_data) {
             bitmaps.entries.emplace_back(fill_media(video));
             mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
         }
     }
-    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, context, request)) {
+    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, request)) {
         caiwei_batch.success = true;
         return caiwei_batch;
     } else {

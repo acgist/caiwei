@@ -15,14 +15,19 @@ caiwei::context::LLMLlamaCPPContext::~LLMLlamaCPPContext() {
 }
 
 bool caiwei::context::LLMLlamaCPPContext::load() {
-    return this->load_model() && this->load_template();
+    this->release();
+    if (!(this->load_model() && this->load_template())) {
+        this->release();
+        return false;
+    }
+    return true;
 }
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::LLMLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
-caiwei::context::caiwei_llama_batch caiwei::context::LLMLlamaCPPContext::get_inputs(std::string& prompt, llama_context* context, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch caiwei::context::LLMLlamaCPPContext::get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const {
     prompt = this->chat_template.apply(this->special_token, request);
     caiwei_llama_batch caiwei_batch{};
     if (prompt.empty()) {
@@ -39,15 +44,15 @@ caiwei::context::caiwei_llama_batch caiwei::context::LLMLlamaCPPContext::get_inp
         return caiwei_batch;
     }
     caiwei_batch.n_prompt_tokens = prompt_tokens.size();
-    const uint32_t n_ctx = llama_n_ctx(context);
-    if (caiwei_batch.n_prompt_tokens > n_ctx) {
-        CW_LOG_W("提示词超长: %d > %d", caiwei_batch.n_prompt_tokens, n_ctx);
+    if (!this->init_context_sampler(caiwei_batch, request)) {
         caiwei_batch.success = false;
-        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
+        if (caiwei_batch.finish_reason.empty()) {
+            caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        }
         return caiwei_batch;
     }
     caiwei_batch.batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
-    const int32_t ret = llama_decode(context, caiwei_batch.batch);
+    const int32_t ret = llama_decode(caiwei_batch.context.get(), caiwei_batch.batch);
     if (ret == 1) {
         CW_LOG_W("解码失败: %d", ret);
         caiwei_batch.success = false;

@@ -58,7 +58,6 @@ caiwei::runtime::ONNXRuntimeRuntime::~ONNXRuntimeRuntime() {
 
 std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime::get_cls_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const int c = caiwei::env::get_int("CAIWEI_CLS_C");
@@ -72,7 +71,6 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
-        CW_LOG_W("模型无效: %s", info->path.c_str());
         return nullptr;
     }
     const int c = caiwei::env::get_int("CAIWEI_DET_C");
