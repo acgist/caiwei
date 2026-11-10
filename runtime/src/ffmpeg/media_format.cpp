@@ -11,6 +11,9 @@ extern "C" {
 #include "libswresample/swresample.h"
 }
 
+#define AVIO_FILE_FORMAT "mp4"
+#define AVIO_BUFFER_SIZE (1024 * 1024)
+
 #if FF_API_AVIO_WRITE_NONCONST
 static int write_fragmented(void* opaque, uint8_t* buf, int buf_size);
 #else
@@ -39,48 +42,53 @@ bool caiwei::media::MediaFormat::open(
         return false;
     }
     int ret = AVERROR_UNKNOWN;
-    if (audio_time_base != nullptr) {
+    if (audio_time_base != nullptr && audio_codec_ctx != nullptr) {
         this->audio_time_base = new AVRational{ audio_time_base->num, audio_time_base->den };
     } else if (audio_codec_ctx != nullptr) {
         this->audio_time_base = new AVRational{ audio_codec_ctx->time_base.num, audio_codec_ctx->time_base.den };
     } else {
-        CW_LOG_D("忽略音频输出");
+        // -
     }
-    if (video_time_base != nullptr) {
+    if (video_time_base != nullptr && video_codec_ctx != nullptr) {
         this->video_time_base = new AVRational{ video_time_base->num, video_time_base->den };
     } else if (video_codec_ctx != nullptr) {
         this->video_time_base = new AVRational{ video_codec_ctx->time_base.num, video_codec_ctx->time_base.den };
     } else {
-        CW_LOG_D("忽略视频输出");
+        // -
     }
-    if (!this->filename.empty()) {
+    if (this->mode_file()) {
         ret = avformat_alloc_output_context2(&this->format_ctx, nullptr, nullptr, this->filename.c_str());
         if (ret < 0) {
-            CW_LOG_W("输出格式创建失败: %d", ret);
+            CW_LOG_W("输出上下文创建失败: %d", ret);
             this->stop();
             return false;
         }
         ret = avio_open2(&this->format_ctx->pb, this->filename.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr);
         if (ret < 0) {
-            CW_LOG_W("输出句柄创建失败: %d", ret);
+            CW_LOG_W("输出句柄打开失败: %d", ret);
             this->stop();
             return false;
         }
-    } else if (this->format_callback != nullptr) {
+    } else if (this->mode_callback()) {
         this->format_ctx = avformat_alloc_context();
         if (this->format_ctx == nullptr) {
-            CW_LOG_W("格式化上下文创建失败");
+            CW_LOG_W("输出上下文创建失败");
             this->stop();
             return false;
         }
-        this->format_ctx->oformat = av_guess_format("mp4", nullptr, nullptr);
+        this->format_ctx->oformat = av_guess_format(AVIO_FILE_FORMAT, nullptr, nullptr);
         if (this->format_ctx->oformat == nullptr) {
             CW_LOG_W("输出格式创建失败");
             this->stop();
             return false;
         }
-        this->buffer.resize(1024 * 1024);
-        this->format_ctx->pb    = avio_alloc_context(this->buffer.data(), this->buffer.size(), 1, this, nullptr, &write_fragmented, nullptr);
+        this->buffer = static_cast<uint8_t*>(av_malloc(AVIO_BUFFER_SIZE));
+        if (this->buffer == nullptr) {
+            CW_LOG_W("输出缓冲区创建失败");
+            this->stop();
+            return false;
+        }
+        this->format_ctx->pb    = avio_alloc_context(this->buffer, AVIO_BUFFER_SIZE, 1, this, nullptr, &write_fragmented, nullptr);
         this->format_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
         if (this->format_ctx->pb == nullptr) {
             CW_LOG_W("输出句柄创建失败");
@@ -92,7 +100,9 @@ bool caiwei::media::MediaFormat::open(
         this->stop();
         return false;
     }
-    if (audio_codec_ctx != nullptr) {
+    if (audio_codec_ctx == nullptr) {
+        CW_LOG_D("忽略音频输出");
+    } else {
         this->audio_stream = avformat_new_stream(this->format_ctx, nullptr);
         if (this->audio_stream == nullptr) {
             CW_LOG_W("音频输出文件流创建失败");
@@ -107,7 +117,9 @@ bool caiwei::media::MediaFormat::open(
         }
         CW_LOG_D("创建音频输出流: %d", this->audio_stream->index);
     }
-    if (video_codec_ctx != nullptr) {
+    if (video_codec_ctx == nullptr) {
+        CW_LOG_D("忽略视频输出");
+    } else {
         this->video_stream = avformat_new_stream(this->format_ctx, nullptr);
         if (this->video_stream == nullptr) {
             CW_LOG_W("视频输出文件流创建失败");
@@ -122,7 +134,11 @@ bool caiwei::media::MediaFormat::open(
         }
         CW_LOG_D("创建视频输出流: %d", this->video_stream->index);
     }
-    return this->send_header();
+    if (!this->send_header()) {
+        this->stop();
+        return false;
+    }
+    return true;
 }
 
 bool caiwei::media::MediaFormat::stop() {
@@ -130,18 +146,21 @@ bool caiwei::media::MediaFormat::stop() {
     if (this->format_ctx) {
         if (this->format_ctx->pb != nullptr) {
             CW_LOG_I("释放格式化上下文IO");
-            if (!this->filename.empty()) {
+            if (this->mode_file()) {
                 avio_closep(&this->format_ctx->pb);
-            } else if (this->format_callback != nullptr) {
+            } else if (this->mode_callback()) {
                 avio_context_free(&this->format_ctx->pb);
             } else {
-                // -
+                CW_LOG_W("输出类型错误");
             }
         }
         CW_LOG_I("释放格式化上下文");
         avformat_close_input(&this->format_ctx);
         this->audio_stream = nullptr;
         this->video_stream = nullptr;
+    }
+    if (this->buffer != nullptr) {
+        av_freep(&this->buffer);
     }
     if (this->audio_time_base) {
         delete this->audio_time_base;
@@ -159,10 +178,14 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
         CW_LOG_W("格式化上下文未初始化");
         return false;
     }
-    if (type == MediaType::AUDIO && this->audio_stream != nullptr) {
+    if (!this->write_header) {
+        CW_LOG_W("视频写出头部失败");
+        return false;
+    }
+    if (type == MediaType::AUDIO && this->audio_time_base != nullptr && this->audio_stream != nullptr) {
         av_packet_rescale_ts(packet, *this->audio_time_base, this->audio_stream->time_base);
         packet->stream_index = this->audio_stream->index;
-    } else if (type == MediaType::VIDEO && this->video_stream != nullptr) {
+    } else if (type == MediaType::VIDEO && this->video_time_base != nullptr && this->video_stream != nullptr) {
         av_packet_rescale_ts(packet, *this->video_time_base, this->video_stream->time_base);
         packet->stream_index = this->video_stream->index;
     } else {
@@ -172,6 +195,7 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
     int ret = av_interleaved_write_frame(this->format_ctx, packet);
     if (ret != 0) {
         CW_LOG_W("发送媒体数据失败: %d", ret);
+        return false;
     }
     return this->callable;
 }
@@ -181,9 +205,9 @@ bool caiwei::media::MediaFormat::send_header() {
         return false;
     }
     AVDictionary* options = nullptr;
-    if (!this->filename.empty()) {
+    if (this->mode_file()) {
         av_dict_set(&options, "movflags", "faststart", 0);
-    } else if (this->format_callback != nullptr) {
+    } else if (this->mode_callback()) {
         av_dict_set(&options, "movflags", "frag_keyframe+empty_moov+delay_moov+default_base_moof", 0);
     } else {
         CW_LOG_W("输出类型错误");
@@ -204,22 +228,29 @@ bool caiwei::media::MediaFormat::send_trailer() {
     if (this->format_ctx == nullptr) {
         return false;
     }
+    if (!this->write_header) {
+        return false;
+    }
     int ret = av_interleaved_write_frame(this->format_ctx, nullptr);
     if (ret != 0) {
         CW_LOG_W("发送媒体数据失败: %d", ret);
     }
-    if (this->write_header) {
-        ret = av_write_trailer(this->format_ctx);
-        if (ret != 0) {
-            CW_LOG_W("视频写出尾部失败: %d", ret);
-            return false;
-        } else {
-            CW_LOG_D("视频写出尾部成功");
-            return true;
-        }
+    ret = av_write_trailer(this->format_ctx);
+    if (ret != 0) {
+        CW_LOG_I("视频写出尾部失败: %d", ret);
+        return false;
     } else {
+        CW_LOG_D("视频写出尾部成功");
         return true;
     }
+}
+
+bool caiwei::media::MediaFormat::mode_file() {
+    return !this->filename.empty();
+}
+
+bool caiwei::media::MediaFormat::mode_callback() {
+    return this->format_callback != nullptr;
 }
 
 #if FF_API_AVIO_WRITE_NONCONST

@@ -545,11 +545,9 @@ std::string caiwei::text::get_content_type(const std::string& url) {
     ) {
         return CONTENT_TYPE_DEVICE;
     } else {
+        std::error_code error_code;
         std::filesystem::path path(url);
-        if (!std::filesystem::exists(path)) {
-            return CONTENT_TYPE_NONE;
-        }
-        if (!std::filesystem::is_regular_file(path)) {
+        if (!std::filesystem::is_regular_file(path, error_code)) {
             return CONTENT_TYPE_NONE;
         }
         if (!path.has_extension()) {
@@ -633,10 +631,8 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
             url_view.remove_prefix(5);
         }
         std::filesystem::path path = url_view;
-        if (!std::filesystem::exists(path)) {
-            return false;
-        }
-        if (!std::filesystem::is_regular_file(path)) {
+        std::error_code error_code;
+        if (!std::filesystem::is_regular_file(path, error_code)) {
             return false;
         }
         if (!path.has_extension()) {

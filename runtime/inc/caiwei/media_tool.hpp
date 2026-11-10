@@ -65,7 +65,7 @@ class MediaFormat {
 private:
     bool write_header = false;
     std::string filename;
-    std::vector<uint8_t> buffer;
+    uint8_t* buffer{ nullptr };
     AVStream* audio_stream{ nullptr }; // 音频流
     AVStream* video_stream{ nullptr }; // 视频流
     AVRational* audio_time_base{ nullptr }; // 原始音频时间基准
@@ -90,6 +90,8 @@ public:
 private:
     bool send_header ();
     bool send_trailer();
+    bool mode_file();
+    bool mode_callback();
 };
 
 class MediaMuxer {
@@ -104,6 +106,7 @@ private:
     SwsContext* sws_ctx{ nullptr }; // 视频重采样上下文
     const AVCodec * audio_codec{ nullptr }; // 音频编码器
     const AVCodec * video_codec{ nullptr }; // 视频编码器
+    int audio_buffer_capacity = 0; // 音频通道缓存容量
     uint8_t    * audio_buffer[8] { nullptr }; // 音频通道缓存
     AVAudioFifo* audio_fifo      { nullptr }; // 音频编码缓存
     AudioInfo in_audio_info;  // 输入音频
@@ -127,13 +130,15 @@ public:
     bool stop();
     bool on_audio(const AudioFrame& frame);
     bool on_video(const VideoFrame& frame);
-    bool on_audio(const int nb_samples,                                  const size_t frames, const uint32_t data_length, const uint8_t** data);
-    bool on_video(const int width, const int height, const int channels, const size_t frames, const uint32_t data_length, const uint8_t*  data);
+    bool on_audio(const int nb_samples,                                  const size_t frames, const uint32_t data_length, const uint8_t* data);
+    bool on_video(const int width, const int height, const int channels, const size_t frames, const uint32_t data_length, const uint8_t* data);
 private:
     bool open_audio();
     bool open_video();
     bool stop_audio();
     bool stop_video();
+    bool build_audio_buffer(const int nb_samples);
+    void close_audio_buffer();
 };
 
 class MediaDemuxer {
