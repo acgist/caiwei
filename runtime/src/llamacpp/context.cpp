@@ -229,7 +229,7 @@ bool caiwei::context::LlamaCPPContext::init_context_sampler(caiwei_llama_batch& 
         CW_LOG_W("提示词元数量错误: %d", caiwei_batch.n_prompt_tokens);
         return false;
     }
-    if (caiwei_batch.n_prompt_tokens >= this->max_token_length) {
+    if (caiwei_batch.n_prompt_tokens >= static_cast<uint32_t>(this->max_token_length)) {
         CW_LOG_W("提示词元数量超长: %d > %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
         return false;
@@ -361,8 +361,8 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
     }
     const int seq_max = llama_max_parallel_sequences();
     const int n_prompts = inputs.size();
-    if (static_cast<size_t>(n_prompts) > seq_max) {
-        CW_LOG_W("不支持的批次: %d > %zu", n_prompts, seq_max);
+    if (n_prompts > seq_max) {
+        CW_LOG_W("不支持的批次: %d > %d", n_prompts, seq_max);
         return {};
     }
     int sum_n_ctx = 0;
@@ -370,7 +370,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
         sum_n_ctx += prompt.size();
     }
     if (sum_n_ctx <= 0) {
-        CW_LOG_W("提示词元数量错误: %zu", sum_n_ctx);
+        CW_LOG_W("提示词元数量错误: %d", sum_n_ctx);
         return {};
     }
     const int n_ctx = std::clamp(sum_n_ctx, std::min(seq_max, this->max_token_length), std::max(seq_max, this->max_token_length));
@@ -415,16 +415,16 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
     });
     for (int k = 0; k < n_prompts; ++k) {
         auto& input = inputs[k];
-        const size_t n_tokens = input.size();
+        const int n_tokens = input.size();
         if (n_tokens == 0) {
             CW_LOG_W("单个嵌入词元为空");
             return {};
         }
-        if (n_tokens > static_cast<size_t>(n_batch)) {
-            CW_LOG_W("单个嵌入词元超长: %zu > %d", n_tokens, n_batch);
+        if (n_tokens > n_batch) {
+            CW_LOG_W("单个嵌入词元超长: %d > %d", n_tokens, n_batch);
             return {};
         }
-        if (batch.n_tokens + n_tokens > static_cast<size_t>(n_batch) || static_cast<size_t>(seq_pos) >= seq_max) {
+        if (batch.n_tokens + n_tokens > n_batch || seq_pos >= seq_max) {
             float* out = emb + emb_pos * n_embd_out;
             if (!batch_decode_pooling(context.get(), batch, pooling_type, out, seq_pos, n_embd_out)) {
                 return {};
@@ -433,7 +433,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
             seq_pos = 0;
             batch.n_tokens = 0;
         }
-        for (size_t i = 0; i < n_tokens; ++i) {
+        for (int i = 0; i < n_tokens; ++i) {
             batch_add(batch, input[i], i, { seq_pos }, true);
         }
         seq_pos += 1;
@@ -488,7 +488,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
     });
     uint32_t generated_tokens = 0;
     while (true) {
-        if (generated_tokens >= max_completion_tokens) {
+        if (generated_tokens >= static_cast<uint32_t>(max_completion_tokens)) {
             CW_LOG_W("生成内容超过最大长度: %d", max_completion_tokens);
             co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_LENGTH, n_prompt_tokens, generated_tokens };
             break;
