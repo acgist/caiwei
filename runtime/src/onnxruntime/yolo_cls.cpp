@@ -35,7 +35,7 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsONNXRuntimeContext::run(cons
     }
     const int64_t data_length = output_dims[1];
     if (data_length != this->class_size) {
-        CW_LOG_W("类型数量错误: %llu != %d", data_length, this->class_size);
+        CW_LOG_W("类型数量错误: %" PRId64 " != %d", data_length, this->class_size);
         return {};
     }
     const float* output_data = output.front().GetTensorData<float>();

@@ -62,14 +62,14 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             if (context->ref_count >= this->max_pool) {
                 continue;
             }
-            CW_LOG_D("返回context: %s = %s = %d => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+            CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
             context->ref_count++;
             return context;
         } else {
             if (context->ref_count > 0) {
                 continue;
             }
-            CW_LOG_D("返回context: %s = %s = %d => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+            CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
             context->ref_count++;
             return context;
         }
@@ -101,9 +101,9 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             CW_LOG_E("加载context异常: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
-        CW_LOG_I("新建context成功: %s = %s = %d = %s", get_type_name(this->type), info->name.c_str(), content_list.size(), ptr->id.c_str());
+        CW_LOG_I("新建context成功: %s = %s = %zu = %s", get_type_name(this->type), info->name.c_str(), content_list.size(), ptr->id.c_str());
         content_list.push_back(ptr);
-        CW_LOG_D("返回context: %s = %s = %d = %s", get_type_name(this->type), info->name.c_str(), content_list.size(), ptr->id.c_str());
+        CW_LOG_D("返回context: %s = %s = %zu = %s", get_type_name(this->type), info->name.c_str(), content_list.size(), ptr->id.c_str());
         ptr->ref_count++;
         return ptr;
     } else {
@@ -121,14 +121,14 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
                 if (context->ref_count >= this->max_pool) {
                     continue;
                 }
-                CW_LOG_D("返回context: %s = %s = %d => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+                CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
                 context->ref_count++;
                 return context;
             } else {
                 if (context->ref_count > 0) {
                     continue;
                 }
-                CW_LOG_D("返回context: %s = %s = %d => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+                CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
                 context->ref_count++;
                 return context;
             }
@@ -156,12 +156,12 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
 size_t caiwei::runtime::Runtime::optimize() {
     std::unique_lock<std::mutex> lock(this->mutex, std::defer_lock);
     if (lock.try_lock()) {
-        CW_LOG_D("优化runtime开始: %s => %d", get_type_name(this->type), this->context_map.size());
+        CW_LOG_D("优化runtime开始: %s => %zu", get_type_name(this->type), this->context_map.size());
         const auto now = std::chrono::steady_clock::now();
         for (auto map_iter = this->context_map.begin(); map_iter != this->context_map.end();) {
             auto& context_name = map_iter->first;
             auto& content_list = map_iter->second;
-            CW_LOG_D("优化context信息: %s = %s => %d", get_type_name(this->type), context_name.c_str(), content_list.size());
+            CW_LOG_D("优化context信息: %s = %s => %zu", get_type_name(this->type), context_name.c_str(), content_list.size());
             if (content_list.size() <= static_cast<size_t>(this->min_pool)) {
                 if (content_list.size() <= 0) {
                     map_iter = this->context_map.erase(map_iter);
@@ -170,7 +170,7 @@ size_t caiwei::runtime::Runtime::optimize() {
                 }
                 continue;
             }
-            CW_LOG_D("优化context开始: %s = %s => %d", get_type_name(this->type), context_name.c_str(), content_list.size());
+            CW_LOG_D("优化context开始: %s = %s => %zu", get_type_name(this->type), context_name.c_str(), content_list.size());
             for (auto context_iter = content_list.begin(); context_iter != content_list.end();) {
                 const auto& ptr = *context_iter;
                 if (ptr->ref_count > 0) {
@@ -179,20 +179,20 @@ size_t caiwei::runtime::Runtime::optimize() {
                 }
                 const auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - ptr->last_run_time).count();
                 if (duration > this->keepalive) {
-                    CW_LOG_I("优化context实例: %s = %s = %s => %lld", get_type_name(this->type), context_name.c_str(), ptr->id.c_str(), duration);
+                    CW_LOG_I("优化context实例: %s = %s = %s => %" PRId64, get_type_name(this->type), context_name.c_str(), ptr->id.c_str(), duration);
                     context_iter = content_list.erase(context_iter);
                 } else {
                     ++context_iter;
                 }
             }
-            CW_LOG_D("优化context完成: %s = %s => %d", get_type_name(this->type), context_name.c_str(), content_list.size());
+            CW_LOG_D("优化context完成: %s = %s => %zu", get_type_name(this->type), context_name.c_str(), content_list.size());
             if (content_list.size() <= 0) {
                 map_iter = this->context_map.erase(map_iter);
             } else {
                 ++map_iter;
             }
         }
-        CW_LOG_D("优化runtime完成: %s => %d", get_type_name(this->type), this->context_map.size());
+        CW_LOG_D("优化runtime完成: %s => %zu", get_type_name(this->type), this->context_map.size());
         return this->context_map.size();
     } else {
         CW_LOG_D("优化runtime跳过: %s", get_type_name(this->type));

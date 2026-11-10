@@ -44,7 +44,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     if (stride_length == CAIWEI_END2END_STRIDE_LENGTH) {
         const float* data = output_data;
         for (int64_t index = 0; index < result_length; ++index) {
-            int   max_class = data[5];
+            int   max_class = static_cast<int>(data[5]);
             float max_score = data[4];
             if(max_score > this->confidence_threshold) {
                 const float box_x1 = (data[0] - this->pad_w) / static_cast<float>(this->dst_w);
@@ -86,7 +86,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
         }
         return result;
     } else {
-        CW_LOG_W("不支持的维度: %lld - %lld", result_length, stride_length);
+        CW_LOG_W("不支持的维度: %" PRId64 " - %" PRId64, result_length, stride_length);
         return {};
     }
 }

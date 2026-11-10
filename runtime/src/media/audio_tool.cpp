@@ -163,7 +163,7 @@ static void matmul(const float* A, const float* B, std::vector<float>& C, const 
 #endif
 
 static void clamp_and_log_max(std::vector<float>& mel_spec, const int rows, const int cols) {
-    const float min_val        = 1e-10;
+    const float min_val        = 1e-10F;
     const float shift_value    = 4.0;
     const float scaling_factor = 1.0 / 4.0;
     float max_val = -std::numeric_limits<float>::infinity();

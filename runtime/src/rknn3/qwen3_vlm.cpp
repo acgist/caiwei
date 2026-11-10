@@ -174,7 +174,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
             video_count++;
         }
     }
-    CW_LOG_D("图片数量: %d 视频数量: %d 视频帧数: %d", image_count, video_count, frame_count);
+    CW_LOG_D("图片数量: %" PRIu64 " 视频数量: %" PRIu64 " 视频帧数: %" PRIu64, image_count, video_count, frame_count);
     context_session->image_frames = image_count + frame_count;
     context_session->image_embeds.resize(output_tensor.attr->aligned_size / sizeof(float16) * image_count);
     context_session->video_embeds.resize(output_tensor.attr->aligned_size / sizeof(float16) * frame_count);
@@ -229,7 +229,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
                     if (per_video_frame == 0) {
                         per_video_frame = video_ptr->size();
                     } else if (per_video_frame != video_ptr->size()) {
-                        CW_LOG_W("视频帧数没有固定: %d != %d", per_video_frame, video_ptr->size());
+                        CW_LOG_W("视频帧数没有固定: %" PRIu64 " != %zu", per_video_frame, video_ptr->size());
                         return {};
                     } else {
                         // -

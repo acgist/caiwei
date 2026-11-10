@@ -101,8 +101,8 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
     #else
     if (level == caiwei::log::Level::I) {
     #endif
-        std::fprintf(stdout, "[%s] %s [%" PRIu64 "] %-16s:%4d | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
+        std::fprintf(stdout, "[%s] %s [%" PRIu64 "] %-16s:%4u | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
     } else {
-        std::fprintf(stderr, "[%s] %s [%" PRIu64 "] %-16s:%4d | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
+        std::fprintf(stderr, "[%s] %s [%" PRIu64 "] %-16s:%4u | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
     }
 }

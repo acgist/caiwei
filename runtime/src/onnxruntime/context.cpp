@@ -106,7 +106,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         } else if (shape.size() == node_dims.size()) {
             for (size_t i = 0; i < shape.size(); ++i) {
                 if (shape[i] != -1 && shape[i] != node_dims[i]) {
-                    CW_LOG_W("输入节点维度错误: %lld != %lld", node_dims[i], shape[i]);
+                    CW_LOG_W("输入节点维度错误: %" PRId64 " != %" PRId64, node_dims[i], shape[i]);
                     this->release();
                     return false;
                 }

@@ -54,7 +54,7 @@ void test_log() {
     for (int i = 0; i < 10; ++i) {
         threads.push_back(std::jthread([i]() {
             CAIWEI_FOR_EACH(10000)
-            CW_LOG_I("测试日志: %d", caiwei_index);
+            CW_LOG_I("测试日志: %zu", caiwei_index);
             CAIWEI_FOR_EACH_END
         }));
     }

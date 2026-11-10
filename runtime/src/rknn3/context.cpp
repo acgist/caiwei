@@ -328,7 +328,7 @@ bool caiwei::context::RKNN3Context::init_internal_tensor_mems() {
             CW_LOG_W("共享内存创建失败: %u", i);
             return false;
         }
-        CW_LOG_I("共享内存创建成功: %u = %p -> %lld == %lld", i, mem, mem->size, internal_size);
+        CW_LOG_I("共享内存创建成功: %u = %p -> %" PRIu64 " == %" PRIu64, i, mem, mem->size, internal_size);
         this->internal_tensor_mems.push_back(mem);
     }
     ret = rknn3_set_internal_mem(this->context, this->internal_tensor_mems.data(), core_num_llm);
@@ -743,7 +743,7 @@ void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::c
         CW_LOG_W("会话状态查询失败: %d", ret);
         return;
     }
-    CW_LOG_I("会话完成: %d=%d | %d=%d", state.n_prefill_tokens, context_session->n_prefill_tokens, state.n_decode_tokens, context_session->n_generate_tokens);
+    CW_LOG_I("会话完成: %" PRIu64 "=%" PRIu32 " | %" PRIu64 "=%" PRIu32, state.n_prefill_tokens, context_session->n_prefill_tokens, state.n_decode_tokens, context_session->n_generate_tokens);
     context_session->n_prefill_tokens  = state.n_prefill_tokens;
     context_session->n_generate_tokens = state.n_decode_tokens;
     std::printf("\n");
@@ -755,14 +755,14 @@ void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::c
     if (prefill_n_tokens > 0 && prefill_ms > 0.0F) {
         const float prefill_tpt =        prefill_ms / prefill_n_tokens;
         const float prefill_tps = 1e3F / prefill_ms * prefill_n_tokens;
-        std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Prefill", prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
+        std::printf(" %-12s  %-15.2f  %-8u  %-23.2f  %-23.2f\n", "Prefill", prefill_ms, prefill_n_tokens, prefill_tpt, prefill_tps);
     }
     const float generate_ms = context_session->generate_ms;
     const uint32_t generate_n_tokens = context_session->n_generate_tokens;
     if (generate_n_tokens > 0 && generate_ms > 0.0F) {
         const float generate_tpt =        generate_ms / generate_n_tokens;
         const float generate_tps = 1e3F / generate_ms * generate_n_tokens;
-        std::printf(" %-12s  %-15.2f  %-8d  %-23.2f  %-23.2f\n", "Generate", generate_ms, generate_n_tokens, generate_tpt, generate_tps);
+        std::printf(" %-12s  %-15.2f  %-8u  %-23.2f  %-23.2f\n", "Generate", generate_ms, generate_n_tokens, generate_tpt, generate_tps);
     }
     const float feature_ms = context_session->feature_ms;
     const int audio_frames = context_session->audio_frames;
@@ -797,7 +797,7 @@ void caiwei::context::rknn3_dump_tensor_attr(const char* name, rknn3_tensor_attr
         }
     }
     CW_LOG_I(
-        "%s: %u => name: %s aligned_size: %lld n_dims: %u n_elems: %u n_stride: %u shape: [%s] stride: [%s] core_id: %d "
+        "%s: %u => name: %s aligned_size: %" PRIu64 " n_dims: %u n_elems: %u n_stride: %u shape: [%s] stride: [%s] core_id: %d "
         "layout: %s dtype: %s qnt_type: %s",
         name,
         attr->index,
@@ -833,7 +833,7 @@ static bool init_tensor(rknn3_context& context, rknn3_tensor& tensor, int i, rkn
         CW_LOG_W("%s内存创建失败: %d", name, i);
         return false;
     }
-    CW_LOG_D("%s内存创建成功: %d = %lld", name, i, tensor.mem->size);
+    CW_LOG_D("%s内存创建成功: %d = %" PRIu64, name, i, tensor.mem->size);
     return true;
 }
 

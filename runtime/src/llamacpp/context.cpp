@@ -226,11 +226,11 @@ bool caiwei::context::LlamaCPPContext::init_context_sampler(caiwei_llama_batch& 
         return true;
     }
     if (caiwei_batch.n_prompt_tokens <= 0) {
-        CW_LOG_W("提示词元数量错误: %d", caiwei_batch.n_prompt_tokens);
+        CW_LOG_W("提示词元数量错误: %u", caiwei_batch.n_prompt_tokens);
         return false;
     }
     if (caiwei_batch.n_prompt_tokens >= static_cast<uint32_t>(this->max_token_length)) {
-        CW_LOG_W("提示词元数量超长: %d > %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
+        CW_LOG_W("提示词元数量超长: %u > %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
         return false;
     }
@@ -347,7 +347,7 @@ bool caiwei::context::LlamaCPPContext::get_mtmd_inputs(
             n_pos = n_pos_chunk;
         }
     }
-    CW_LOG_D("媒体嵌入完成: %d = %d", n_pos, caiwei_batch.n_prompt_tokens);
+    CW_LOG_D("媒体嵌入完成: %d = %u", n_pos, caiwei_batch.n_prompt_tokens);
     caiwei_batch.mtmd  = true;
     caiwei_batch.n_pos = n_pos;
     caiwei_batch.batch = llama_batch_init(1, 0, 1);
