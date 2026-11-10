@@ -5,19 +5,6 @@
 
 #include "stb/stb_image.h"
 
-caiwei::media::Frame::Frame(uint32_t size) {
-    this->data.reserve(size);
-}
-
-caiwei::media::AudioFrame::AudioFrame(uint32_t size) : Frame(size) {
-}
-
-caiwei::media::ImageFrame::ImageFrame(uint32_t size) : Frame(size) {
-}
-
-caiwei::media::VideoFrame::VideoFrame(uint32_t size) : ImageFrame(size) {
-}
-
 bool caiwei::media::ImageFrame::load_from_file(const char* path) {
     if (path == nullptr) {
         return false;

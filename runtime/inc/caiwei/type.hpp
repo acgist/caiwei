@@ -3,10 +3,10 @@
 
 #include <cmath>
 #include <cstdint>
-#include <cstring>
 #include <algorithm>
 
 #if defined(__aarch64__)
+#include <cstring>
 #include <arm_neon.h>
 #else
 #include <immintrin.h>
@@ -22,8 +22,9 @@ inline void u8_to_i8(const uint8_t* __restrict src, const size_t size, int8_t* _
 }
 
 inline void u8_to_f32(const uint8_t* __restrict src, const size_t size, float* __restrict dst, const float scale) {
+    const float scale_inv = 1.0F / scale;
     for (size_t i = 0; i < size; ++i) {
-        dst[i] = static_cast<float>(src[i]) / scale;
+        dst[i] = static_cast<float>(src[i]) * scale_inv;
     }
 }
 

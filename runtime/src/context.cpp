@@ -161,6 +161,28 @@ bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
     }
 }
 
+void caiwei::context::normalize_l2(const float* embd, float* out, int size, bool normalize_single) {
+    if (embd == nullptr || out == nullptr || size < 0) {
+        return;
+    }
+    if (size == 1 && !normalize_single) {
+        if (embd == out) {
+            return;
+        }
+        out[0] = embd[0];
+        return;
+    }
+    double sum = 0.0;
+    for (int i = 0; i < size; ++i) {
+        sum += embd[i] * embd[i];
+    }
+    sum = std::sqrt(sum);
+    const float norm = sum > 0.0 ? 1.0F / sum : 0.0F;
+    for (int i = 0; i < size; ++i) {
+        out[i] = embd[i] * norm;
+    }
+}
+
 inline static std::string strip(const std::string& value) {
     auto pos_a = value.find_first_not_of(empty_char);
     if (pos_a == std::string_view::npos) {

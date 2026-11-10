@@ -30,6 +30,10 @@ public:
     virtual std::string get() = 0;
 };
 
+/**
+ * data == nullptr: 心跳
+ * length <= 0: strlen(data)
+ */
 using Callback = std::function<bool(const char* data, int length)>;
 
 class StatefulSession : public Session {

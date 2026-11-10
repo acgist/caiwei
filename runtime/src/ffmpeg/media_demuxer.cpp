@@ -37,6 +37,10 @@ caiwei::media::MediaDemuxer::MediaDemuxer(
 ) : running(false), type(type), url(url), media_muxer(media_muxer), media_format(media_format) {
 }
 
+caiwei::media::MediaDemuxer::~MediaDemuxer() {
+    CW_LOG_I("媒体解析处理完成: %s - %s", this->type.c_str(), this->url.c_str());
+}
+
 inline bool recv_audio_frame(
     const size_t audio_frames,
     SwrContext* swr_ctx,

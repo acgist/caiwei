@@ -178,6 +178,7 @@ void stop();
 const ContextInfo* get_context_info(const std::string& name);
 std::vector<const ContextInfo*> get_all_context_info();
 bool check_model_path(const ContextInfo* info, int size = 0);
+void normalize_l2(const float* embd, float* out, int size, bool normalize_single = false);
 
 template<typename F>
 struct RaiiGuard {

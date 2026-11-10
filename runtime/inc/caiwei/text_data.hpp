@@ -2,6 +2,7 @@
 #define CAIWEI_RUNTIME_TEXT_DATA_HPP
 
 #include <string>
+#include <vector>
 #include <cstdint>
 #include <variant>
 #include <optional>

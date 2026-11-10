@@ -1,8 +1,8 @@
 #ifndef CAIWEI_RUNTIME_MEDIA_DATA_HPP
 #define CAIWEI_RUNTIME_MEDIA_DATA_HPP
 
-#include <cstdio>
 #include <vector>
+#include <cstddef>
 #include <cstdint>
 
 namespace caiwei {
@@ -34,7 +34,6 @@ class Frame {
 public:
     std::vector<uint8_t> data;
 public:
-    Frame(uint32_t size);
     Frame() noexcept = default;
     virtual ~Frame() = default;
     Frame(const Frame& result) noexcept = default;
@@ -45,21 +44,15 @@ public:
 
 class AudioFrame : public Frame {
 public:
-    uint64_t frames;
-    uint32_t samples;
-public:
-    AudioFrame(uint32_t size);
-    AudioFrame() noexcept = default;
+    uint64_t frames  = 0;
+    uint32_t samples = 0;
 };
 
 class ImageFrame : public Frame {
 public:
-    uint32_t width;
-    uint32_t height;
-    uint32_t channels;
-public:
-    ImageFrame(uint32_t size);
-    ImageFrame() noexcept = default;
+    uint32_t width    = 0;
+    uint32_t height   = 0;
+    uint32_t channels = 0;
 public:
     bool load_from_file(const char* path);
     bool load_from_memory(const uint8_t* buffer, const size_t size);
@@ -67,10 +60,7 @@ public:
 
 class VideoFrame : public ImageFrame {
 public:
-    uint64_t frames;
-public:
-    VideoFrame(uint32_t size);
-    VideoFrame() noexcept = default;
+    uint64_t frames = 0;
 };
 
 } // media

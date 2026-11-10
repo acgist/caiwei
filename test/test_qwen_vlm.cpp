@@ -2,7 +2,6 @@
 
 #include <thread>
 #include <vector>
-#include <generator>
 
 [[maybe_unused]]
 void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {

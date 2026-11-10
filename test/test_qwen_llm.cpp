@@ -1,10 +1,9 @@
 #include "test.hpp"
 
-#include "nlohmann/json.hpp"
-
 #include <thread>
 #include <vector>
-#include <generator>
+
+#include "nlohmann/json.hpp"
 
 [[maybe_unused]]
 void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {

@@ -1,6 +1,5 @@
 #include "test.hpp"
 
-#include <thread>
 #include <fstream>
 
 [[maybe_unused]]

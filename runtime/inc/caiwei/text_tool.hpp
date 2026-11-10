@@ -24,6 +24,10 @@ class ChatTemplate {
 public:
     ChatTemplate();
     ~ChatTemplate();
+    ChatTemplate(const ChatTemplate&) = delete;
+    ChatTemplate& operator=(const ChatTemplate&) = delete;
+    ChatTemplate(ChatTemplate&&) = delete;
+    ChatTemplate& operator=(ChatTemplate&&) = delete;
 private:
     std::unique_ptr<minja::chat_template> chat_template{ nullptr };
 public:

@@ -78,6 +78,10 @@ public:
     MediaFormat(std::string filename);
     MediaFormat(FormatCallback format_callback);
     ~MediaFormat();
+    MediaFormat(const MediaFormat&) = delete;
+    MediaFormat& operator=(const MediaFormat&) = delete;
+    MediaFormat(MediaFormat&&) = delete;
+    MediaFormat& operator=(MediaFormat&&) = delete;
 public:
     bool open(
         const AVCodecContext* audio_codec_ctx,
@@ -125,6 +129,10 @@ public:
         MediaFormat* media_format = nullptr
     );
     ~MediaMuxer();
+    MediaMuxer(const MediaMuxer&) = delete;
+    MediaMuxer& operator=(const MediaMuxer&) = delete;
+    MediaMuxer(MediaMuxer&&) = delete;
+    MediaMuxer& operator=(MediaMuxer&&) = delete;
 public:
     bool open(AudioInfo in_audio_info, VideoInfo in_video_info);
     bool stop();
@@ -150,6 +158,11 @@ private:
     MediaFormat* media_format{ nullptr };
 public:
     MediaDemuxer(const std::string& type, const std::string& url, MediaMuxer* media_muxer = nullptr, MediaFormat* media_format = nullptr);
+    ~MediaDemuxer();
+    MediaDemuxer(const MediaDemuxer&) = delete;
+    MediaDemuxer& operator=(const MediaDemuxer&) = delete;
+    MediaDemuxer(MediaDemuxer&&) = delete;
+    MediaDemuxer& operator=(MediaDemuxer&&) = delete;
 public:
     bool open(
         AudioInfo audio_info,

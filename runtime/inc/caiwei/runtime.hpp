@@ -8,7 +8,8 @@
 #define CAIWEI_RUNTIME_RUNTIME_HPP
 
 #include <map>
-#include <atomic>
+#include <memory>
+#include <string>
 #include <memory>
 #include <vector>
 #include <shared_mutex>

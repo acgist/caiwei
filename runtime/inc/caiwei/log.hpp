@@ -4,6 +4,12 @@
 #include <cinttypes>
 #include <source_location>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define CW_LOG_FORMAT(...) __attribute__((format(printf, 3, 4)))
+#else
+#define CW_LOG_FORMAT(...)
+#endif
+
 namespace caiwei {
 namespace log    {
 
@@ -14,6 +20,7 @@ enum class Level {
     E,
 };
 
+CW_LOG_FORMAT()
 void log(Level level, const std::source_location& loc, const char* fmt, ...);
 
 void set_log_level(Level level);

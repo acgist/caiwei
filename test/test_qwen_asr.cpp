@@ -2,7 +2,6 @@
 
 #include <thread>
 #include <vector>
-#include <generator>
 
 [[maybe_unused]]
 void asr_run(caiwei::manager::ASRWrapper* ptr, const caiwei::text::CompletionsRequest& request) {

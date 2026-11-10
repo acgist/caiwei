@@ -1,7 +1,5 @@
 #include "test.hpp"
 
-#include "caiwei/type.hpp"
-
 #define N_FFT 400
 #define HOP_LENGTH 160
 #define MEL_FILTERS_PATH "mel_128_filters.txt"

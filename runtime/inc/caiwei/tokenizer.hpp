@@ -12,7 +12,7 @@ namespace context {
 
 llama_token piece_to_token(const llama_vocab* vocab, const std::string& piece, bool add_special = false, bool parse_special = true);
 std::string token_to_piece(const llama_vocab* vocab, llama_token token, bool special = true);
-int token_to_piece(const llama_vocab* vocab, llama_token token, char* buf, int len, bool special = true);;
+int token_to_piece(const llama_vocab* vocab, llama_token token, char* buf, int len, bool special = true);
 int tokenize(const llama_vocab* vocab, const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special = false, bool parse_special = true);
 std::vector<llama_token> tokenize(const llama_vocab* vocab, const std::string& text, bool add_special = false, bool parse_special = true);
 std::string detokenize(const llama_vocab* vocab, llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
@@ -38,6 +38,10 @@ private:
 public:
     Tokenizer();
     ~Tokenizer();
+    Tokenizer(const Tokenizer&) = delete;
+    Tokenizer& operator=(const Tokenizer&) = delete;
+    Tokenizer(Tokenizer&&) = delete;
+    Tokenizer& operator=(Tokenizer&&) = delete;
 private:
     void release();
 public:
@@ -56,8 +60,6 @@ public:
     std::vector<llama_token> tokenize(const std::string& text, bool add_special = false, bool parse_special = true);
     std::string detokenize(llama_token* tokens, int32_t n_tokens, bool remove_special = false, bool unparse_special = false);
 };
-
-void normalize_l2(const float* embd, float* out, int size, bool normalize_single = false);
 
 } // context
 } // caiwei
