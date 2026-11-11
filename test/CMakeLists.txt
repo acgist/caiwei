@@ -69,10 +69,17 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp4"
 )
 
-add_custom_command(
-    TARGET caiwei-test POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<CONFIG>/bin/"
-)
+if (is_multi_config)
+    add_custom_command(
+        TARGET caiwei-test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<CONFIG>/bin/"
+    )
+else()
+    add_custom_command(
+        TARGET caiwei-test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/"
+    )
+endif()
 
 if(CMAKE_HOST_UNIX)
     # -

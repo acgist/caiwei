@@ -20,6 +20,8 @@ option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # 瑞芯微: RK18
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"      ON)  # llama.cpp
 option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"    ON)  # ONNXRuntime
 
+get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
 # TODO 升级 23
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -227,8 +229,7 @@ if(CMAKE_HOST_UNIX)
     else()
         list(
             APPEND CAIWEI_RUNTIME_INCS
-            # TODO 确定目录
-            "${FFMPEG_PATH}/include"
+            "${FFMPEG_PATH}/"
         )
         list(
             APPEND CAIWEI_RUNTIME_LIBS
@@ -255,7 +256,13 @@ else()
 endif()
 
 if(CMAKE_HOST_UNIX)
-    find_package(httplib REQUIRED)
+    find_file(
+        HTTPLIB_H
+        NAMES httplib.h
+    )
+    if(NOT HTTPLIB_H)
+        message(FATAL_ERROR "没有安装cpp-httplib")
+    endif()
 elseif(CMAKE_HOST_WIN32)
     set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CPP_HTTPLIB_PATH}")
