@@ -157,7 +157,7 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         return static_cast<float>(v) / 32768.0F;
     });
     std::vector<float> audio_feature(this->n_mels * n_frame, 0.0F);
-    caiwei::audio::log_mel_spectrogram(
+    const bool mel_success = caiwei::audio::log_mel_spectrogram(
         audio_data_f32.data(),
         audio_data_f32.size(),
         this->mel_filters.data(),
@@ -167,6 +167,10 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         n_frame * HOP_LENGTH,
         audio_feature
     );
+    if (!mel_success) {
+        CW_LOG_W("计算梅尔谱图失败");
+        return false;
+    }
     audio_embeds.resize(this->chunk_length * n_tokens);
     const int batch_chunk_size = this->batch_size * this->window_size;
     for(int chunk = 0; chunk * batch_chunk_size < n_frame; ++chunk) {

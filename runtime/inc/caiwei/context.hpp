@@ -14,6 +14,7 @@
 #include <chrono>
 #include <vector>
 #include <generator>
+#include <type_traits>
 #include <unordered_map>
 
 #include "caiwei/text_data.hpp"
@@ -58,7 +59,7 @@ inline const char* get_type_name(Type type) {
 }
 
 struct ContextInfo {
-    Type type;
+    Type type = Type::NONE;
     std::string type_name;
     std::string name;
     std::string path;
@@ -182,7 +183,7 @@ void normalize_l2(const float* embd, float* out, int size, bool normalize_single
 
 template<typename F>
 struct RaiiGuard {
-    F fun;
+    std::decay_t<F> fun;
     explicit RaiiGuard(F&& fun) : fun(std::forward<F>(fun)) {
     }
     ~RaiiGuard() noexcept {

@@ -132,37 +132,37 @@ bool caiwei::context::Tokenizer::load(const std::string& path) {
 }
 
 bool caiwei::context::Tokenizer::is_eog(llama_token token_id) {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_is_eog(this->vocab, token_id);
 }
 
 int32_t caiwei::context::Tokenizer::get_size() {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_n_tokens(this->vocab);
 }
 
 llama_token caiwei::context::Tokenizer::get_nl() {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_nl(this->vocab);
 }
 
 llama_token caiwei::context::Tokenizer::get_bos() {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_bos(this->vocab);
 }
 
 llama_token caiwei::context::Tokenizer::get_eos() {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_eos(this->vocab);
 }
 
 llama_token caiwei::context::Tokenizer::get_eot() {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_eot(this->vocab);
 }
 
 llama_token caiwei::context::Tokenizer::get_pad() {
-    caiwei::env::check_nullptr(this->vocab);
+    caiwei::env::check_not_nullptr(this->vocab);
     return llama_vocab_pad(this->vocab);
 }
 
@@ -194,7 +194,7 @@ llama_token caiwei::context::piece_to_token(const llama_vocab* vocab, const std:
     if (piece.empty()) {
         return LLAMA_TOKEN_NULL;
     }
-    caiwei::env::check_nullptr(vocab);
+    caiwei::env::check_not_nullptr(vocab);
     llama_token token{};
     const int n_tokens = llama_tokenize(vocab, piece.c_str(), piece.size(), &token, 1, add_special, parse_special);
     if (n_tokens != 1) {
@@ -208,7 +208,7 @@ std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_toke
     if (token == LLAMA_TOKEN_NULL) {
         return "";
     }
-    caiwei::env::check_nullptr(vocab);
+    caiwei::env::check_not_nullptr(vocab);
     std::string piece;
     piece.resize(16);
     const int length = llama_token_to_piece(vocab, token, piece.data(), piece.size(), 0, special);
@@ -225,12 +225,12 @@ std::string caiwei::context::token_to_piece(const llama_vocab* vocab, llama_toke
 }
 
 int caiwei::context::token_to_piece(const llama_vocab* vocab, llama_token token, char* buf, int len, bool special) {
-    caiwei::env::check_nullptr(vocab);
+    caiwei::env::check_not_nullptr(vocab);
     return llama_token_to_piece(vocab, token, buf, len, 0, special);
 }
 
 int caiwei::context::tokenize(const llama_vocab* vocab, const char* text, int32_t length, llama_token* tokens, int32_t n_tokens, bool add_special, bool parse_special) {
-    caiwei::env::check_nullptr(vocab);
+    caiwei::env::check_not_nullptr(vocab);
     return llama_tokenize(vocab, text, length, tokens, n_tokens, add_special, parse_special);
 }
 
@@ -238,7 +238,7 @@ std::vector<llama_token> caiwei::context::tokenize(const llama_vocab* vocab, con
     if (text.empty()) {
         return {};
     }
-    caiwei::env::check_nullptr(vocab);
+    caiwei::env::check_not_nullptr(vocab);
     const int n_tokens = -llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, parse_special);
     if (n_tokens <= 0) {
         CW_LOG_W("编码失败: %s", text.c_str());
@@ -256,7 +256,7 @@ std::string caiwei::context::detokenize(const llama_vocab* vocab, llama_token* t
     if (tokens == nullptr || n_tokens <= 0) {
         return "";
     }
-    caiwei::env::check_nullptr(vocab);
+    caiwei::env::check_not_nullptr(vocab);
     std::string text;
     text.resize(n_tokens);
     const int length = llama_detokenize(vocab, tokens, n_tokens, text.data(), text.size(), remove_special, unparse_special);

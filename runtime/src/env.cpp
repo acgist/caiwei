@@ -23,9 +23,9 @@ static std::unordered_map<std::string, std::string> env_map;
 
 std::atomic_uint32_t caiwei::env::id_index = 0;
 
-std::vector<std::string> caiwei::env::allow_path;
-std::vector<std::string> caiwei::env::allow_host;
-std::vector<std::string> caiwei::env::allow_media_type;
+static std::vector<std::string> allow_path;
+static std::vector<std::string> allow_host;
+static std::vector<std::string> allow_media_type;
 
 static std::map<std::string, std::string> default_config = {
     {"CAIWEI_VERSION",          "1.0.0"  }, // 版本信息
@@ -256,9 +256,9 @@ void caiwei::env::set(const std::string& name, const std::string& value) {
 void caiwei::env::init() {
     initialized = true;
     std::call_once(env_map_once_flag, []() {
-        caiwei::env::allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
-        caiwei::env::allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
-        caiwei::env::allow_media_type = caiwei::env::get_vector("CAIWEI_ALLOW_MEDIA_TYPE");
+        allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
+        allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
+        allow_media_type = caiwei::env::get_vector("CAIWEI_ALLOW_MEDIA_TYPE");
     });
 }
 
@@ -283,4 +283,16 @@ void caiwei::env::set_thread_name(const std::string& name) {
         pthread_setname_np(pthread_self(), name.c_str());
     }
 #endif
+}
+
+const std::vector<std::string>& caiwei::env::get_allow_path() {
+    return allow_path;
+}
+
+const std::vector<std::string>& caiwei::env::get_allow_host() {
+    return allow_host;
+}
+
+const std::vector<std::string>& caiwei::env::get_allow_media_type() {
+    return allow_media_type;
 }

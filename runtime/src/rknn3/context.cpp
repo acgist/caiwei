@@ -468,6 +468,7 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
 std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& request) {
     if (request.messages.empty()) {
         CW_LOG_W("输入为空");
+        co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, 0, 0 };
         co_return;
     }
     ContextSession context_session;
@@ -480,10 +481,6 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     context_session.e_thinking = this->tokenizer->piece_to_token(this->special_token.e_thinking);
     context_session.b_toolcall = this->tokenizer->piece_to_token(this->special_token.b_toolcall);
     context_session.e_toolcall = this->tokenizer->piece_to_token(this->special_token.e_toolcall);
-    rknn3_session_ptr session{ this->get_session(&context_session, &request) };
-    if (!session) {
-        co_return;
-    }
     std::string prompt;
     auto b_time = std::chrono::steady_clock::now();
     std::vector<rknn3_llm_input> inputs = this->get_inputs(prompt, &context_session, request);
@@ -491,6 +488,13 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     context_session.feature_ms = std::chrono::duration_cast<std::chrono::milliseconds>(e_time - b_time).count();
     if (inputs.empty()) {
         CW_LOG_W("输入为空");
+        co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, context_session.n_prefill_tokens, 0 };
+        co_return;
+    }
+    rknn3_session_ptr session{ this->get_session(&context_session, &request) };
+    if (!session) {
+        CW_LOG_W("会话为空");
+        co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, context_session.n_prefill_tokens, 0 };
         co_return;
     }
     CW_LOG_D("提示词: %s", prompt.c_str());
@@ -501,6 +505,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::RKNN3Context::ge
     int ret = rknn3_session_run_async(session.get(), inputs.data(), inputs.size(), &llm_infer_param);
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("会话异步运行失败: %d", ret);
+        co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, context_session.n_prefill_tokens, 0 };
         co_return;
     }
     auto raii_guard = caiwei::context::RaiiGuard([&]() {

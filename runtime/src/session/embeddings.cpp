@@ -7,7 +7,7 @@ caiwei::session::EmbeddingsSession::EmbeddingsSession(caiwei::text::EmbeddingsRe
 
 std::string caiwei::session::EmbeddingsSession::get() {
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>(this->request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     auto result = ptr->run(this->request);
     caiwei::text::EmbeddingsResponse response;
     response.model = request.model;
@@ -17,7 +17,7 @@ std::string caiwei::session::EmbeddingsSession::get() {
     } else {
         input_size = std::get<std::vector<std::string>>(request.input).size();
     }
-    caiwei::env::check_ne(input_size, result.result.size(), "推理失败");
+    caiwei::env::check_eq(input_size, result.result.size(), "推理失败");
     for (size_t i = 0; i < result.result.size(); ++i) {
         caiwei::text::EmbeddingsResponseData data;
         data.index = i;

@@ -154,10 +154,10 @@ endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     message(STATUS "Enable Rockchip RKNN2")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN=1)
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2=1)
+    set(ENABLE_CAIWEI_RUNTIME_RKNN ON)
     if(CMAKE_HOST_UNIX)
-        list(APPEND CAIWEI_RUNTIME_LIBS rga rknnrt)
+        list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
     elseif(CMAKE_HOST_WIN32)
     # -
     else()
@@ -167,10 +167,21 @@ endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN3)
     message(STATUS "Enable Rockchip RKNN3")
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN=1)
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3=1)
+    set(ENABLE_CAIWEI_RUNTIME_RKNN ON)
     if(CMAKE_HOST_UNIX)
-        list(APPEND CAIWEI_RUNTIME_LIBS rga rknn3_api)
+        list(APPEND CAIWEI_RUNTIME_LIBS rknn3_api)
+    elseif(CMAKE_HOST_WIN32)
+    # -
+    else()
+    # -
+    endif()
+endif()
+
+if(ENABLE_CAIWEI_RUNTIME_RKNN)
+    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN=1)
+    if(CMAKE_HOST_UNIX)
+        list(APPEND CAIWEI_RUNTIME_LIBS rga)
     elseif(CMAKE_HOST_WIN32)
     # -
     else()

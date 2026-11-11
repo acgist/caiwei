@@ -36,10 +36,10 @@ struct ContextSession {
     bool toolcall = false;
     bool add_special   = false;
     bool parse_special = true;
-    int32_t b_thinking;
-    int32_t e_thinking;
-    int32_t b_toolcall;
-    int32_t e_toolcall;
+    int32_t b_thinking = LLAMA_TOKEN_NULL;
+    int32_t e_thinking = LLAMA_TOKEN_NULL;
+    int32_t b_toolcall = LLAMA_TOKEN_NULL;
+    int32_t e_toolcall = LLAMA_TOKEN_NULL;
     int audio_frames           = 0;
     int image_frames           = 0;
     uint32_t n_prefill_tokens  = 0;
@@ -51,11 +51,11 @@ struct ContextSession {
     rknn3_context media_context = 0;
     std::mutex mutex;
     std::condition_variable condition;
-    int        embedding_dim;
+    int        embedding_dim { 0       };
     float16  * embedding_data{ nullptr };
     Tokenizer* tokenizer     { nullptr };
-    TokenBuffer token_buffer;
-    caiwei::text::ToolcallSession toolcall_session;
+    TokenBuffer token_buffer {         };
+    caiwei::text::ToolcallSession toolcall_session{};
     std::vector<std::vector<float>> pool_result{};
     std::vector<caiwei::text::CompletionResult> token_result{};
     std::vector<float16> audio_embeds{};
@@ -63,10 +63,12 @@ struct ContextSession {
     std::vector<float16> video_embeds{};
     std::vector<rknn3_tensor> output_tensors{};
     std::vector<rknn3_aux_tensor> deepstack_tensors{};
+
     bool init_output_tensors(int n_output_tensors = 1);
     void release_output_tensors();
     bool init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length, int size = 3);
     void release_deepstack_tensors();
+
     ~ContextSession();
 };
 
@@ -78,18 +80,18 @@ protected:
     const std::string tokenizer_path;
     const std::string media_model_path;
     const std::string media_weight_path;
-          int32_t     max_token_length;
+          int32_t     max_token_length = 0;
     std::mutex media_mutex;
     rknn3_context context       = 0;
     rknn3_context media_context = 0;
-           int      vocab_size;
-           int      embedding_fd = -1;
-           int      embedding_dim;
+           int      vocab_size  = 0;
+           int      embedding_fd  = -1;
+           int      embedding_dim = 0;
            float16* embedding_data{ nullptr };
-    struct stat     embedding_stat{};
+    struct stat     embedding_stat{         };
     Tokenizer* tokenizer{ nullptr };
-    caiwei::text::ChatTemplate chat_template;
-    caiwei::text::SpecialToken special_token;
+    caiwei::text::ChatTemplate chat_template{};
+    caiwei::text::SpecialToken special_token{};
     std::vector<rknn3_tensor> media_input   {};
     std::vector<rknn3_tensor> media_output  {};
     std::vector<rknn3_tensor_mem*> internal_tensor_mems{};

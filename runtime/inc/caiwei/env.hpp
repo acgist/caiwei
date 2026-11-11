@@ -11,6 +11,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <concepts>
 #include <stdexcept>
 
@@ -35,53 +36,35 @@ concept Comparable = requires(T a, T z) {
 };
 
 template<Comparable T>
-inline void check_eq(T src, T dst, const std::string& message = "数据错误", const std::string& code = "9999") {
-    if (src == dst) {
-        throw MessageCodeException(code, message);
-    }
-}
-
-template<Comparable T>
-inline void check_ne(T src, T dst, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_eq(const T& src, const T& dst, const std::string& message = "数据错误", const std::string& code = "9999") {
     if (src != dst) {
         throw MessageCodeException(code, message);
     }
 }
 
 template<Comparable T>
-inline void check_in(T val, T min, T max, const std::string& message = "数据错误", const std::string& code = "9999") {
-    if (val >= min && val <= max) {
-        throw MessageCodeException(code, message);
-    }
-}
-
-template<Comparable T>
-inline void check_out(T val, T min, T max, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_in(const T& val, const T& min, const T& max, const std::string& message = "数据错误", const std::string& code = "9999") {
     if (val < min || val > max) {
         throw MessageCodeException(code, message);
     }
 }
 
 template<typename T>
-inline void check_empty(const T& value, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_not_empty(const T& value, const std::string& message = "数据错误", const std::string& code = "9999") {
     if (value.empty()) {
         throw MessageCodeException(code, message);
     }
 }
 
-inline void check_nullptr(const void* ptr, const std::string& message = "指针不能为空", const std::string& code = "9999") {
+inline void check_not_nullptr(const void* ptr, const std::string& message = "数据错误", const std::string& code = "9999") {
     if (ptr == nullptr) {
         throw MessageCodeException(code, message);
     }
 }
 
-const int max_id_index = 10000;
+inline constexpr uint32_t max_id_index = 10000;
 
 extern std::atomic_uint32_t id_index;
-
-extern std::vector<std::string> allow_path;
-extern std::vector<std::string> allow_host;
-extern std::vector<std::string> allow_media_type;
 
 std::string get      (const std::string& name);
 bool        get_bool (const std::string& name);
@@ -95,21 +78,25 @@ void init();
 void stop();
 void print_all_env();
 
-inline size_t timestamp() {
+void set_thread_name(const std::string& name);
+
+const std::vector<std::string>& get_allow_path();
+const std::vector<std::string>& get_allow_host();
+const std::vector<std::string>& get_allow_media_type();
+
+inline uint64_t timestamp() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-inline size_t unix_timestamp() {
+inline uint64_t unix_timestamp() {
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 inline std::string id() {
-    const uint32_t cur = id_index.fetch_add(1, std::memory_order_acq_rel);
+    const uint32_t cur = id_index.fetch_add(1, std::memory_order_relaxed);
     const uint32_t val = cur % max_id_index;
     return std::to_string(caiwei::env::timestamp() * max_id_index + val);
 }
-
-void set_thread_name(const std::string& name);
 
 } // env
 } // caiwei

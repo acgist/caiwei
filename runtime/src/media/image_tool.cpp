@@ -39,6 +39,10 @@ bool caiwei::image::resize(
         CW_LOG_W("不支持的图片通道: %d", channels);
         return false;
     }
+    if (src_h == dst_h && src_w == dst_w && pad_w == 0 && pad_h == 0) {
+        std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, dst);
+        return true;
+    }
     if (src_w % 16 != 0) {
         CW_LOG_D("图片宽度必须是16的倍数: %d", src_w);
         thread_local std::vector<uint8_t> v;

@@ -16,11 +16,12 @@ struct caiwei_llama_batch {
     bool success = true;
     bool mtmd    = false;
     llama_pos   n_pos = 0;
-    llama_batch batch;
+    llama_batch batch{};
     std::string finish_reason;
     uint32_t    n_prompt_tokens = 0;
     llama_context_ptr context{ nullptr };
     llama_sampler_ptr sampler{ nullptr };
+
     caiwei_llama_batch() noexcept = default;
     ~caiwei_llama_batch();
     caiwei_llama_batch(const caiwei_llama_batch& batch) noexcept = delete;
@@ -33,7 +34,7 @@ class LlamaCPPContext {
 protected:
     const std::string path;
     const std::string mtmd_path;
-          int32_t     max_token_length;
+          int32_t     max_token_length = 0;
           caiwei::text::ChatTemplate chat_template;
           caiwei::text::SpecialToken special_token;
           llama_model* model{ nullptr };

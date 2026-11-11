@@ -208,6 +208,20 @@ void test_transpose() {
 
 [[maybe_unused]]
 void test_hwc_to_chw() {
+    std::vector<float> hwc_vec = {
+        10, 20, 30,
+        11, 21, 31,
+        12, 22, 32,
+        13, 23, 33
+    };
+    std::vector<float> chw_vec(hwc_vec.size());
+    std::vector<float> chw_true = {
+        10, 11, 12, 13,
+        20, 21, 22, 23,
+        30, 31, 32, 33
+    };
+    caiwei::image::hwc_to_chw(hwc_vec.data(), chw_vec.data(), 1, 4, 3);
+    assert((chw_vec == chw_true));
     int width, height, channels;
     auto data = stbi_load(image_path, &width, &height, &channels, STBI_rgb);
     assert(data != nullptr);
@@ -217,8 +231,8 @@ void test_hwc_to_chw() {
     std::vector<int8_t> chw_i8(width * height * channels);
     caiwei::type::u8_to_f32(data, width * height * channels, hwc.data(), 255.0F);
     caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);
-    caiwei::image::chw_to_hwc(chw.data(), hwc.data(), height, width, channels);
-    stbi_write_hdr("./image_hwc_to_chw.hdr", width, height, channels, hwc.data());
+    stbi_write_hdr("./image_chw.hdr", width, height, channels, chw.data());
+    stbi_write_hdr("./image_hwc.hdr", width, height, channels, hwc.data());
     {
         CAIWEI_FOR_EACH(1000)
         caiwei::image::hwc_to_chw(hwc.data(), chw.data(), height, width, channels);

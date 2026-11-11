@@ -1,6 +1,7 @@
 #ifndef CAIWEI_RUNTIME_MEDIA_TOOL_HPP
 #define CAIWEI_RUNTIME_MEDIA_TOOL_HPP
 
+#include <atomic>
 #include <string>
 #include <functional>
 
@@ -151,7 +152,7 @@ private:
 
 class MediaDemuxer {
 private:
-    volatile bool running; // 是否运行
+    std::atomic<bool> running { false }; // 是否运行
     std::string type; // 媒体类型: rtp|data|file|http|rtmp|rtsp|device
     std::string url ; // 媒体地址
     MediaMuxer * media_muxer { nullptr };

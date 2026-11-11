@@ -12,7 +12,7 @@ bool load_mel_filters(
     std::vector<float>& mel_filters
 );
 
-void log_mel_spectrogram(
+bool log_mel_spectrogram(
     const float* audio,
     int audio_length,
     const float* mel_filters,
@@ -26,4 +26,4 @@ void log_mel_spectrogram(
 } // audio
 } // caiwei
 
-# endif // CAIWEI_RUNTIME_AUDIO_TOOL_HPP
+#endif // CAIWEI_RUNTIME_AUDIO_TOOL_HPP

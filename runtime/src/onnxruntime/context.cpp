@@ -146,12 +146,12 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(const int h, co
             CW_LOG_W("图片大小和模型输入大小不匹配");
             return {};
         }
-        this->src_w = image.width;
-        this->src_h = image.height;
-        this->src_c = image.channels;
         if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
             return {};
         }
+        this->src_w = image.width;
+        this->src_h = image.height;
+        this->src_c = image.channels;
         this->dst.resize(static_cast<size_t>(this->dst_w) * this->dst_h * image.channels);
         this->pad.resize(static_cast<size_t>(          w) *           h * image.channels, caiwei::image::DEFAULT_PADDING);
         this->hwc.resize(static_cast<size_t>(          w) *           h * image.channels);

@@ -207,7 +207,7 @@ static void log_mel_spectrogram(
     clamp_and_log_max(mel_spec, ROWS_A, COLS_B);
 }
 
-void caiwei::audio::log_mel_spectrogram(
+bool caiwei::audio::log_mel_spectrogram(
     const float* audio,
     const int    audio_length,
     const float* mel_filters,
@@ -219,18 +219,19 @@ void caiwei::audio::log_mel_spectrogram(
 ) {
     if (max_audio_length < n_fft) {
         CW_LOG_W("小于窗口");
-        return;
+        return false;
     }
     if (audio_length < max_audio_length) {
         CW_LOG_W("长度不足");
-        return;
+        return false;
     }
     if (audio == nullptr || mel_filters == nullptr || n_fft <= 1 || hop_length <= 0 || n_mels <= 0) {
         CW_LOG_W("参数错误");
-        return;
+        return false;
     }
     mel_spec.resize(static_cast<size_t>(n_mels) * max_audio_length / hop_length, 0.0F);
     std::vector<float> audio_data(max_audio_length);
     std::copy(audio, audio + max_audio_length, audio_data.begin());
     ::log_mel_spectrogram(audio_data.data(), max_audio_length, mel_filters, n_fft, hop_length, n_mels, mel_spec);
+    return true;
 }

@@ -7,11 +7,11 @@ caiwei::session::RerankingsSession::RerankingsSession(caiwei::text::RerankingsRe
 
 std::string caiwei::session::RerankingsSession::get() {
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>(this->request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     auto result = ptr->run(this->request);
     caiwei::text::RerankingsResponse response;
     response.model = request.model;
-    caiwei::env::check_ne(this->request.documents.size(), result.result.size(), "推理失败");
+    caiwei::env::check_eq(this->request.documents.size(), result.result.size(), "推理失败");
     for (size_t i = 0; i < result.result.size(); ++i) {
         caiwei::text::RerankingsResponseData data;
         data.index = i;

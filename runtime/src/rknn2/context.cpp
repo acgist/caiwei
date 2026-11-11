@@ -167,12 +167,12 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
             CW_LOG_W("不支持的输入格式: %s", get_format_string(input_attr.fmt));
             return {};
         }
-        this->src_w = image.width;
-        this->src_h = image.height;
-        this->src_c = image.channels;
         if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
             return {};
         }
+        this->src_w = image.width;
+        this->src_h = image.height;
+        this->src_c = image.channels;
         this->dst.resize    (static_cast<size_t>(this->dst_w) * this->dst_h * image.channels);
         this->pad.resize    (static_cast<size_t>(          w) *           h * image.channels, caiwei::image::DEFAULT_PADDING);
         this->hwc.resize    (static_cast<size_t>(          w) *           h * image.channels);

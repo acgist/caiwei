@@ -238,8 +238,8 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     request.stream   = data.value("stream", false);
     request.model    = data.value("model", "");
     request.messages = data.value("messages", std::vector<CompletionsRequestMessage>{});
-    caiwei::env::check_empty(request.model,    "模型不能为空");
-    caiwei::env::check_empty(request.messages, "消息不能为空");
+    caiwei::env::check_not_empty(request.model,    "模型不能为空");
+    caiwei::env::check_not_empty(request.messages, "消息不能为空");
     set_opt(data, request.seed,  "seed");
     set_opt(data, request.top_k, "top_k");
     set_opt(data, request.top_p, "top_p");
@@ -258,7 +258,7 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     set_opt(data, request.media_type,      "media_type");
     set_opt(data, request.model_list,      "model_list");
     if (request.max_completion_tokens.has_value()) {
-        caiwei::env::check_out(request.max_completion_tokens.value(), 1, 65536);
+        caiwei::env::check_in(request.max_completion_tokens.value(), 1, 65536);
     }
     request.id      = caiwei::env::id();
     request.created = caiwei::env::unix_timestamp();
@@ -269,15 +269,15 @@ caiwei::text::EmbeddingsRequest caiwei::text::json_to_embeddings(const std::stri
     EmbeddingsRequest request;
     nlohmann::json data = nlohmann::json::parse(json);
     request.model = data.value("model", "");
-    caiwei::env::check_empty(request.model, "模型不能为空");
+    caiwei::env::check_not_empty(request.model, "模型不能为空");
     nlohmann::json input_json = data.value("input", nlohmann::json());
     if (input_json.is_string()) {
         std::string input = input_json.get<std::string>();
-        caiwei::env::check_empty(input, "输入不能为空");
+        caiwei::env::check_not_empty(input, "输入不能为空");
         request.input = std::move(input);
     } else if (input_json.is_array()) {
         std::vector<std::string> input = input_json.get<std::vector<std::string>>();
-        caiwei::env::check_empty(input, "输入不能为空");
+        caiwei::env::check_not_empty(input, "输入不能为空");
         request.input = std::move(input);
     } else {
         throw caiwei::env::MessageCodeException("输入格式错误");
@@ -290,12 +290,12 @@ caiwei::text::RerankingsRequest caiwei::text::json_to_rerankings(const std::stri
     nlohmann::json data = nlohmann::json::parse(json);
     request.model = data.value("model", "");
     request.query = data.value("query", "");
-    caiwei::env::check_empty(request.model, "模型不能为空");
-    caiwei::env::check_empty(request.query, "查询不能为空");
+    caiwei::env::check_not_empty(request.model, "模型不能为空");
+    caiwei::env::check_not_empty(request.query, "查询不能为空");
     nlohmann::json documents_json = data.value("documents", nlohmann::json());
     if (documents_json.is_array()) {
         request.documents = documents_json.get<std::vector<std::string>>();
-        caiwei::env::check_empty(request.documents, "文档不能为空");
+        caiwei::env::check_not_empty(request.documents, "文档不能为空");
     } else {
         throw caiwei::env::MessageCodeException("文档格式错误");
     }
@@ -609,14 +609,14 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
     } else if (check_type != type) {
         return false;
     }
-    if (caiwei::env::allow_media_type.empty()) {
+    const auto& allow_media_type = caiwei::env::get_allow_media_type();
+    if (allow_media_type.empty()) {
         #if CAIWEI_DEBUG
         #else
         CW_LOG_W("未配置白名单媒体类型");
         return false;
         #endif
     } else {
-        const auto& allow_media_type = caiwei::env::allow_media_type;
         if (std::find(allow_media_type.begin(), allow_media_type.end(), type) == allow_media_type.end()) {
             return false;
         }
@@ -641,7 +641,8 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         if (std::find(suffix.begin(), suffix.end(), path.extension().string()) == suffix.end()) {
             return false;
         }
-        if (caiwei::env::allow_path.empty()) {
+        const auto& allow_path = caiwei::env::get_allow_path();
+        if (allow_path.empty()) {
             #if CAIWEI_DEBUG
             #else
             CW_LOG_W("未配置白名单文件路径");
@@ -649,7 +650,6 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
             #endif
         } else {
             std::string real_path = std::filesystem::canonical(path).string();
-            const auto& allow_path = caiwei::env::allow_path;
             if (
                 std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
                     return real_path.starts_with(value);
@@ -659,7 +659,8 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
             }
         }
     } else if (type == "http" || type == "rtmp" || type == "rtsp") {
-        if (caiwei::env::allow_host.empty()) {
+        const auto& allow_host = caiwei::env::get_allow_host();
+        if (allow_host.empty()) {
             #if CAIWEI_DEBUG
             #else
             CW_LOG_W("未配置白名单主机地址");
@@ -670,7 +671,6 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
             host.resize(256);
             av_url_split(nullptr, 0, nullptr, 0, host.data(), host.size(), nullptr, nullptr, 0, url.c_str());
             host.resize(std::strlen(host.c_str()));
-            const auto& allow_host = caiwei::env::allow_host;
             if (std::find(allow_host.begin(), allow_host.end(), host) == allow_host.end()) {
                 return false;
             }

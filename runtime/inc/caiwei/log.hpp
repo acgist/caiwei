@@ -4,7 +4,7 @@
 #include <cinttypes>
 #include <source_location>
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #define CW_LOG_FORMAT(...) __attribute__((format(printf, 3, 4)))
 #else
 #define CW_LOG_FORMAT(...)

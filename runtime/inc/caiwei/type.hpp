@@ -15,12 +15,14 @@
 namespace caiwei {
 namespace type   {
 
+// TODO SIMD
 inline void u8_to_i8(const uint8_t* __restrict src, const size_t size, int8_t* __restrict dst) {
     for (size_t i = 0; i < size; ++i) {
         dst[i] = static_cast<int8_t>(static_cast<int>(src[i]) - 128);
     }
 }
 
+// TODO SIMD
 inline void u8_to_f32(const uint8_t* __restrict src, const size_t size, float* __restrict dst, const float scale) {
     const float scale_inv = 1.0F / scale;
     for (size_t i = 0; i < size; ++i) {

@@ -50,7 +50,7 @@ caiwei::session::CompletionsSession::CompletionsSession(
 
 std::string caiwei::session::CompletionsSession::get_sync() {
     const auto* context_info = caiwei::context::get_context_info(request.model);
-    caiwei::env::check_nullptr(context_info, "模型无效");
+    caiwei::env::check_not_nullptr(context_info, "模型无效");
     caiwei::text::CompletionsResponse response;
     response.id      = request.id;
     response.created = request.created;
@@ -424,31 +424,31 @@ static void sync_generator(caiwei::text::CompletionsRequest& /* request */, caiw
 
 static void sync_cls(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     sync_yolo(std::move(ptr), request, response);
 }
 
 static void sync_det(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     sync_yolo(std::move(ptr), request, response);
 }
 
 static void sync_asr(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     sync_generator(request, response, ptr->run(request));
 }
 
 static void sync_llm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     sync_generator(request, response, ptr->run(request));
 }
 
 static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>(request.model);
-    caiwei::env::check_nullptr(ptr.get(), "模型无效");
+    caiwei::env::check_not_nullptr(ptr.get(), "模型无效");
     sync_generator(request, response, ptr->run(request));
 }
 

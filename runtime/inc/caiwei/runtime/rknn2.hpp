@@ -27,11 +27,11 @@ protected:
     rknn_context context = 0;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
-    int   dst_w;
-    int   dst_h;
-    int   pad_w;
-    int   pad_h;
-    float scale;
+    int   dst_w = 0;
+    int   dst_h = 0;
+    int   pad_w = 0;
+    int   pad_h = 0;
+    float scale = 0.0F;
 private:
     uint32_t src_w = 0;
     uint32_t src_h = 0;
