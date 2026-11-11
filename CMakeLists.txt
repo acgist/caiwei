@@ -226,19 +226,16 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
 endif()
 
 if(CMAKE_HOST_UNIX)
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-        list(
-            APPEND CAIWEI_RUNTIME_LIBS
-            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
-            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
-            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
-            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
-            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
-            ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
-        )
-    else()
-        list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
-    endif()
+    # list(
+    #     APPEND CAIWEI_RUNTIME_LIBS
+    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
+    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
+    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
+    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
+    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
+    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
+    # )
+    list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
 elseif(CMAKE_HOST_WIN32)
     set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${FFMPEG_PATH})

@@ -1,6 +1,6 @@
 # 采薇
 
-一个`AI`模型部署平台，主要支持`YOLO`和`QWEN`相关模型，支持`RKNN`、`CUDA`后端。
+基于`C++23`开发的`AI`模型部署平台
 
 ```
 小雅·采薇
@@ -25,48 +25,32 @@
 
 ----
 
-## 通用推理SDK
+## 项目文档
 
-|SDK|官方地址|支持计划|
+* [部署文档](docs/deploy.md)
+* [接口文档](docs/API.md)
+* [模型文档](docs/model)
+* [运行时库](docs/runtime)
+
+## 运行时库
+
+|运行时库|官方地址|支持计划|
 |:--|:--|:--|
-|llama.cpp  |https://github.com/ggml-org/llama.cpp   |√|
-|ONNXRuntime|https://github.com/microsoft/onnxruntime|√|
-
-## 厂家推理SDK
-
-|SDK|官方地址|支持计划|
-|:--|:--|:--|
-|RKNN2|https://github.com/airockchip/rknn-toolkit2|√|
-|RKNN3|https://github.com/airockchip/rknn3-toolkit|√|
-
-> 其他`CANN`/`OpenVINO`等等可以使用通用推理`SDK`推理
+|RKNN2      |https://github.com/airockchip/rknn-toolkit2|√|
+|RKNN3      |https://github.com/airockchip/rknn3-toolkit|√|
+|llama.cpp  |https://github.com/ggml-org/llama.cpp      |√|
+|ONNXRuntime|https://github.com/microsoft/onnxruntime   |√|
 
 ## 模型支持
 
-|模型|RKNN|llama.cpp|ONNXRuntime|
-|:--|:--|:--|:--|
-|YOLO-CLS       |√|×|√|
-|YOLO-DET       |√|×|√|
-|Qwen3          |√|√|×|
-|Qwen3-VL       |√|√|×|
-|Qwen3-ASR      |√|√|×|
-|Qwen3-Reranker |√|√|×|
-|Qwen3-Embedding|√|√|×|
+|模型|RKNN2|RKNN3|llama.cpp|ONNXRuntime|
+|:--|:--|:--|:--|:--|
+|YOLO-CLS       |√|×|×|√|
+|YOLO-DET       |√|×|×|√|
+|Qwen3          |×|√|√|×|
+|Qwen3-VL       |×|√|√|×|
+|Qwen3-ASR      |×|√|√|×|
+|Qwen3-Reranker |×|√|√|×|
+|Qwen3-Embedding|×|√|√|×|
 
-> √=已支持 ○=计划中 ?=未计划 ×=不支持
-
-## 日志前缀
-
-```
-* = 修改代码
-+ = 增加功能
-- = 减少功能
-~ = 优化代码
-% = 重要更新
-@ = 修复问题
-! = 版本发布
-$ = 配置更新
-# = 文档更新
-& = 依赖升级
-? = 其他修改
-```
+> √=已支持 ○=开发中 ×=不支持
