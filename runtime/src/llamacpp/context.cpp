@@ -85,16 +85,16 @@ caiwei::context::LlamaCPPContext::~LlamaCPPContext() {
 
 void caiwei::context::LlamaCPPContext::release() {
     if (this->vocab) {
-        CW_LOG_D("释放LlamaCPPContext vocab");
+        CW_LOG_I("释放LlamaCPPContext vocab");
         this->vocab = nullptr;
     }
     if (this->model) {
-        CW_LOG_D("释放LlamaCPPContext model");
+        CW_LOG_I("释放LlamaCPPContext model");
         llama_model_free(this->model);
         this->model = nullptr;
     }
     if (this->mtmd_model) {
-        CW_LOG_D("释放LlamaCPPContext mtmd_model");
+        CW_LOG_I("释放LlamaCPPContext mtmd_model");
         mtmd_free(this->mtmd_model);
         this->mtmd_model = nullptr;
     }
@@ -104,12 +104,12 @@ bool caiwei::context::LlamaCPPContext::load_model() {
     llama_model_params params = llama_model_default_params();
     this->model = llama_model_load_from_file(this->path.c_str(), params);
     if (this->model == nullptr) {
-        CW_LOG_W("模型加载失败: %s", this->path.c_str());
+        CW_LOG_W("模型加载失败");
         return false;
     }
     this->vocab = llama_model_get_vocab(this->model);
     if (this->vocab == nullptr) {
-        CW_LOG_W("模型加载失败: %s", this->path.c_str());
+        CW_LOG_W("模型加载失败");
         return false;
     }
     CW_LOG_I("模型加载成功: %s", this->path.c_str());
@@ -141,7 +141,7 @@ bool caiwei::context::LlamaCPPContext::load_mtmd_model(int image_min_tokens, int
     }
     this->mtmd_model = mtmd_init_from_file(this->mtmd_path.c_str(), this->model, params);
     if (this->mtmd_model == nullptr) {
-        CW_LOG_W("模型加载失败: %s", this->mtmd_path.c_str());
+        CW_LOG_W("模型加载失败");
         return false;
     }
     CW_LOG_I("模型加载成功: %s", this->mtmd_path.c_str());
@@ -152,7 +152,6 @@ bool caiwei::context::LlamaCPPContext::load_template() {
     if (this->chat_template.set_template(llama_model_chat_template(this->model, nullptr), this->special_token.bos, this->special_token.eos)) {
         return true;
     } else {
-        CW_LOG_W("模板加载失败: %s", this->path.c_str());
         return false;
     }
 }

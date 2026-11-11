@@ -9,7 +9,6 @@ static const char* image_path = "./acgist.jpg";
 void cls_image() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file("./samoyed.jpg")) {
-        CW_LOG_W("图片加载失败");
         return;
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
@@ -30,7 +29,6 @@ void cls_image() {
 void cls_image_for() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
-        CW_LOG_W("图片加载失败");
         return;
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
@@ -59,7 +57,6 @@ void cls_image_for() {
 void cls_image_thread() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
-        CW_LOG_W("图片加载失败");
         return;
     }
     std::vector<std::jthread> threads;
@@ -102,7 +99,7 @@ void cls_video() {
         [&ptr](caiwei::media::VideoFrame& frame) {
             auto ret = ptr->run(frame);
             for (const auto& index : ret) {
-                CW_LOG_I("%d = %.2f", index.class_id, index.score);
+                CW_LOG_I("cls: %d = %.2f", index.class_id, index.score);
             }
             return caiwei::player::play_video(frame.data.data(), frame.width * 3);
         }

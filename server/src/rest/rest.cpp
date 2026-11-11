@@ -60,13 +60,13 @@ bool caiwei::rest::open() {
     get_favicon();
     get_shutdown();
     register_api();
-    CW_LOG_I("启动REST服务: %s - %d => %d - %d", host.c_str(), port, min_pool, max_pool);
+    CW_LOG_I("启动REST服务: %s:%d => %d ~ %d", host.c_str(), port, min_pool, max_pool);
     const bool ret = caiwei::rest::server->listen(host, port);
     if (!ret) {
         CW_LOG_W("监听REST服务失败");
     }
     release_server();
-    CW_LOG_I("结束REST服务: %s - %d", host.c_str(), port);
+    CW_LOG_I("结束REST服务: %s:%d", host.c_str(), port);
     return ret;
 }
 
@@ -120,13 +120,9 @@ static void get_index() {
 static void get_favicon() {
     caiwei::rest::server->Get("/favicon.ico", [](const httplib::Request& /* request */, httplib::Response& response) {
         const std::filesystem::path path("./favicon.ico");
-        if (!std::filesystem::exists(path)) {
-            response.status = httplib::StatusCode::NotFound_404;
-            response.set_content(caiwei::json::buildResponse("1404", "文件无效"), caiwei::rest::content::type::JSON);
-            return;
-        }
-        const auto file_size = std::filesystem::file_size(path);
-        if(file_size <= 0) {
+        std::error_code error_code;
+        const auto file_size = std::filesystem::file_size(path, error_code);
+        if(error_code || file_size <= 0) {
             response.status = httplib::StatusCode::NotFound_404;
             response.set_content(caiwei::json::buildResponse("1404", "文件无效"), caiwei::rest::content::type::JSON);
             return;

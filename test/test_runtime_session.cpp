@@ -8,7 +8,6 @@ void test_completions_sync() {
     request.model = "qwen3-llm";
     request.stream = false;
     request.enable_thinking = false;
-
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     caiwei::session::CompletionsSession session(request);
     CW_LOG_I("completions: %s", session.get_sync().c_str());

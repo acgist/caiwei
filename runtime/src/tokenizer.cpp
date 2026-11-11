@@ -109,9 +109,7 @@ void caiwei::context::Tokenizer::release() {
 }
 
 bool caiwei::context::Tokenizer::load(const std::string& path) {
-    if (this->model != nullptr) {
-        this->release();
-    }
+    this->release();
     llama_model_params params = llama_model_default_params();
     params.vocab_only = true;
     this->model = llama_model_load_from_file(path.c_str(), params);

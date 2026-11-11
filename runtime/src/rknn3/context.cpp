@@ -85,12 +85,12 @@ void caiwei::context::RKNN3Context::release() {
         this->internal_tensor_mems.clear();
     }
     if (this->context != 0) {
-        CW_LOG_I("释放RKNN3Context context");
+        CW_LOG_I("释放RKNN3Context: %" PRIu64, this->context);
         rknn3_destroy(this->context);
         this->context = 0;
     }
     if (this->media_context != 0) {
-        CW_LOG_I("释放RKNN3Context media_context");
+        CW_LOG_I("释放RKNN3Context: %" PRIu64, this->media_context);
         rknn3_destroy(this->media_context);
         this->media_context = 0;
     }
@@ -143,24 +143,24 @@ bool caiwei::context::RKNN3Context::load_model(
         CW_LOG_W("设备加载失败: %d", ret);
         return false;
     }
-    CW_LOG_I("加载设备成功: %d => %s", rknn_id, extend.device_id);
+    CW_LOG_I("设备加载成功: %d => %s", rknn_id, extend.device_id);
     ret = rknn3_load_model_from_path(context, model_path.c_str(), weight_path.c_str());
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("模型读取失败: %d = %s", ret, model_path.c_str());
+        CW_LOG_W("模型读取失败: %d", ret);
         return false;
     }
     ret = rknn3_model_init(context, &config);
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("模型加载失败: %d = %s", ret, model_path.c_str());
+        CW_LOG_W("模型加载失败: %d", ret);
         return false;
     }
     rknn3_sdk_version version{};
     ret = rknn3_query(context, RKNN3_QUERY_SDK_VERSION, &version, sizeof(rknn3_sdk_version));
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("模型版本查询失败: %d = %s", ret, model_path.c_str());
+        CW_LOG_W("模型版本查询失败: %d", ret);
         return false;
     }
-    CW_LOG_I("模型加载成功: %s = %s - %s", model_path.c_str(), version.api_version, version.drv_version);
+    CW_LOG_I("模型加载成功: %s - %s", version.api_version, version.drv_version);
     return true;
 }
 
@@ -177,7 +177,7 @@ bool caiwei::context::RKNN3Context::load_model(bool user_mem_internal, uint32_t 
     rknn3_llm_config llm_config{};
     int ret = rknn3_query(this->context, RKNN3_QUERY_LLM_CONFIG, &llm_config, sizeof(rknn3_llm_config));
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("模型配置查询失败: %d = %s", ret, this->model_path.c_str());
+        CW_LOG_W("模型配置查询失败: %d", ret);
         return false;
     }
     const int32_t max_ctx_len = llm_config.max_ctx_len;
@@ -208,13 +208,12 @@ bool caiwei::context::RKNN3Context::load_template() {
     rknn3_llm_config llm_config{};
     int ret = rknn3_query(this->context, RKNN3_QUERY_LLM_CONFIG, &llm_config, sizeof(rknn3_llm_config));
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("模型配置查询失败: %d = %s", ret, this->model_path.c_str());
+        CW_LOG_W("模型配置查询失败: %d", ret);
         return false;
     }
     if (this->chat_template.set_template(llm_config.chat_template, this->special_token.bos, this->special_token.eos)) {
         return true;
     } else {
-        CW_LOG_W("模板加载失败: %s", this->model_path.c_str());
         return false;
     }
 }
@@ -222,31 +221,30 @@ bool caiwei::context::RKNN3Context::load_template() {
 bool caiwei::context::RKNN3Context::load_tokenizer() {
     this->tokenizer = new Tokenizer();
     if (!this->tokenizer->load(this->tokenizer_path)) {
-        CW_LOG_W("分词模型加载失败: %s", this->tokenizer_path.c_str());
         return false;
     }
     this->vocab_size = this->tokenizer->get_size();
-    CW_LOG_I("分词模型加载成功: %s = %d", this->tokenizer_path.c_str(), this->vocab_size);
+    CW_LOG_I("分词模型加载成功: %d", this->vocab_size);
     return true;
 }
 
 bool caiwei::context::RKNN3Context::load_embedding() {
     this->embedding_fd = ::open(this->embedding_path.c_str(), O_RDONLY);
     if (this->embedding_fd == -1) {
-        CW_LOG_W("嵌入文件打开失败: %s", this->embedding_path.c_str());
+        CW_LOG_W("嵌入文件打开失败");
         return false;
     }
     if (::fstat(this->embedding_fd, &this->embedding_stat) == -1) {
-        CW_LOG_W("嵌入文件查询失败: %s", this->embedding_path.c_str());
+        CW_LOG_W("嵌入文件查询失败");
         return false;
     }
     this->embedding_data = (float16*) ::mmap(nullptr, this->embedding_stat.st_size, PROT_READ, MAP_PRIVATE, this->embedding_fd, 0);
     if (this->embedding_data == MAP_FAILED) {
-        CW_LOG_W("嵌入文件映射失败: %s", this->embedding_path.c_str());
+        CW_LOG_W("嵌入文件映射失败");
         return false;
     }
     this->embedding_dim = this->embedding_stat.st_size / this->vocab_size / sizeof(float16);
-    CW_LOG_I("嵌入文件加载成功: %s = %d", this->embedding_path.c_str(), this->embedding_dim);
+    CW_LOG_I("嵌入文件加载成功: %d", this->embedding_dim);
     return true;
 }
 
@@ -254,7 +252,7 @@ bool caiwei::context::RKNN3Context::init_media_tensors() {
     rknn3_input_output_num io_num{};
     int ret = rknn3_query(this->media_context, RKNN3_QUERY_IN_OUT_NUM, &io_num, sizeof(rknn3_input_output_num));
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("媒体输入输出查询失败: %d = %s", ret, this->media_model_path.c_str());
+        CW_LOG_W("媒体输入输出查询失败: %d", ret);
         return false;
     }
     this->media_input.resize(io_num.n_input);
@@ -284,12 +282,12 @@ bool caiwei::context::RKNN3Context::init_internal_tensor_mems() {
     uint32_t core_num_media = 0;
     int ret = rknn3_query(this->context, RKNN3_QUERY_CORE_NUMBER, &core_num_llm, sizeof(uint32_t));
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("查询核心配置失败: %d - %s", ret, this->model_path.c_str());
+        CW_LOG_W("查询核心配置失败: %d", ret);
         return false;
     }
     ret = rknn3_query(this->media_context, RKNN3_QUERY_CORE_NUMBER, &core_num_media, sizeof(uint32_t));
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("查询核心配置失败: %d - %s", ret, this->media_model_path.c_str());
+        CW_LOG_W("查询核心配置失败: %d", ret);
         return false;
     }
     std::vector<rknn3_core_mem_size> core_mem_size_llm(core_num_llm);

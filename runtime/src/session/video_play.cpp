@@ -41,7 +41,7 @@ bool caiwei::session::VideoPlaySession::media_codec() {
         if (ret != nullptr && this->callback(ret, len - 1)) {
             return true;
         } else {
-            CW_LOG_I("媒体数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
+            CW_LOG_I("媒体数据回调失败释放资源: %s = %s", this->type.c_str(), this->url.c_str());
             return false;
         }
     });
@@ -91,7 +91,7 @@ bool caiwei::session::VideoPlaySession::media_forward() {
         if (ret != nullptr && this->callback(ret, len - 1)) {
             return true;
         } else {
-            CW_LOG_I("媒体数据回调失败释放资源: %s - %s", this->type.c_str(), this->url.c_str());
+            CW_LOG_I("媒体数据回调失败释放资源: %s = %s", this->type.c_str(), this->url.c_str());
             return false;
         }
     });

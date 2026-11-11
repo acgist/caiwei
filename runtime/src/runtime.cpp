@@ -97,6 +97,9 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
                 CW_LOG_W("加载context失败: %s = %s", get_type_name(this->type), info->name.c_str());
                 return nullptr;
             }
+        } catch (const std::exception& e) {
+            CW_LOG_E("加载context异常: %s = %s => %s", get_type_name(this->type), info->name.c_str(), e.what());
+            return nullptr;
         } catch (...) {
             CW_LOG_E("加载context异常: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;

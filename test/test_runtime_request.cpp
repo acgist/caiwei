@@ -132,7 +132,7 @@ void test_completions_response_to_json() {
         },
     };
     const std::string json = caiwei::text::to_json(response);
-    CW_LOG_I("test_completions_response_to_json: %s", json.c_str());
+    CW_LOG_I("completions_response: %s", json.c_str());
 }
 
 [[maybe_unused]]
@@ -152,7 +152,7 @@ void test_completions_chunk_to_json() {
         },
     };
     const std::string json = caiwei::text::to_json(chunk);
-    CW_LOG_I("test_completions_chunk_to_json: %s", json.c_str());
+    CW_LOG_I("completions_chunk: %s", json.c_str());
 }
 
 [[maybe_unused]]
@@ -166,7 +166,7 @@ void test_embedding_response_to_json() {
         .total_tokens  = 100
     };
     const std::string json = caiwei::text::to_json(response);
-    CW_LOG_I("test_embedding_response_to_json: %s", json.c_str());
+    CW_LOG_I("embedding_response: %s", json.c_str());
 }
 
 [[maybe_unused]]
@@ -180,7 +180,7 @@ void test_reranking_response_to_json() {
         .total_tokens  = 100
     };
     const std::string json = caiwei::text::to_json(response);
-    CW_LOG_I("test_reranking_response_to_json: %s", json.c_str());
+    CW_LOG_I("reranking_response: %s", json.c_str());
 }
 
 [[maybe_unused]]

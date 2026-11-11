@@ -146,6 +146,9 @@ bool caiwei::session::CompletionsSession::get() {
         size_t frame_count      = 0;
         size_t image_frame_size = 0;
         size_t video_frame_size = 0;
+        size_t audio_full_count = 0;
+        size_t image_full_count = 0;
+        size_t video_full_count = 0;
         std::vector<uint8_t>                   audio_frame_buffer;
         std::vector<caiwei::media::ImageFrame> image_frame_buffer;
         std::vector<caiwei::media::VideoFrame> video_frame_buffer;
@@ -221,7 +224,9 @@ bool caiwei::session::CompletionsSession::get() {
                             asr_cv.notify_one();
                         }
                     } else {
-                        CW_LOG_I("音频数据队列已满无法添加数据");
+                        if (audio_full_count++ % 10 == 0) {
+                            CW_LOG_I("音频数据队列已满无法添加数据: %zu", audio_frame_buffer.size());
+                        }
                         asr_cv.notify_one();
                     }
                 }
@@ -263,7 +268,9 @@ bool caiwei::session::CompletionsSession::get() {
                             vlm_cv.notify_one();
                         }
                     } else {
-                        CW_LOG_I("视频数据队列已满无法添加数据");
+                        if (video_full_count++ % 10 == 0) {
+                            CW_LOG_I("视频数据队列已满无法添加数据: %zu", video_frame_size);
+                        }
                         vlm_cv.notify_one();
                     }
                 }
@@ -297,7 +304,9 @@ bool caiwei::session::CompletionsSession::get() {
                         ++image_frame_size;
                         yolo_cv.notify_one();
                     } else {
-                        CW_LOG_I("图片数据队列已满无法添加数据");
+                        if (image_full_count++ % 10 == 0) {
+                            CW_LOG_I("图片数据队列已满无法添加数据: %zu", image_frame_size);
+                        }
                         yolo_cv.notify_one();
                     }
                 }
@@ -743,7 +752,6 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
         }
     } else if (type == caiwei::text::CONTENT_TYPE_FILE) {
         if (!image_frame.load_from_file(image_url.c_str())) {
-            CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
     } else if (type == caiwei::text::CONTENT_TYPE_HTTP) {

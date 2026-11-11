@@ -485,12 +485,16 @@ bool caiwei::media::MediaDemuxer::open(
             device_open = false;
         }
     }
-    std::error_code error_code;
-    if (this->type == "rtp" && !sdp_file.empty() && std::filesystem::exists(sdp_file, error_code)) {
+    if (this->type == "rtp" && !sdp_file.empty()) {
+        std::error_code error_code;
         if (std::filesystem::remove(sdp_file, error_code)) {
             CW_LOG_I("删除SDP文件成功: %s", sdp_file.c_str());
         } else {
-            CW_LOG_W("删除SDP文件失败: %s = %s", sdp_file.c_str(), error_code.message().c_str());
+            if (error_code) {
+                CW_LOG_W("删除SDP文件失败: %s = %s", sdp_file.c_str(), error_code.message().c_str());
+            } else {
+                // 不存在的文件
+            }
         }
     }
     CW_LOG_I("媒体接收线程结束: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
@@ -507,16 +511,14 @@ static bool write_sdp_file(const char* data, int size, const std::filesystem::pa
         CW_LOG_W("没有指定文件路径");
         return false;
     }
-    std::error_code error_code;
     std::filesystem::path parent = path.parent_path();
-    if (!std::filesystem::exists(parent, error_code)) {
+    std::error_code error_code;
+    if (!std::filesystem::create_directories(parent, error_code)) {
         if (error_code) {
-            CW_LOG_W("检查SDP目录失败: %s", error_code.message().c_str());
-            return false;
-        }
-        if (!std::filesystem::create_directories(parent, error_code)) {
             CW_LOG_W("创建SDP目录失败: %s", error_code.message().c_str());
             return false;
+        } else {
+            // 已经存在
         }
     }
     std::ofstream stream;

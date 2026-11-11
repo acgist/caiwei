@@ -9,7 +9,6 @@ static const char* image_path = "./acgist.jpg";
 void det_image() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
-        CW_LOG_W("图片加载失败");
         return;
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
@@ -38,7 +37,6 @@ void det_image() {
 void det_image_for() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
-        CW_LOG_W("图片加载失败");
         return;
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
@@ -67,7 +65,6 @@ void det_image_for() {
 void det_image_thread() {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
-        CW_LOG_W("图片加载失败");
         return;
     }
     std::vector<std::jthread> threads;

@@ -93,30 +93,36 @@ static void print_all_protocols() {
 #endif
 
 static void delete_old_sdp_file() {
-    std::error_code error_code;
-    if (!std::filesystem::is_directory(caiwei::media::sdp_file_path, error_code)) {
-        CW_LOG_W("遍历旧的SDP文件失败: %s", error_code.message().c_str());
+    std::error_code error_code_exists;
+    if (!std::filesystem::exists(caiwei::media::sdp_file_path, error_code_exists)) {
         return;
     }
-    auto iter = std::filesystem::directory_iterator(caiwei::media::sdp_file_path, error_code);
-    if (error_code) {
-        CW_LOG_W("遍历旧的SDP文件失败: %s", error_code.message().c_str());
+    std::error_code error_code_iter;
+    auto iter = std::filesystem::directory_iterator(caiwei::media::sdp_file_path, error_code_iter);
+    if (error_code_iter) {
+        CW_LOG_W("遍历旧的SDP文件失败: %s = %s", caiwei::media::sdp_file_path, error_code_iter.message().c_str());
         return;
     }
     for (auto& entry : iter) {
-        if (!entry.is_regular_file(error_code)) {
-            if (error_code) {
-                CW_LOG_W("删除旧的SDP文件失败: %s = %s", entry.path().string().c_str(), error_code.message().c_str());
+        std::error_code error_code_file;
+        if (!entry.is_regular_file(error_code_file)) {
+            if (error_code_file) {
+                CW_LOG_W("删除旧的SDP文件失败: %s = %s", entry.path().string().c_str(), error_code_file.message().c_str());
             } else {
                 CW_LOG_W("删除旧的SDP文件失败: %s", entry.path().string().c_str());
             }
             continue;
         }
         if (entry.path().extension() == ".sdp") {
-            if (std::filesystem::remove(entry.path(), error_code)) {
+            std::error_code error_code_remove;
+            if (std::filesystem::remove(entry.path(), error_code_remove)) {
                 CW_LOG_I("删除旧的SDP文件成功: %s", entry.path().string().c_str());
             } else {
-                CW_LOG_W("删除旧的SDP文件失败: %s = %s", entry.path().string().c_str(), error_code.message().c_str());
+                if (error_code_remove) {
+                    CW_LOG_W("删除旧的SDP文件失败: %s = %s", entry.path().string().c_str(), error_code_remove.message().c_str());
+                } else {
+                    CW_LOG_W("删除旧的SDP文件失败: %s", entry.path().string().c_str());
+                }
             }
         }
     }

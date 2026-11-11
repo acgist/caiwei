@@ -71,6 +71,9 @@ int main(int argc, char* argv[]) {
         caiwei::env::set_thread_name("rest-server");
         try {
             success.store(caiwei::rest::open(), std::memory_order_release);
+        } catch (const std::exception& e) {
+            CW_LOG_E("注册REST服务异常: %s", e.what());
+            success.store(false, std::memory_order_release);
         } catch (...) {
             CW_LOG_E("注册REST服务异常");
             success.store(false, std::memory_order_release);

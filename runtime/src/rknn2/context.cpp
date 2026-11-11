@@ -34,7 +34,7 @@ caiwei::context::RKNN2Context::~RKNN2Context() {
 
 void caiwei::context::RKNN2Context::release() {
     if (this->context != 0) {
-        CW_LOG_I("释放RKNN2Context context");
+        CW_LOG_I("释放RKNN2Context: %" PRIu64, this->context);
         rknn_destroy(this->context);
         this->context = 0;
     }
@@ -44,7 +44,7 @@ bool caiwei::context::RKNN2Context::load_model() {
     this->release();
     std::fstream stream(this->path, std::ios::binary | std::ios::in);
     if (!stream.is_open()) {
-        CW_LOG_W("模型打开失败: %s", this->path.c_str());
+        CW_LOG_W("模型打开失败");
         return false;
     }
     const uintmax_t size = std::filesystem::file_size(this->path);
@@ -52,40 +52,40 @@ bool caiwei::context::RKNN2Context::load_model() {
     data.resize(size);
     stream.read(data.data(), size);
     if (static_cast<uintmax_t>(stream.gcount()) != size) {
-        CW_LOG_W("模型读取失败: %s", this->path.c_str());
+        CW_LOG_W("模型读取失败");
         return false;
     }
     stream.close();
     int ret = rknn_init(&this->context, data.data(), data.size(), RKNN_FLAG_PRIOR_HIGH, nullptr);
     if (ret != RKNN_SUCC) {
-        CW_LOG_W("模型加载失败: %d = %s", ret, this->path.c_str());
+        CW_LOG_W("模型加载失败: %d", ret);
         this->release();
         return false;
     }
     rknn_core_mask mask = RKNN_NPU_CORE_ALL;
     ret = rknn_set_core_mask(this->context, mask);
     if (ret != RKNN_SUCC) {
-        CW_LOG_W("模型核心设置失败: %d = %s", ret, this->path.c_str());
+        CW_LOG_W("模型核心设置失败: %d", ret);
         this->release();
         return false;
     }
     rknn_sdk_version version{};
     ret = rknn_query(this->context, RKNN_QUERY_SDK_VERSION, &version, sizeof(rknn_sdk_version));
     if (ret != RKNN_SUCC) {
-        CW_LOG_W("模型版本查询失败: %d = %s", ret, this->path.c_str());
+        CW_LOG_W("模型版本查询失败: %d", ret);
         this->release();
         return false;
     }
-    CW_LOG_I("模型加载成功: %s = %s - %s", this->path.c_str(), version.api_version, version.drv_version);
+    CW_LOG_I("模型加载成功: %s - %s", version.api_version, version.drv_version);
     rknn_input_output_num io_num{};
     ret = rknn_query(this->context, RKNN_QUERY_IN_OUT_NUM, &io_num, sizeof(io_num));
     if (ret != RKNN_SUCC) {
-        CW_LOG_W("模型参数查询失败: %d - %s", ret, this->path.c_str());
+        CW_LOG_W("模型参数查询失败: %d", ret);
         this->release();
         return false;
     }
     if (io_num.n_input <= 0 || io_num.n_output <= 0) {
-        CW_LOG_W("模型输入输出错误: %u - %u = %s", io_num.n_input, io_num.n_output, this->path.c_str());
+        CW_LOG_W("模型输入输出错误: %u - %u", io_num.n_input, io_num.n_output);
         this->release();
         return false;
     }
@@ -95,7 +95,7 @@ bool caiwei::context::RKNN2Context::load_model() {
         input_attr.index = i;
         ret = rknn_query(this->context, RKNN_QUERY_INPUT_ATTR, &input_attr, sizeof(rknn_tensor_attr));
         if (ret != RKNN_SUCC) {
-            CW_LOG_W("输入参数查询失败: %u - %d - %s", i, ret, this->path.c_str());
+            CW_LOG_W("输入参数查询失败: %u - %d", i, ret);
             this->release();
             return false;
         }
@@ -107,7 +107,7 @@ bool caiwei::context::RKNN2Context::load_model() {
         output_attr.index = i;
         ret = rknn_query(this->context, RKNN_QUERY_OUTPUT_ATTR, &output_attr, sizeof(rknn_tensor_attr));
         if (ret != RKNN_SUCC) {
-            CW_LOG_W("输出参数查询失败: %u - %d - %s", i, ret, this->path.c_str());
+            CW_LOG_W("输出参数查询失败: %u - %d", i, ret);
             this->release();
             return false;
         }

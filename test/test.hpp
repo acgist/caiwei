@@ -31,10 +31,10 @@
 #ifndef CAIWEI_FOR_EACH_END
 #define CAIWEI_FOR_EACH_END                                                                                                   \
     }                                                                                                                         \
+    const auto    loc = std::source_location::current();                                                                      \
     const auto    caiwei_for_z  = std::chrono::steady_clock::now();                                                           \
     const int64_t caiwei_for_ms = std::chrono::duration_cast<std::chrono::milliseconds>(caiwei_for_z - caiwei_for_a).count(); \
-    const auto    loc = std::source_location::current();                                                                      \
-    const auto    caiwei_per_ms = caiwei_count == 0 ? 0 : static_cast<size_t>(caiwei_for_ms) / caiwei_count;                  \
+    const size_t  caiwei_per_ms = caiwei_count == 0 ? 0 : static_cast<size_t>(caiwei_for_ms) / caiwei_count;                  \
     CW_LOG_I(                                                                                                                 \
         "耗时: %6" PRId64 " / %4zu = %4zu ms = %32s",                                                                         \
         caiwei_for_ms,                                                                                                        \

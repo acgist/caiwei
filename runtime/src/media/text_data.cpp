@@ -114,6 +114,8 @@ void caiwei::text::ToolcallSession::finish() {
                     this->arguments = arguments.dump();
                 }
             }
+        } catch (const std::exception& e) {
+            CW_LOG_E("方法解析异常: %s => %s", this->content.c_str(), e.what());
         } catch (...) {
             CW_LOG_E("方法解析异常: %s", this->content.c_str());
         }
@@ -649,7 +651,11 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
             return false;
             #endif
         } else {
-            std::string real_path = std::filesystem::canonical(path).string();
+            std::error_code error_code_canonical;
+            std::string real_path = std::filesystem::canonical(path, error_code_canonical).string();
+            if (error_code_canonical) {
+                return false;
+            }
             if (
                 std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
                     return real_path.starts_with(value);

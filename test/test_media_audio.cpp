@@ -22,7 +22,6 @@ void test_log_mel_spectrogram() {
     const int n_mels = 128;
     std::vector<float> mel_filters{};
     if (!caiwei::audio::load_mel_filters(n_mels, N_FFT, mel_filters)) {
-        CW_LOG_W("读取mel_filters文件失败: %s", MEL_FILTERS_PATH);
         return;
     }
     const int n_frames = audio_data.size() * sizeof(uint8_t) / sizeof(int16_t);

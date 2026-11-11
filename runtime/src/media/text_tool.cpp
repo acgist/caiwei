@@ -64,6 +64,8 @@ bool caiwei::text::ChatTemplate::set_template(const char* template_text, const s
     CW_LOG_D("设置模板: %s - %s -> %s", bos.c_str(), eos.c_str(), template_text);
     try {
         this->chat_template = std::make_unique<minja::chat_template>(template_text, bos, eos);
+    } catch (const std::exception& e) {
+        CW_LOG_E("设置模板异常: %s => %s", template_text, e.what());
     } catch (...) {
         CW_LOG_E("设置模板异常: %s", template_text);
     }
@@ -148,7 +150,7 @@ std::string caiwei::text::ChatTemplate::apply(
                     }
                 }
                 for (size_t i = audio_index; i < message.audio_data.size(); ++i) {
-                    CW_LOG_I("音频标签不够自动填充");
+                    CW_LOG_D("音频标签不够自动填充");
                     audio_count++;
                     message_content_items_json.emplace_back(nlohmann::json({
                         {"type", "text"},
@@ -156,7 +158,7 @@ std::string caiwei::text::ChatTemplate::apply(
                     }));
                 }
                 for (size_t i = image_index; i < message.image_data.size(); ++i) {
-                    CW_LOG_I("图片标签不够自动填充");
+                    CW_LOG_D("图片标签不够自动填充");
                     image_count++;
                     std::string text;
                     if (add_vision_id) {
@@ -171,7 +173,7 @@ std::string caiwei::text::ChatTemplate::apply(
                     }));
                 }
                 for (size_t i = video_index; i < message.video_data.size(); ++i) {
-                    CW_LOG_I("视频标签不够自动填充");
+                    CW_LOG_D("视频标签不够自动填充");
                     video_count++;
                     std::string text;
                     if (add_vision_id) {

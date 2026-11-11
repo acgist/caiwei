@@ -54,10 +54,10 @@ void test_tokenizer() {
     assert(length > 0);
     const std::string text = tokenizer.detokenize(tokens.data(), length);
     assert(text == "你好这是一个测试<think>think</think><tool_call>tool_call</tool_call>");
-    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length).c_str());
-    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, true, false).c_str());
-    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, false, true).c_str());
-    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, true, true).c_str());
+    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length              ).c_str());
+    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, true,  false).c_str());
+    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, false, true ).c_str());
+    CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, true,  true ).c_str());
 }
 
 [[maybe_unused]]
@@ -114,7 +114,8 @@ void test_chat_template() {
     CAIWEI_FOR_EACH_END
 }
 
-[[maybe_unused]] void print_name_arguments(caiwei::text::ToolcallSession& session) {
+[[maybe_unused]]
+void print_name_arguments(caiwei::text::ToolcallSession& session) {
     std::string name = session.get_name();
     CW_LOG_I("name: %s", name.c_str());
     std::string arguments = session.get_arguments();

@@ -65,7 +65,7 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
     const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
     const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
     if (w != image_width || h != image_height) {
-        CW_LOG_W("图片尺寸与模型尺寸不匹配");
+        CW_LOG_W("图片尺寸与模型尺寸不匹配: %dx%d != %dx%d", w, h, image_width, image_height);
         return false;
     }
     float scale;

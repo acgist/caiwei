@@ -10,7 +10,8 @@ extern "C" {
 
 [[maybe_unused]]
 static std::string base64_file(const std::string& type, const std::string& path) {
-    if (!std::filesystem::exists(path)) {
+    std::error_code error_code;
+    if (!std::filesystem::exists(path, error_code)) {
         CW_LOG_W("文件无效: %s", path.c_str());
         return "";
     }

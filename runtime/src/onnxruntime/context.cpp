@@ -33,12 +33,12 @@ caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
 
 void caiwei::context::ONNXRuntimeContext::release() {
     if(this->run_options) {
-        CW_LOG_D("释放ONNXRuntimeContext run_options");
+        CW_LOG_I("释放ONNXRuntimeContext run_options");
         delete this->run_options;
         this->run_options = nullptr;
     }
     if(this->session) {
-        CW_LOG_D("释放ONNXRuntimeContext session");
+        CW_LOG_I("释放ONNXRuntimeContext session");
         delete this->session;
         this->session = nullptr;
     }
@@ -136,6 +136,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     }
     this->run_options = new Ort::RunOptions(nullptr);
     this->memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+    CW_LOG_I("模型加载成功: %s", this->path.c_str());
     return true;
 }
 

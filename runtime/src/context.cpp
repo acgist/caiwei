@@ -138,8 +138,13 @@ bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
         return false;
     }
     if (size == 0) {
-        if (!std::filesystem::exists(info->path)) {
-            CW_LOG_W("模型文件无效: %s", info->path.c_str());
+        std::error_code error_code;
+        if (!std::filesystem::exists(info->path, error_code)) {
+            if (error_code) {
+                CW_LOG_W("模型文件无效: %s = %s", info->path.c_str(), error_code.message().c_str());
+            } else {
+                CW_LOG_W("模型文件无效: %s", info->path.c_str());
+            }
             return false;
         }
         return true;
@@ -149,8 +154,13 @@ bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
             return false;
         }
         for (const auto& path : info->path_list) {
-            if (!std::filesystem::exists(path)) {
-                CW_LOG_W("模型文件无效: %s", path.c_str());
+            std::error_code error_code;
+            if (!std::filesystem::exists(path, error_code)) {
+                if (error_code) {
+                    CW_LOG_W("模型文件无效: %s = %s", path.c_str(), error_code.message().c_str());
+                } else {
+                    CW_LOG_W("模型文件无效: %s", path.c_str());
+                }
                 return false;
             }
         }

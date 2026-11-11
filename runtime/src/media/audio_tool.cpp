@@ -218,15 +218,15 @@ bool caiwei::audio::log_mel_spectrogram(
     std::vector<float>& mel_spec
 ) {
     if (max_audio_length < n_fft) {
-        CW_LOG_W("小于窗口");
+        CW_LOG_W("音频数据小于窗口");
         return false;
     }
     if (audio_length < max_audio_length) {
-        CW_LOG_W("长度不足");
+        CW_LOG_W("音频数据长度不足");
         return false;
     }
     if (audio == nullptr || mel_filters == nullptr || n_fft <= 1 || hop_length <= 0 || n_mels <= 0) {
-        CW_LOG_W("参数错误");
+        CW_LOG_W("音频数据参数错误");
         return false;
     }
     mel_spec.resize(static_cast<size_t>(n_mels) * max_audio_length / hop_length, 0.0F);
