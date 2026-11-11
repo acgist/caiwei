@@ -262,7 +262,7 @@ inline void hwc_to_chw_u8_f32(const uint8_t* __restrict hwc, float* __restrict c
     }
 }
 
-#if ENABLE_CAIWEI_RUNTIME_RKNN
+#if ENABLE_CAIWEI_BACKEND_RKNN
 bool resize(
     const uint8_t* src,
           uint8_t* dst,

@@ -1,18 +1,14 @@
-enable_testing()
-
 if(CMAKE_HOST_UNIX)
-# -
+    find_package(SDL2 QUIET)
 elseif(CMAKE_HOST_WIN32)
     set(SDL2_PATH "${CMAKE_SOURCE_DIR}/deps/sdl2" CACHE STRING "SDL2 Path")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${SDL2_PATH})
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        file(GLOB SDL2_DLLS "${SDL2_PATH}/debug/bin/*.dll")
-    else()
-        file(GLOB SDL2_DLLS "${SDL2_PATH}/bin/*.dll")
-    endif()
-    list(APPEND CAIWEI_TEST_DLLS ${SDL2_DLLS})
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${SDL2_PATH}")
+    file(GLOB SDL2_DLLS_DEBUG "${SDL2_PATH}/debug/bin/*.dll")
+    file(GLOB SDL2_DLLS_RELEASE "${SDL2_PATH}/bin/*.dll")
+    list(APPEND CAIWEI_TEST_DLLS_DEBUG ${SDL2_DLLS_DEBUG})
+    list(APPEND CAIWEI_TEST_DLLS_RELEASE ${SDL2_DLLS_RELEASE})
 else()
-# -
+    message(FATAL_ERROR "SDL2不支持的平台")
 endif()
 find_package(SDL2 REQUIRED)
 list(APPEND CAIWEI_TEST_LIBS $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
@@ -63,21 +59,32 @@ foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)
     target_link_libraries(${TEST_NAME} caiwei-test)
 endforeach()
 
-message(STATUS "CAIWEI_TEST_DLLS: ${CAIWEI_TEST_DLLS}")
 message(STATUS "CAIWEI_TEST_INCS: ${CAIWEI_TEST_INCS}")
 message(STATUS "CAIWEI_TEST_LIBS: ${CAIWEI_TEST_LIBS}")
 
-file(COPY ./ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin FILES_MATCHING PATTERN "*.jpg" PATTERN "*.mp3" PATTERN "*.mp4")
+file(
+    GLOB CAIWEI_TEST_RESOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.jpg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.mp3"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.mp4"
+)
+
+add_custom_command(
+    TARGET caiwei-test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<CONFIG>/bin/"
+)
 
 if(CMAKE_HOST_UNIX)
-# -
+    # -
 elseif(CMAKE_HOST_WIN32)
-    if(CAIWEI_TEST_DLLS)
+    message(STATUS "CAIWEI_TEST_DLLS_DEBUG: ${CAIWEI_TEST_DLLS_DEBUG}")
+    message(STATUS "CAIWEI_TEST_DLLS_RELEASE: ${CAIWEI_TEST_DLLS_RELEASE}")
+    if(CAIWEI_TEST_DLLS_DEBUG AND CAIWEI_TEST_DLLS_RELEASE)
         add_custom_command(
             TARGET caiwei-test POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_DLLS} ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<IF:$<CONFIG:Debug>,${CAIWEI_TEST_DLLS_DEBUG},${CAIWEI_TEST_DLLS_RELEASE}>" "${CMAKE_BINARY_DIR}/$<CONFIG>/bin/"
         )
     endif()
 else()
-# -
+    # -
 endif()

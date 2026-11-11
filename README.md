@@ -43,14 +43,12 @@
 
 ## 模型支持
 
-|模型|RKNN2|RKNN3|llama.cpp|ONNXRuntime|
-|:--|:--|:--|:--|:--|
-|YOLO-CLS       |√|×|×|√|
-|YOLO-DET       |√|×|×|√|
-|Qwen3          |×|√|√|×|
-|Qwen3-VL       |×|√|√|×|
-|Qwen3-ASR      |×|√|√|×|
-|Qwen3-Reranker |×|√|√|×|
-|Qwen3-Embedding|×|√|√|×|
-
-> √=已支持 ○=开发中 ×=不支持
+|模型|类型|RKNN2|RKNN3|llama.cpp|ONNXRuntime|
+|:--|:--|:--|:--|:--|:--|
+|YOLO-CLS       |cls      |√|×|×|√|
+|YOLO-DET       |det      |√|×|×|√|
+|Qwen3          |llm      |×|√|√|×|
+|Qwen3-VL       |vlm      |×|√|√|×|
+|Qwen3-ASR      |asr      |×|√|√|×|
+|Qwen3-Reranker |reranking|×|√|√|×|
+|Qwen3-Embedding|embedding|×|√|√|×|

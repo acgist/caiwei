@@ -12,11 +12,11 @@
 #include "stb/stb_image_write.h"
 #endif
 
-#if ENABLE_CAIWEI_RUNTIME_RKNN
-#include "rga/im2d.hpp"
+#if ENABLE_CAIWEI_BACKEND_RKNN
+#include "rga/im2d.h"
 #endif
 
-#if ENABLE_CAIWEI_RUNTIME_RKNN
+#if ENABLE_CAIWEI_BACKEND_RKNN
 bool caiwei::image::resize(
     const uint8_t* src,
           uint8_t* dst,

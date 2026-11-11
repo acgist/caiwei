@@ -10,20 +10,15 @@ project(caiwei-project VERSION 1.0.0 LANGUAGES C CXX)
 # https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html
 # https://learn.microsoft.com/zh-cn/cpp/build/reference/compiler-options-listed-by-category
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 编译测试
-option(ENABLE_CAIWEI_PERF                "Performance"     ON)  # 性能统计
-option(ENABLE_CAIWEI_BACKEND_RKNN        "Rockchip NPU"    OFF) #           ONNXRuntime
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"      OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2"  OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
-option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3"  OFF) # 瑞芯微: RK1820/RK1828
-option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"       ON)  # 跨平台
-option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # 跨平台
+option(ENABLE_CAIWEI_TEST                "Build Test"     OFF) # 编译测试
+option(ENABLE_CAIWEI_PERF                "Performance"    ON)  # 性能统计
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"     OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2" OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
+option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # 瑞芯微: RK1820/RK1828
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"      ON)  # llama.cpp
+option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"    ON)  # ONNXRuntime
 
 # TODO 升级 23
 set(CMAKE_C_STANDARD 17)
@@ -56,15 +51,18 @@ elseif(CMAKE_HOST_WIN32)
         )
         add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     else()
-        message(FATAL_ERROR "需要安装MSVC开发环境")
+        message(FATAL_ERROR "没有安装MSVC开发环境")
     endif()
 else()
     message(FATAL_ERROR "不支持的操作系统: ${CMAKE_HOST_SYSTEM_NAME}")
 endif()
 
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message(STATUS "CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
-message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+add_compile_definitions(
+    $<$<CONFIG:Debug>:CAIWEI_DEBUG=1>
+    $<$<CONFIG:Debug>:CAIWEI_LOG_LEVEL=D>
+    $<$<CONFIG:Release>:CAIWEI_DEBUG=0>
+    $<$<CONFIG:Release>:CAIWEI_LOG_LEVEL=I>
+)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
@@ -74,33 +72,34 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DCAIWEI_DEBUG=1)
-    add_definitions(-DCAIWEI_LOG_LEVEL=D)
-    message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
-    message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-    add_definitions(-DCAIWEI_DEBUG=0)
-    add_definitions(-DCAIWEI_LOG_LEVEL=I)
-    message(STATUS "C_FLAGS: ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
-    message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-endif()
+message(STATUS "CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "CMAKE_C_FLAGS:           ${CMAKE_C_FLAGS}")
+message(STATUS "CMAKE_C_FLAGS_DEBUG:     ${CMAKE_C_FLAGS_DEBUG}")
+message(STATUS "CMAKE_C_FLAGS_RELEASE:   ${CMAKE_C_FLAGS_RELEASE}")
+message(STATUS "CMAKE_CXX_FLAGS:         ${CMAKE_CXX_FLAGS}")
+message(STATUS "CMAKE_CXX_FLAGS_DEBUG:   ${CMAKE_CXX_FLAGS_DEBUG}")
+message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
-set(CAIWEI_AUDIO_DECODER "" CACHE STRING "优先使用的音频解码器名: aac/opus")
-set(CAIWEI_VIDEO_DECODER "" CACHE STRING "优先使用的视频解码器名: h264_rkmpp/h264_cuvid/h264_qsv/hevc_rkmpp/hevc_cuvid/hevc_qsv")
-set(CAIWEI_AUDIO_ENCODER "" CACHE STRING "优先使用的音频编码器名: aac/opus")
-set(CAIWEI_VIDEO_ENCODER "" CACHE STRING "优先使用的视频编码器名: h264_rkmpp/h264_cuvid/h264_qsv/hevc_rkmpp/hevc_cuvid/hevc_qsv")
+set(CAIWEI_AUDIO_DECODER "" CACHE STRING "优先使用的音频解码器名: aac/mp3/opus")
+set(CAIWEI_VIDEO_DECODER "" CACHE STRING "优先使用的视频解码器名: h264_qsv/h264_cuvid/h264_rkmpp/hevc_qsv/hevc_cuvid/hevc_rkmpp")
+set(CAIWEI_AUDIO_ENCODER "" CACHE STRING "优先使用的音频编码器名: aac/mp3/opus")
+set(CAIWEI_VIDEO_ENCODER "" CACHE STRING "优先使用的视频编码器名: h264_qsv/h264_cuvid/h264_rkmpp/hevc_qsv/hevc_cuvid/hevc_rkmpp")
 
 if(NOT CAIWEI_AUDIO_DECODER STREQUAL "")
+    message(STATUS "Enable audio decoder: ${CAIWEI_AUDIO_DECODER}")
     add_compile_definitions(CAIWEI_AUDIO_DECODER="${CAIWEI_AUDIO_DECODER}")
 endif()
 if(NOT CAIWEI_VIDEO_DECODER STREQUAL "")
+    message(STATUS "Enable video decoder: ${CAIWEI_VIDEO_DECODER}")
     add_compile_definitions(CAIWEI_VIDEO_DECODER="${CAIWEI_VIDEO_DECODER}")
 endif()
 if(NOT CAIWEI_AUDIO_ENCODER STREQUAL "")
+    message(STATUS "Enable audio encoder: ${CAIWEI_AUDIO_ENCODER}")
     add_compile_definitions(CAIWEI_AUDIO_ENCODER="${CAIWEI_AUDIO_ENCODER}")
 endif()
 if(NOT CAIWEI_VIDEO_ENCODER STREQUAL "")
+    message(STATUS "Enable video encoder: ${CAIWEI_VIDEO_ENCODER}")
     add_compile_definitions(CAIWEI_VIDEO_ENCODER="${CAIWEI_VIDEO_ENCODER}")
 endif()
 
@@ -112,11 +111,6 @@ endif()
 if(ENABLE_CAIWEI_PERF)
     message(STATUS "性能统计")
     add_definitions(-DENABLE_CAIWEI_PERF=1)
-endif()
-
-if(ENABLE_CAIWEI_BACKEND_RKNN)
-    message(STATUS "Enable Rockchip NPU")
-    add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN=1)
 endif()
 
 if(ENABLE_CAIWEI_BACKEND_CUDA)
@@ -141,13 +135,13 @@ if(ENABLE_CAIWEI_BACKEND_CUDA)
     # 35  Kepler       GTX Titan、Tesla K80/K40/K20
     # 30  Kepler       GTX 680/670/660/650
     if(CMAKE_HOST_UNIX)
-        set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90)
-        set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16")
+        set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16" CACHE STRING "CUDA量化参数")
+        set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90 CACHE STRING "CUDA架构列表")
     elseif(CMAKE_HOST_WIN32)
-        set(CMAKE_CUDA_ARCHITECTURES 89)
-        set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0")
+        set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0" CACHE STRING "CUDA量化参数")
+        set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING "CUDA架构列表")
     else()
-    # -
+        message(FATAL_ERROR "CUDA不支持的平台")
     endif()
     find_package(CUDAToolkit REQUIRED)
 endif()
@@ -155,37 +149,38 @@ endif()
 if(ENABLE_CAIWEI_RUNTIME_RKNN2)
     message(STATUS "Enable Rockchip RKNN2")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN2=1)
-    set(ENABLE_CAIWEI_RUNTIME_RKNN ON)
+    set(ENABLE_CAIWEI_BACKEND_RKNN ON)
     if(CMAKE_HOST_UNIX)
         list(APPEND CAIWEI_RUNTIME_LIBS rknnrt)
     elseif(CMAKE_HOST_WIN32)
-    # -
+        message(FATAL_ERROR "RKNN2不支持Windows平台")
     else()
-    # -
+        message(FATAL_ERROR "RKNN2不支持的平台")
     endif()
 endif()
 
 if(ENABLE_CAIWEI_RUNTIME_RKNN3)
     message(STATUS "Enable Rockchip RKNN3")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN3=1)
-    set(ENABLE_CAIWEI_RUNTIME_RKNN ON)
+    set(ENABLE_CAIWEI_BACKEND_RKNN ON)
     if(CMAKE_HOST_UNIX)
         list(APPEND CAIWEI_RUNTIME_LIBS rknn3_api)
     elseif(CMAKE_HOST_WIN32)
-    # -
+        message(FATAL_ERROR "RKNN3不支持Windows平台")
     else()
-    # -
+        message(FATAL_ERROR "RKNN3不支持的平台")
     endif()
 endif()
 
-if(ENABLE_CAIWEI_RUNTIME_RKNN)
-    add_definitions(-DENABLE_CAIWEI_RUNTIME_RKNN=1)
+if(ENABLE_CAIWEI_BACKEND_RKNN)
+    message(STATUS "Enable Rockchip NPU")
+    add_definitions(-DENABLE_CAIWEI_BACKEND_RKNN=1)
     if(CMAKE_HOST_UNIX)
         list(APPEND CAIWEI_RUNTIME_LIBS rga)
     elseif(CMAKE_HOST_WIN32)
-    # -
+        message(FATAL_ERROR "RKNN不支持Windows平台")
     else()
-    # -
+        message(FATAL_ERROR "RKNN不支持的平台")
     endif()
 endif()
 
@@ -197,7 +192,7 @@ if(ENABLE_CAIWEI_RUNTIME_LLAMACPP)
         set(GGML_CUDA ON)
     endif()
     set(LLAMA_BUILD_MTMD ON)
-    add_subdirectory(${LLAMACPP_PATH})
+    add_subdirectory("${LLAMACPP_PATH}")
     set_target_properties(ggml ggml-cpu ggml-base mtmd llama vendor-hash PROPERTIES FOLDER "llama.cpp")
     list(APPEND CAIWEI_RUNTIME_LIBS ggml ggml-cpu ggml-base mtmd llama vendor-hash)
     if(ENABLE_CAIWEI_BACKEND_CUDA)
@@ -210,63 +205,68 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
     message(STATUS "Enable ONNXRuntime")
     add_definitions(-DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME=1)
     set(ONNXRUNTIME_PATH "${CMAKE_SOURCE_DIR}/deps/onnxruntime" CACHE STRING "ONNXRuntime Path")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${ONNXRUNTIME_PATH})
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${ONNXRUNTIME_PATH}")
     if(CMAKE_HOST_UNIX)
         file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/libonnxruntime.so")
         list(APPEND CAIWEI_RUNTIME_INCS "${ONNXRUNTIME_PATH}/include")
     elseif(CMAKE_HOST_WIN32)
         file(GLOB ONNXRUNTIME_DLLS "${ONNXRUNTIME_PATH}/lib/*.dll")
         file(GLOB ONNXRUNTIME_LIBS "${ONNXRUNTIME_PATH}/lib/*.lib")
-        list(APPEND CAIWEI_RUNTIME_DLLS ${ONNXRUNTIME_DLLS})
+        list(APPEND CAIWEI_SERVER_DLLS ${ONNXRUNTIME_DLLS})
         list(APPEND CAIWEI_RUNTIME_INCS "${ONNXRUNTIME_PATH}/include")
     else()
-    # -
+        message(FATAL_ERROR "ONNXRuntime不支持的平台")
     endif()
     list(APPEND CAIWEI_RUNTIME_LIBS ${ONNXRUNTIME_LIBS})
 endif()
 
 if(CMAKE_HOST_UNIX)
-    # list(
-    #     APPEND CAIWEI_RUNTIME_LIBS
-    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavutil/libavutil.so
-    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavcodec/libavcodec.so
-    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavdevice/libavdevice.so
-    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libavformat/libavformat.so
-    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswscale/libswscale.so
-    #     ${CMAKE_SOURCE_DIR}/deps/ffmpeg-6.1.1/libswresample/libswresample.so
-    # )
-    list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
+    set(FFMPEG_PATH "" CACHE STRING "FFmpeg Path")
+    if(FFMPEG_PATH STREQUAL "")
+        list(APPEND CAIWEI_RUNTIME_LIBS avutil avcodec avdevice avformat swscale swresample)
+    else()
+        list(
+            APPEND CAIWEI_RUNTIME_INCS
+            # TODO 确定目录
+            "${FFMPEG_PATH}/include"
+        )
+        list(
+            APPEND CAIWEI_RUNTIME_LIBS
+            "${FFMPEG_PATH}/libavutil/libavutil.so"
+            "${FFMPEG_PATH}/libavcodec/libavcodec.so"
+            "${FFMPEG_PATH}/libavdevice/libavdevice.so"
+            "${FFMPEG_PATH}/libavformat/libavformat.so"
+            "${FFMPEG_PATH}/libswscale/libswscale.so"
+            "${FFMPEG_PATH}/libswresample/libswresample.so"
+        )
+    endif()
 elseif(CMAKE_HOST_WIN32)
     set(FFMPEG_PATH "${CMAKE_SOURCE_DIR}/deps/ffmpeg" CACHE STRING "FFmpeg Path")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${FFMPEG_PATH})
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/debug/bin/*.dll")
-    else()
-        file(GLOB FFMPEG_DLLS "${FFMPEG_PATH}/bin/*.dll")
-    endif()
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${FFMPEG_PATH}")
     find_package(FFMPEG REQUIRED)
-    list(APPEND CAIWEI_RUNTIME_DLLS ${FFMPEG_DLLS})
+    file(GLOB FFMPEG_DLLS_DEBUG "${FFMPEG_PATH}/debug/bin/*.dll")
+    file(GLOB FFMPEG_DLLS_RELEASE "${FFMPEG_PATH}/bin/*.dll")
+    list(APPEND CAIWEI_SERVER_DLLS_DEBUG ${FFMPEG_DLLS_DEBUG})
+    list(APPEND CAIWEI_SERVER_DLLS_RELEASE ${FFMPEG_DLLS_RELEASE})
     list(APPEND CAIWEI_RUNTIME_INCS ${FFMPEG_INCLUDE_DIRS})
     list(APPEND CAIWEI_RUNTIME_LIBS ${FFMPEG_LIBRARIES})
 else()
-# -
+    message(FATAL_ERROR "FFmpeg不支持的平台")
 endif()
 
 if(CMAKE_HOST_UNIX)
-# -
+    find_package(httplib REQUIRED)
 elseif(CMAKE_HOST_WIN32)
     set(CPP_HTTPLIB_PATH "${CMAKE_SOURCE_DIR}/deps/cpp-httplib" CACHE STRING "cpp-httplib Path")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CPP_HTTPLIB_PATH})
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
-    else()
-        file(GLOB CPP_HTTPLIB_DLLS "${CPP_HTTPLIB_PATH}/bin/*.dll")
-    endif()
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CPP_HTTPLIB_PATH}")
     find_package(httplib REQUIRED)
-    list(APPEND CAIWEI_RUNTIME_DLLS ${CPP_HTTPLIB_DLLS})
+    file(GLOB CPP_HTTPLIB_DLLS_DEBUG "${CPP_HTTPLIB_PATH}/debug/bin/*.dll")
+    file(GLOB CPP_HTTPLIB_DLLS_RELEASE "${CPP_HTTPLIB_PATH}/bin/*.dll")
+    list(APPEND CAIWEI_SERVER_DLLS_DEBUG ${CPP_HTTPLIB_DLLS_DEBUG})
+    list(APPEND CAIWEI_SERVER_DLLS_RELEASE ${CPP_HTTPLIB_DLLS_RELEASE})
     list(APPEND CAIWEI_RUNTIME_LIBS $<IF:$<TARGET_EXISTS:cpp-httplib>,cpp-httplib,httplib::httplib>)
 else()
-# -
+    message(FATAL_ERROR "cpp-httplib不支持的平台")
 endif()
 
 add_subdirectory(runtime)
