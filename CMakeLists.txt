@@ -15,12 +15,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(ENABLE_CAIWEI_TEST                "Build Test"     OFF) # 编译测试
 option(ENABLE_CAIWEI_PERF                "Performance"    ON)  # 性能统计
 option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"     OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2" OFF) # 瑞芯微: RK3566/RK3568/RK3576/RK3588
-option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # 瑞芯微: RK1820/RK1828
+option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2" OFF) # RKNN2
+option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # RKNN3
 option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"      ON)  # llama.cpp
 option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"    ON)  # ONNXRuntime
-
-get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
 # TODO 升级 23
 set(CMAKE_C_STANDARD 17)
@@ -31,20 +29,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_HOST_UNIX)
     add_definitions(-DCAIWEI_OS_UNIX=1)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CMAKE_COMMAND} -E time")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 elseif(CMAKE_HOST_WIN32)
     if(MSVC)
         add_definitions(-DCAIWEI_OS_WIN=1)
         add_compile_options(
-            $<$<COMPILE_LANGUAGE:C>:/W2>
-            $<$<COMPILE_LANGUAGE:CXX>:/W2>
             $<$<COMPILE_LANGUAGE:C>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>
@@ -59,12 +49,18 @@ else()
     message(FATAL_ERROR "不支持的操作系统: ${CMAKE_HOST_SYSTEM_NAME}")
 endif()
 
-add_compile_definitions(
-    $<$<CONFIG:Debug>:CAIWEI_DEBUG=1>
-    $<$<CONFIG:Debug>:CAIWEI_LOG_LEVEL=D>
-    $<$<CONFIG:Release>:CAIWEI_DEBUG=0>
-    $<$<CONFIG:Release>:CAIWEI_LOG_LEVEL=I>
-)
+get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT is_multi_config)
+    if(NOT CMAKE_BUILD_TYPE)
+        message(STATUS "设置默认编译模式: Release")
+        set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    endif()
+    message(STATUS "编译模式: ${CMAKE_BUILD_TYPE}")
+endif()
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/lib")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
@@ -118,29 +114,15 @@ endif()
 if(ENABLE_CAIWEI_BACKEND_CUDA)
     message(STATUS "Enable Nvidia GPU")
     add_definitions(-DENABLE_CAIWEI_BACKEND_CUDA=1)
-    # CUDA架构列表
-    # 120 Blackwell    RTX PRO 6000/4500、RTX 5090/5080/5070 Ti/5070/5060 Ti/5060/5050
-    # 110 Blackwell    Jetson T5000、Jetson T4000
-    # 103 Blackwell    GB300、B300
-    # 100 Blackwell    GB200、B200
-    # 90  Hopper       GH200、H200、H100
-    # 89  Ada Lovelace L4/L40/L40S、RTX 6000/5000/4500/4000/2000 Ada、RTX 4090/4080/4070 Ti/4070/4060 Ti/4060/4050
-    # 87  Ampere       Jetson AGX Orin、Jetson Orin NX、Jetson Orin Nano
-    # 86  Ampere       RTX 3090/3080 Ti/3080/3070 Ti/3070/3060 Ti/3060/3050
-    # 80  Ampere       A100、A30、A10
-    # 75  Turing       RTX 2080 Ti/2080/2070/2060、T4、Quadro RTX 8000/6000/5000/4000
-    # 70  Volta        Tesla V100、Titan V
-    # 61  Pascal       GTX 1080 Ti/1080/1070 Ti/1070/1060/1050 Ti/1050、P40、P4
-    # 60  Pascal       Tesla P100
-    # 52  Maxwell      GTX 980 Ti/980/970/960、GTX Titan X
-    # 50  Maxwell      GTX 750 Ti/750
-    # 35  Kepler       GTX Titan、Tesla K80/K40/K20
-    # 30  Kepler       GTX 680/670/660/650
     if(CMAKE_HOST_UNIX)
+        # 指定CUDA量化参数减少编译时间
         set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16" CACHE STRING "CUDA量化参数")
+        # 指定CUDA架构列表减少编译时间
         set(CMAKE_CUDA_ARCHITECTURES 70 80 89 90 CACHE STRING "CUDA架构列表")
     elseif(CMAKE_HOST_WIN32)
+        # 指定CUDA量化参数减少编译时间
         set(GGML_CUDA_FA_QUANTS "q4_0-q4_0,q8_0-q8_0" CACHE STRING "CUDA量化参数")
+        # 指定CUDA架构列表减少编译时间
         set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING "CUDA架构列表")
     else()
         message(FATAL_ERROR "CUDA不支持的平台")
@@ -229,16 +211,16 @@ if(CMAKE_HOST_UNIX)
     else()
         list(
             APPEND CAIWEI_RUNTIME_INCS
-            "${FFMPEG_PATH}/"
+            "${FFMPEG_PATH}/include/"
         )
         list(
             APPEND CAIWEI_RUNTIME_LIBS
-            "${FFMPEG_PATH}/libavutil/libavutil.so"
-            "${FFMPEG_PATH}/libavcodec/libavcodec.so"
-            "${FFMPEG_PATH}/libavdevice/libavdevice.so"
-            "${FFMPEG_PATH}/libavformat/libavformat.so"
-            "${FFMPEG_PATH}/libswscale/libswscale.so"
-            "${FFMPEG_PATH}/libswresample/libswresample.so"
+            "${FFMPEG_PATH}/lib/libavutil.so"
+            "${FFMPEG_PATH}/lib/libavcodec.so"
+            "${FFMPEG_PATH}/lib/libavdevice.so"
+            "${FFMPEG_PATH}/lib/libavformat.so"
+            "${FFMPEG_PATH}/lib/libswscale.so"
+            "${FFMPEG_PATH}/lib/libswresample.so"
         )
     endif()
 elseif(CMAKE_HOST_WIN32)
@@ -256,10 +238,7 @@ else()
 endif()
 
 if(CMAKE_HOST_UNIX)
-    find_file(
-        HTTPLIB_H
-        NAMES httplib.h
-    )
+    find_file(HTTPLIB_H NAMES httplib.h)
     if(NOT HTTPLIB_H)
         message(FATAL_ERROR "没有安装cpp-httplib")
     endif()
@@ -275,6 +254,11 @@ elseif(CMAKE_HOST_WIN32)
 else()
     message(FATAL_ERROR "cpp-httplib不支持的平台")
 endif()
+
+add_compile_definitions(
+    CAIWEI_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
+    CAIWEI_LOG_LEVEL=$<IF:$<CONFIG:Debug>,D,I>
+)
 
 add_subdirectory(runtime)
 add_subdirectory(server)

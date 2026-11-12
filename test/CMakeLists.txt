@@ -1,3 +1,7 @@
+project(caiwei-test VERSION 1.0.0)
+
+enable_testing()
+
 if(CMAKE_HOST_UNIX)
     find_package(SDL2 QUIET)
 elseif(CMAKE_HOST_WIN32)
@@ -19,18 +23,19 @@ set(
     player.cpp
 )
 
-add_library(
-    caiwei-test
-    STATIC
-    ${CAIWEI_TEST_SRCS}
-)
-set_target_properties(caiwei-test PROPERTIES FOLDER "test")
-target_link_libraries(
-    caiwei-test
-    PUBLIC
-    caiwei-runtime
-    ${CAIWEI_TEST_LIBS}
-)
+list(APPEND CAIWEI_TEST_LIBS caiwei-runtime)
+
+add_library(${PROJECT_NAME} STATIC ${CAIWEI_TEST_SRCS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIWEI_TEST_LIBS})
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "test")
+
+if(CMAKE_HOST_UNIX)
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra)
+elseif(CMAKE_HOST_WIN32)
+    target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:C>:/W2> $<$<COMPILE_LANGUAGE:CXX>:/W2>)
+else()
+    # -
+endif()
 
 set(
     CAIWEI_TEST_LIST
@@ -54,9 +59,16 @@ set(
 
 foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)
     add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    target_link_libraries(${TEST_NAME} ${PROJECT_NAME})
     set_target_properties(${TEST_NAME} PROPERTIES FOLDER "test")
-    target_link_libraries(${TEST_NAME} caiwei-test)
+    if(CMAKE_HOST_UNIX)
+        target_compile_options(${TEST_NAME} PUBLIC -Wall -Wextra)
+    elseif(CMAKE_HOST_WIN32)
+        target_compile_options(${TEST_NAME} PUBLIC $<$<COMPILE_LANGUAGE:C>:/W2> $<$<COMPILE_LANGUAGE:CXX>:/W2>)
+    else()
+        # -
+    endif()
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 endforeach()
 
 message(STATUS "CAIWEI_TEST_INCS: ${CAIWEI_TEST_INCS}")
@@ -69,17 +81,10 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp4"
 )
 
-if (is_multi_config)
-    add_custom_command(
-        TARGET caiwei-test POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<CONFIG>/bin/"
-    )
-else()
-    add_custom_command(
-        TARGET caiwei-test POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin/"
-    )
-endif()
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+)
 
 if(CMAKE_HOST_UNIX)
     # -
@@ -88,8 +93,10 @@ elseif(CMAKE_HOST_WIN32)
     message(STATUS "CAIWEI_TEST_DLLS_RELEASE: ${CAIWEI_TEST_DLLS_RELEASE}")
     if(CAIWEI_TEST_DLLS_DEBUG AND CAIWEI_TEST_DLLS_RELEASE)
         add_custom_command(
-            TARGET caiwei-test POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<IF:$<CONFIG:Debug>,${CAIWEI_TEST_DLLS_DEBUG},${CAIWEI_TEST_DLLS_RELEASE}>" "${CMAKE_BINARY_DIR}/$<CONFIG>/bin/"
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<IF:$<CONFIG:Debug>,${CAIWEI_TEST_DLLS_DEBUG},${CAIWEI_TEST_DLLS_RELEASE}>" "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+            COMMAND_EXPAND_LISTS
+            VERBATIM
         )
     endif()
 else()

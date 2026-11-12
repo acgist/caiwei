@@ -1,26 +1,36 @@
+*.log
+
 *.a
 *.so
 *.out
 
+*.lib
 *.dll
 *.exe
-*.lib
-*.obj
-
-*.log
 
 *.pt
-*.onnx
+*.pth
+*.bin
+*.ckpt
+*.gguf
 *.rknn
+*.onnx
+*.onnx.data
+*.weight
+*.safetensors
+
+/web/package-lock.json
+
+__pycache__
 
 /build/
+
+/.vscode/
 
 /web/dist/
 /web/node_modules/
 
-/web/package-lock.json
-
-/.vscode/
+/code/generation/
 
 /deps/sdl2/
 /deps/ffmpeg/

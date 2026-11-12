@@ -83,25 +83,28 @@ endif()
 message(STATUS "CAIWEI_RUNTIME_INCS: ${CAIWEI_RUNTIME_INCS}")
 message(STATUS "CAIWEI_RUNTIME_LIBS: ${CAIWEI_RUNTIME_LIBS}")
 
-add_library(
-    ${PROJECT_NAME}
-    STATIC
-    ${CAIWEI_RUNTIME_SRCS}
-)
-target_link_libraries(
-    ${PROJECT_NAME}
-    PUBLIC
-    ${CAIWEI_RUNTIME_LIBS}
-)
-target_include_directories(
-    ${PROJECT_NAME}
-    PUBLIC
-    ${CAIWEI_RUNTIME_INCS}
-)
+add_library(${PROJECT_NAME} STATIC ${CAIWEI_RUNTIME_SRCS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIWEI_RUNTIME_LIBS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CAIWEI_RUNTIME_INCS})
+
+if(CMAKE_HOST_UNIX)
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra)
+elseif(CMAKE_HOST_WIN32)
+    target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:C>:/W2> $<$<COMPILE_LANGUAGE:CXX>:/W2>)
+else()
+    # -
+endif()
 
 if(CMAKE_HOST_UNIX)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-        target_compile_options(${PROJECT_NAME} PRIVATE -mavx2 -mf16c)
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-mavx2" CXX_HAS_MAVX2)
+        check_cxx_compiler_flag("-mf16c" CXX_HAS_MF16C)
+        if(CXX_HAS_MAVX2 AND CXX_HAS_MF16C)
+            target_compile_options(${PROJECT_NAME} PRIVATE -mavx2 -mf16c)
+        else()
+            message(FATAL_ERROR "avx2/f16c flag support not found")
+        endif()
     endif()
     install(
         TARGETS ${PROJECT_NAME}
