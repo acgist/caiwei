@@ -21,31 +21,29 @@
 #include <Windows.h>
 #endif
 
+// clang-format off
 #ifndef CAIWEI_FOR_EACH
-#define CAIWEI_FOR_EACH(caiwei_length)                          \
-    const size_t caiwei_count = (caiwei_length);                \
-    const auto caiwei_for_a = std::chrono::steady_clock::now(); \
+#define CAIWEI_FOR_EACH(caiwei_length)                            \
+    const size_t caiwei_count = (caiwei_length);                  \
+    const auto   caiwei_for_a = std::chrono::steady_clock::now(); \
     for (size_t caiwei_index = 0; caiwei_index < caiwei_count; ++caiwei_index) {
 #endif
+// clang-format on
 
+// clang-format off
 #ifndef CAIWEI_FOR_EACH_END
-#define CAIWEI_FOR_EACH_END                                                                                                   \
-    }                                                                                                                         \
-    const auto    loc = std::source_location::current();                                                                      \
-    const auto    caiwei_for_z  = std::chrono::steady_clock::now();                                                           \
-    const int64_t caiwei_for_ms = std::chrono::duration_cast<std::chrono::milliseconds>(caiwei_for_z - caiwei_for_a).count(); \
-    const size_t  caiwei_per_ms = caiwei_count == 0 ? 0 : static_cast<size_t>(caiwei_for_ms) / caiwei_count;                  \
-    CW_LOG_I(                                                                                                                 \
-        "耗时: %6" PRId64 " / %4zu = %4zu ms = %32s",                                                                         \
-        caiwei_for_ms,                                                                                                        \
-        caiwei_count,                                                                                                         \
-        caiwei_per_ms,                                                                                                        \
-        loc.function_name()                                                                                                   \
-    );
+#define CAIWEI_FOR_EACH_END                                                                                                  \
+    }                                                                                                                        \
+    const auto   loc           = std::source_location::current();                                                            \
+    const auto   caiwei_for_z  = std::chrono::steady_clock::now();                                                           \
+    const auto   caiwei_for_ms = std::chrono::duration_cast<std::chrono::milliseconds>(caiwei_for_z - caiwei_for_a).count(); \
+    const size_t caiwei_per_ms = caiwei_count == 0 ? 0 : static_cast<size_t>(caiwei_for_ms) / caiwei_count;                  \
+    CW_LOG_I("耗时: %6" PRId64 " / %4zu = %4zu ms = %32s", caiwei_for_ms, caiwei_count, caiwei_per_ms, loc.function_name());
 #endif
+// clang-format on
 
 namespace caiwei {
-namespace test   {
+namespace test {
 
 inline void caiwei_wait_enter() {
     CW_LOG_I("回车继续");
@@ -53,6 +51,7 @@ inline void caiwei_wait_enter() {
 }
 
 inline void draw_rect(
+    // clang-format off
     uint8_t* dst,
     const int src_w,
     const int src_h,
@@ -62,14 +61,17 @@ inline void draw_rect(
     const int h,
     const int channels  = 3,
     const uint8_t color = 255
+    // clang-format on
 ) {
     if (dst == nullptr || src_w <= 0 || src_h <= 0 || channels <= 0) {
         return;
     }
+    // clang-format off
     const int x1 = std::clamp(x,     0, src_w - 1);
     const int y1 = std::clamp(y,     0, src_h - 1);
     const int x2 = std::clamp(x + w, 0, src_w    );
     const int y2 = std::clamp(y + h, 0, src_h    );
+    // clang-format on
     if (x2 <= x1 || y2 <= y1) {
         return;
     }
@@ -92,9 +94,9 @@ inline void draw_rect(
 }
 
 inline void init_test() {
-    #if CAIWEI_OS_WIN
+#if CAIWEI_OS_WIN
     SetConsoleOutputCP(CP_UTF8);
-    #endif
+#endif
     CW_LOG_I("测试开始");
     caiwei::init();
 }
@@ -104,7 +106,7 @@ inline void stop_test() {
     CW_LOG_I("测试结束");
 }
 
-} // test
-} // caiwei
+}  // namespace test
+}  // namespace caiwei
 
-#endif // CAIWEI_TEST_TEST_HPP
+#endif  // CAIWEI_TEST_TEST_HPP

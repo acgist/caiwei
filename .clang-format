@@ -1,9 +1,17 @@
+Language: Cpp
+Standard: Latest
 BasedOnStyle: Google
 UseTab: Never
 TabWidth: 4
+LineEnding: CRLF
 IndentWidth: 4
 ColumnLimit: 256
+SortIncludes: Never
+IncludeBlocks: Preserve
 AccessModifierOffset: -4
+SpaceAfterCStyleCast: true
 AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
+EmptyLineBeforeAccessModifier: Never

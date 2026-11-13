@@ -39,7 +39,7 @@ export default {
     return {
       host  : `http://${location.hostname}:8888`,
       type  : "VideoPlay",
-      status: "green",
+      status: "#00cc66",
       healthTimerId: 0,
     }
   },
@@ -50,22 +50,26 @@ export default {
     this.clearHealthTimer();
   },
   methods: {
+    async healthCheck() {
+      try {
+          const resp = await fetch(`${this.host}/v1/health`);
+          const json = await resp.json();
+          if (json.header.code === "0000") {
+            this.status = "#00cc66";
+          } else {
+            this.status = "#ff0000";
+          }
+        } catch (error) {
+          this.status = "#ff0000";
+        }
+    },
     healthTimer() {
       if (this.healthTimerId != 0) {
         return;
       }
+      this.healthCheck();
       this.healthTimerId = setInterval(async () => {
-        try {
-          const resp = await fetch(`${this.host}/v1/health`);
-          const json = await resp.json();
-          if (json.header.code === "0000") {
-            this.status = "green";
-          } else {
-            this.status = "red";
-          }
-        } catch (error) {
-          this.status = "red";
-        }
+        await this.healthCheck();
       }, 5000);
     },
     clearHealthTimer() {

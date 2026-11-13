@@ -7,10 +7,18 @@
 #include "caiwei/tokenizer.hpp"
 
 inline static int buffer_size(uint8_t v) {
-    if (v < 0x80)           return 1;
-    if ((v & 0xE0) == 0xC0) return 2;
-    if ((v & 0xF0) == 0xE0) return 3;
-    if ((v & 0xF8) == 0xF0) return 4;
+    if (v < 0x80) {
+        return 1;
+    }
+    if ((v & 0xE0) == 0xC0) {
+        return 2;
+    }
+    if ((v & 0xF0) == 0xE0) {
+        return 3;
+    }
+    if ((v & 0xF8) == 0xF0) {
+        return 4;
+    }
     return 0;
 }
 

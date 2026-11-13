@@ -4,18 +4,20 @@ Checks: >
   modernize-*,
   performance-*,
   readability-*,
-  -llvm-*,
-  -abseil-*,
-  -google-*,
-  -fuchsia-*,
-  -misc-non-private-member-variables-in-classes
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
   -bugprone-easily-swappable-parameters,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
   -readability-function-size,
   -readability-identifier-length,
+  -readability-identifier-naming,
   -readability-redundant-access-specifiers,
-  -readability-function-cognitive-complexity,
+  -readability-function-cognitive-complexity
 CheckOptions:
-  - key: modernize-use-nullptr.NullMacros
-    value: "NULL"
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: 0
+FormatStyle: file
+WarningsAsErrors: readability-braces-around-statements
+HeaderFilterRegex: '(^|.*[\\/])(runtime|server|test)[\\/].*'
+ExcludeHeaderFilterRegex: '(^|.*[\\/])runtime[\\/]third_party[\\/].*'
