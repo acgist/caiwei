@@ -10,23 +10,22 @@
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 [[maybe_unused]]
 void test_rknn2(int size, const std::string& path, const std::string& type) {
-    size = size <= 0 ? 640 : size;
-    caiwei::context::RKNN2Context context(path.empty() ? "yolo26n-det.rknn" : path, 3, size, size);
-    if (!context.load_model()) {
-        return;
-    }
+    const int channels = caiwei::media::IMAGE_CHANNELS;
+    const int data_size = channels * size * size;
+    caiwei::context::RKNN2Context context(path, channels, size, size);
+    CAIWEI_ASSERT(context.load_model());
     if (type == "i8") {
-        std::vector<int8_t> data(3 * size * size);
+        std::vector<int8_t> data(data_size);
         CAIWEI_FOR_EACH(1000)
         context.run<int8_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else if (type == "u8") {
-        std::vector<uint8_t> data(3 * size * size);
+        std::vector<uint8_t> data(data_size);
         CAIWEI_FOR_EACH(1000)
         context.run<uint8_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
     } else {
-        std::vector<uint16_t> data(3 * size * size);
+        std::vector<uint16_t> data(data_size);
         CAIWEI_FOR_EACH(1000)
         context.run<uint16_t>(data.data(), data.size());
         CAIWEI_FOR_EACH_END
@@ -37,13 +36,12 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 [[maybe_unused]]
 void test_onnxruntime(int size, const std::string& path) {
-    size = size <= 0 ? 640 : size;
+    const int channels = caiwei::media::IMAGE_CHANNELS;
+    const int data_size = channels * size * size;
     auto env = std::make_unique<Ort::Env>(caiwei::context::onnxruntime_log_level, "caiwei");
-    caiwei::context::ONNXRuntimeContext context(path.empty() ? "yolo26n-det.onnx" : path, 3, size, size, env.get());
-    if (!context.load_model()) {
-        return;
-    }
-    std::vector<float> data(3 * size * size);
+    caiwei::context::ONNXRuntimeContext context(path, channels, size, size, env.get());
+    CAIWEI_ASSERT(context.load_model());
+    std::vector<float> data(data_size);
     CAIWEI_FOR_EACH(1000)
     context.run(data.data(), data.size());
     CAIWEI_FOR_EACH_END
@@ -57,19 +55,28 @@ int main(int argc, char* argv[]) {
     std::string type;
     if (argc > 1) {
         size = std::stoi(argv[1]);
+    } else {
+        size = 640;
     }
     if (argc > 2) {
         path = argv[2];
+    } else {
+#if ENABLE_CAIWEI_RUNTIME_RKNN2
+        path = "yolo26n-det.rknn";
+#endif
+#if ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
+        path = "yolo26n-det.onnx";
+#endif
     }
     if (argc > 3) {
         type = argv[3];
     }
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     test_rknn2(size, path, type);
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
     test_onnxruntime(size, path);
-    #endif
+#endif
     caiwei::test::stop_test();
     return 0;
 }

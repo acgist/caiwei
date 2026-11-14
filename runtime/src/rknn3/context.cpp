@@ -405,6 +405,14 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
         CW_LOG_W("输入为空");
         return {};
     }
+    int sum_length = 0;
+    for (const auto& prompt : prompt_list) {
+        sum_length += prompt->size();
+    }
+    if (sum_length <= 0) {
+        CW_LOG_W("提示词元数量错误: %d", sum_length);
+        return {};
+    }
     ContextSession context_session;
     context_session.context        = this->context;
     context_session.media_context  = this->media_context;
@@ -416,16 +424,23 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
     if (!context_session.init_output_tensors()) {
         return {};
     }
-    context_session.pool_result.resize(context_session.output_tensors.size());
     rknn3_session_ptr session{ this->get_session(&context_session, nullptr) };
     if (!session) {
         return {};
     }
-    for (size_t i = 0; i < context_session.output_tensors.size(); ++i) {
+    const size_t output_tensors_size = context_session.output_tensors.size();
+    context_session.pool_result.resize(output_tensors_size);
+    for (size_t i = 0; i < output_tensors_size; ++i) {
         context_session.pool_result[i].resize(context_session.output_tensors[i].attr->n_elems);
     }
     std::vector<std::vector<float>> result;
     for (const auto& prompt : prompt_list) {
+        if (prompt->empty()) {
+            for (size_t i = 0; i < output_tensors_size; ++i) {
+                result.push_back(std::vector<float>(context_session.output_tensors[i].attr->n_elems));
+            }
+            continue;
+        }
         context_session.n_prefill_tokens = 0;
         std::vector<rknn3_llm_input> inputs(1);
         rknn3_llm_tensor tensor {
@@ -450,7 +465,7 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(uint32_t&
             CW_LOG_W("会话同步运行失败: %d", ret);
             return {};
         }
-        for (size_t i = 0; i < context_session.output_tensors.size(); ++i) {
+        for (size_t i = 0; i < output_tensors_size; ++i) {
             auto& pool_result = context_session.pool_result[i];
             caiwei::context::normalize_l2(pool_result.data(), pool_result.data(), pool_result.size());
             result.push_back(pool_result);

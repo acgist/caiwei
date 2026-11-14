@@ -24,23 +24,54 @@ void test_completions_async() {
         CW_LOG_I("completions: %s", data);
         return true;
     });
-    session.get();
+    CAIWEI_ASSERT(session.get());
 }
 
 [[maybe_unused]]
 void test_embeddings() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    caiwei::session::EmbeddingsSession session(request);
-    CW_LOG_I("embeddings: %s", session.get().c_str());
+    {
+        caiwei::session::EmbeddingsSession session(request);
+        CW_LOG_I("embeddings: %s", session.get().c_str());
+    }
+    {
+        caiwei::session::EmbeddingsSession session(request);
+        request.input = "你好";
+        CW_LOG_I("embeddings: %s", session.get().c_str());
+    }
+    {
+        caiwei::session::EmbeddingsSession session(request);
+        request.input = std::vector<std::string>{"你好", "广州"};
+        CW_LOG_I("embeddings: %s", session.get().c_str());
+    }
+    {
+        caiwei::session::EmbeddingsSession session(request);
+        request.input = std::vector<std::string>{"你好", "", "广州"};
+        CW_LOG_I("embeddings: %s", session.get().c_str());
+    }
 }
 
 [[maybe_unused]]
 void test_rerankings() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
-    caiwei::session::RerankingsSession session(request);
-    CW_LOG_I("rerankings: %s", session.get().c_str());
+    {
+        caiwei::session::RerankingsSession session(request);
+        CW_LOG_I("rerankings: %s", session.get().c_str());
+    }
+    {
+        request.query = "广东省会是哪个城市？";
+        request.documents = {"广州", "深圳"};
+        caiwei::session::RerankingsSession session(request);
+        CW_LOG_I("rerankings: %s", session.get().c_str());
+    }
+    {
+        request.query = "广东省会是哪个城市？";
+        request.documents = {"广州", "", "深圳"};
+        caiwei::session::RerankingsSession session(request);
+        CW_LOG_I("rerankings: %s", session.get().c_str());
+    }
 }
 
 [[maybe_unused]]
@@ -49,11 +80,11 @@ void test_video_play() {
         CW_LOG_I("video play: %d kb", length / 1024);
         return true;
     });
-    session.get();
+    CAIWEI_ASSERT(session.get());
 }
 
 int main() {
-    #if ENABLE_CAIWEI_RUNTIME_RKNN3
+#if ENABLE_CAIWEI_RUNTIME_RKNN3
     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-f16.rknn
 DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn
@@ -63,18 +94,18 @@ VLM,QWEN,qwen3-vlm,/data/model/Qwen3-VL-2B-Instruct/llm/Qwen3-VL-2B-Instruct.rkn
 EMBEDDING,QWEN,qwen3-embedding,/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.rknn|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.weight|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.embed.bin|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.tokenizer.gguf
 RERANKING,QWEN,qwen3-reranking,/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.rknn|/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.weight|/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.embed.bin|/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.tokenizer.gguf
     )");
-    #elif CAIWEI_OS_UNIX
+#elif CAIWEI_OS_UNIX
     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
 ASR,QWEN,qwen3-asr,/data/caiwei/deps/llama.cpp/Qwen3-ASR-0.6B/Qwen3-ASR-0.6B-Q4_K_M.gguf|/data/caiwei/deps/llama.cpp/Qwen3-ASR-0.6B/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf
 LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf
-VLM,QWEN,qwen3-vlm,/data/caiwei/deps/llama.cpp/Qwen3-VL-2B-InstructQwen3-VL-2B-Instruct-Q4_K_M.gguf|/data/caiwei/deps/llama.cpp/Qwen3-VL-2B-Instruct/mmproj-Qwen3-VL-2b-Instruct-Q4_K_M.gguf
+VLM,QWEN,qwen3-vlm,/data/caiwei/deps/llama.cpp/Qwen3-VL-2B-Instruct/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|/data/caiwei/deps/llama.cpp/Qwen3-VL-2B-Instruct/mmproj-Qwen3-VL-2b-Instruct-Q4_K_M.gguf
 EMBEDDING,QWEN,qwen3-embedding,/data/caiwei/deps/llama.cpp/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B-Q4_K_M.gguf
 RERANKING,QWEN,qwen3-reranking,/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )");
-    #elif CAIWEI_OS_WIN
-    #if CAIWEI_HOME
+#elif CAIWEI_OS_WIN
+#if CAIWEI_HOME
     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
@@ -84,7 +115,7 @@ VLM,QWEN,qwen3-vlm,E:/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|E:/model/
 EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf
 RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )");
-    #else
+#else
     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
@@ -94,9 +125,9 @@ VLM,QWEN,qwen3-vlm,D:/tmp/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|D:/tm
 EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf
 RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )");
-    #endif
-    #else
-    #endif
+#endif
+#else
+#endif
     caiwei::test::init_test();
     test_completions_sync();
     test_completions_async();

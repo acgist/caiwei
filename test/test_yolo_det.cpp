@@ -13,7 +13,6 @@ void det_image(const char* image_path) {
     for (const auto& box : result) {
         CW_LOG_I("box: %d = %.2f", box.class_id, box.score);
         caiwei::test::draw_rect(
-            // clang-format off
             frame.data.data(),
             frame.width,
             frame.height,
@@ -22,7 +21,6 @@ void det_image(const char* image_path) {
             static_cast<int>((box.x2 - box.x1) * frame.width),
             static_cast<int>((box.y2 - box.y1) * frame.height),
             frame.channels
-            // clang-format on
         );
     }
     CAIWEI_ASSERT(stbi_write_jpg("./acgist_det.jpg", frame.width, frame.height, frame.channels, frame.data.data(), 80) != 0);
@@ -91,7 +89,6 @@ void det_video() {
             }
             for (const auto& box : ret) {
                 caiwei::test::draw_rect(
-                    // clang-format off
                     frame.data.data(),
                     frame.width,
                     frame.height,
@@ -100,7 +97,6 @@ void det_video() {
                     static_cast<int>((box.x2 - box.x1) * frame.width),
                     static_cast<int>((box.y2 - box.y1) * frame.height),
                     frame.channels
-                    // clang-format on
                 );
             }
             return caiwei::player::play_video(frame.data.data(), frame.width * frame.channels);

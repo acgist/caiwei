@@ -358,18 +358,18 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
         CW_LOG_W("输入为空");
         return {};
     }
-    const int seq_max = llama_max_parallel_sequences();
-    const int n_prompts = inputs.size();
-    if (n_prompts > seq_max) {
-        CW_LOG_W("不支持的批次: %d > %d", n_prompts, seq_max);
-        return {};
-    }
     int sum_n_ctx = 0;
     for (const auto& prompt : inputs) {
         sum_n_ctx += prompt.size();
     }
     if (sum_n_ctx <= 0) {
         CW_LOG_W("提示词元数量错误: %d", sum_n_ctx);
+        return {};
+    }
+    const int seq_max = llama_max_parallel_sequences();
+    const int n_prompts = inputs.size();
+    if (n_prompts > seq_max) {
+        CW_LOG_W("不支持的批次: %d > %d", n_prompts, seq_max);
         return {};
     }
     const int n_ctx = std::clamp(sum_n_ctx, std::min(seq_max, this->max_token_length), std::max(seq_max, this->max_token_length));
@@ -416,8 +416,8 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
         auto& input = inputs[k];
         const int n_tokens = input.size();
         if (n_tokens == 0) {
-            CW_LOG_W("单个嵌入词元为空");
-            return {};
+            seq_pos += 1;
+            continue;
         }
         if (n_tokens > n_batch) {
             CW_LOG_W("单个嵌入词元超长: %d > %d", n_tokens, n_batch);

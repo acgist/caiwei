@@ -62,7 +62,6 @@ inline void caiwei_wait_enter() {
 }
 
 inline void draw_rect(
-    // clang-format off
     uint8_t* dst,
     const int src_w,
     const int src_h,
@@ -70,9 +69,8 @@ inline void draw_rect(
     const int y,
     const int w,
     const int h,
-    const int channels  = 3,
+    const int channels = 3,
     const uint8_t color = 255
-    // clang-format on
 ) {
     if (dst == nullptr || src_w <= 0 || src_h <= 0 || channels <= 0) {
         return;
