@@ -5,7 +5,7 @@
 
 [[maybe_unused]]
 void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
-    ALWAYS_ASSERT(ptr != nullptr);
+    CAIWEI_ASSERT(ptr != nullptr);
     for (const auto& value : ptr->run(request)) {
         if (!value.finish_reason.empty()) {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());

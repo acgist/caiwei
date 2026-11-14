@@ -6,9 +6,9 @@
 [[maybe_unused]]
 void det_image(const char* image_path) {
     caiwei::media::ImageFrame frame;
-    ALWAYS_ASSERT(frame.load_from_file(image_path));
+    CAIWEI_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    ALWAYS_ASSERT(ptr);
+    CAIWEI_ASSERT(ptr);
     auto result = ptr->run(frame);
     for (const auto& box : result) {
         CW_LOG_I("box: %d = %.2f", box.class_id, box.score);
@@ -25,15 +25,15 @@ void det_image(const char* image_path) {
             // clang-format on
         );
     }
-    ALWAYS_ASSERT(stbi_write_jpg("./acgist_det.jpg", frame.width, frame.height, frame.channels, frame.data.data(), 80) != 0);
+    CAIWEI_ASSERT(stbi_write_jpg("./acgist_det.jpg", frame.width, frame.height, frame.channels, frame.data.data(), 80) != 0);
 }
 
 [[maybe_unused]]
 void det_image_for(const char* image_path) {
     caiwei::media::ImageFrame frame;
-    ALWAYS_ASSERT(frame.load_from_file(image_path));
+    CAIWEI_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    ALWAYS_ASSERT(ptr);
+    CAIWEI_ASSERT(ptr);
     caiwei::test::caiwei_wait_enter();
     CW_LOG_I("图片大小: %dx%d", frame.width, frame.height);
     {
@@ -54,12 +54,12 @@ void det_image_for(const char* image_path) {
 [[maybe_unused]]
 void det_image_thread(const char* image_path) {
     caiwei::media::ImageFrame frame;
-    ALWAYS_ASSERT(frame.load_from_file(image_path));
+    CAIWEI_ASSERT(frame.load_from_file(image_path));
     std::vector<std::jthread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::jthread([&]() {
             auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-            ALWAYS_ASSERT(ptr);
+            CAIWEI_ASSERT(ptr);
             CAIWEI_FOR_EACH(100)
             ptr->run(frame);
             CAIWEI_FOR_EACH_END
@@ -74,9 +74,9 @@ void det_image_thread(const char* image_path) {
 [[maybe_unused]]
 void det_video() {
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    ALWAYS_ASSERT(ptr);
+    CAIWEI_ASSERT(ptr);
     size_t frame_count = 0;
-    ALWAYS_ASSERT(caiwei::player::open_player());
+    CAIWEI_ASSERT(caiwei::player::open_player());
     caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
     bool success = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE, caiwei::media::VIDEO_INFO_DECODE,
@@ -104,9 +104,7 @@ void det_video() {
             }
             return caiwei::player::play_video(frame.data.data(), frame.width * frame.channels);
         });
-    if (!success) {
-        CW_LOG_W("视频加载失败");
-    }
+    CAIWEI_ASSERT(success);
     caiwei::player::stop_player();
 }
 

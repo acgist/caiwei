@@ -58,7 +58,7 @@ void test_reranking_thread() {
         threads.push_back(std::jthread([&]() {
             CAIWEI_FOR_EACH(100)
             auto ret = ptr->run(request);
-            ALWAYS_ASSERT(ret.result == true_ret.result);
+            CAIWEI_ASSERT(ret.result == true_ret.result);
             CAIWEI_FOR_EACH_END
         }));
     }

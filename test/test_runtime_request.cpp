@@ -11,8 +11,8 @@ void test_json_to_completions() {
             "content": "碧螺萧萧"
         }]
     })");
-    ALWAYS_ASSERT(request1.model == "qwen3");
-    ALWAYS_ASSERT(request1.messages.size() == 1);
+    CAIWEI_ASSERT(request1.model == "qwen3");
+    CAIWEI_ASSERT(request1.messages.size() == 1);
     auto request2 = caiwei::text::json_to_completions(R"({
         "model": "qwen3",
         "messages": [{
@@ -66,11 +66,11 @@ void test_json_to_completions() {
         "media_type": "http",
         "model_list": ["qwen3", "qwen3-vlm"]
     })");
-    ALWAYS_ASSERT(request2.model == "qwen3");
-    ALWAYS_ASSERT(request2.messages.size() == 3);
-    ALWAYS_ASSERT(request2.messages[0].role == "system");
-    ALWAYS_ASSERT(request2.messages[1].role == "user");
-    ALWAYS_ASSERT(request2.seed == 12345);
+    CAIWEI_ASSERT(request2.model == "qwen3");
+    CAIWEI_ASSERT(request2.messages.size() == 3);
+    CAIWEI_ASSERT(request2.messages[0].role == "system");
+    CAIWEI_ASSERT(request2.messages[1].role == "user");
+    CAIWEI_ASSERT(request2.seed == 12345);
     CW_LOG_I("repeat_penalty: %.2f", request2.repeat_penalty.value_or(0.0));
 }
 
@@ -80,26 +80,26 @@ void test_json_to_embeddings() {
         "model": "qwen3-embedding",
         "input": "你好"
     })");
-    ALWAYS_ASSERT(request1.model == "qwen3-embedding");
+    CAIWEI_ASSERT(request1.model == "qwen3-embedding");
     std::visit([](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::string>) {
-            ALWAYS_ASSERT(arg == "你好");
+            CAIWEI_ASSERT(arg == "你好");
         } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
-            ALWAYS_ASSERT(arg == std::vector<std::string>{"你好"});
+            CAIWEI_ASSERT(arg == std::vector<std::string>{"你好"});
         }
     }, request1.input);
     auto request2 = caiwei::text::json_to_embeddings(R"({
         "model": "qwen3-embedding",
         "input": ["你好"]
     })");
-    ALWAYS_ASSERT(request2.model == "qwen3-embedding");
+    CAIWEI_ASSERT(request2.model == "qwen3-embedding");
     std::visit([](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::string>) {
-            ALWAYS_ASSERT(arg == "你好");
+            CAIWEI_ASSERT(arg == "你好");
         } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
-            ALWAYS_ASSERT(arg == std::vector<std::string>{"你好"});
+            CAIWEI_ASSERT(arg == std::vector<std::string>{"你好"});
         }
     }, request2.input);
 }
@@ -111,8 +111,8 @@ void test_json_to_rerankings() {
         "query": "你好",
         "documents": ["你好", "你好吗", "你好啊"]
     })");
-    ALWAYS_ASSERT(request.model == "qwen3-reranking");
-    ALWAYS_ASSERT((request.documents == std::vector<std::string>{"你好", "你好吗", "你好啊"}));
+    CAIWEI_ASSERT(request.model == "qwen3-reranking");
+    CAIWEI_ASSERT((request.documents == std::vector<std::string>{"你好", "你好吗", "你好啊"}));
 }
 
 [[maybe_unused]]

@@ -22,10 +22,10 @@
 #include <Windows.h>
 #endif
 
-#define ALWAYS_ASSERT(cond)                                                                                  \
+#define CAIWEI_ASSERT(cond)                                                                                  \
     do {                                                                                                     \
         if (!(cond)) {                                                                                       \
-            std::fprintf(stderr, "ALWAYS_ASSERT failed: %s, file:%s, line:%d\n", #cond, __FILE__, __LINE__); \
+            std::fprintf(stderr, "CAIWEI_ASSERT failed: %s, file:%s, line:%d\n", #cond, __FILE__, __LINE__); \
             abort();                                                                                         \
         }                                                                                                    \
     } while (0)

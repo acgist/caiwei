@@ -7,7 +7,7 @@
 
 [[maybe_unused]]
 void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
-    ALWAYS_ASSERT(ptr != nullptr);
+    CAIWEI_ASSERT(ptr != nullptr);
     std::string content;
     std::string thinking;
     std::string toolcall_name;

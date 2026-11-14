@@ -56,7 +56,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
             data += stride_length;
         }
         return ret;
-    } else if (result_length == this->class_size + 4) {
+    } else if (result_length == this->class_size + YOLO_BOX_SIZE) {
         const size_t total = static_cast<size_t>(result_length) * stride_length;
         if (total != this->out_dst.size()) {
             this->out_dst.resize(total);
@@ -64,10 +64,10 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
         caiwei::image::transpose(output_data, this->out_dst.data(), result_length, stride_length);
         const float* data = this->out_dst.data();
         for (int64_t index = 0; index < stride_length; ++index) {
-            int   max_class;
-            float max_score;
-            const float* scores = data + 4;
-            caiwei::image::max_loc(scores, this->class_size, max_score, max_class);
+            const float* scores = data + YOLO_BOX_SIZE;
+            auto  max_ptr   = std::max_element(scores, scores + this->class_size);
+            float max_score = *max_ptr;
+            int   max_class = std::distance(scores, max_ptr);
             if(max_score > this->confidence_threshold) {
                 const float box_x = (data[0] - this->pad_w) / static_cast<float>(this->dst_w);
                 const float box_y = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);

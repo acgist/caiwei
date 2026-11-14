@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 
+#define YOLO_BOX_SIZE 4
+
 namespace caiwei {
 namespace image  {
 

@@ -50,7 +50,9 @@ bool caiwei::image::resize(
         if (!caiwei::image::resize(src, v.data(), src_w, src_h, dst_w, dst_h, channels)) {
             return false;
         }
-        caiwei::image::padding(v.data(), dst, dst_w, dst_h, pad_w, pad_h, w, h, channels);
+        if (!caiwei::image::padding(v.data(), dst, dst_w, dst_h, pad_w, pad_h, w, h, channels)) {
+            return false;
+        }
         return true;
     }
     rga_buffer_t src_img = wrapbuffer_virtualaddr((void*) src, src_w, src_h, image_type);

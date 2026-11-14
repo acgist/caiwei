@@ -93,6 +93,7 @@ inline bool padding(
         pad_w + src_w > w ||
         pad_h + src_h > h
     ) {
+        CW_LOG_W("图片尺寸错误: %dx%d + %dx%d -> %dx%d", src_w, src_h, pad_w, pad_h, w, h);
         return false;
     }
     if (pad_w == 0 && pad_h == 0) {
@@ -154,29 +155,6 @@ inline std::vector<size_t> nms_boxes(const std::vector<T>& boxes, const float io
         all_index.swap(tmp_index);
     }
     return ret_index;
-}
-
-template <typename T>
-inline void min_loc(const T* score, const int size, T& min_score, int& min_index) {
-    auto min = std::min_element(score, score + size);
-    min_score = *min;
-    min_index = std::distance(score, min);
-}
-
-template <typename T>
-inline void max_loc(const T* score, const int size, T& max_score, int& max_index) {
-    auto max = std::max_element(score, score + size);
-    max_score = *max;
-    max_index = std::distance(score, max);
-}
-
-template <typename T>
-inline void min_max_loc(const T* score, const int size, T& min_score, int& min_index, T& max_score, int& max_index) {
-    auto [min, max] = std::minmax_element(score, score + size);
-    min_score = *min;
-    min_index = std::distance(score, min);
-    max_score = *max;
-    max_index = std::distance(score, max);
 }
 
 template <typename T, typename R>

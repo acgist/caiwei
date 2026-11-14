@@ -87,7 +87,7 @@ void test_demuxer() {
         CW_LOG_W("不支持的类型: %s", type);
         return;
     }
-    ALWAYS_ASSERT(caiwei::player::open_player());
+    CAIWEI_ASSERT(caiwei::player::open_player());
     caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
@@ -98,7 +98,7 @@ void test_demuxer() {
         },
         [](caiwei::media::VideoFrame& frame) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            return caiwei::player::play_video(frame.data.data(), frame.width * 3);
+            return caiwei::player::play_video(frame.data.data(), frame.width * frame.channels);
         }
     );
     caiwei::player::stop_player();

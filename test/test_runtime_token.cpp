@@ -32,25 +32,25 @@ void test_tokenizer() {
         eos, eos_piece.c_str(),
         pad, pad_piece.c_str()
     );
-    ALWAYS_ASSERT(bos == tokenizer.piece_to_token(bos_piece));
-    ALWAYS_ASSERT(eos == tokenizer.piece_to_token(eos_piece));
-    ALWAYS_ASSERT(pad == tokenizer.piece_to_token(pad_piece));
+    CAIWEI_ASSERT(bos == tokenizer.piece_to_token(bos_piece));
+    CAIWEI_ASSERT(eos == tokenizer.piece_to_token(eos_piece));
+    CAIWEI_ASSERT(pad == tokenizer.piece_to_token(pad_piece));
     const int bthinking = tokenizer.piece_to_token("<think>");
     const int ethinking = tokenizer.piece_to_token("</think>");
     const int btoolcall = tokenizer.piece_to_token("<tool_call>");
     const int etoolcall = tokenizer.piece_to_token("</tool_call>");
-    ALWAYS_ASSERT(bthinking == 151667);
-    ALWAYS_ASSERT(ethinking == 151668);
-    ALWAYS_ASSERT(btoolcall == 151657);
-    ALWAYS_ASSERT(etoolcall == 151658);
+    CAIWEI_ASSERT(bthinking == 151667);
+    CAIWEI_ASSERT(ethinking == 151668);
+    CAIWEI_ASSERT(btoolcall == 151657);
+    CAIWEI_ASSERT(etoolcall == 151658);
     const std::string piece = tokenizer.token_to_piece(151644);
-    ALWAYS_ASSERT(piece == "<|im_start|>");
+    CAIWEI_ASSERT(piece == "<|im_start|>");
     const std::string prompt = "<|im_start|>你好这是一个测试<think>think</think><tool_call>tool_call</tool_call><|im_end|>";
     std::vector<int32_t> tokens(64);
     const int length = tokenizer.tokenize(prompt.data(), static_cast<int32_t>(prompt.size()), tokens.data(), static_cast<int32_t>(tokens.size()));
-    ALWAYS_ASSERT(length > 0);
+    CAIWEI_ASSERT(length > 0);
     const std::string text = tokenizer.detokenize(tokens.data(), length);
-    ALWAYS_ASSERT(text == "你好这是一个测试<think>think</think><tool_call>tool_call</tool_call>");
+    CAIWEI_ASSERT(text == "你好这是一个测试<think>think</think><tool_call>tool_call</tool_call>");
     CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length              ).c_str());
     CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, true,  false).c_str());
     CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, false, true ).c_str());

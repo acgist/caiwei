@@ -40,7 +40,7 @@ void test_embedding() {
     for (const auto& item : ret.result) {
         CW_LOG_I("embedding: %zu", item.size());
     }
-    ALWAYS_ASSERT((ret.result.size() == std::get<std::vector<std::string>>(request.input).size()));
+    CAIWEI_ASSERT((ret.result.size() == std::get<std::vector<std::string>>(request.input).size()));
     cosine_similarity(ret.result[0], ret.result[1]);
     cosine_similarity(ret.result[0], ret.result[2]);
     cosine_similarity(ret.result[0], ret.result[3]);
@@ -84,7 +84,7 @@ void test_embedding_thread() {
         threads.push_back(std::jthread([&]() {
             CAIWEI_FOR_EACH(100)
             auto ret = ptr->run(request);
-            ALWAYS_ASSERT(ret.result == true_ret.result);
+            CAIWEI_ASSERT(ret.result == true_ret.result);
             CAIWEI_FOR_EACH_END
         }));
     }
