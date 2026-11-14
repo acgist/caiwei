@@ -68,7 +68,7 @@ foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)
     else()
         # -
     endif()
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME} WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_NAME}>")
 endforeach()
 
 message(STATUS "CAIWEI_TEST_INCS: ${CAIWEI_TEST_INCS}")

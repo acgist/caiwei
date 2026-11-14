@@ -5,7 +5,7 @@
 
 [[maybe_unused]]
 void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
-    assert(ptr != nullptr);
+    ALWAYS_ASSERT(ptr != nullptr);
     for (const auto& value : ptr->run(request)) {
         if (!value.finish_reason.empty()) {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
@@ -63,7 +63,6 @@ void test_vlm() {
     request.messages.back().video_data.emplace_back(std::move(video_frames));
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     vlm_run(ptr.get(), request);
@@ -146,7 +145,6 @@ void test_vlm_for() {
     request.messages.back().image_data.emplace_back(std::move(frame2));
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -184,10 +182,8 @@ void test_vlm_thread() {
     frame2.load_from_file("./caiwei.jpg");
     request.messages.back().image_data.emplace_back(std::move(frame1));
     request.messages.back().image_data.emplace_back(std::move(frame2));
-    // 共享模型线程安全所有线程共享一个模型实例
     auto ptr = caiwei::manager::get_context<caiwei::context::VLMContext>("qwen3-vlm");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<std::jthread> threads;

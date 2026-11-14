@@ -87,7 +87,7 @@ void test_demuxer() {
         CW_LOG_W("不支持的类型: %s", type);
         return;
     }
-    caiwei::player::open_player();
+    ALWAYS_ASSERT(caiwei::player::open_player());
     caiwei::media::MediaDemuxer media_demuxer(type, url);
     media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,

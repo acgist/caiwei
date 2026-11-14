@@ -9,17 +9,14 @@ void test_tokenizer() {
     caiwei::context::Tokenizer tokenizer;
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
     if (!tokenizer.load("/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B.tokenizer.gguf")) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     #elif CAIWEI_OS_UNIX
     if (!tokenizer.load("/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf")) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     #else
     if (!tokenizer.load("D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf")) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     #endif
@@ -35,25 +32,25 @@ void test_tokenizer() {
         eos, eos_piece.c_str(),
         pad, pad_piece.c_str()
     );
-    assert(bos == tokenizer.piece_to_token(bos_piece));
-    assert(eos == tokenizer.piece_to_token(eos_piece));
-    assert(pad == tokenizer.piece_to_token(pad_piece));
+    ALWAYS_ASSERT(bos == tokenizer.piece_to_token(bos_piece));
+    ALWAYS_ASSERT(eos == tokenizer.piece_to_token(eos_piece));
+    ALWAYS_ASSERT(pad == tokenizer.piece_to_token(pad_piece));
     const int bthinking = tokenizer.piece_to_token("<think>");
     const int ethinking = tokenizer.piece_to_token("</think>");
     const int btoolcall = tokenizer.piece_to_token("<tool_call>");
     const int etoolcall = tokenizer.piece_to_token("</tool_call>");
-    assert(bthinking == 151667);
-    assert(ethinking == 151668);
-    assert(btoolcall == 151657);
-    assert(etoolcall == 151658);
+    ALWAYS_ASSERT(bthinking == 151667);
+    ALWAYS_ASSERT(ethinking == 151668);
+    ALWAYS_ASSERT(btoolcall == 151657);
+    ALWAYS_ASSERT(etoolcall == 151658);
     const std::string piece = tokenizer.token_to_piece(151644);
-    assert(piece == "<|im_start|>");
+    ALWAYS_ASSERT(piece == "<|im_start|>");
     const std::string prompt = "<|im_start|>你好这是一个测试<think>think</think><tool_call>tool_call</tool_call><|im_end|>";
     std::vector<int32_t> tokens(64);
     const int length = tokenizer.tokenize(prompt.data(), static_cast<int32_t>(prompt.size()), tokens.data(), static_cast<int32_t>(tokens.size()));
-    assert(length > 0);
+    ALWAYS_ASSERT(length > 0);
     const std::string text = tokenizer.detokenize(tokens.data(), length);
-    assert(text == "你好这是一个测试<think>think</think><tool_call>tool_call</tool_call>");
+    ALWAYS_ASSERT(text == "你好这是一个测试<think>think</think><tool_call>tool_call</tool_call>");
     CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length              ).c_str());
     CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, true,  false).c_str());
     CW_LOG_I("text: %s", tokenizer.detokenize(tokens.data(), length, false, true ).c_str());

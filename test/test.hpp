@@ -13,13 +13,22 @@
 #include "caiwei/media_tool.hpp"
 
 #include <chrono>
-#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 #include <numeric>
 #include <iostream>
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>
 #endif
+
+#define ALWAYS_ASSERT(cond)                                                                                  \
+    do {                                                                                                     \
+        if (!(cond)) {                                                                                       \
+            std::fprintf(stderr, "ALWAYS_ASSERT failed: %s, file:%s, line:%d\n", #cond, __FILE__, __LINE__); \
+            abort();                                                                                         \
+        }                                                                                                    \
+    } while (0)
 
 // clang-format off
 #ifndef CAIWEI_FOR_EACH

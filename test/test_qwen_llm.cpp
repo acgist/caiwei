@@ -7,7 +7,7 @@
 
 [[maybe_unused]]
 void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
-    assert(ptr != nullptr);
+    ALWAYS_ASSERT(ptr != nullptr);
     std::string content;
     std::string thinking;
     std::string toolcall_name;
@@ -49,7 +49,6 @@ void test_llm() {
     };
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     llm_run(ptr.get(), request);
@@ -81,7 +80,6 @@ void test_llm_for() {
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -101,10 +99,8 @@ void test_llm_thread() {
     request.stream = true;
     request.enable_thinking = false;
     request.messages.push_back({.role = "user", .content = "1+1=?"});
-    // 共享模型线程安全所有线程共享一个模型实例
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<std::jthread> threads;

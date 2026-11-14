@@ -12,6 +12,7 @@ AccessModifierOffset: -4
 SpaceAfterCStyleCast: true
 AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
+AllowShortLambdasOnASingleLine: None
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 EmptyLineBeforeAccessModifier: Never

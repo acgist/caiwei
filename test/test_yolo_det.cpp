@@ -3,23 +3,17 @@
 #include <thread>
 #include <vector>
 
-static const char* image_path = "./acgist.jpg";
-
 [[maybe_unused]]
-void det_image() {
+void det_image(const char* image_path) {
     caiwei::media::ImageFrame frame;
-    if (!frame.load_from_file(image_path)) {
-        return;
-    }
+    ALWAYS_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    if (ptr == nullptr) {
-        CW_LOG_W("模型加载失败");
-        return;
-    }
+    ALWAYS_ASSERT(ptr);
     auto result = ptr->run(frame);
     for (const auto& box : result) {
         CW_LOG_I("box: %d = %.2f", box.class_id, box.score);
         caiwei::test::draw_rect(
+            // clang-format off
             frame.data.data(),
             frame.width,
             frame.height,
@@ -28,22 +22,18 @@ void det_image() {
             static_cast<int>((box.x2 - box.x1) * frame.width),
             static_cast<int>((box.y2 - box.y1) * frame.height),
             frame.channels
+            // clang-format on
         );
     }
-    stbi_write_jpg("./acgist_det.jpg", frame.width, frame.height, frame.channels, frame.data.data(), 80);
+    ALWAYS_ASSERT(stbi_write_jpg("./acgist_det.jpg", frame.width, frame.height, frame.channels, frame.data.data(), 80) != 0);
 }
 
 [[maybe_unused]]
-void det_image_for() {
+void det_image_for(const char* image_path) {
     caiwei::media::ImageFrame frame;
-    if (!frame.load_from_file(image_path)) {
-        return;
-    }
+    ALWAYS_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    if (ptr == nullptr) {
-        CW_LOG_W("模型加载失败");
-        return;
-    }
+    ALWAYS_ASSERT(ptr);
     caiwei::test::caiwei_wait_enter();
     CW_LOG_I("图片大小: %dx%d", frame.width, frame.height);
     {
@@ -62,20 +52,14 @@ void det_image_for() {
 }
 
 [[maybe_unused]]
-void det_image_thread() {
+void det_image_thread(const char* image_path) {
     caiwei::media::ImageFrame frame;
-    if (!frame.load_from_file(image_path)) {
-        return;
-    }
+    ALWAYS_ASSERT(frame.load_from_file(image_path));
     std::vector<std::jthread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::jthread([&]() {
-            // 独占模型非线程安全每个线程独立一个模型实例
             auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-            if (ptr == nullptr) {
-                CW_LOG_W("模型加载失败");
-                return;
-            }
+            ALWAYS_ASSERT(ptr);
             CAIWEI_FOR_EACH(100)
             ptr->run(frame);
             CAIWEI_FOR_EACH_END
@@ -90,27 +74,23 @@ void det_image_thread() {
 [[maybe_unused]]
 void det_video() {
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
-    if (ptr == nullptr) {
-        CW_LOG_W("模型加载失败");
-        return;
-    }
+    ALWAYS_ASSERT(ptr);
     size_t frame_count = 0;
-    std::vector<caiwei::image::Box> ret;
-    caiwei::player::open_player();
+    ALWAYS_ASSERT(caiwei::player::open_player());
     caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
-    // caiwei::media::MediaDemuxer media_demuxer("device", R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)");
     bool success = media_demuxer.open(
-        caiwei::media::AUDIO_INFO_DECODE,
-        caiwei::media::VIDEO_INFO_DECODE,
+        caiwei::media::AUDIO_INFO_DECODE, caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return caiwei::player::play_audio(frame.data.data(), static_cast<int>(frame.data.size()));
         },
-        [&ptr, &ret, &frame_count](caiwei::media::VideoFrame& frame) {
+        [&ptr, &frame_count](caiwei::media::VideoFrame& frame) {
+            thread_local std::vector<caiwei::image::Box> ret;
             if (frame_count++ % 4 == 0) {
                 ret = ptr->run(frame);
             }
             for (const auto& box : ret) {
                 caiwei::test::draw_rect(
+                    // clang-format off
                     frame.data.data(),
                     frame.width,
                     frame.height,
@@ -119,11 +99,11 @@ void det_video() {
                     static_cast<int>((box.x2 - box.x1) * frame.width),
                     static_cast<int>((box.y2 - box.y1) * frame.height),
                     frame.channels
+                    // clang-format on
                 );
             }
-            return caiwei::player::play_video(frame.data.data(), frame.width * 3);
-        }
-    );
+            return caiwei::player::play_video(frame.data.data(), frame.width * frame.channels);
+        });
     if (!success) {
         CW_LOG_W("视频加载失败");
     }
@@ -131,24 +111,25 @@ void det_video() {
 }
 
 int main(int argc, char* argv[]) {
-    #if ENABLE_CAIWEI_RUNTIME_RKNN2
+#if ENABLE_CAIWEI_RUNTIME_RKNN2
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-i8.rknn");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn");
-    #endif
+#endif
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
     if (argc > 1) {
         caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);
     }
+    const char* image_path;
     if (argc > 2) {
         image_path = argv[2];
     } else {
         image_path = "./acgist.jpg";
     }
     caiwei::test::init_test();
-    det_image();
-    det_image_for();
-    // det_image_thread();
-    // det_image_thread();
+    det_image(image_path);
+    det_image_for(image_path);
+    // det_image_thread(image_path);
+    // det_image_thread(image_path);
     // det_video();
     caiwei::test::stop_test();
     return 0;

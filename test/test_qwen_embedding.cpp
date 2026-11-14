@@ -34,14 +34,13 @@ void test_embedding() {
     request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     const auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
         CW_LOG_I("embedding: %zu", item.size());
     }
-    assert((ret.result.size() == std::get<std::vector<std::string>>(request.input).size()));
+    ALWAYS_ASSERT((ret.result.size() == std::get<std::vector<std::string>>(request.input).size()));
     cosine_similarity(ret.result[0], ret.result[1]);
     cosine_similarity(ret.result[0], ret.result[2]);
     cosine_similarity(ret.result[0], ret.result[3]);
@@ -57,7 +56,6 @@ void test_embedding_for() {
     request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -76,10 +74,8 @@ void test_embedding_thread() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
-    // 共享模型线程安全所有线程共享一个模型实例
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     const auto true_ret = ptr->run(request);
@@ -88,7 +84,7 @@ void test_embedding_thread() {
         threads.push_back(std::jthread([&]() {
             CAIWEI_FOR_EACH(100)
             auto ret = ptr->run(request);
-            assert(ret.result == true_ret.result);
+            ALWAYS_ASSERT(ret.result == true_ret.result);
             CAIWEI_FOR_EACH_END
         }));
     }

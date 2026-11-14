@@ -3,8 +3,6 @@
 #include <thread>
 #include <vector>
 
-static const char* image_path = "./acgist.jpg";
-
 [[maybe_unused]]
 void cls_image() {
     caiwei::media::ImageFrame frame;
@@ -13,27 +11,25 @@ void cls_image() {
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     auto result = ptr->run(frame);
-    assert(!result.empty());
+    ALWAYS_ASSERT(!result.empty());
     for (const auto& cls : result) {
         CW_LOG_I("cls: %d = %.2f", cls.class_id, cls.score);
     }
     // 258 == samoyed
-    assert(result[0].class_id== 258);
+    ALWAYS_ASSERT(result[0].class_id== 258);
 }
 
 [[maybe_unused]]
-void cls_image_for() {
+void cls_image_for(const char* image_path) {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
         return;
     }
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -54,7 +50,7 @@ void cls_image_for() {
 }
 
 [[maybe_unused]]
-void cls_image_thread() {
+void cls_image_thread(const char* image_path) {
     caiwei::media::ImageFrame frame;
     if (!frame.load_from_file(image_path)) {
         return;
@@ -62,15 +58,12 @@ void cls_image_thread() {
     std::vector<std::jthread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.push_back(std::jthread([&]() {
-            // 独占模型非线程安全每个线程独立一个模型实例
             auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
             if (ptr == nullptr) {
-                CW_LOG_W("模型加载失败");
                 return;
             }
             CAIWEI_FOR_EACH(100)
-            auto result = ptr->run(frame);
-            assert(result[0].class_id== 258);
+            ptr->run(frame);
             CAIWEI_FOR_EACH_END
         }));
     }
@@ -84,12 +77,10 @@ void cls_image_thread() {
 void cls_video() {
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     if (ptr == nullptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
-    caiwei::player::open_player();
+    ALWAYS_ASSERT(caiwei::player::open_player());
     caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
-    // caiwei::media::MediaDemuxer media_demuxer("device", R"(audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera)");
     bool success = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
@@ -118,6 +109,7 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);
     }
+    const char* image_path;
     if (argc > 2) {
         image_path = argv[2];
     } else {
@@ -125,9 +117,9 @@ int main(int argc, char* argv[]) {
     }
     caiwei::test::init_test();
     cls_image();
-    cls_image_for();
-    // cls_image_thread();
-    // cls_image_thread();
+    cls_image_for(image_path);
+    // cls_image_thread(image_path);
+    // cls_image_thread(image_path);
     // cls_video();
     caiwei::test::stop_test();
     return 0;

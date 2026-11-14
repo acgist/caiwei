@@ -32,18 +32,18 @@ void test_manager_init() {
 [[maybe_unused]]
 void test_manager_optimize() {
     auto ptr1 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    assert(ptr1 != nullptr);
+    ALWAYS_ASSERT(ptr1 != nullptr);
     auto ptr2 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    assert(ptr2 != nullptr);
+    ALWAYS_ASSERT(ptr2 != nullptr);
     auto ptr3 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    assert(ptr3 != nullptr);
+    ALWAYS_ASSERT(ptr3 != nullptr);
     auto ptr4 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    assert(ptr4 != nullptr);
+    ALWAYS_ASSERT(ptr4 != nullptr);
     ptr4 = nullptr;
     auto ptr5 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    assert(ptr5 != nullptr);
+    ALWAYS_ASSERT(ptr5 != nullptr);
     auto ptr6 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
-    assert(ptr6 == nullptr);
+    ALWAYS_ASSERT(ptr6 == nullptr);
     ptr5 = nullptr;
     caiwei::test::caiwei_wait_enter();
 }

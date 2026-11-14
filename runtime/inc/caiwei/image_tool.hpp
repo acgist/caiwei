@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <vector>
-#include <cassert>
 #include <cstdint>
 #include <algorithm>
 
@@ -76,7 +75,7 @@ inline bool resize(
     return true;
 }
 
-inline void padding(
+inline bool padding(
     const uint8_t* __restrict src,
           uint8_t* __restrict pad,
     const int src_w,
@@ -87,10 +86,18 @@ inline void padding(
     const int h,
     const int channels = 3
 ) {
-    assert(pad_w >= 0 && pad_h >= 0 && pad_w + src_w <= w && pad_h + src_h <= h);
+    if (
+        pad_w <  0 || pad_h <  0 ||
+        src_w <= 0 || src_h <= 0 ||
+        w     <= 0 || h     <= 0 ||
+        pad_w + src_w > w ||
+        pad_h + src_h > h
+    ) {
+        return false;
+    }
     if (pad_w == 0 && pad_h == 0) {
         std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, pad);
-        return;
+        return true;
     }
     const size_t stride = static_cast<size_t>(src_w) * channels;
     for (int y = 0; y < src_h; ++y) {
@@ -98,6 +105,7 @@ inline void padding(
         const size_t dst_offset = (static_cast<size_t>(pad_h + y) * w + pad_w) * channels;
         std::copy_n(src + src_offset, stride, pad + dst_offset);
     }
+    return true;
 }
 
 template<typename T>
@@ -150,7 +158,6 @@ inline std::vector<size_t> nms_boxes(const std::vector<T>& boxes, const float io
 
 template <typename T>
 inline void min_loc(const T* score, const int size, T& min_score, int& min_index) {
-    assert(size > 0);
     auto min = std::min_element(score, score + size);
     min_score = *min;
     min_index = std::distance(score, min);
@@ -158,7 +165,6 @@ inline void min_loc(const T* score, const int size, T& min_score, int& min_index
 
 template <typename T>
 inline void max_loc(const T* score, const int size, T& max_score, int& max_index) {
-    assert(size > 0);
     auto max = std::max_element(score, score + size);
     max_score = *max;
     max_index = std::distance(score, max);
@@ -166,7 +172,6 @@ inline void max_loc(const T* score, const int size, T& max_score, int& max_index
 
 template <typename T>
 inline void min_max_loc(const T* score, const int size, T& min_score, int& min_index, T& max_score, int& max_index) {
-    assert(size > 0);
     auto [min, max] = std::minmax_element(score, score + size);
     min_score = *min;
     min_index = std::distance(score, min);

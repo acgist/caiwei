@@ -113,7 +113,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
     }
     const auto* info = caiwei::context::get_context_info(name);
     if (info == nullptr) {
-        CW_LOG_D("没有模型配置信息: %s", name.c_str());
+        CW_LOG_W("没有配置模型: %s", name.c_str());
         return nullptr;
     }
     if (info->type != C::TYPE) {
@@ -156,7 +156,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         }
     }
     #endif
-    CW_LOG_W("获取context失败: %s", info->name.c_str());
+    CW_LOG_W("模型加载失败: %s", info->name.c_str());
     return nullptr;
 }
 

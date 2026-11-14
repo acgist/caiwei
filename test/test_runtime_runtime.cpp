@@ -13,7 +13,6 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
     size = size <= 0 ? 640 : size;
     caiwei::context::RKNN2Context context(path.empty() ? "yolo26n-det.rknn" : path, 3, size, size);
     if (!context.load_model()) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     if (type == "i8") {
@@ -42,7 +41,6 @@ void test_onnxruntime(int size, const std::string& path) {
     auto env = std::make_unique<Ort::Env>(caiwei::context::onnxruntime_log_level, "caiwei");
     caiwei::context::ONNXRuntimeContext context(path.empty() ? "yolo26n-det.onnx" : path, 3, size, size, env.get());
     if (!context.load_model()) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<float> data(3 * size * size);

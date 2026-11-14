@@ -13,7 +13,6 @@ void test_reranking() {
     request.documents = std::vector<std::string>{ "下雨打车出门", "广州正在下雨", "广州美食不错", "达州正在下雨" };
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     const auto ret = ptr->run(request);
@@ -30,7 +29,6 @@ void test_reranking_for() {
     request.documents = std::vector<std::string>{ "下雨打车出门", "广州正在下雨", "广州美食不错", "达州正在下雨" };
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -50,10 +48,8 @@ void test_reranking_thread() {
     request.model = "qwen3-reranking";
     request.query = "广州今天的天气怎么样";
     request.documents = std::vector<std::string>{ "下雨打车出门", "广州正在下雨", "广州美食不错", "达州正在下雨" };
-    // 共享模型线程安全所有线程共享一个模型实例
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     const auto true_ret = ptr->run(request);
@@ -62,7 +58,7 @@ void test_reranking_thread() {
         threads.push_back(std::jthread([&]() {
             CAIWEI_FOR_EACH(100)
             auto ret = ptr->run(request);
-            assert(ret.result == true_ret.result);
+            ALWAYS_ASSERT(ret.result == true_ret.result);
             CAIWEI_FOR_EACH_END
         }));
     }

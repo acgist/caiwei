@@ -5,7 +5,7 @@
 
 [[maybe_unused]]
 void asr_run(caiwei::manager::ASRWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
-    assert(ptr != nullptr);
+    ALWAYS_ASSERT(ptr != nullptr);
     for (const auto& value : ptr->run(request)) {
         if (!value.finish_reason.empty()) {
             CW_LOG_I("完成: %s", value.finish_reason.c_str());
@@ -42,7 +42,6 @@ void test_asr() {
     request.messages.back().audio_data.push_back(audio_frame);
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     asr_run(ptr.get(), request);
@@ -111,7 +110,6 @@ void test_asr_for() {
     request.messages.back().audio_data.push_back(std::move(audio_frame));
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     caiwei::test::caiwei_wait_enter();
@@ -150,10 +148,8 @@ void test_asr_thread() {
         }
     });
     request.messages.back().audio_data.push_back(std::move(audio_frame));
-    // 共享模型线程安全所有线程共享一个模型实例
     auto ptr = caiwei::manager::get_context<caiwei::context::ASRContext>("qwen3-asr");
     if (!ptr) {
-        CW_LOG_W("模型加载失败");
         return;
     }
     std::vector<std::jthread> threads;
