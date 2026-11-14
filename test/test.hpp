@@ -22,6 +22,7 @@
 #include <Windows.h>
 #endif
 
+#ifndef CAIWEI_ASSERT
 #define CAIWEI_ASSERT(cond)                                                                                  \
     do {                                                                                                     \
         if (!(cond)) {                                                                                       \
@@ -29,6 +30,7 @@
             abort();                                                                                         \
         }                                                                                                    \
     } while (0)
+#endif
 
 // clang-format off
 #ifndef CAIWEI_FOR_EACH

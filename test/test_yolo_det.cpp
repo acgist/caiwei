@@ -79,7 +79,8 @@ void det_video() {
     CAIWEI_ASSERT(caiwei::player::open_player());
     caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
     bool success = media_demuxer.open(
-        caiwei::media::AUDIO_INFO_DECODE, caiwei::media::VIDEO_INFO_DECODE,
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
         [](caiwei::media::AudioFrame& frame) {
             return caiwei::player::play_audio(frame.data.data(), static_cast<int>(frame.data.size()));
         },
@@ -103,7 +104,8 @@ void det_video() {
                 );
             }
             return caiwei::player::play_video(frame.data.data(), frame.width * frame.channels);
-        });
+        }
+    );
     CAIWEI_ASSERT(success);
     caiwei::player::stop_player();
 }
