@@ -14,8 +14,10 @@ void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRe
     std::string toolcall_arguments;
     for (const auto& value : ptr->run(request)) {
         if (value.toolcall) {
+            // clang-format off
             toolcall_name      += value.toolcall_name;
             toolcall_arguments += value.toolcall_arguments;
+            // clang-format on
         } else if (value.thinking) {
             thinking += value.token;
         } else {
@@ -38,20 +40,16 @@ void test_llm() {
     request.stream = true;
     request.enable_thinking = true;
     request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
-    request.tools = {
-        caiwei::text::CompletionsRequestTool {
-            .type = "function",
-            .function = caiwei::text::CompletionsRequestToolFunction {
-                .name = "get_weather",
-                .description = "查询城市天气",
-                .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
-            },
-        }
-    };
+    request.tools = {caiwei::text::CompletionsRequestTool{
+        .type = "function",
+        .function = caiwei::text::CompletionsRequestToolFunction{
+            .name = "get_weather",
+            .description = "查询城市天气",
+            .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
+        },
+    }};
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
-    if (!ptr) {
-        return;
-    }
+    CAIWEI_ASSERT(ptr);
     llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     request.messages.clear();
@@ -80,9 +78,7 @@ void test_llm_for() {
     request.enable_thinking = false;
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
-    if (!ptr) {
-        return;
-    }
+    CAIWEI_ASSERT(ptr);
     caiwei::test::caiwei_wait_enter();
     llm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
@@ -101,9 +97,7 @@ void test_llm_thread() {
     request.enable_thinking = false;
     request.messages.push_back({.role = "user", .content = "1+1=?"});
     auto ptr = caiwei::manager::get_context<caiwei::context::LLMContext>("qwen3-llm");
-    if (!ptr) {
-        return;
-    }
+    CAIWEI_ASSERT(ptr);
     std::vector<std::jthread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::jthread([&]() {
@@ -119,15 +113,21 @@ void test_llm_thread() {
 }
 
 int main() {
-    #if ENABLE_CAIWEI_RUNTIME_RKNN3
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,/data/model/Qwen3-1.7B/Qwen3-1.7B.rknn|/data/model/Qwen3-1.7B/Qwen3-1.7B.weight|/data/model/Qwen3-1.7B/Qwen3-1.7B.embed.bin|/data/model/Qwen3-1.7B/Qwen3-1.7B.tokenizer.gguf)");
-    #elif CAIWEI_OS_UNIX
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf)");
-    #elif CAIWEI_OS_WIN
+#if ENABLE_CAIWEI_RUNTIME_RKNN3
+    caiwei::env::set(
+        "CAIWEI_CONTEXT_INFO",
+        R"(LLM,QWEN,qwen3-llm,/data/model/Qwen3-1.7B/Qwen3-1.7B.rknn|/data/model/Qwen3-1.7B/Qwen3-1.7B.weight|/data/model/Qwen3-1.7B/Qwen3-1.7B.embed.bin|/data/model/Qwen3-1.7B/Qwen3-1.7B.tokenizer.gguf)"
+    );
+#elif CAIWEI_OS_UNIX
+    caiwei::env::set(
+        "CAIWEI_CONTEXT_INFO",
+        R"(LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf)"
+    );
+#elif CAIWEI_OS_WIN
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf)");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf)");
-    #else
-    #endif
+#else
+#endif
     caiwei::test::init_test();
     test_llm();
     test_llm_for();

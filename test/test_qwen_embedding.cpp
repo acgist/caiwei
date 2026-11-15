@@ -8,14 +8,18 @@ static void cosine_similarity(const std::vector<float>& a, const std::vector<flo
     if (a.empty() || z.empty() || a.size() != z.size()) {
         return;
     }
+    // clang-format off
     double dot    = 0.0;
     double norm_a = 0.0;
     double norm_z = 0.0;
+    // clang-format on
     const size_t n = a.size();
     for (size_t i = 0; i < n; ++i) {
+        // clang-format off
         dot    += (double) a[i] * z[i];
         norm_a += (double) a[i] * a[i];
         norm_z += (double) z[i] * z[i];
+        // clang-format on
     }
     norm_a = std::sqrt(norm_a);
     norm_z = std::sqrt(norm_z);
@@ -31,11 +35,9 @@ void test_embedding() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     // request.input = "北京";
-    request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
+    request.input = std::vector<std::string>{"小狗", "猫咪", "苹果", "汽车"};
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
-    if (!ptr) {
-        return;
-    }
+    CAIWEI_ASSERT(ptr);
     const auto ret = ptr->run(request);
     for (const auto& item : ret.result) {
         CW_LOG_I("embedding: %zu", item.size());
@@ -53,11 +55,9 @@ void test_embedding() {
 void test_embedding_for() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
+    request.input = std::vector<std::string>{"小狗", "猫咪", "苹果", "汽车"};
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
-    if (!ptr) {
-        return;
-    }
+    CAIWEI_ASSERT(ptr);
     caiwei::test::caiwei_wait_enter();
     ptr->run(request);
     caiwei::test::caiwei_wait_enter();
@@ -73,11 +73,9 @@ void test_embedding_for() {
 void test_embedding_thread() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    request.input = std::vector<std::string>{ "小狗", "猫咪", "苹果", "汽车" };
+    request.input = std::vector<std::string>{"小狗", "猫咪", "苹果", "汽车"};
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
-    if (!ptr) {
-        return;
-    }
+    CAIWEI_ASSERT(ptr);
     const auto true_ret = ptr->run(request);
     std::vector<std::jthread> threads;
     for (int i = 0; i < 4; ++i) {
@@ -95,15 +93,27 @@ void test_embedding_thread() {
 }
 
 int main() {
-    #if ENABLE_CAIWEI_RUNTIME_RKNN3
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(EMBEDDING,QWEN,qwen3-embedding,/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.rknn|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.weight|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.embed.bin|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.tokenizer.gguf)");
-    #elif CAIWEI_OS_UNIX
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(EMBEDDING,QWEN,qwen3-embedding,/data/caiwei/deps/llama.cpp/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B-Q4_K_M.gguf)");
-    #elif CAIWEI_OS_WIN
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)");
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)");
-    #else
-    #endif
+#if ENABLE_CAIWEI_RUNTIME_RKNN3
+    caiwei::env::set(
+        "CAIWEI_CONTEXT_INFO",
+        R"(EMBEDDING,QWEN,qwen3-embedding,/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.rknn|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.weight|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.embed.bin|/data/model/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B.tokenizer.gguf)"
+    );
+#elif CAIWEI_OS_UNIX
+    caiwei::env::set(
+        "CAIWEI_CONTEXT_INFO",
+        R"(EMBEDDING,QWEN,qwen3-embedding,/data/caiwei/deps/llama.cpp/Qwen3-Embedding-0.6B/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
+    );
+#elif CAIWEI_OS_WIN
+    // caiwei::env::set(
+    //     "CAIWEI_CONTEXT_INFO",
+    //     R"(EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
+    // );
+    caiwei::env::set(
+        "CAIWEI_CONTEXT_INFO",
+        R"(EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
+    );
+#else
+#endif
     caiwei::test::init_test();
     test_embedding();
     test_embedding_for();

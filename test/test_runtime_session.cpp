@@ -105,17 +105,15 @@ EMBEDDING,QWEN,qwen3-embedding,/data/caiwei/deps/llama.cpp/Qwen3-Embedding-0.6B/
 RERANKING,QWEN,qwen3-reranking,/data/caiwei/deps/llama.cpp/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )");
 #elif CAIWEI_OS_WIN
-#if CAIWEI_HOME
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
-CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
-DET,YOLO,yolo26n-det,yolo26n-det.onnx
-ASR,QWEN,qwen3-asr,E:/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf|E:/model/llama.cpp/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf
-LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf
-VLM,QWEN,qwen3-vlm,E:/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|E:/model/llama.cpp/mmproj-Qwen3-VL-2b-Instruct-Q4_K_M.gguf
-EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf
-RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf
-    )");
-#else
+    //     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
+    // CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
+    // DET,YOLO,yolo26n-det,yolo26n-det.onnx
+    // ASR,QWEN,qwen3-asr,E:/model/llama.cpp/Qwen3-ASR-0.6B-Q4_K_M.gguf|E:/model/llama.cpp/mmproj-Qwen3-ASR-0.6b-Q4_K_M.gguf
+    // LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf
+    // VLM,QWEN,qwen3-vlm,E:/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|E:/model/llama.cpp/mmproj-Qwen3-VL-2b-Instruct-Q4_K_M.gguf
+    // EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf
+    // RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf
+    //     )");
     caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
@@ -125,7 +123,6 @@ VLM,QWEN,qwen3-vlm,D:/tmp/model/llama.cpp/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|D:/tm
 EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf
 RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )");
-#endif
 #else
 #endif
     caiwei::test::init_test();
