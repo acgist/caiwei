@@ -29,6 +29,7 @@ void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRe
     CW_LOG_I("thinking: %s", thinking.c_str());
     CW_LOG_I("toolcall_name: %s", toolcall_name.c_str());
     CW_LOG_I("toolcall_arguments: %s", toolcall_arguments.c_str());
+    CAIWEI_ASSERT(!content.empty() || !thinking.empty() || !toolcall_name.empty() || !toolcall_arguments.empty());
 }
 
 [[maybe_unused]]
@@ -119,12 +120,12 @@ void test_llm_thread() {
 
 int main() {
     #if ENABLE_CAIWEI_RUNTIME_RKNN3
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,/data/model/Qwen3-1.7B/Qwen3-1.7B.rknn|/data/model/Qwen3-1.7B/Qwen3-1.7B.weight|/data/model/Qwen3-1.7B/Qwen3-1.7B.embed.bin|/data/model/Qwen3-1.7B/Qwen3-1.7B.tokenizer.gguf");
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,/data/model/Qwen3-1.7B/Qwen3-1.7B.rknn|/data/model/Qwen3-1.7B/Qwen3-1.7B.weight|/data/model/Qwen3-1.7B/Qwen3-1.7B.embed.bin|/data/model/Qwen3-1.7B/Qwen3-1.7B.tokenizer.gguf)");
     #elif CAIWEI_OS_UNIX
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf");
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf)");
     #elif CAIWEI_OS_WIN
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf)");
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,D:/tmp/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf)");
     #else
     #endif
     caiwei::test::init_test();

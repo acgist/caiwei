@@ -18,5 +18,6 @@ if __name__ == "__main__":
     resp.raise_for_status()
     data = resp.json()
     print(data["usage"])
+    assert len(data["data"]) == 4
     for reranking in data["data"]:
         print(f"{reranking['index']} -> {reranking['score']:.4f}")

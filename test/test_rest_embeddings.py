@@ -19,6 +19,7 @@ if __name__ == "__main__":
         ],
     )
     print(resp.usage)
+    assert len(resp.data) == 4
     for embedding in resp.data:
         print(f"{embedding.index} -> len = {len(embedding.embedding)}")
     print(f"{cosine_similarity(resp.data[0].embedding, resp.data[1].embedding):.4f}")

@@ -15,6 +15,7 @@ def base64_file(file_path: str) -> str:
 
 def print_resp(stream, resp):
     usage = None
+    content = ""
     if stream:
         choices = {}
         for chunk in resp:
@@ -32,12 +33,16 @@ def print_resp(stream, resp):
         print("")
         for index, text in choices.items():
             print(f"choice[{index}] = {text}")
+            content += text
     else:
         for choice in resp.choices:
             print(f"choice[{choice.index}] = {choice.message.content}")
+            content += choice.message.content
         usage = resp.usage
-    if usage:
-        print(f"usage = {usage}")
+    assert usage
+    assert content
+    print(f"usage = {usage}")
+    print(f"content = {content}")
 
 
 def test_cls():
