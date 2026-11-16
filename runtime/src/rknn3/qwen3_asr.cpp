@@ -2,10 +2,6 @@
 #include "caiwei/audio_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
-#define N_FFT 400
-#define HOP_LENGTH 160
-#define DOWN_SAMPLE_RATE 8
-
 static int get_n_per_window_token(int window_size);
 static int get_n_left_token(int window_size, int n_frame);
 static int get_n_audio(int window_size, int n_frame);
@@ -141,7 +137,7 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         return false;
     }
     int ret = 0;
-    const int n_frame = std::floor((n_frames - N_FFT) / HOP_LENGTH ) + 1;
+    const int n_frame = std::floor((n_frames - N_FFT) / HOP_LENGTH) + 1;
     const int n_audio = get_n_audio(this->window_size, n_frame);
     const int n_prefix_token = this->prefix_token.size();
     const int n_suffix_token = this->suffix_token.size();

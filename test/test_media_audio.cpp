@@ -1,14 +1,10 @@
 #include "test.hpp"
 
-#define N_FFT 400
-#define HOP_LENGTH 160
-#define MEL_FILTERS_PATH "mel_128_filters.txt"
-
 [[maybe_unused]]
 void test_log_mel_spectrogram() {
     std::vector<uint8_t> audio_data;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
-    media_demuxer.open(
+    bool success = media_demuxer.open(
         caiwei::media::AUDIO_INFO_DECODE,
         caiwei::media::VIDEO_INFO_DECODE,
         [&audio_data](caiwei::media::AudioFrame& frame) {
@@ -19,17 +15,13 @@ void test_log_mel_spectrogram() {
             return true;
         }
     );
+    CAIWEI_ASSERT(success);
     const int n_mels = 128;
     std::vector<float> mel_filters{};
-    if (!caiwei::audio::load_mel_filters(n_mels, N_FFT, mel_filters)) {
-        return;
-    }
+    CAIWEI_ASSERT(caiwei::audio::load_mel_filters(n_mels, N_FFT, mel_filters));
     const int n_frames = audio_data.size() * sizeof(uint8_t) / sizeof(int16_t);
-    if (n_frames < (N_FFT + HOP_LENGTH) * 2) {
-        CW_LOG_W("音频数据长度不足: %d", n_frames);
-        return;
-    }
-    const int n_frame = std::floor((n_frames - N_FFT) / HOP_LENGTH ) + 1;
+    CAIWEI_ASSERT(n_frames >= (N_FFT + HOP_LENGTH) * 2);
+    const int n_frame = std::floor((n_frames - N_FFT) / HOP_LENGTH) + 1;
     std::vector<float> audio_data_f32(n_frames);
     const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio_data.data());
     std::transform(audio_data_ptr, audio_data_ptr + n_frames, audio_data_f32.data(), [](int16_t v) {
@@ -46,11 +38,8 @@ void test_log_mel_spectrogram() {
         n_frame * HOP_LENGTH,
         audio_feature
     );
-    if (!mel_success) {
-        CW_LOG_W("计算梅尔谱图失败");
-        return;
-    }
-    stbi_write_hdr("./log_mel_spectrogram.hdr", n_frame, n_mels, 1, audio_feature.data());
+    CAIWEI_ASSERT(mel_success);
+    CAIWEI_ASSERT(stbi_write_hdr("./log_mel_spectrogram.hdr", n_frame, n_mels, 1, audio_feature.data()) != 0);
 }
 
 int main() {

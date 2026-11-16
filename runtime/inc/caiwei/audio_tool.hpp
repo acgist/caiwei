@@ -3,6 +3,16 @@
 
 #include <vector>
 
+#ifndef N_FFT
+#define N_FFT 400
+#endif
+#ifndef HOP_LENGTH
+#define HOP_LENGTH 160
+#endif
+#ifndef DOWN_SAMPLE_RATE
+#define DOWN_SAMPLE_RATE 8
+#endif
+
 namespace caiwei {
 namespace audio  {
 

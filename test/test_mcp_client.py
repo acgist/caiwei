@@ -34,10 +34,16 @@ class MCPServer:
 
     async def close_mcp_server(self):
         print(f"关闭MCP Server: {self.url}")
-        if self.session:
-            await self.session.__aexit__(None, None, None)
-        if self.client:
-            await self.client.__aexit__(None, None, None)
+        try:
+            if self.session:
+                await self.session.__aexit__(None, None, None)
+        except Exception as e:
+            print(f"关闭MCP Server异常: {e}")
+        try:
+            if self.client:
+                await self.client.__aexit__(None, None, None)
+        except Exception as e:
+            print(f"关闭MCP Server异常: {e}")
 
 
 class MCPClient:
@@ -47,35 +53,59 @@ class MCPClient:
         self.mapping = {}
         for url in urls:
             mcpServer = MCPServer()
-            await mcpServer.init_mcp_server(url)
-            for tool in (await mcpServer.context.list_tools()).tools:
-                self.tools.append(
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": tool.name,
-                            "parameters": tool.input_schema,
-                            "description": tool.description,
-                        },
-                    }
-                )
-                self.mapping[tool.name] = mcpServer
-            self.servers.append(mcpServer)
+            try:
+                await mcpServer.init_mcp_server(url)
+                for tool in (await mcpServer.context.list_tools()).tools:
+                    self.tools.append(
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": tool.name,
+                                "description": tool.description,
+                                "parameters": tool.input_schema,
+                            },
+                        }
+                    )
+                    self.mapping[tool.name] = mcpServer
+                self.servers.append(mcpServer)
+            except Exception as e:
+                print(f"加载MCP Server异常: {e}")
+                await mcpServer.close_mcp_server()
         print(f"加载MCP Server完成: {len(self.servers)}")
 
     async def close_mcp_server(self):
         for server in self.servers:
-            try:
-                await server.close_mcp_server()
-            except Exception as e:
-                print(f"关闭MCP Server异常: {e}")
+            await server.close_mcp_server()
+
+    def tool_fill(self, tools_params, tool):
+        if tool.index not in tools_params:
+            tools_params[tool.index] = tool
+        if tool.id:
+            tools_params[tool.index].id = tool.id
+        if tool.function:
+            if tools_params[tool.index].function is None:
+                tools_params[tool.index].function = tool.function
+            if tool.function.name:
+                tools_params[tool.index].function.name = tool.function.name
+            if tool.function.arguments:
+                if tools_params[tool.index].function.arguments is None:
+                    tools_params[tool.index].function.arguments = ""
+                tools_params[tool.index].function.arguments += tool.function.arguments
+
+    def tool_text(self, content):
+        if content.type == "text":
+            return content.text
+        print(f"不支持的内容类型: {content}")
+        return ""
 
     async def call_tool(self, tools_params, messages):
         for _, tool in tools_params.items():
-            if not tool.function:
-                print(f"调用工具参数错误: {tool}")
-                continue
-            if not tool.function.name:
+            if (
+                not tool.id
+                and not tool.type
+                and not tool.function
+                and not tool.function.name
+            ):
                 print(f"调用工具参数错误: {tool}")
                 continue
             if tool.function.name not in self.mapping:
@@ -94,15 +124,30 @@ class MCPClient:
                     ),
                     timeout=120,
                 )
-                content = "".join(list(map(lambda v: v.text, response.content)))
+                content = "".join(
+                    list(map(lambda v: self.tool_text(v), response.content or []))
+                )
                 print(f"调用工具: {tool} - {content}")
                 messages.extend(
                     [
-                        {"role": "assistant", "content": None, "tool_calls": [tool]},
+                        {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "id": tool.id,
+                                    "type": tool.type,
+                                    "function": {
+                                        "name": tool.function.name,
+                                        "arguments": tool.function.arguments or "{}",
+                                    },
+                                }
+                            ],
+                        },
                         {
                             "role": "tool",
-                            "content": content,
                             "tool_call_id": tool.id,
+                            "content": content,
                         },
                     ]
                 )
@@ -110,7 +155,7 @@ class MCPClient:
                 print(f"调用工具异常: {tool} - {e}")
         return messages
 
-    async def chat(self, model, stream, messages):
+    async def chat(self, model, stream, messages, tool_call_count=0):
         params = {
             "model": model,
             "tools": self.tools,
@@ -135,21 +180,7 @@ class MCPClient:
                                 yield delta.content
                             if delta.tool_calls:
                                 for tool in delta.tool_calls:
-                                    if tool.index not in tools_params:
-                                        tools_params[tool.index] = tool
-                                    if tool.id:
-                                        tools_params[tool.index].id = tool.id
-                                    if tool.function:
-                                        if tool.function.name:
-                                            tools_params[tool.index].function.name = (
-                                                tool.function.name
-                                            )
-                                        if tool.function.arguments:
-                                            tools_params[
-                                                tool.index
-                                            ].function.arguments += (
-                                                tool.function.arguments
-                                            )
+                                    self.tool_fill(tools_params, tool)
                             if reason:
                                 print(f"会话完成: {reason} = {text}")
                                 if reason == "stop":
@@ -160,11 +191,19 @@ class MCPClient:
                                         }
                                     )
                                 elif reason == "tool_calls":
+                                    tool_call_count += 1
+                                    if tool_call_count > 8:
+                                        message = "工具调用次数超限"
+                                        messages.append(
+                                            {"role": "assistant", "content": message}
+                                        )
+                                        yield message
+                                        return
                                     messages = await self.call_tool(
                                         tools_params, messages
                                     )
                                     async for recursion_chunk in self.chat(
-                                        model, stream, messages
+                                        model, stream, messages, tool_call_count
                                     ):
                                         yield recursion_chunk
                                     break
@@ -188,8 +227,16 @@ class MCPClient:
                             }
                         )
                     elif reason == "tool_calls":
+                        tool_call_count += 1
+                        if tool_call_count > 8:
+                            message = "工具调用次数超限"
+                            messages.append({"role": "assistant", "content": message})
+                            yield message
+                            return
                         messages = await self.call_tool(tools_params, messages)
-                        async for recursion_chunk in self.chat(model, stream, messages):
+                        async for recursion_chunk in self.chat(
+                            model, stream, messages, tool_call_count
+                        ):
                             text += recursion_chunk
                     else:
                         print(f"其他结束原因: {reason}")
@@ -236,8 +283,8 @@ async def chat(model: str, message: str, stream: bool = True):
 
 
 async def main():
-    await mcpClient.init_mcp_server(["http://localhost:19091/sse"])
-    config = Config(app, host="0.0.0.0", port=18081)
+    await mcpClient.init_mcp_server(["http://localhost:19090/sse"])
+    config = Config(app, host="0.0.0.0", port=18080)
     server = Server(config)
     try:
         await server.serve()

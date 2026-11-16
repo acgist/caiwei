@@ -257,5 +257,6 @@ add_compile_definitions(
 add_subdirectory(runtime)
 add_subdirectory(server)
 if(ENABLE_CAIWEI_TEST)
+    enable_testing()
     add_subdirectory(test)
 endif()

@@ -13,6 +13,7 @@ BinPackParameters: false
 AccessModifierOffset: -4
 SpaceAfterCStyleCast: true
 PenaltyBreakAssignment: 9999
+PenaltyBreakBeforeMemberAccess: 9999
 ContinuationIndentWidth: 4
 EmptyLineBeforeAccessModifier: Never
 AlignAfterOpenBracket: BlockIndent

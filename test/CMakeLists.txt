@@ -1,7 +1,5 @@
 project(caiwei-test VERSION 1.0.0)
 
-enable_testing()
-
 if(CMAKE_HOST_UNIX)
     find_package(SDL2 QUIET)
 elseif(CMAKE_HOST_WIN32)
