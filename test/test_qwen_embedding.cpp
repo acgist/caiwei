@@ -6,7 +6,7 @@
 [[maybe_unused]]
 static float cosine_similarity(const std::vector<float>& a, const std::vector<float>& z) {
     if (a.empty() || z.empty() || a.size() != z.size()) {
-        return;
+        return 0.0F;
     }
     // clang-format off
     double dot    = 0.0;
@@ -24,7 +24,7 @@ static float cosine_similarity(const std::vector<float>& a, const std::vector<fl
     norm_a = std::sqrt(norm_a);
     norm_z = std::sqrt(norm_z);
     if (norm_a < 1e-8 || norm_z < 1e-8) {
-        return;
+        return 0.0F;
     }
     const float ret = static_cast<float>(dot / (norm_a * norm_z));
     CW_LOG_I("余弦相似度: %.2f", ret);
