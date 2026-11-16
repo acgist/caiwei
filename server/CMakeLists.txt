@@ -42,6 +42,7 @@ file(
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_RESOURCES} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+    COMMENT "server-copy-resources"
 )
 
 if(CMAKE_HOST_UNIX)
@@ -79,12 +80,14 @@ elseif(CMAKE_HOST_WIN32)
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_SERVER_DLLS} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+            COMMENT "server-copy-dlls-common"
         )
     endif()
     if(CAIWEI_SERVER_DLLS_DEBUG AND CAIWEI_SERVER_DLLS_RELEASE)
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<IF:$<CONFIG:Debug>,${CAIWEI_SERVER_DLLS_DEBUG},${CAIWEI_SERVER_DLLS_RELEASE}>" "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+            COMMENT "server-copy-dlls-custom"
             COMMAND_EXPAND_LISTS
             VERBATIM
         )

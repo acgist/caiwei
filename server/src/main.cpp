@@ -3,28 +3,29 @@
 #include "caiwei/rest.hpp"
 #include "caiwei/caiwei.hpp"
 
-#if CAIWEI_OS_WIN
-#include <Windows.h>
-#endif
 #include <atomic>
 #include <thread>
 #include <csignal>
 #include <cstring>
 
-static std::atomic<int> caiwei_signal{ 0 };
+#if CAIWEI_OS_WIN
+#include <Windows.h>
+#endif
+
+volatile static std::sig_atomic_t caiwei_signal{0};
 
 #if CAIWEI_OS_WIN
 static BOOL WINAPI on_signal(DWORD type) {
     switch (type) {
-    case CTRL_C_EVENT:
-    case CTRL_BREAK_EVENT:
-    case CTRL_CLOSE_EVENT:
-    case CTRL_LOGOFF_EVENT:
-    case CTRL_SHUTDOWN_EVENT:
-        caiwei_signal = 1;
-        return TRUE;
-    default:
-        return FALSE;
+        case CTRL_C_EVENT:
+        case CTRL_BREAK_EVENT:
+        case CTRL_CLOSE_EVENT:
+        case CTRL_LOGOFF_EVENT:
+        case CTRL_SHUTDOWN_EVENT:
+            caiwei_signal = 1;
+            return TRUE;
+        default:
+            return FALSE;
     }
 }
 #else
@@ -37,6 +38,7 @@ static void install_signal_handler() {
 #if CAIWEI_OS_WIN
     SetConsoleCtrlHandler(on_signal, TRUE);
 #else
+    // clang-format off
     struct sigaction sa{};
     sa.sa_flags   = SA_RESTART;
     sa.sa_handler = on_signal;
@@ -44,6 +46,7 @@ static void install_signal_handler() {
     sigaction(SIGHUP,  &sa, nullptr);
     sigaction(SIGINT,  &sa, nullptr);
     sigaction(SIGTERM, &sa, nullptr);
+    // clang-format on
 #endif
 }
 
@@ -65,8 +68,8 @@ int main(int argc, char* argv[]) {
         caiwei::stop();
         return 0;
     }
-    std::atomic<bool> running{ true };
-    std::atomic<bool> success{ true };
+    std::atomic<bool> running{true};
+    std::atomic<bool> success{true};
     std::jthread server_thread([&running, &success]() {
         caiwei::env::set_thread_name("rest-server");
         try {

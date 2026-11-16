@@ -59,9 +59,13 @@ foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)
     add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
     target_link_libraries(${TEST_NAME} ${PROJECT_NAME})
     set_target_properties(${TEST_NAME} PROPERTIES FOLDER "test")
+    add_dependencies(${TEST_NAME} test-copy-resources)
     if(CMAKE_HOST_UNIX)
         target_compile_options(${TEST_NAME} PUBLIC -Wall -Wextra)
     elseif(CMAKE_HOST_WIN32)
+        if(CAIWEI_TEST_DLLS_DEBUG AND CAIWEI_TEST_DLLS_RELEASE)
+            add_dependencies(${TEST_NAME} test-copy-dlls)
+        endif()
         target_compile_options(${TEST_NAME} PUBLIC $<$<COMPILE_LANGUAGE:C>:/W2> $<$<COMPILE_LANGUAGE:CXX>:/W2>)
     else()
         # -
@@ -77,12 +81,16 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/*.jpg"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp3"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp4"
+    "${CMAKE_SOURCE_DIR}/server/res/*.ico"
+    "${CMAKE_SOURCE_DIR}/server/res/*.txt"
 )
 
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
+add_custom_target(
+    "test-copy-resources" ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+    COMMENT "test-copy-resources"
 )
+set_target_properties("test-copy-resources" PROPERTIES FOLDER "test")
 
 if(CMAKE_HOST_UNIX)
     # -
@@ -90,12 +98,14 @@ elseif(CMAKE_HOST_WIN32)
     message(STATUS "CAIWEI_TEST_DLLS_DEBUG: ${CAIWEI_TEST_DLLS_DEBUG}")
     message(STATUS "CAIWEI_TEST_DLLS_RELEASE: ${CAIWEI_TEST_DLLS_RELEASE}")
     if(CAIWEI_TEST_DLLS_DEBUG AND CAIWEI_TEST_DLLS_RELEASE)
-        add_custom_command(
-            TARGET ${PROJECT_NAME} POST_BUILD
+        add_custom_target(
+            "test-copy-dlls" ALL
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<IF:$<CONFIG:Debug>,${CAIWEI_TEST_DLLS_DEBUG},${CAIWEI_TEST_DLLS_RELEASE}>" "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
+            COMMENT "test-copy-dlls"
             COMMAND_EXPAND_LISTS
             VERBATIM
         )
+        set_target_properties("test-copy-dlls" PROPERTIES FOLDER "test")
     endif()
 else()
     # -
