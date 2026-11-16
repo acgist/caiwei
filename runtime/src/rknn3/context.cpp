@@ -662,7 +662,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 std::fflush(stdout);
                 #endif
                 CW_LOG_D("采样结束: %d", token_id);
-                session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->n_prefill_tokens, session->n_generate_tokens });
+                session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->n_prefill_tokens, session->n_generate_tokens, session->toolcall_session });
                 session->stop = true;
                 session->condition.notify_one();
                 return 0;
@@ -703,7 +703,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
             session->condition.notify_one();
             return 0;
         }
-        session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->n_prefill_tokens, session->n_generate_tokens });
+        session->token_result.push_back(caiwei::text::CompletionResult{ session->thinking, session->toolcall, session->n_prefill_tokens, session->n_generate_tokens, session->toolcall_session });
         session->stop = true;
         session->condition.notify_one();
     } else if (state == RKLLM_RUN_STOP) {

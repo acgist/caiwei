@@ -182,8 +182,8 @@ class MCPClient:
                                 for tool in delta.tool_calls:
                                     self.tool_fill(tools_params, tool)
                             if reason:
-                                print(f"会话完成: {reason} = {text}")
                                 if reason == "stop":
+                                    print(f"会话完成: {reason} = {text}")
                                     messages.append(
                                         {
                                             "role": "assistant",

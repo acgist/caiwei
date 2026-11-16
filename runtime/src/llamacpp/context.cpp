@@ -506,7 +506,7 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             std::fflush(stdout);
             #endif
             CW_LOG_D("采样结束: %d", token_id);
-            co_yield caiwei::text::CompletionResult{ thinking, toolcall, n_prompt_tokens, generated_tokens };
+            co_yield caiwei::text::CompletionResult{ thinking, toolcall, n_prompt_tokens, generated_tokens, toolcall_session };
             break;
         }
         if (token_id == b_thinking) {
