@@ -14,9 +14,10 @@ void test_reranking() {
     auto ptr = caiwei::manager::get_context<caiwei::context::RerankingContext>("qwen3-reranking");
     CAIWEI_ASSERT(ptr);
     const auto ret = ptr->run(request);
-    CAIWEI_ASSERT(ret.result.size() == 4);
+    CAIWEI_ASSERT(ret.result.size() == request.documents.size());
     for (const auto& item : ret.result) {
         CW_LOG_I("reranking: %s", nlohmann::json(item).dump().c_str());
+        CAIWEI_ASSERT(!item.empty());
     }
     float a = ret.result[0][0];
     float b = ret.result[1][0];

@@ -40,11 +40,17 @@ void test_embedding() {
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     CAIWEI_ASSERT(ptr);
     const auto ret = ptr->run(request);
-    CAIWEI_ASSERT(ret.result.size() == 4);
+    if (std::holds_alternative<std::string>(request.input)) {
+        CAIWEI_ASSERT(ret.result.size() == 1);
+    } else {
+        CAIWEI_ASSERT(ret.result.size() == std::get<std::vector<std::string>>(request.input).size());
+    }
     for (const auto& item : ret.result) {
         CW_LOG_I("embedding: %zu", item.size());
     }
-    CAIWEI_ASSERT((ret.result.size() == std::get<std::vector<std::string>>(request.input).size()));
+    if (std::holds_alternative<std::string>(request.input)) {
+        return;
+    }
     float a = cosine_similarity(ret.result[0], ret.result[1]);
     float b = cosine_similarity(ret.result[0], ret.result[2]);
     float c = cosine_similarity(ret.result[0], ret.result[3]);

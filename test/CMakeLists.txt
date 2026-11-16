@@ -83,6 +83,7 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp4"
     "${CMAKE_SOURCE_DIR}/server/res/*.ico"
     "${CMAKE_SOURCE_DIR}/server/res/*.txt"
+    "${CMAKE_SOURCE_DIR}/server/res/*.html"
 )
 
 add_custom_target(

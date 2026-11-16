@@ -37,6 +37,7 @@ file(
     GLOB CAIWEI_RESOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/res/*.ico"
     "${CMAKE_CURRENT_SOURCE_DIR}/res/*.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/*.html"
 )
 
 add_custom_command(
@@ -46,7 +47,7 @@ add_custom_command(
 )
 
 if(CMAKE_HOST_UNIX)
-    install(DIRECTORY res/ DESTINATION bin FILES_MATCHING PATTERN "*.ico" PATTERN "*.txt")
+    install(DIRECTORY res/ DESTINATION bin FILES_MATCHING PATTERN "*.ico" PATTERN "*.txt" PATTERN "*.html")
     install(
         TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION lib
