@@ -4,7 +4,7 @@
 #include <vector>
 
 [[maybe_unused]]
-static void cosine_similarity(const std::vector<float>& a, const std::vector<float>& z) {
+static float cosine_similarity(const std::vector<float>& a, const std::vector<float>& z) {
     if (a.empty() || z.empty() || a.size() != z.size()) {
         return;
     }
@@ -28,6 +28,7 @@ static void cosine_similarity(const std::vector<float>& a, const std::vector<flo
     }
     const float ret = static_cast<float>(dot / (norm_a * norm_z));
     CW_LOG_I("余弦相似度: %.2f", ret);
+    return ret;
 }
 
 [[maybe_unused]]
@@ -39,16 +40,22 @@ void test_embedding() {
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     CAIWEI_ASSERT(ptr);
     const auto ret = ptr->run(request);
+    CAIWEI_ASSERT(ret.result.size() == 4);
     for (const auto& item : ret.result) {
         CW_LOG_I("embedding: %zu", item.size());
     }
     CAIWEI_ASSERT((ret.result.size() == std::get<std::vector<std::string>>(request.input).size()));
-    cosine_similarity(ret.result[0], ret.result[1]);
-    cosine_similarity(ret.result[0], ret.result[2]);
-    cosine_similarity(ret.result[0], ret.result[3]);
-    cosine_similarity(ret.result[1], ret.result[2]);
-    cosine_similarity(ret.result[1], ret.result[3]);
-    cosine_similarity(ret.result[2], ret.result[3]);
+    float a = cosine_similarity(ret.result[0], ret.result[1]);
+    float b = cosine_similarity(ret.result[0], ret.result[2]);
+    float c = cosine_similarity(ret.result[0], ret.result[3]);
+    float d = cosine_similarity(ret.result[1], ret.result[2]);
+    float e = cosine_similarity(ret.result[1], ret.result[3]);
+    float f = cosine_similarity(ret.result[2], ret.result[3]);
+    CAIWEI_ASSERT(a > b);
+    CAIWEI_ASSERT(a > c);
+    CAIWEI_ASSERT(a > d);
+    CAIWEI_ASSERT(a > e);
+    CAIWEI_ASSERT(a > f);
 }
 
 [[maybe_unused]]

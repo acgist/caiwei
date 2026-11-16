@@ -4,7 +4,7 @@
 #include <vector>
 
 [[maybe_unused]]
-void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
+void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request, bool not_empty = true) {
     CAIWEI_ASSERT(ptr);
     std::string content;
     for (const auto& value : ptr->run(request)) {
@@ -14,7 +14,11 @@ void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRe
         }
     }
     CW_LOG_I("content: %s", content.c_str());
-    CAIWEI_ASSERT(!content.empty());
+    if (not_empty) {
+        CAIWEI_ASSERT(!content.empty());
+    } else {
+        CAIWEI_ASSERT(content.empty());
+    }
 }
 
 [[maybe_unused]]
@@ -94,7 +98,7 @@ void test_vlm() {
     caiwei::test::caiwei_wait_enter();
     request.messages.clear();
     CW_LOG_I("测试空数据: %zu", request.messages.size());
-    vlm_run(ptr.get(), request);
+    vlm_run(ptr.get(), request, false);
     caiwei::test::caiwei_wait_enter();
 }
 

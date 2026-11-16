@@ -87,9 +87,9 @@ std::string caiwei::text::ChatTemplate::apply(
     nlohmann::json messages_json;
     nlohmann::json tools_json;
     nlohmann::json extra_context_json;
-    int audio_count = 0;
-    int image_count = 0;
-    int video_count = 0;
+    size_t audio_count = 0;
+    size_t image_count = 0;
+    size_t video_count = 0;
     for (const auto& message : request.messages) {
         nlohmann::json message_json;
         message_json["role"] = message.role.value_or(caiwei::text::ROLE_USER);
@@ -103,9 +103,9 @@ std::string caiwei::text::ChatTemplate::apply(
             if (std::holds_alternative<std::string>(message.content.value())) {
                 message_json["content"] = std::get<std::string>(message.content.value());
             } else {
-                int audio_index = 0;
-                int image_index = 0;
-                int video_index = 0;
+                size_t audio_index = 0;
+                size_t image_index = 0;
+                size_t video_index = 0;
                 nlohmann::json message_content_items_json;
                 const auto& message_content_items = std::get<std::vector<caiwei::text::CompletionsRequestMessageContentItem>>(message.content.value());
                 for (const auto& message_content_item : message_content_items) {
@@ -117,10 +117,18 @@ std::string caiwei::text::ChatTemplate::apply(
                             message_content_item_json["text"] = message_content_item.text.value_or("");
                         } else if (type == "audio" || type == "audio_url") {
                             audio_index++;
+                            if (audio_index > message.audio_data.size()) {
+                                CW_LOG_I("音频标签超出范围");
+                                continue;
+                            }
                             audio_count++;
                             message_content_item_json["text"] = audio_marker;
                         } else if (type == "image" || type == "image_url") {
                             image_index++;
+                            if (image_index > message.image_data.size()) {
+                                CW_LOG_I("图片标签超出范围");
+                                continue;
+                            }
                             image_count++;
                             std::string text;
                             if (add_vision_id) {
@@ -132,6 +140,10 @@ std::string caiwei::text::ChatTemplate::apply(
                             message_content_item_json["text"] = std::move(text);
                         } else if (type == "video" || type == "video_url") {
                             video_index++;
+                            if (video_index > message.video_data.size()) {
+                                CW_LOG_I("视频标签超出范围");
+                                continue;
+                            }
                             video_count++;
                             std::string text;
                             if (add_vision_id) {
@@ -150,7 +162,7 @@ std::string caiwei::text::ChatTemplate::apply(
                     }
                 }
                 for (size_t i = audio_index; i < message.audio_data.size(); ++i) {
-                    CW_LOG_D("音频标签不够自动填充");
+                    CW_LOG_I("音频标签不够自动填充");
                     audio_count++;
                     message_content_items_json.emplace_back(nlohmann::json({
                         {"type", "text"},
@@ -158,7 +170,7 @@ std::string caiwei::text::ChatTemplate::apply(
                     }));
                 }
                 for (size_t i = image_index; i < message.image_data.size(); ++i) {
-                    CW_LOG_D("图片标签不够自动填充");
+                    CW_LOG_I("图片标签不够自动填充");
                     image_count++;
                     std::string text;
                     if (add_vision_id) {
@@ -173,7 +185,7 @@ std::string caiwei::text::ChatTemplate::apply(
                     }));
                 }
                 for (size_t i = video_index; i < message.video_data.size(); ++i) {
-                    CW_LOG_D("视频标签不够自动填充");
+                    CW_LOG_I("视频标签不够自动填充");
                     video_count++;
                     std::string text;
                     if (add_vision_id) {
