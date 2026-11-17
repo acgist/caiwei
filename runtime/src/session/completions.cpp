@@ -67,7 +67,7 @@ std::string caiwei::session::CompletionsSession::get_sync() {
     } else if (context_info->type == caiwei::context::Type::VLM) {
         sync_vlm(request, response);
     } else {
-        throw caiwei::env::MessageCodeException("9999", "模型类型无效");
+        throw caiwei::env::MessageCodeException("3404", "模型类型无效");
     }
     return caiwei::text::to_json(response);
 }
@@ -110,12 +110,11 @@ bool caiwei::session::CompletionsSession::get() {
         } else if (context_info->type == caiwei::context::Type::VLM) {
             vlm_ptr = caiwei::manager::get_context<caiwei::context::VLMContext>(model);
         } else {
-            CW_LOG_W("模型类型无效: %s", context_info->type_name.c_str());
+            CW_LOG_W("模型类型无效: %s", get_type_name(context_info->type));
         }
     }
     if (cls_ptr == nullptr && det_ptr == nullptr && asr_ptr == nullptr && llm_ptr == nullptr && vlm_ptr == nullptr) {
-        callback_safe("没有可用模型", -1);
-        return false;
+        throw caiwei::env::MessageCodeException("3404", "没有可用模型");
     }
     const bool media_stream = this->request.media_url.has_value() && this->request.media_type.has_value();
     if (media_stream) {
@@ -156,8 +155,7 @@ bool caiwei::session::CompletionsSession::get() {
         image_frame_buffer.resize(YOLO_QUEUE_SIZE);
         video_frame_buffer.resize(vlm_frames);
         if (!enable_asr && !enable_vlm && !enable_yolo) {
-            callback_safe("没有可用媒体模型", -1);
-            return false;
+            throw caiwei::env::MessageCodeException("3404", "没有可用媒体模型");
         }
         if (enable_asr) {
             asr_thread = std::jthread(

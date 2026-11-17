@@ -60,7 +60,6 @@ inline const char* get_type_name(Type type) {
 
 struct ContextInfo {
     Type type = Type::NONE;
-    std::string type_name;
     std::string name;
     std::string path;
     std::string vendor;

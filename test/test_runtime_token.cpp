@@ -33,10 +33,7 @@ void test_tokenizer() {
     const std::string prompt = "<|im_start|>你好这是一个测试<think>think</think><tool_call>tool_call</tool_call><|im_end|>";
     std::vector<int32_t> tokens(64);
     const int length = tokenizer.tokenize(
-        prompt.data(),
-        static_cast<int32_t>(prompt.size()),
-        tokens.data(),
-        static_cast<int32_t>(tokens.size())
+        prompt.data(), static_cast<int32_t>(prompt.size()), tokens.data(), static_cast<int32_t>(tokens.size())
     );
     CAIWEI_ASSERT(length > 0);
     const std::string text = tokenizer.detokenize(tokens.data(), length);

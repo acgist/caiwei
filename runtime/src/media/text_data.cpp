@@ -202,7 +202,7 @@ void from_json(const nlohmann::json& json, CompletionsRequestMessageContent& con
         std::vector<CompletionsRequestMessageContentItem> vector = json;
         content = std::move(vector);
     } else {
-        throw caiwei::env::MessageCodeException("输入格式错误");
+        throw caiwei::env::MessageCodeException("1400", "输入格式错误");
     }
 }
 
@@ -287,7 +287,7 @@ caiwei::text::EmbeddingsRequest caiwei::text::json_to_embeddings(const std::stri
         caiwei::env::check_not_empty(input, "输入不能为空");
         request.input = std::move(input);
     } else {
-        throw caiwei::env::MessageCodeException("输入格式错误");
+        throw caiwei::env::MessageCodeException("1400", "输入格式错误");
     }
     return request;
 }
@@ -304,7 +304,7 @@ caiwei::text::RerankingsRequest caiwei::text::json_to_rerankings(const std::stri
         request.documents = documents_json.get<std::vector<std::string>>();
         caiwei::env::check_not_empty(request.documents, "文档不能为空");
     } else {
-        throw caiwei::env::MessageCodeException("文档格式错误");
+        throw caiwei::env::MessageCodeException("1400", "文档格式错误");
     }
     request.instruct = data.value("instruct", "");
     return request;

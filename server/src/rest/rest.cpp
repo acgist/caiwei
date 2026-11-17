@@ -209,14 +209,19 @@ static void register_handler() {
             std::string message;
             try {
                 std::rethrow_exception(std::move(e));
+            } catch (const nlohmann::json::exception& e) {
+                response.status = httplib::StatusCode::BadRequest_400;
+                message = caiwei::json::buildResponse("1400", "数据格式错误");
             } catch (const caiwei::env::MessageCodeException& e) {
+                response.status = e.status;
                 message = caiwei::json::buildResponse(e.code, e.message);
             } catch (const std::exception& e) {
+                response.status = httplib::StatusCode::InternalServerError_500;
                 message = caiwei::json::buildResponse("9999", e.what());
             } catch (...) {
+                response.status = httplib::StatusCode::InternalServerError_500;
                 message = caiwei::json::buildResponse("9999", "未知错误");
             }
-            response.status = httplib::StatusCode::InternalServerError_500;
             response.set_content(message, caiwei::rest::content::type::JSON);
         }
     );

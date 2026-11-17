@@ -84,12 +84,10 @@ int main() {
     );
 #elif CAIWEI_OS_WIN
     // caiwei::env::set(
-    //     "CAIWEI_CONTEXT_INFO",
-    //     R"(RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf)"
+    //     "CAIWEI_CONTEXT_INFO", R"(RERANKING,QWEN,qwen3-reranking,E:/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf)"
     // );
     caiwei::env::set(
-        "CAIWEI_CONTEXT_INFO",
-        R"(RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf)"
+        "CAIWEI_CONTEXT_INFO", R"(RERANKING,QWEN,qwen3-reranking,D:/tmp/model/llama.cpp/Qwen3-Reranker-0.6B-Q4_K_M.gguf)"
     );
 #else
 #endif

@@ -248,7 +248,6 @@ static void init_context_info_map() {
         }
         auto ret = map.insert_or_assign(name, caiwei::context::ContextInfo{
             iter->second,
-            type,
             name,
             path,
             vendor,

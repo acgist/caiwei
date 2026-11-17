@@ -118,12 +118,10 @@ int main() {
     );
 #elif CAIWEI_OS_WIN
     // caiwei::env::set(
-    //     "CAIWEI_CONTEXT_INFO",
-    //     R"(EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
+    //     "CAIWEI_CONTEXT_INFO", R"(EMBEDDING,QWEN,qwen3-embedding,E:/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
     // );
     caiwei::env::set(
-        "CAIWEI_CONTEXT_INFO",
-        R"(EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
+        "CAIWEI_CONTEXT_INFO", R"(EMBEDDING,QWEN,qwen3-embedding,D:/tmp/model/llama.cpp/Qwen3-Embedding-0.6B-Q4_K_M.gguf)"
     );
 #else
 #endif

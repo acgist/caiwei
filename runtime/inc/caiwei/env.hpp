@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <cstdlib>
 #include <concepts>
 #include <stdexcept>
 
@@ -20,11 +21,24 @@ namespace env    {
 
 class MessageCodeException : public std::runtime_error {
 public:
-    const std::string code;
+    int status;
+    std::string code;
     const std::string message;
 public:
-    MessageCodeException(std::string message) : std::runtime_error(message), code("9999"), message(std::move(message)) {}
-    MessageCodeException(std::string code, std::string message) : std::runtime_error(message), code(std::move(code)), message(std::move(message)) {}
+    MessageCodeException(std::string message) : std::runtime_error(message), code("9999"), message(std::move(message)) {
+        this->status = 500;
+    }
+    MessageCodeException(std::string code, std::string message) : std::runtime_error(message), code(std::move(code)), message(std::move(message)) {
+        if (this->code.size() != 4) {
+            this->code = "9999";
+            this->status = 500;
+        } else {
+            this->status = std::atoi(this->code.c_str()) % 1000;
+            if (this->status < 100 || this->status > 599) {
+                this->status = 500;
+            }
+        }
+    }
 };
 
 template<typename T>
@@ -36,27 +50,27 @@ concept Comparable = requires(T a, T z) {
 };
 
 template<Comparable T>
-inline void check_eq(const T& src, const T& dst, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_eq(const T& src, const T& dst, const std::string& message = "数据错误", const std::string& code = "1400") {
     if (src != dst) {
         throw MessageCodeException(code, message);
     }
 }
 
 template<Comparable T>
-inline void check_in(const T& val, const T& min, const T& max, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_in(const T& val, const T& min, const T& max, const std::string& message = "数据错误", const std::string& code = "1400") {
     if (val < min || val > max) {
         throw MessageCodeException(code, message);
     }
 }
 
 template<typename T>
-inline void check_not_empty(const T& value, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_not_empty(const T& value, const std::string& message = "数据错误", const std::string& code = "1400") {
     if (value.empty()) {
         throw MessageCodeException(code, message);
     }
 }
 
-inline void check_not_nullptr(const void* ptr, const std::string& message = "数据错误", const std::string& code = "9999") {
+inline void check_not_nullptr(const void* ptr, const std::string& message = "数据错误", const std::string& code = "1400") {
     if (ptr == nullptr) {
         throw MessageCodeException(code, message);
     }

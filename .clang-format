@@ -20,7 +20,7 @@ AlignAfterOpenBracket: BlockIndent
 AlignArrayOfStructures: None
 AlignConsecutiveAssignments: None
 AlignConsecutiveDeclarations: None
-AllowAllArgumentsOnNextLine: false
+AllowAllArgumentsOnNextLine: true
 AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortLambdasOnASingleLine: None

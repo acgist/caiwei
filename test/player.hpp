@@ -10,7 +10,7 @@ void stop_player();
 bool play_audio(const void* data, int len);
 bool play_video(const void* data, int len);
 
-} // player
-} // caiwei
+}  // namespace player
+}  // namespace caiwei
 
-#endif // CAIWEI_TEST_PLAYER_HPP
+#endif  // CAIWEI_TEST_PLAYER_HPP

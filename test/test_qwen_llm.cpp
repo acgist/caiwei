@@ -120,8 +120,7 @@ int main() {
     );
 #elif CAIWEI_OS_UNIX
     caiwei::env::set(
-        "CAIWEI_CONTEXT_INFO",
-        R"(LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf)"
+        "CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,/data/caiwei/deps/llama.cpp/Qwen3-1.7B/Qwen3-1.7B-Q4_K_M.gguf)"
     );
 #elif CAIWEI_OS_WIN
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", R"(LLM,QWEN,qwen3-llm,E:/model/llama.cpp/Qwen3-1.7B-Q4_K_M.gguf)");
