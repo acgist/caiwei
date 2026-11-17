@@ -68,7 +68,7 @@ static void get_models() {
             });
             // clang-format on
         }
-        response.set_content(caiwei::json::buildResponse(body), caiwei::rest::content::type::JSON);
+        response.set_content(caiwei::json::buildResponse(std::move(body)), caiwei::rest::content::type::JSON);
     });
 }
 
@@ -84,6 +84,7 @@ static void get_video_play() {
             return;
         }
         // clang-format off
+        // 如果线程紧张可以修改阻塞模式: 使用队列异步回调
         response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [
             url   = std::move(url),
             type  = std::move(type),
@@ -136,6 +137,7 @@ static void post_chat_completions() {
             return;
         }
         if (completions.stream) {
+            // 如果线程紧张可以修改阻塞模式: 使用队列异步回调
             response.set_chunked_content_provider(
                 caiwei::rest::content::type::EVENT,
                 [completions = std::move(completions)](size_t /* offset */, httplib::DataSink& sink) mutable -> bool {

@@ -182,7 +182,7 @@ static void register_handler() {
     });
     caiwei::rest::server->set_error_handler([](const httplib::Request& request, httplib::Response& response) {
         CW_LOG_W(
-            "系统错误: %s - [%zu] - %d - [%zu]",
+            "系统错误: %s - [%4zu] - %3d - [%4zu]",
             request.path.c_str(),
             request.body.size(),
             response.status,
@@ -200,7 +200,7 @@ static void register_handler() {
     caiwei::rest::server->set_exception_handler(
         [](const httplib::Request& request, httplib::Response& response, std::exception_ptr e) {
             CW_LOG_W(
-                "系统异常: %s - [%zu] - %d - [%zu]",
+                "系统异常: %s - [%4zu] - %3d - [%4zu]",
                 request.path.c_str(),
                 request.body.size(),
                 response.status,

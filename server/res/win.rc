@@ -8,8 +8,8 @@
 IDI_ICON1 ICON "logo.ico"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     1,0,0,0
-PRODUCTVERSION  1,0,0,0
+FILEVERSION     CAIWEI_VERSION_COMMA
+PRODUCTVERSION  CAIWEI_VERSION_COMMA
 FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
 #if CAIWEI_DEBUG
 FILEFLAGS       VS_FF_DEBUG
@@ -26,13 +26,13 @@ BEGIN
         BEGIN
             VALUE "CompanyName",      "acgist"
             VALUE "FileDescription",  "采薇"
-            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "FileVersion",      CAIWEI_VERSION
             VALUE "InternalName",     "采薇"
             VALUE "LegalCopyright",   "Copyright © 2026 acgist.com. All Rights Reserved."
             VALUE "LegalTrademarks",  "caiwei"
             VALUE "OriginalFilename", "caiwei-server.exe"
             VALUE "ProductName",      "采薇"
-            VALUE "ProductVersion",   "1.0.0.0"
+            VALUE "ProductVersion",   CAIWEI_VERSION
         END
     END
     BLOCK "VarFileInfo"

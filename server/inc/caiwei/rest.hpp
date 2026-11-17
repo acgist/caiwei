@@ -5,21 +5,23 @@ namespace httplib {
 
 class Server;
 
-} // httplib
+}  // namespace httplib
 
 namespace caiwei {
-namespace rest   {
+namespace rest {
 
 namespace content {
-namespace type    {
+namespace type {
 
-    inline constexpr const char* HTML  = "text/html; charset=utf-8";
-    inline constexpr const char* ICON  = "image/x-icon";
-    inline constexpr const char* JSON  = "application/json; charset=utf-8";
-    inline constexpr const char* EVENT = "text/event-stream";
+// clang-format off
+inline constexpr const char* HTML  = "text/html; charset=utf-8";
+inline constexpr const char* ICON  = "image/x-icon";
+inline constexpr const char* JSON  = "application/json; charset=utf-8";
+inline constexpr const char* EVENT = "text/event-stream; charset=utf-8";
+// clang-format on
 
-}; // type
-}; // content
+}  // namespace type
+}  // namespace content
 
 extern httplib::Server* server;
 
@@ -27,7 +29,7 @@ bool open();
 void stop();
 void register_api();
 
-} // rest
-} // caiwei
+}  // namespace rest
+}  // namespace caiwei
 
-#endif // CAIWEI_SERVER_REST_HPP
+#endif  // CAIWEI_SERVER_REST_HPP

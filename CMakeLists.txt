@@ -10,6 +10,8 @@ project(caiwei-project VERSION 1.0.0 LANGUAGES C CXX)
 # https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html
 # https://learn.microsoft.com/zh-cn/cpp/build/reference/compiler-options-listed-by-category
 
+message(STATUS "CAIWEI_VERSION: ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ENABLE_CAIWEI_TEST                "Build Test"     OFF) # 编译测试
@@ -269,6 +271,11 @@ endif()
 add_compile_definitions(
     CAIWEI_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     CAIWEI_LOG_LEVEL=$<IF:$<CONFIG:Debug>,D,I>
+)
+
+add_compile_definitions(
+    CAIWEI_VERSION="${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+    CAIWEI_VERSION_COMMA=${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0
 )
 
 add_subdirectory(runtime)
