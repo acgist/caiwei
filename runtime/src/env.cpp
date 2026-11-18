@@ -29,9 +29,7 @@ static std::vector<std::string> allow_media_type;
 
 std::atomic_uint32_t caiwei::env::id_index = 0;
 
-static std::unordered_set<std::string> security_config = {
-    "CAIWEI_PASSWORD"
-};
+static std::unordered_set<std::string> security_config = {"CAIWEI_PASSWORD"};
 
 static std::map<std::string, std::string> default_config = {
     // clang-format off
@@ -161,6 +159,17 @@ static std::map<std::string, std::string> default_config = {
     // LLAMACPP: LLM模型文件
     // LLAMACPP: LLM模型文件|ASR模型文件
     // LLAMACPP: LLM模型文件|VLM模型文件
+#if ENABLE_CAIWEI_BACKEND_RKNN
+    {"CAIWEI_CONTEXT_INFO", R"(
+CLS,YOLO,yolo26n-cls,yolo26n-cls.rknn
+DET,YOLO,yolo26n-det,yolo26n-det.rknn
+ASR,QWEN,qwen3-asr,Qwen3-ASR/llm/Qwen3-ASR-0.6B.rknn|Qwen3-ASR/llm/Qwen3-ASR-0.6B.weight|Qwen3-ASR/llm/Qwen3-ASR-0.6B.embed.bin|Qwen3-ASR/llm/Qwen3-ASR-0.6B.tokenizer.gguf|Qwen3-ASR/asr/Qwen3-ASR-0.6B.rknn|Qwen3-ASR/asr/Qwen3-ASR-0.6B.weight
+LLM,QWEN,qwen3-llm,Qwen3/Qwen3-1.7B.rknn|Qwen3/Qwen3-1.7B.weight|Qwen3/Qwen3-1.7B.embed.bin|Qwen3/Qwen3-1.7B.tokenizer.gguf
+VLM,QWEN,qwen3-vlm,Qwen3-VL/llm/Qwen3-VL-2B-Instruct.rknn|Qwen3-VL/llm/Qwen3-VL-2B-Instruct.weight|Qwen3-VL/llm/Qwen3-VL-2B-Instruct.embed.bin|Qwen3-VL/llm/Qwen3-VL-2B-Instruct.tokenizer.gguf|Qwen3-VL/vlm/Qwen3-VL-2B-Instruct.rknn|Qwen3-VL/vlm/Qwen3-VL-2B-Instruct.weight
+EMBEDDING,QWEN,qwen3-embedding,Qwen3-Embedding/Qwen3-Embedding-0.6B.rknn|Qwen3-Embedding/Qwen3-Embedding-0.6B.weight|Qwen3-Embedding/Qwen3-Embedding-0.6B.embed.bin|Qwen3-Embedding/Qwen3-Embedding-0.6B.tokenizer.gguf
+RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B.rknn|Qwen3-Reranker/Qwen3-Reranker-0.6B.weight|Qwen3-Reranker/Qwen3-Reranker-0.6B.embed.bin|Qwen3-Reranker/Qwen3-Reranker-0.6B.tokenizer.gguf
+    )"},
+#else
     {"CAIWEI_CONTEXT_INFO", R"(
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
 DET,YOLO,yolo26n-det,yolo26n-det.onnx
@@ -170,6 +179,7 @@ VLM,QWEN,qwen3-vlm,Qwen3-VL/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|Qwen3-VL/mmproj-Qwe
 EMBEDDING,QWEN,qwen3-embedding,Qwen3-Embedding/Qwen3-Embedding-0.6B-Q4_K_M.gguf
 RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )"},
+#endif
     // clang-format on
 };
 
