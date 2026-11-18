@@ -85,6 +85,39 @@ void cls_video() {
     caiwei::player::stop_player();
 }
 
+[[maybe_unused]]
+void cls_video_frame() {
+    auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
+    CAIWEI_ASSERT(ptr);
+    size_t cls_count = 0;
+    size_t frame_count = 0;
+    caiwei::media::MediaDemuxer media_demuxer("file", "./caiwei.mp4");
+    auto time_a = std::chrono::steady_clock::now();
+    bool success = media_demuxer.open(
+        caiwei::media::AUDIO_INFO_DECODE,
+        caiwei::media::VIDEO_INFO_DECODE,
+        [](caiwei::media::AudioFrame& /* frame */) {
+            return true;
+        },
+        [&ptr, &cls_count, &frame_count](caiwei::media::VideoFrame& frame) {
+            auto ret = ptr->run(frame);
+            cls_count += ret.size();
+            ++frame_count;
+            return true;
+        }
+    );
+    auto time_z = std::chrono::steady_clock::now();
+    auto milliseconds = std::chrono::duration_cast<std::chrono::duration<std::chrono::milliseconds>>(time_z - time_a).count();
+    CW_LOG_I(
+        "视频处理完成: %zu => %" PRId64 "ms / %zu = %.2f",
+        cls_count,
+        milliseconds,
+        frame_count,
+        1.0F * milliseconds / frame_count
+    );
+    CAIWEI_ASSERT(success);
+}
+
 int main(int argc, char* argv[]) {
 #if ENABLE_CAIWEI_RUNTIME_RKNN2
     // caiwei::env::set("CAIWEI_CONTEXT_INFO", "CLS,YOLO,yolo26n-cls,yolo26n-cls-rk3588-i8.rknn");
@@ -105,6 +138,7 @@ int main(int argc, char* argv[]) {
     // cls_image_thread(image_path);
     // cls_image_thread(image_path);
     // cls_video();
+    cls_video_frame();
     caiwei::test::stop_test();
     return 0;
 }

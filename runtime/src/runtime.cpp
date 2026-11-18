@@ -259,43 +259,36 @@ size_t caiwei::runtime::Runtime::optimize() {
 
 std::shared_ptr<caiwei::context::ClsContext>
 caiwei::runtime::Runtime::get_cls_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::DetContext>
 caiwei::runtime::Runtime::get_det_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::ASRContext>
 caiwei::runtime::Runtime::get_asr_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::LLMContext>
 caiwei::runtime::Runtime::get_llm_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::VLMContext>
 caiwei::runtime::Runtime::get_vlm_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::EmbeddingContext>
 caiwei::runtime::Runtime::get_embedding_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
 std::shared_ptr<caiwei::context::RerankingContext>
 caiwei::runtime::Runtime::get_reranking_context(const caiwei::context::ContextInfo* /* info */) {
-    CW_LOG_W("没有实现");
     return nullptr;
 }
 
