@@ -116,20 +116,20 @@ std::string caiwei::text::ChatTemplate::apply(
                         if (type == "text") {
                             message_content_item_json["text"] = message_content_item.text.value_or("");
                         } else if (type == "audio" || type == "audio_url") {
-                            audio_index++;
+                            ++audio_index;
                             if (audio_index > message.audio_data.size()) {
                                 CW_LOG_I("音频标签超出范围");
                                 continue;
                             }
-                            audio_count++;
+                            ++audio_count;
                             message_content_item_json["text"] = audio_marker;
                         } else if (type == "image" || type == "image_url") {
-                            image_index++;
+                            ++image_index;
                             if (image_index > message.image_data.size()) {
                                 CW_LOG_I("图片标签超出范围");
                                 continue;
                             }
-                            image_count++;
+                            ++image_count;
                             std::string text;
                             if (add_vision_id) {
                                 text += "Picture ";
@@ -139,12 +139,12 @@ std::string caiwei::text::ChatTemplate::apply(
                             text += image_marker;
                             message_content_item_json["text"] = std::move(text);
                         } else if (type == "video" || type == "video_url") {
-                            video_index++;
+                            ++video_index;
                             if (video_index > message.video_data.size()) {
                                 CW_LOG_I("视频标签超出范围");
                                 continue;
                             }
-                            video_count++;
+                            ++video_count;
                             std::string text;
                             if (add_vision_id) {
                                 text += "Video ";
@@ -163,7 +163,7 @@ std::string caiwei::text::ChatTemplate::apply(
                 }
                 for (size_t i = audio_index; i < message.audio_data.size(); ++i) {
                     CW_LOG_I("音频标签不够自动填充");
-                    audio_count++;
+                    ++audio_count;
                     message_content_items_json.emplace_back(nlohmann::json({
                         {"type", "text"},
                         {"text", audio_marker}
@@ -171,7 +171,7 @@ std::string caiwei::text::ChatTemplate::apply(
                 }
                 for (size_t i = image_index; i < message.image_data.size(); ++i) {
                     CW_LOG_I("图片标签不够自动填充");
-                    image_count++;
+                    ++image_count;
                     std::string text;
                     if (add_vision_id) {
                         text += "Picture ";
@@ -186,7 +186,7 @@ std::string caiwei::text::ChatTemplate::apply(
                 }
                 for (size_t i = video_index; i < message.video_data.size(); ++i) {
                     CW_LOG_I("视频标签不够自动填充");
-                    video_count++;
+                    ++video_count;
                     std::string text;
                     if (add_vision_id) {
                         text += "Video ";

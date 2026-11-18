@@ -368,9 +368,9 @@ static void caiwei_llama_log(enum ggml_log_level level, const char* text, void* 
     }
     if (text[n - 1] == '\n') {
         if (n > 1 && text[n - 2] == '\r') {
-            n--;
+            --n;
         }
-        n--;
+        --n;
     }
     if (level == GGML_LOG_LEVEL_DEBUG) {
         CW_LOG_D("%.*s", static_cast<int>(n), text);

@@ -256,7 +256,7 @@ bool caiwei::context::RKNN3Context::init_media_tensors() {
         return false;
     }
     this->media_input.resize(io_num.n_input);
-    for (uint32_t i = 0; i < io_num.n_input; i++) {
+    for (uint32_t i = 0; i < io_num.n_input; ++i) {
         auto& tensor = this->media_input[i];
         if (!init_tensor(this->media_context, tensor, i, RKNN3_QUERY_INPUT_ATTR, "媒体输入", 0)) {
             return false;
@@ -268,7 +268,7 @@ bool caiwei::context::RKNN3Context::init_media_tensors() {
         }
     }
     this->media_output.resize(io_num.n_output);
-    for (uint32_t i = 0; i < io_num.n_output; i++) {
+    for (uint32_t i = 0; i < io_num.n_output; ++i) {
         auto& tensor = this->media_output[i];
         if (!init_tensor(this->media_context, tensor, i, RKNN3_QUERY_OUTPUT_ATTR, "媒体输出", 0)) {
             return false;
@@ -806,14 +806,14 @@ void caiwei::context::rknn3_perf_session_print(rknn3_session* session, caiwei::c
 
 void caiwei::context::rknn3_dump_tensor_attr(const char* name, rknn3_tensor_attr* attr) {
     std::string shape = "";
-    for (uint32_t j = 0; j < attr->n_dims; j++) {
+    for (uint32_t j = 0; j < attr->n_dims; ++j) {
         shape += std::to_string(attr->shape[j]);
         if (j < attr->n_dims - 1) {
             shape += ", ";
         }
     }
     std::string stride = "";
-    for (uint32_t j = 0; j < attr->n_stride; j++) {
+    for (uint32_t j = 0; j < attr->n_stride; ++j) {
         stride += std::to_string(attr->stride[j]);
         if (j < attr->n_stride - 1) {
             stride += ", ";

@@ -166,12 +166,12 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(std::s
     for (const auto& message : request.messages) {
         for (const auto& image : message.image_data) {
             data_list.emplace_back(&image, nullptr);
-            image_count++;
+            ++image_count;
         }
         for (const auto& video : message.video_data) {
             data_list.emplace_back(nullptr, &video);
             frame_count += video.size();
-            video_count++;
+            ++video_count;
         }
     }
     CW_LOG_D("图片数量: %" PRIu64 " 视频数量: %" PRIu64 " 视频帧数: %" PRIu64, image_count, video_count, frame_count);

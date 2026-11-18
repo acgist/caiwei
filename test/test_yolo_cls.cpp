@@ -106,10 +106,11 @@ void cls_video_frame() {
             return true;
         }
     );
+    CAIWEI_ASSERT(frame_count > 0);
     auto time_z = std::chrono::steady_clock::now();
-    auto milliseconds = std::chrono::duration_cast<std::chrono::duration<std::chrono::milliseconds>>(time_z - time_a).count();
+    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(time_z - time_a).count();
     CW_LOG_I(
-        "视频处理完成: %zu => %" PRId64 "ms / %zu = %.2f",
+        "视频处理完成: %zu => %" PRId64 " ms / %zu = %.2f ms",
         cls_count,
         milliseconds,
         frame_count,

@@ -75,7 +75,7 @@ inline void f32_to_fp16(uint16_t* __restrict dst, const float* __restrict src, i
         __m128i vh = _mm256_cvtps_ph(vf, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
         _mm_storeu_si128((__m128i*) (dst + i), vh);
     }
-    for (; i < count; i++) {
+    for (; i < count; ++i) {
         __m128  vf = _mm_set_ss(src[i]);
         __m128i vh = _mm_cvtps_ph(vf, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
         dst[i] = (uint16_t) _mm_extract_epi16(vh, 0);
@@ -89,7 +89,7 @@ inline void fp16_to_f32(float* __restrict dst, const uint16_t* __restrict src, i
         __m256  vf = _mm256_cvtph_ps(vh);
         _mm256_storeu_ps(dst + i, vf);
     }
-    for (; i < count; i++) {
+    for (; i < count; ++i) {
         __m128i vh = _mm_set1_epi16(src[i]);
         __m128  vf = _mm_cvtph_ps(vh);
         dst[i] = _mm_cvtss_f32(vf);

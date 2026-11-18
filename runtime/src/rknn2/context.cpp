@@ -222,7 +222,7 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
 
 static void print_tensor_info(const char* title, const rknn_tensor_attr& attr) {
     std::string shape{};
-    for (uint32_t j = 0; j < attr.n_dims; j++) {
+    for (uint32_t j = 0; j < attr.n_dims; ++j) {
         shape += std::to_string(attr.dims[j]);
         if (j < attr.n_dims - 1) {
             shape += ", ";

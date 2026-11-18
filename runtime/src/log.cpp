@@ -2,6 +2,7 @@
 
 #include <array>
 #include <ctime>
+#include <cstdio>
 #include <string>
 #include <cstdarg>
 #include <cstring>
@@ -16,14 +17,14 @@
 #endif
 
 #ifdef CAIWEI_LOG_LEVEL
-static caiwei::log::Level level = caiwei::log::Level::CAIWEI_LOG_LEVEL;
+inline static caiwei::log::Level caiwei_level = caiwei::log::Level::CAIWEI_LOG_LEVEL;
 #else
-static caiwei::log::Level level = caiwei::log::Level::D;
+inline static caiwei::log::Level caiwei_level = caiwei::log::Level::D;
 #endif
 
-inline constexpr int MESSAGE_SIZE = 2048;
+inline static constexpr int MESSAGE_SIZE = 2048;
 
-inline uint64_t thread_id() {
+inline static uint64_t thread_id() {
 #if CAIWEI_OS_WIN
     return static_cast<uint64_t>(GetCurrentThreadId());
 #elif CAIWEI_OS_UNIX
@@ -33,7 +34,8 @@ inline uint64_t thread_id() {
 #endif
 }
 
-inline const char* format_level(caiwei::log::Level level) {
+inline static const char* format_level(caiwei::log::Level level) {
+    // clang-format off
     switch (level) {
     case caiwei::log::Level::D: return "D";
     case caiwei::log::Level::I: return "I";
@@ -41,37 +43,40 @@ inline const char* format_level(caiwei::log::Level level) {
     case caiwei::log::Level::E: return "E";
     default                   : return "?";
     }
+    // clang-format on
 }
 
 void caiwei::log::set_log_level(caiwei::log::Level level) {
-    ::level = level;
+    caiwei_level = level;
 }
 
 void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc, const char* fmt, ...) {
-    if (level < ::level) {
+    if (level < caiwei_level) {
         return;
     }
     // 日志时间
+    // clang-format off
     thread_local char        time_buf[16] = {};
     thread_local std::time_t time_old     = 0;
+    // clang-format on
     time_t time_now = std::time(nullptr);
     if (time_now != time_old) {
         time_old = time_now;
         struct tm time_tm{};
-        #if CAIWEI_OS_WIN
+#if CAIWEI_OS_WIN
         localtime_s(&time_tm, &time_now);
-        #else
+#else
         localtime_r(&time_now, &time_tm);
-        #endif
+#endif
         std::strftime(time_buf, sizeof(time_buf), "%m-%d %H:%M:%S", &time_tm);
     }
     // 文件名称
     const char* file = loc.file_name();
-    #if CAIWEI_OS_WIN
+#if CAIWEI_OS_WIN
     const char* name = std::strrchr(file, '\\');
-    #else
+#else
     const char* name = std::strrchr(file, '/');
-    #endif
+#endif
     if (name == nullptr) {
         name = file;
     } else {
@@ -96,13 +101,18 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
         message[message.size() - 2] = '.';
         message[message.size() - 1] = '\0';
     }
-    #if CAIWEI_DEBUG
+    thread_local uint64_t tid = thread_id();
+    FILE* stream = nullptr;
+#if CAIWEI_DEBUG
     if (level == caiwei::log::Level::D || level == caiwei::log::Level::I) {
-    #else
+#else
     if (level == caiwei::log::Level::I) {
-    #endif
-        std::fprintf(stdout, "[%s] %s [%" PRIu64 "] %-16s:%4u | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
+#endif
+        stream = stdout;
     } else {
-        std::fprintf(stderr, "[%s] %s [%" PRIu64 "] %-16s:%4u | %s\n", format_level(level), time_buf, thread_id(), name, loc.line(), message.data()); 
+        stream = stderr;
     }
+    std::fprintf(
+        stream, "[%s] %s [%" PRIu64 "] %-16s:%4u | %s\n", format_level(level), time_buf, tid, name, loc.line(), message.data()
+    );
 }
