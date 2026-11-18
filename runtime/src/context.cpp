@@ -19,7 +19,7 @@ caiwei::context::Context::Context(
 ) : type(type),
     id(caiwei::env::id()),
     ref_count(0),
-    last_run_time(std::chrono::steady_clock::now()),
+    last_run_time(caiwei::env::steady_timestamp()),
     runtime(runtime) {
     CW_LOG_D("创建context: %s", this->id.c_str());
 }

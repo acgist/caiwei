@@ -1,6 +1,7 @@
 #ifndef CAIWEI_RUNTIME_MANAGER_HPP
 #define CAIWEI_RUNTIME_MANAGER_HPP
 
+#include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
@@ -22,10 +23,9 @@
 namespace caiwei  {
 namespace manager {
 
-extern std::atomic<bool> available;
-
 void init();
 void stop();
+bool is_available();
 
 template <typename C>
 class ContextWrapper {
@@ -65,7 +65,7 @@ C* caiwei::manager::ContextWrapper<C>::ptr() {
 
 template <typename C>
 typename C::O caiwei::manager::ContextWrapper<C>::run(const I& input) {
-    this->context->last_run_time = std::chrono::steady_clock::now();
+    this->context->last_run_time.store(caiwei::env::steady_timestamp(), std::memory_order_relaxed);
     return this->context->run(input);
 }
 
@@ -107,7 +107,7 @@ inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::
 template <typename C>
 std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
     static_assert(requires { C::TYPE; }, "子类没有指定类型");
-    if (!available.load(std::memory_order_acquire)) {
+    if (!is_available()) {
         CW_LOG_I("系统还未准备就绪");
         return nullptr;
     }

@@ -24,12 +24,15 @@
 std::shared_mutex caiwei::runtime::runtime_mutex;
 std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> caiwei::runtime::runtime_map;
 
+// clang-format off
 static std::mutex              runtime_optimize_mutex;
 static std::jthread            runtime_optimize_thread;
 static std::condition_variable runtime_optimize_cv;
+// clang-format on
 
 static void runtime_optimize_timer();
 
+// clang-format off
 caiwei::runtime::Runtime::Runtime(
     int min_pool,
     int max_pool,
@@ -44,6 +47,10 @@ caiwei::runtime::Runtime::Runtime(
     keepalive(std::clamp(keepalive, 60, 3600)),
     share(share),
     type(type) {
+    // clang-format on
+    if (this->min_pool > this->max_pool) {
+        this->max_pool = this->min_pool;
+    }
     CW_LOG_I("创建runtime: %s => %s", get_type_name(this->type), id.c_str());
 }
 
@@ -62,20 +69,33 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             if (context->ref_count >= this->max_pool) {
                 continue;
             }
-            CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+            CW_LOG_D(
+                "返回context: %s = %s = %zu => %s",
+                get_type_name(this->type),
+                info->name.c_str(),
+                content_list.size(),
+                context->id.c_str()
+            );
             context->ref_count++;
             return context;
         } else {
             if (context->ref_count > 0) {
                 continue;
             }
-            CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+            CW_LOG_D(
+                "返回context: %s = %s = %zu => %s",
+                get_type_name(this->type),
+                info->name.c_str(),
+                content_list.size(),
+                context->id.c_str()
+            );
             context->ref_count++;
             return context;
         }
     }
-    std::shared_ptr<caiwei::context::Context> ptr{ nullptr };
+    std::shared_ptr<caiwei::context::Context> ptr{nullptr};
     if (content_list.size() < static_cast<size_t>(this->max_pool)) {
+        // clang-format off
         switch (info->type) {
         case caiwei::context::Type::CLS: ptr = this->get_cls_context(info); break;
         case caiwei::context::Type::DET: ptr = this->get_det_context(info); break;
@@ -86,6 +106,7 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         case caiwei::context::Type::RERANKING: ptr = this->get_reranking_context(info); break;
         default: break;
         }
+        // clang-format on
         if (ptr == nullptr) {
             // 日志记录manager.get_context
             return nullptr;
@@ -104,9 +125,21 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             CW_LOG_E("加载context异常: %s = %s", get_type_name(this->type), info->name.c_str());
             return nullptr;
         }
-        CW_LOG_I("新建context成功: %s = %s = %zu = %s", get_type_name(this->type), info->name.c_str(), content_list.size(), ptr->id.c_str());
+        CW_LOG_I(
+            "新建context成功: %s = %s = %zu = %s",
+            get_type_name(this->type),
+            info->name.c_str(),
+            content_list.size(),
+            ptr->id.c_str()
+        );
         content_list.push_back(ptr);
-        CW_LOG_D("返回context: %s = %s = %zu = %s", get_type_name(this->type), info->name.c_str(), content_list.size(), ptr->id.c_str());
+        CW_LOG_D(
+            "返回context: %s = %s = %zu = %s",
+            get_type_name(this->type),
+            info->name.c_str(),
+            content_list.size(),
+            ptr->id.c_str()
+        );
         ptr->ref_count++;
         return ptr;
     } else {
@@ -124,14 +157,26 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
                 if (context->ref_count >= this->max_pool) {
                     continue;
                 }
-                CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+                CW_LOG_D(
+                    "返回context: %s = %s = %zu => %s",
+                    get_type_name(this->type),
+                    info->name.c_str(),
+                    content_list.size(),
+                    context->id.c_str()
+                );
                 context->ref_count++;
                 return context;
             } else {
                 if (context->ref_count > 0) {
                     continue;
                 }
-                CW_LOG_D("返回context: %s = %s = %zu => %s", get_type_name(this->type), info->name.c_str(), content_list.size(), context->id.c_str());
+                CW_LOG_D(
+                    "返回context: %s = %s = %zu => %s",
+                    get_type_name(this->type),
+                    info->name.c_str(),
+                    content_list.size(),
+                    context->id.c_str()
+                );
                 context->ref_count++;
                 return context;
             }
@@ -145,9 +190,9 @@ void caiwei::runtime::Runtime::put_context(std::shared_ptr<caiwei::context::Cont
     if (context == nullptr) {
         return;
     }
-    CW_LOG_D("回收context: %s", context->id.c_str());
     std::lock_guard<std::mutex> lock(this->mutex);
     if (context->ref_count > 0) {
+        CW_LOG_D("回收context: %s", context->id.c_str());
         context->ref_count--;
     } else {
         CW_LOG_W("回收context计数失败: %s = %d", context->id.c_str(), context->ref_count.load());
@@ -160,13 +205,14 @@ size_t caiwei::runtime::Runtime::optimize() {
     std::unique_lock<std::mutex> lock(this->mutex, std::defer_lock);
     if (lock.try_lock()) {
         CW_LOG_D("优化runtime开始: %s => %zu", get_type_name(this->type), this->context_map.size());
-        const auto now = std::chrono::steady_clock::now();
+        const auto now = caiwei::env::steady_timestamp();
         for (auto map_iter = this->context_map.begin(); map_iter != this->context_map.end();) {
             auto& context_name = map_iter->first;
             auto& content_list = map_iter->second;
             CW_LOG_D("优化context信息: %s = %s => %zu", get_type_name(this->type), context_name.c_str(), content_list.size());
             if (content_list.size() <= static_cast<size_t>(this->min_pool)) {
-                if (content_list.size() <= 0) {
+                if (content_list.empty()) {
+                    CW_LOG_D("优化context淘汰: %s = %s", get_type_name(this->type), context_name.c_str());
                     map_iter = this->context_map.erase(map_iter);
                 } else {
                     ++map_iter;
@@ -180,16 +226,23 @@ size_t caiwei::runtime::Runtime::optimize() {
                     ++context_iter;
                     continue;
                 }
-                const auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - ptr->last_run_time).count();
+                const auto duration = (now - ptr->last_run_time.load(std::memory_order_relaxed)) / 1000;
                 if (duration > this->keepalive) {
-                    CW_LOG_I("优化context实例: %s = %s = %s => %" PRId64, get_type_name(this->type), context_name.c_str(), ptr->id.c_str(), duration);
+                    CW_LOG_I(
+                        "优化context过期: %s = %s = %s => %" PRId64,
+                        get_type_name(this->type),
+                        context_name.c_str(),
+                        ptr->id.c_str(),
+                        duration
+                    );
                     context_iter = content_list.erase(context_iter);
                 } else {
                     ++context_iter;
                 }
             }
             CW_LOG_D("优化context完成: %s = %s => %zu", get_type_name(this->type), context_name.c_str(), content_list.size());
-            if (content_list.size() <= 0) {
+            if (content_list.empty()) {
+                CW_LOG_D("优化context淘汰: %s = %s", get_type_name(this->type), context_name.c_str());
                 map_iter = this->context_map.erase(map_iter);
             } else {
                 ++map_iter;
@@ -204,31 +257,45 @@ size_t caiwei::runtime::Runtime::optimize() {
     }
 }
 
-std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::Runtime::get_cls_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::ClsContext>
+caiwei::runtime::Runtime::get_cls_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
-std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::Runtime::get_det_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::DetContext>
+caiwei::runtime::Runtime::get_det_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
-std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::Runtime::get_asr_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::ASRContext>
+caiwei::runtime::Runtime::get_asr_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
-std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::Runtime::get_llm_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::LLMContext>
+caiwei::runtime::Runtime::get_llm_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
-std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::Runtime::get_vlm_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::VLMContext>
+caiwei::runtime::Runtime::get_vlm_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
-std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::Runtime::get_embedding_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::EmbeddingContext>
+caiwei::runtime::Runtime::get_embedding_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
-std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::Runtime::get_reranking_context(const caiwei::context::ContextInfo* /* info */) {
+std::shared_ptr<caiwei::context::RerankingContext>
+caiwei::runtime::Runtime::get_reranking_context(const caiwei::context::ContextInfo* /* info */) {
+    CW_LOG_W("没有实现");
     return nullptr;
 }
 
@@ -246,18 +313,18 @@ static void init_onnxruntime();
 #endif
 
 void caiwei::runtime::init() {
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     init_rknn2();
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
     init_rknn3();
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
     init_llamacpp();
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
     init_onnxruntime();
-    #endif
+#endif
     runtime_optimize_timer();
 }
 
@@ -313,7 +380,7 @@ static void caiwei_llama_log(enum ggml_log_level level, const char* text, void* 
         n--;
     }
     if (level == GGML_LOG_LEVEL_DEBUG) {
-//      CW_LOG_D("%.*s", static_cast<int>(n), text);
+        CW_LOG_D("%.*s", static_cast<int>(n), text);
     } else if (level == GGML_LOG_LEVEL_INFO) {
         CW_LOG_I("%.*s", static_cast<int>(n), text);
     } else if (level == GGML_LOG_LEVEL_WARN) {
@@ -326,13 +393,14 @@ static void caiwei_llama_log(enum ggml_log_level level, const char* text, void* 
 }
 
 static void init_llamacpp() {
+    // clang-format off
     llama_log_set      (caiwei_llama_log, nullptr);
-//  mtmd_log_set       (caiwei_llama_log, nullptr);
     mtmd_helper_log_set(caiwei_llama_log, nullptr);
+    // clang-format on
     ggml_backend_load_all();
     CW_LOG_I("llama.cpp版本信息: %s", ggml_version());
-    const size_t backend_count = ggml_backend_reg_count();
-    for (size_t i = 0; i < backend_count; ++i) {
+    const size_t backend_reg_count = ggml_backend_reg_count();
+    for (size_t i = 0; i < backend_reg_count; ++i) {
         ggml_backend_reg* reg = ggml_backend_reg_get(i);
         if (reg == nullptr) {
             continue;
@@ -346,7 +414,7 @@ static void init_llamacpp() {
 static void init_onnxruntime() {
     CW_LOG_I("ONNXRuntime版本信息: %s", Ort::GetVersionString().c_str());
     CW_LOG_I("ONNXRuntime构建信息: %s", Ort::GetBuildInfoString().c_str());
-    for(const auto& provider : Ort::GetAvailableProviders()) {
+    for (const auto& provider : Ort::GetAvailableProviders()) {
         CW_LOG_I("ONNXRuntime支持后端: %s", provider.c_str());
     }
 }

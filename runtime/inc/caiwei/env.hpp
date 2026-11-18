@@ -98,12 +98,16 @@ const std::vector<std::string>& get_allow_path();
 const std::vector<std::string>& get_allow_host();
 const std::vector<std::string>& get_allow_media_type();
 
-inline uint64_t timestamp() {
+inline int64_t timestamp() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-inline uint64_t unix_timestamp() {
+inline int64_t unix_timestamp() {
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+inline int64_t steady_timestamp() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 inline std::string id() {

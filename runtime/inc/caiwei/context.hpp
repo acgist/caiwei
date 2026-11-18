@@ -71,7 +71,7 @@ public:
     const Type type;
     const std::string id;
     std::atomic_int32_t ref_count;
-    std::chrono::steady_clock::time_point last_run_time;
+    std::atomic<int64_t> last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
 public:

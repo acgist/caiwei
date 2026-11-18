@@ -101,7 +101,7 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
         #endif
         auto& node_dims = this->input_node_dims[index];
         auto shape = info.GetShape();
-        if (shape.size() == 0) {
+        if (shape.empty()) {
             shape.assign(node_dims.begin(), node_dims.end());
         } else if (shape.size() == node_dims.size()) {
             for (size_t i = 0; i < shape.size(); ++i) {
