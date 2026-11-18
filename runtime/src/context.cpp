@@ -133,13 +133,13 @@ std::vector<const caiwei::context::ContextInfo*> caiwei::context::get_all_contex
     return ret;
 }
 
-bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
+bool caiwei::context::check_model_path(const ContextInfo* info, size_t size) {
     if (info == nullptr) {
         return false;
     }
     if (size == 0) {
         std::error_code error_code;
-        if (!std::filesystem::exists(info->path, error_code)) {
+        if (!std::filesystem::is_regular_file(info->path, error_code)) {
             if (error_code) {
                 CW_LOG_W("模型文件无效: %s = %s", info->path.c_str(), error_code.message().c_str());
             } else {
@@ -148,14 +148,14 @@ bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
             return false;
         }
         return true;
-    } else if (size > 0) {
-        if (info->path_list.size() != static_cast<size_t>(size)) {
-            CW_LOG_W("模型文件配置错误: %d => %s", size, info->path.c_str());
+    } else {
+        if (size != info->path_list.size()) {
+            CW_LOG_W("模型文件配置错误: %s => %zu != %zu", info->path.c_str(), size, info->path_list.size());
             return false;
         }
         for (const auto& path : info->path_list) {
             std::error_code error_code;
-            if (!std::filesystem::exists(path, error_code)) {
+            if (!std::filesystem::is_regular_file(path, error_code)) {
                 if (error_code) {
                     CW_LOG_W("模型文件无效: %s = %s", path.c_str(), error_code.message().c_str());
                 } else {
@@ -165,9 +165,6 @@ bool caiwei::context::check_model_path(const ContextInfo* info, int size) {
             }
         }
         return true;
-    } else {
-        CW_LOG_W("模型文件访问错误: %d", size);
-        return false;
     }
 }
 
@@ -258,6 +255,9 @@ static void init_context_info_map() {
         } else {
             CW_LOG_I("模型配置重复: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());
         }
+        // 启动不验证模型文件数量是否正确只验证所有模型文件是否正确
+        auto& info = ret.first->second;
+        caiwei::context::check_model_path(&info, info.path_list.size());
     }
     context_info_map.swap(map);
 }
