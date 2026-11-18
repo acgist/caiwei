@@ -13,6 +13,8 @@ static void get_index();
 static void get_favicon();
 static void get_shutdown();
 
+static void file_handler(const std::string& file_path, const std::string& content_type, httplib::Response& response);
+
 static void release_server();
 static void register_handler();
 static bool constant_time_password_check(std::string_view a, std::string_view z);
@@ -81,51 +83,13 @@ void caiwei::rest::stop() {
 
 static void get_index() {
     caiwei::rest::server->Get("/", [](const httplib::Request& /* request */, httplib::Response& response) {
-        const std::filesystem::path path("./index.html");
-        std::error_code error_code;
-        const auto file_size = std::filesystem::file_size(path, error_code);
-        if (error_code || file_size <= 0) {
-            response.status = httplib::StatusCode::NotFound_404;
-            return;
-        }
-        std::ifstream stream;
-        stream.open(path, std::ios_base::binary);
-        if (!stream.is_open()) {
-            response.status = httplib::StatusCode::NotFound_404;
-            return;
-        }
-        std::vector<char> data(file_size);
-        stream.read(data.data(), file_size);
-        if (stream.gcount() != file_size) {
-            response.status = httplib::StatusCode::NotFound_404;
-            return;
-        }
-        response.set_content(data.data(), file_size, caiwei::rest::content::type::HTML);
+        file_handler("./index.html", caiwei::rest::content::type::HTML, response);
     });
 }
 
 static void get_favicon() {
     caiwei::rest::server->Get("/favicon.ico", [](const httplib::Request& /* request */, httplib::Response& response) {
-        const std::filesystem::path path("./favicon.ico");
-        std::error_code error_code;
-        const auto file_size = std::filesystem::file_size(path, error_code);
-        if (error_code || file_size <= 0) {
-            response.status = httplib::StatusCode::NotFound_404;
-            return;
-        }
-        std::ifstream stream;
-        stream.open(path, std::ios_base::binary);
-        if (!stream.is_open()) {
-            response.status = httplib::StatusCode::NotFound_404;
-            return;
-        }
-        std::vector<char> data(file_size);
-        stream.read(data.data(), file_size);
-        if (stream.gcount() != file_size) {
-            response.status = httplib::StatusCode::NotFound_404;
-            return;
-        }
-        response.set_content(data.data(), file_size, caiwei::rest::content::type::ICON);
+        file_handler("./favicon.ico", caiwei::rest::content::type::ICON, response);
     });
 }
 
@@ -236,4 +200,34 @@ static bool constant_time_password_check(std::string_view a, std::string_view z)
         ret |= static_cast<std::size_t>(av ^ zv);
     }
     return ret == 0;
+}
+
+static void file_handler(const std::string& file_path, const std::string& content_type, httplib::Response& response) {
+    const std::filesystem::path path(file_path);
+    std::error_code error_code;
+    const auto file_size = std::filesystem::file_size(path, error_code);
+    if (error_code || file_size <= 0) {
+        if (error_code) {
+            CW_LOG_W("文件读取失败: %s => %s", file_path.c_str(), error_code.message().c_str());
+        } else {
+            CW_LOG_W("文件读取失败: %s", file_path.c_str());
+        }
+        response.status = httplib::StatusCode::NotFound_404;
+        return;
+    }
+    std::ifstream stream;
+    stream.open(path, std::ios_base::binary);
+    if (!stream.is_open()) {
+        CW_LOG_W("文件打开失败: %s", file_path.c_str());
+        response.status = httplib::StatusCode::NotFound_404;
+        return;
+    }
+    std::vector<char> data(file_size);
+    stream.read(data.data(), file_size);
+    if (stream.gcount() != static_cast<int>(file_size)) {
+        CW_LOG_W("文件读取失败: %s", file_path.c_str());
+        response.status = httplib::StatusCode::InternalServerError_500;
+        return;
+    }
+    response.set_content(data.data(), file_size, content_type);
 }
