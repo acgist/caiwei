@@ -47,10 +47,10 @@ bool caiwei::rest::open() {
         release_server();
         return false;
     }
-    caiwei::rest::server->set_read_timeout(60);
-    caiwei::rest::server->set_write_timeout(60);
-    caiwei::rest::server->set_keep_alive_timeout(60);
-    caiwei::rest::server->set_payload_max_length(64ULL * 1024 * 1024);
+    caiwei::rest::server->set_read_timeout(CAIWEI_TIMEOUT_READ);
+    caiwei::rest::server->set_write_timeout(CAIWEI_TIMEOUT_WRITE);
+    caiwei::rest::server->set_keep_alive_timeout(CAIWEI_TIMEOUT_KEEP_ALIVE);
+    caiwei::rest::server->set_payload_max_length(CAIWEI_PAYLOAD_MAX_LENGTH);
     caiwei::rest::server->new_task_queue = [min_pool, max_pool] {
         return new httplib::ThreadPool(min_pool, max_pool);
     };

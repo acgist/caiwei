@@ -11,7 +11,7 @@ bool caiwei::init() {
     std::setvbuf(stdout, nullptr, _IOLBF, 0);
     std::setvbuf(stderr, nullptr, _IOLBF, 0);
 #endif
-    CW_LOG_I("系统启动");
+    CW_LOG_I("系统启动: %s", CAIWEI_VERSION);
     try {
         caiwei::env::init();
         caiwei::media::init();

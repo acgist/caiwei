@@ -1,6 +1,20 @@
 #ifndef CAIWEI_SERVER_REST_HPP
 #define CAIWEI_SERVER_REST_HPP
 
+
+#ifndef CAIWEI_TIMEOUT_READ
+#define CAIWEI_TIMEOUT_READ 60
+#endif
+#ifndef CAIWEI_TIMEOUT_WRITE
+#define CAIWEI_TIMEOUT_WRITE 60
+#endif
+#ifndef CAIWEI_TIMEOUT_KEEP_ALIVE
+#define CAIWEI_TIMEOUT_KEEP_ALIVE 60
+#endif
+#ifndef CAIWEI_PAYLOAD_MAX_LENGTH
+#define CAIWEI_PAYLOAD_MAX_LENGTH (64 * 1024 * 1024)
+#endif
+
 namespace httplib {
 
 class Server;

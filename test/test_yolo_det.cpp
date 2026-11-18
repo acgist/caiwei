@@ -142,12 +142,12 @@ void det_video_frame() {
 
 int main(int argc, char* argv[]) {
 #if ENABLE_CAIWEI_RUNTIME_RKNN2
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-i8.rknn");
-    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-i8.rknn", true);
+    caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-rk3588-f16.rknn", true);
 #endif
-    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx");
+    // caiwei::env::set("CAIWEI_CONTEXT_INFO", "DET,YOLO,yolo26n-det,yolo26n-det-e2e.onnx", true);
     if (argc > 1) {
-        caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1]);
+        caiwei::env::set("CAIWEI_CONTEXT_INFO", argv[1], true);
     }
     const char* image_path;
     if (argc > 2) {

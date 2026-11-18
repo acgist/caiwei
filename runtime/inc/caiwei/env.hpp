@@ -86,7 +86,7 @@ int         get_int  (const std::string& name);
 float       get_float(const std::string& name);
 std::vector<std::string> get_vector(const std::string& name, const char delim = ',', const bool skip_empty = true);
 
-void set(const std::string& name, const std::string& value);
+void set(const std::string& name, const std::string& value, bool force = false);
 
 void init();
 void stop();

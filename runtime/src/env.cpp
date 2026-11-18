@@ -5,6 +5,7 @@
 #include <sstream>
 #include <shared_mutex>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
@@ -16,45 +17,55 @@
 #define THREAD_NAME_MAX_LENGTH 15
 #endif
 
-static std::atomic<bool> initialized{ false };
-static std::shared_mutex mutex;
-static std::once_flag env_map_once_flag;
+// clang-format off
+static std::once_flag    env_map_once_flag;
+static std::shared_mutex env_mutex;
 static std::unordered_map<std::string, std::string> env_map;
-
-std::atomic_uint32_t caiwei::env::id_index = 0;
+// clang-format on
 
 static std::vector<std::string> allow_path;
 static std::vector<std::string> allow_host;
 static std::vector<std::string> allow_media_type;
 
+std::atomic_uint32_t caiwei::env::id_index = 0;
+
+static std::unordered_set<std::string> security_config = {
+    "CAIWEI_PASSWORD"
+};
+
 static std::map<std::string, std::string> default_config = {
-    {"CAIWEI_VERSION",          "1.0.0"  }, // 版本信息
-    {"CAIWEI_CUDA_ID",          "0"      }, // CUDA ID
-    {"CAIWEI_CUDA_MEM",         "1024"   }, // CUDA MEM
-    {"CAIWEI_RKNN_ID",          "0"      }, // RKNN ID
-    {"CAIWEI_SERVER_HOST",      "0.0.0.0"}, // 监听主机
-    {"CAIWEI_SERVER_PORT",      "8888"   }, // 监听端口
-    {"CAIWEI_SERVER_MIN_POOL",  "4"      }, // 最小线程
-    {"CAIWEI_SERVER_MAX_POOL",  "32"     }, // 最大线程
-    {"CAIWEI_TIMEOUT",          "30000"  }, // 超时时间
-    {"CAIWEI_USERNAME",         "admin"  }, // 接口账号
-    {"CAIWEI_PASSWORD",         "admin"  }, // 接口密码
-    {"CAIWEI_MEL_FILTERS",      "mel_128_filters.txt"}, // 梅尔滤波器文件
+    // clang-format off
+    // 公共配置
+    {"CAIWEI_VERSION",         CAIWEI_VERSION       },
+    {"CAIWEI_CUDA_ID",         "0"                  },
+    {"CAIWEI_CUDA_MEM",        "1024"               },
+    {"CAIWEI_RKNN_ID",         "0"                  },
+    {"CAIWEI_SERVER_HOST",     "0.0.0.0"            },
+    {"CAIWEI_SERVER_PORT",     "8888"               },
+    {"CAIWEI_SERVER_MIN_POOL", "4"                  },
+    {"CAIWEI_SERVER_MAX_POOL", "64"                 },
+    {"CAIWEI_TIMEOUT",         "30000"              },
+    {"CAIWEI_MEL_FILTERS",     "mel_128_filters.txt"},
+    // 安全配置
     #if CAIWEI_DEBUG
-    {"CAIWEI_SECURITY",         "OFF"}, // 安全验证
-    {"CAIWEI_ALLOW_PATH",       ""   }, // 允许路径
-    {"CAIWEI_ALLOW_HOST",       ""   }, // 允许地址
-    {"CAIWEI_ALLOW_MEDIA_TYPE", ""   }, // 允许媒体类型
+    {"CAIWEI_SECURITY",         "OFF"  },
+    {"CAIWEI_USERNAME",         "admin"},
+    {"CAIWEI_PASSWORD",         "admin"},
+    {"CAIWEI_ALLOW_PATH",       ""     },
+    {"CAIWEI_ALLOW_HOST",       ""     },
+    {"CAIWEI_ALLOW_MEDIA_TYPE", ""     },
     #else
-    {"CAIWEI_SECURITY",         "ON"       }, // 安全验证
-    {"CAIWEI_ALLOW_PATH",       "/data/"   }, // 允许路径
-    {"CAIWEI_ALLOW_HOST",       ""         }, // 允许地址
-    {"CAIWEI_ALLOW_MEDIA_TYPE", "data,file"}, // 允许媒体类型
+    {"CAIWEI_SECURITY",         "ON"       },
+    {"CAIWEI_USERNAME",         "admin"    },
+    {"CAIWEI_PASSWORD",         "admin"    },
+    {"CAIWEI_ALLOW_PATH",       "/data/"   },
+    {"CAIWEI_ALLOW_HOST",       ""         },
+    {"CAIWEI_ALLOW_MEDIA_TYPE", "data,file"},
     #endif
     // 运行配置
-    {"CAIWEI_RUNTIME_TIMEOUT",      "30" },
-    {"CAIWEI_RUNTIME_INTERVAL",     "30" },
-    {"CAIWEI_RUNTIME_KEEPALIVE",    "600"},
+    {"CAIWEI_RUNTIME_TIMEOUT",   "30" },
+    {"CAIWEI_RUNTIME_INTERVAL",  "30" },
+    {"CAIWEI_RUNTIME_KEEPALIVE", "600"},
     // 共享配置
     {"CAIWEI_RKNN2_SHARE",          "false"},
     {"CAIWEI_RKNN2_MIN_POOL",       "2"    },
@@ -133,7 +144,7 @@ static std::map<std::string, std::string> default_config = {
     // EMBEDDING
     {"CAIWEI_EMBEDDING_MAX_TOKEN_LENGTH", "8092"},
     // RERANKING
-    {"CAIWEI_RERANKING_MAX_TOKEN_LENGTH", "8092"},
+    {"CAIWEI_RERANKING_MAX_TOKEN_LENGTH",   "8092"        },
     {"CAIWEI_RERANKING_TOKEN_BOS",          "<|im_start|>"},
     {"CAIWEI_RERANKING_TOKEN_EOS",          "<|im_end|>"  },
     {"CAIWEI_RERANKING_TOKEN_BTHINKING",    "<think>"     },
@@ -159,17 +170,18 @@ VLM,QWEN,qwen3-vlm,Qwen3-VL/Qwen3-VL-2B-Instruct-Q4_K_M.gguf|Qwen3-VL/mmproj-Qwe
 EMBEDDING,QWEN,qwen3-embedding,Qwen3-Embedding/Qwen3-Embedding-0.6B-Q4_K_M.gguf
 RERANKING,QWEN,qwen3-reranking,Qwen3-Reranker/Qwen3-Reranker-0.6B-Q4_K_M.gguf
     )"},
+    // clang-format on
 };
 
 std::string caiwei::env::get(const std::string& name) {
     {
-        std::shared_lock<std::shared_mutex> lock(mutex);
+        std::shared_lock<std::shared_mutex> lock(env_mutex);
         if (auto iter = env_map.find(name); iter != env_map.end()) {
             return iter->second;
         }
     }
     {
-        std::unique_lock<std::shared_mutex> lock(mutex);
+        std::unique_lock<std::shared_mutex> lock(env_mutex);
         if (auto iter = env_map.find(name); iter != env_map.end()) {
             return iter->second;
         }
@@ -190,7 +202,7 @@ std::string caiwei::env::get(const std::string& name) {
 
 bool caiwei::env::get_bool(const std::string& name) {
     std::string value = caiwei::env::get(name);
-    return value == "ON" || value == "yes" || value == "true";
+    return value == "ON" || value == "true" || value == "on" || value == "TRUE";
 }
 
 int caiwei::env::get_int(const std::string& name) {
@@ -230,31 +242,37 @@ std::vector<std::string> caiwei::env::get_vector(const std::string& name, const 
     return vector;
 }
 
-void caiwei::env::set(const std::string& name, const std::string& value) {
+void caiwei::env::set(const std::string& name, const std::string& value, bool force) {
+    // clang-format off
     if (
-        name == "CAIWEI_ALLOW_PATH"       ||
-        name == "CAIWEI_ALLOW_HOST"       ||
-        name == "CAIWEI_ALLOW_MEDIA_TYPE" ||
-        name == "CAIWEI_CONTEXT_INFO"
+        !force &&
+        (
+            name == "CAIWEI_ALLOW_PATH"       ||
+            name == "CAIWEI_ALLOW_HOST"       ||
+            name == "CAIWEI_ALLOW_MEDIA_TYPE" ||
+            name == "CAIWEI_CONTEXT_INFO"
+        )
     ) {
-        if (initialized) {
-            CW_LOG_W("配置禁止动态修改: %s", name.c_str());
-            return;
-        }
+        CW_LOG_W("配置禁止动态修改: %s", name.c_str());
+        return;
     }
+    // clang-format on
     {
-        std::lock_guard<std::shared_mutex> lock(mutex);
+        std::lock_guard<std::shared_mutex> lock(env_mutex);
         if (!default_config.contains(name)) {
             CW_LOG_W("不支持的环境配置: %s", name.c_str());
             return;
         }
-        CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
+        if (security_config.contains(name)) {
+            CW_LOG_I("设置环境配置: %s = ****", name.c_str());
+        } else {
+            CW_LOG_I("设置环境配置: %s = %s", name.c_str(), value.c_str());
+        }
         env_map.insert_or_assign(name, value);
     }
 }
 
 void caiwei::env::init() {
-    initialized = true;
     std::call_once(env_map_once_flag, []() {
         allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
         allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
@@ -267,12 +285,16 @@ void caiwei::env::stop() {
 
 void caiwei::env::print_all_env() {
     for (const auto& [k, _] : default_config) {
-        CW_LOG_I("%-36s = %s", k.c_str(), get(k).c_str());
+        if (security_config.contains(k)) {
+            CW_LOG_I("%-36s = ****", k.c_str());
+        } else {
+            CW_LOG_I("%-36s = %s", k.c_str(), get(k).c_str());
+        }
     }
 }
 
 void caiwei::env::set_thread_name(const std::string& name) {
-    #if CAIWEI_OS_WIN
+#if CAIWEI_OS_WIN
     std::wstring thread_name(name.begin(), name.end());
     SetThreadDescription(GetCurrentThread(), thread_name.c_str());
 #else
