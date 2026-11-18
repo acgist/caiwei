@@ -128,14 +128,31 @@ static void register_handler() {
             return httplib::Server::HandlerResponse::Handled;
         }
         if (caiwei::env::get_bool("CAIWEI_SECURITY")) {
-            const auto username = caiwei::env::get("CAIWEI_USERNAME");
-            const auto password = caiwei::env::get("CAIWEI_PASSWORD");
             const auto authorization = request.get_header_value("Authorization");
             std::string_view authorization_view(authorization);
             if (authorization_view.starts_with("Basic ")) {
+                const auto username = caiwei::env::get("CAIWEI_USERNAME");
+                const auto password = caiwei::env::get("CAIWEI_PASSWORD");
                 authorization_view.remove_prefix(6);
-            }
-            if (!constant_time_password_check(authorization_view, httplib::detail::base64_encode(username + ":" + password))) {
+                const bool success = constant_time_password_check(
+                    authorization_view, httplib::detail::base64_encode(username + ":" + password)
+                );
+                if (!success) {
+                    response.status = httplib::StatusCode::Unauthorized_401;
+                    response.set_header("WWW-Authenticate", "Basic realm=\"CAIWEI\"");
+                    response.set_content(caiwei::json::buildResponse("1401", "没有授权"), caiwei::rest::content::type::JSON);
+                    return httplib::Server::HandlerResponse::Handled;
+                }
+            } else if (authorization_view.starts_with("Bearer ")) {
+                const auto apikey = caiwei::env::get("CAIWEI_APIKEY");
+                authorization_view.remove_prefix(7);
+                if (!constant_time_password_check(authorization_view, apikey)) {
+                    response.status = httplib::StatusCode::Unauthorized_401;
+                    response.set_header("WWW-Authenticate", "Bearer realm=\"CAIWEI\"");
+                    response.set_content(caiwei::json::buildResponse("1401", "没有授权"), caiwei::rest::content::type::JSON);
+                    return httplib::Server::HandlerResponse::Handled;
+                }
+            } else {
                 response.status = httplib::StatusCode::Unauthorized_401;
                 response.set_header("WWW-Authenticate", "Basic realm=\"CAIWEI\"");
                 response.set_content(caiwei::json::buildResponse("1401", "没有授权"), caiwei::rest::content::type::JSON);

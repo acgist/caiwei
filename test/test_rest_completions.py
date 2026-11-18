@@ -3,7 +3,7 @@ import base64
 from openai import OpenAI
 
 stream = True
-api_key = "api-key"
+api_key = "caiwei"
 base_url = "http://127.0.0.1:8888/v1"
 
 
@@ -203,11 +203,18 @@ RERANKING,QWEN,qwen3-reranking,/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.
 """
 
 if __name__ == "__main__":
-    # test_cls()
+    print("开始测试")
+    test_cls()
     # test_det()
     # test_asr()
     # test_llm()
     # test_vlm()
     # test_media()
-    for i in range(100):
-        test_llm()
+    # for i in range(100):
+    #     test_cls()
+    #     test_det()
+    #     test_asr()
+    #     test_llm()
+    #     test_vlm()
+    #     test_media()
+    print("测试完成")

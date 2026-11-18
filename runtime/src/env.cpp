@@ -29,7 +29,7 @@ static std::vector<std::string> allow_media_type;
 
 std::atomic_uint32_t caiwei::env::id_index = 0;
 
-static std::unordered_set<std::string> security_config = {"CAIWEI_PASSWORD"};
+static std::unordered_set<std::string> security_config = {"CAIWEI_APIKEY", "CAIWEI_PASSWORD"};
 
 static std::map<std::string, std::string> default_config = {
     // clang-format off
@@ -46,14 +46,16 @@ static std::map<std::string, std::string> default_config = {
     {"CAIWEI_MEL_FILTERS",     "mel_128_filters.txt"},
     // 安全配置
     #if CAIWEI_DEBUG
-    {"CAIWEI_SECURITY",         "OFF"  },
-    {"CAIWEI_USERNAME",         "admin"},
-    {"CAIWEI_PASSWORD",         "admin"},
-    {"CAIWEI_ALLOW_PATH",       ""     },
-    {"CAIWEI_ALLOW_HOST",       ""     },
-    {"CAIWEI_ALLOW_MEDIA_TYPE", ""     },
+    {"CAIWEI_SECURITY",         "OFF"   },
+    {"CAIWEI_APIKEY",           "caiwei"},
+    {"CAIWEI_USERNAME",         "admin" },
+    {"CAIWEI_PASSWORD",         "admin" },
+    {"CAIWEI_ALLOW_PATH",       ""      },
+    {"CAIWEI_ALLOW_HOST",       ""      },
+    {"CAIWEI_ALLOW_MEDIA_TYPE", ""      },
     #else
     {"CAIWEI_SECURITY",         "ON"       },
+    {"CAIWEI_APIKEY",           "caiwei"   },
     {"CAIWEI_USERNAME",         "admin"    },
     {"CAIWEI_PASSWORD",         "admin"    },
     {"CAIWEI_ALLOW_PATH",       "/data/"   },
