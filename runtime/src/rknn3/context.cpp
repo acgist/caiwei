@@ -680,13 +680,18 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
             } else {
                 // TODO asr_text 151704
                 auto& token_buffer = session->token_buffer;
-                const int32_t buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
+                int32_t buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
                 if (buffer_length < 0) {
-                    CW_LOG_W("解码失败: %d", buffer_length);
-                    session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, session->n_prefill_tokens, session->n_generate_tokens });
-                    session->stop = true;
-                    session->condition.notify_one();
-                    return 0;
+                    CW_LOG_I("解码长度不足: %d", buffer_length);
+                    token_buffer.add_len(-buffer_length);
+                    buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
+                    if (buffer_length < 0) {
+                        CW_LOG_W("解码失败: %d", buffer_length);
+                        session->token_result.push_back(caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, session->n_prefill_tokens, session->n_generate_tokens });
+                        session->stop = true;
+                        session->condition.notify_one();
+                        return 0;
+                    }
                 }
                 std::string piece = token_buffer.get_token(buffer_length);
                 #if ENABLE_CAIWEI_PERF

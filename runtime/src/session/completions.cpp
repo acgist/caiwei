@@ -327,7 +327,7 @@ bool caiwei::session::CompletionsSession::get() {
             yolo_thread.join();
         }
         if (ret) {
-            CW_LOG_I("媒体解析完成: %s = %s", type.c_str(), url.c_str());
+            CW_LOG_I("媒体解析完成: %s = %s => %zu", type.c_str(), url.c_str(), frame_count);
         } else {
             CW_LOG_W("媒体解析失败: %s = %s", type.c_str(), url.c_str());
         }

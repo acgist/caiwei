@@ -19,16 +19,16 @@ std::string detokenize(const llama_vocab* vocab, llama_token* tokens, int32_t n_
 
 class TokenBuffer {
 private:
-          int pos = 0;
-    const int len = 1024;
+    int pos = 0;
+    int len = 0;
     std::string buffer;
 public:
     TokenBuffer();
 public:
     int   get_length();
     char* get_buffer();
+    int   add_len(int length);
     std::string get_token(int length);
-    std::string flush();
 };
 
 class Tokenizer {
@@ -51,8 +51,6 @@ public:
     llama_token get_nl();
     llama_token get_bos();
     llama_token get_eos();
-    llama_token get_eot();
-    llama_token get_pad();
     llama_token piece_to_token(const std::string& piece, bool add_special = false, bool parse_special = true);
     std::string token_to_piece(llama_token token, bool special = true);
     int token_to_piece(llama_token token, char* buf, int len, bool special = true);

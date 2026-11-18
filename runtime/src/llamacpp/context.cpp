@@ -520,11 +520,16 @@ std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext:
             toolcall_session.finish();
             co_yield caiwei::text::CompletionResult{ thinking, toolcall, "", toolcall_session };
         } else {
-            const int32_t buffer_length = caiwei::context::token_to_piece(this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length());
+            int32_t buffer_length = caiwei::context::token_to_piece(this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length());
             if (buffer_length < 0) {
-                CW_LOG_W("解码失败: %d", buffer_length);
-                co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
-                break;
+                CW_LOG_I("解码长度不足: %d", buffer_length);
+                token_buffer.add_len(-buffer_length);
+                buffer_length = caiwei::context::token_to_piece(this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length());
+                if (buffer_length < 0) {
+                    CW_LOG_W("解码失败: %d", buffer_length);
+                    co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, n_prompt_tokens, generated_tokens };
+                    break;
+                }
             }
             std::string token = token_buffer.get_token(buffer_length);
             #if ENABLE_CAIWEI_PERF

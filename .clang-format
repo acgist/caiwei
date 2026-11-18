@@ -21,9 +21,11 @@ AlignArrayOfStructures: None
 AlignConsecutiveAssignments: None
 AlignConsecutiveDeclarations: None
 AllowAllArgumentsOnNextLine: true
+# AllowAllParametersOnNextLine: false
 AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortLambdasOnASingleLine: None
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
-AllowAllParametersOfDeclarationOnNextLine: false
+# AllowAllArgumentsOfDeclarationOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
