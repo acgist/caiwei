@@ -5,6 +5,20 @@
 #include <cstddef>
 #include <cstdint>
 
+#ifndef N_FFT
+#define N_FFT 400
+#endif
+#ifndef HOP_LENGTH
+#define HOP_LENGTH 160
+#endif
+#ifndef DOWN_SAMPLE_RATE
+#define DOWN_SAMPLE_RATE 8
+#endif
+
+#ifndef YOLO_BOX_SIZE
+#define YOLO_BOX_SIZE 4
+#endif
+
 namespace caiwei {
 namespace media  {
 
@@ -23,6 +37,10 @@ inline constexpr const int VIDEO_MIN_WIDTH = 128;
 inline constexpr const int VIDEO_MAX_WIDTH = 2560;
 inline constexpr const int VIDEO_MIN_HEIGHT = 0;
 inline constexpr const int VIDEO_MAX_HEIGHT = 2560;
+
+inline constexpr uint8_t DEFAULT_PADDING = 114;
+
+inline constexpr const char* sdp_file_path = "./sdp/";
 
 enum class MediaType {
     AUDIO,
@@ -61,6 +79,20 @@ public:
 class VideoFrame : public ImageFrame {
 public:
     uint64_t frames = 0;
+};
+
+struct Cls {
+    int   class_id = 0;
+    float score    = 0.0F;
+};
+
+struct Box {
+    float x1 = 0.0F;
+    float y1 = 0.0F;
+    float x2 = 0.0F;
+    float y2 = 0.0F;
+    int   class_id = 0;
+    float score    = 0.0F;
 };
 
 } // media

@@ -10,18 +10,15 @@ set(
     src/session.cpp
     src/manager.cpp
     src/tokenizer.cpp
+    src/media/media.cpp
     src/media/text_data.cpp
     src/media/text_tool.cpp
-    src/media/audio_data.cpp
-    src/media/audio_tool.cpp
-    src/media/image_data.cpp
-    src/media/image_tool.cpp
     src/media/media_data.cpp
+    src/media/audio_tool.cpp
     src/media/media_tool.cpp
-    src/ffmpeg/media_muxer.cpp
-    src/ffmpeg/media_ffmpeg.cpp
-    src/ffmpeg/media_format.cpp
-    src/ffmpeg/media_demuxer.cpp
+    src/media/media_muxer.cpp
+    src/media/media_format.cpp
+    src/media/media_demuxer.cpp
     src/session/video_play.cpp
     src/session/embeddings.cpp
     src/session/rerankings.cpp

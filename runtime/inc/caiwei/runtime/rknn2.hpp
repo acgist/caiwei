@@ -74,7 +74,7 @@ public:
     ~ClsRKNN2Context();
 public:
     bool load() override;
-    std::vector<caiwei::image::Cls> run(const caiwei::media::ImageFrame& image) override;
+    std::vector<caiwei::media::Cls> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class DetRKNN2Context : public DetContext, public RKNN2Context {
@@ -97,7 +97,7 @@ public:
     ~DetRKNN2Context();
 public:
     bool load() override;
-    std::vector<caiwei::image::Box> run(const caiwei::media::ImageFrame& image) override;
+    std::vector<caiwei::media::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
 } // context

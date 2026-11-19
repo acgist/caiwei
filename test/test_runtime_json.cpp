@@ -164,17 +164,17 @@ void test_reranking_response_to_json() {
 [[maybe_unused]]
 void test_image_data_json() {
     // clang-format off
-    std::vector<caiwei::image::Cls> cls = {
+    std::vector<caiwei::media::Cls> cls = {
         {1, 0.8F},
         {2, 0.5F}
     };
-    std::vector<caiwei::image::Box> box = {
+    std::vector<caiwei::media::Box> box = {
         {0.1F, 0.2F, 0.3F, 0.4F, 1, 0.8F},
         {0.5F, 0.6F, 0.7F, 0.8F, 2, 0.5F}
     };
     // clang-format on
-    auto cls_json = caiwei::image::to_json(cls);
-    auto box_json = caiwei::image::to_json(box);
+    auto cls_json = caiwei::media::to_json(cls);
+    auto box_json = caiwei::media::to_json(box);
     CW_LOG_I("cls: %s", cls_json.c_str());
     CW_LOG_I("box: %s", box_json.c_str());
     CAIWEI_ASSERT(cls_json == R"([{"class_id":1,"score":0.800000011920929},{"class_id":2,"score":0.5}])");

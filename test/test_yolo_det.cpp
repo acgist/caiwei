@@ -3,6 +3,8 @@
 #include <thread>
 #include <vector>
 
+#include "stb/stb_image_write.h"
+
 [[maybe_unused]]
 void det_image(const char* image_path) {
     caiwei::media::ImageFrame frame;
@@ -83,7 +85,7 @@ void det_video() {
             return caiwei::player::play_audio(frame.data.data(), static_cast<int>(frame.data.size()));
         },
         [&ptr, &frame_count](caiwei::media::VideoFrame& frame) {
-            thread_local std::vector<caiwei::image::Box> ret;
+            thread_local std::vector<caiwei::media::Box> ret;
             if (frame_count++ % 4 == 0) {
                 ret = ptr->run(frame);
             }

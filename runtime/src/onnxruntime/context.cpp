@@ -4,7 +4,7 @@
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
 #if CAIWEI_DEBUG
@@ -147,24 +147,24 @@ std::vector<Ort::Value> caiwei::context::ONNXRuntimeContext::run(const int h, co
             CW_LOG_W("图片大小和模型输入大小不匹配");
             return {};
         }
-        if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
+        if (!caiwei::media::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
             return {};
         }
         this->src_w = image.width;
         this->src_h = image.height;
         this->src_c = image.channels;
         this->dst.resize(static_cast<size_t>(this->dst_w) * this->dst_h * image.channels);
-        this->pad.resize(static_cast<size_t>(          w) *           h * image.channels, caiwei::image::DEFAULT_PADDING);
+        this->pad.resize(static_cast<size_t>(          w) *           h * image.channels, caiwei::media::DEFAULT_PADDING);
         this->hwc.resize(static_cast<size_t>(          w) *           h * image.channels);
         this->chw.resize(static_cast<size_t>(          w) *           h * image.channels);
     }
-    if (!caiwei::image::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h, image.channels)) {
+    if (!caiwei::media::resize(image.data.data(), this->dst.data(), image.width, image.height, this->dst_w, this->dst_h, image.channels)) {
         return {};
     }
-    if (!caiwei::image::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h, image.channels)) {
+    if (!caiwei::media::padding(this->dst.data(), this->pad.data(), this->dst_w, this->dst_h, this->pad_w, this->pad_h, w, h, image.channels)) {
         return {};
     }
-    caiwei::image::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
+    caiwei::media::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
     return this->run(this->chw.data(), this->chw.size());
 }
 

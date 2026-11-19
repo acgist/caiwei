@@ -8,8 +8,6 @@
 #include "caiwei/caiwei.hpp"
 #include "caiwei/manager.hpp"
 #include "caiwei/text_tool.hpp"
-#include "caiwei/audio_tool.hpp"
-#include "caiwei/image_tool.hpp"
 #include "caiwei/media_tool.hpp"
 
 #include <chrono>

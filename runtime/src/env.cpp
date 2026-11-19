@@ -9,6 +9,7 @@
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
+#include "caiwei/tool.hpp"
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>
@@ -246,6 +247,7 @@ std::vector<std::string> caiwei::env::get_vector(const std::string& name, const 
     std::vector<std::string> vector;
     std::stringstream stream(value);
     while (std::getline(stream, line, delim)) {
+        line = caiwei::tool::strip(line);
         if (skip_empty && line.empty()) {
             continue;
         }

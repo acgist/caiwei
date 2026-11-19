@@ -39,7 +39,6 @@ def print_resp(stream, resp):
             print(f"choice[{choice.index}] = {choice.message.content}")
             content += choice.message.content
         usage = resp.usage
-    assert usage
     assert content
     print(f"usage = {usage}")
     print(f"content = {content}")

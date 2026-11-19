@@ -18,8 +18,6 @@
 #include <unordered_map>
 
 #include "caiwei/text_data.hpp"
-#include "caiwei/audio_data.hpp"
-#include "caiwei/image_data.hpp"
 #include "caiwei/media_data.hpp"
 
 namespace caiwei  {
@@ -95,7 +93,7 @@ public:
 public:
     static constexpr Type TYPE = Type::CLS;
     using I = caiwei::media::ImageFrame;
-    using O = std::vector<caiwei::image::Cls>;
+    using O = std::vector<caiwei::media::Cls>;
     virtual O run(const I& image) = 0;
 };
 
@@ -113,7 +111,7 @@ public:
 public:
     static constexpr Type TYPE = Type::DET;
     using I = caiwei::media::ImageFrame;
-    using O = std::vector<caiwei::image::Box>;
+    using O = std::vector<caiwei::media::Box>;
     virtual O run(const I& image) = 0;
 };
 

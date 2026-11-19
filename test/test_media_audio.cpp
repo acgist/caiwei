@@ -1,5 +1,7 @@
 #include "test.hpp"
 
+#include "stb/stb_image_write.h"
+
 [[maybe_unused]]
 void test_log_mel_spectrogram() {
     std::vector<uint8_t> audio_data;
@@ -18,7 +20,7 @@ void test_log_mel_spectrogram() {
     CAIWEI_ASSERT(success);
     const int n_mels = 128;
     std::vector<float> mel_filters{};
-    CAIWEI_ASSERT(caiwei::audio::load_mel_filters(n_mels, N_FFT, mel_filters));
+    CAIWEI_ASSERT(caiwei::media::load_mel_filters(n_mels, N_FFT, mel_filters));
     const int n_frames = audio_data.size() * sizeof(uint8_t) / sizeof(int16_t);
     CAIWEI_ASSERT(n_frames >= (N_FFT + HOP_LENGTH) * 2);
     const int n_frame = std::floor((n_frames - N_FFT) / HOP_LENGTH) + 1;
@@ -28,7 +30,7 @@ void test_log_mel_spectrogram() {
         return static_cast<float>(v) / 32768.0F;
     });
     std::vector<float> audio_feature(n_mels * n_frame, 0.0F);
-    const bool mel_success = caiwei::audio::log_mel_spectrogram(
+    const bool mel_success = caiwei::media::log_mel_spectrogram(
         audio_data_f32.data(),
         audio_data_f32.size(),
         mel_filters.data(),

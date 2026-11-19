@@ -3,6 +3,7 @@
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
+#include "caiwei/tool.hpp"
 #include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
 
@@ -11,8 +12,7 @@ static std::unordered_map<std::string, caiwei::context::ContextInfo> context_inf
 
 static void init_context_info_map();
 
-inline constexpr const char* empty_char = " \t\r\n";
-
+// clang-format off
 caiwei::context::Context::Context(
     Type type,
     caiwei::runtime::Runtime* runtime
@@ -21,6 +21,7 @@ caiwei::context::Context::Context(
     ref_count(0),
     last_run_time(caiwei::env::steady_timestamp()),
     runtime(runtime) {
+    // clang-format on
     CW_LOG_D("创建context: %s", this->id.c_str());
 }
 
@@ -28,6 +29,7 @@ caiwei::context::Context::~Context() {
     CW_LOG_D("释放context: %s", this->id.c_str());
 }
 
+// clang-format off
 caiwei::context::ClsContext::ClsContext(
     int c,
     int h,
@@ -43,11 +45,13 @@ caiwei::context::ClsContext::ClsContext(
     class_size(class_size),
     top_k(top_k),
     confidence_threshold(confidence_threshold) {
+    // clang-format on
 }
 
 caiwei::context::ClsContext::~ClsContext() {
 }
 
+// clang-format off
 caiwei::context::DetContext::DetContext(
     int c,
     int h,
@@ -63,46 +67,37 @@ caiwei::context::DetContext::DetContext(
     class_size(class_size),
     iou_threshold(iou_threshold),
     confidence_threshold(confidence_threshold) {
+    // clang-format on
 }
 
 caiwei::context::DetContext::~DetContext() {
 }
 
-caiwei::context::ASRContext::ASRContext(
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::ASR, runtime) {
+caiwei::context::ASRContext::ASRContext(caiwei::runtime::Runtime* runtime) : Context(Type::ASR, runtime) {
 }
 
 caiwei::context::ASRContext::~ASRContext() {
 }
 
-caiwei::context::LLMContext::LLMContext(
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::LLM, runtime) {
+caiwei::context::LLMContext::LLMContext(caiwei::runtime::Runtime* runtime) : Context(Type::LLM, runtime) {
 }
 
 caiwei::context::LLMContext::~LLMContext() {
 }
 
-caiwei::context::VLMContext::VLMContext(
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::VLM, runtime) {
+caiwei::context::VLMContext::VLMContext(caiwei::runtime::Runtime* runtime) : Context(Type::VLM, runtime) {
 }
 
 caiwei::context::VLMContext::~VLMContext() {
 }
 
-caiwei::context::EmbeddingContext::EmbeddingContext(
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::EMBEDDING, runtime) {
+caiwei::context::EmbeddingContext::EmbeddingContext(caiwei::runtime::Runtime* runtime) : Context(Type::EMBEDDING, runtime) {
 }
 
 caiwei::context::EmbeddingContext::~EmbeddingContext() {
 }
 
-caiwei::context::RerankingContext::RerankingContext(
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::RERANKING, runtime) {
+caiwei::context::RerankingContext::RerankingContext(caiwei::runtime::Runtime* runtime) : Context(Type::RERANKING, runtime) {
 }
 
 caiwei::context::RerankingContext::~RerankingContext() {
@@ -190,16 +185,8 @@ void caiwei::context::normalize_l2(const float* embd, float* out, int size, bool
     }
 }
 
-inline static std::string strip(const std::string& value) {
-    auto pos_a = value.find_first_not_of(empty_char);
-    if (pos_a == std::string_view::npos) {
-        return "";
-    }
-    auto pos_z = value.find_last_not_of(empty_char);
-    return value.substr(pos_a, pos_z - pos_a + 1);
-}
-
 static void init_context_info_map() {
+    // clang-format off
     static const std::unordered_map<std::string, caiwei::context::Type> type_map = {
         { "CLS",       caiwei::context::Type::CLS       },
         { "DET",       caiwei::context::Type::DET       },
@@ -209,25 +196,28 @@ static void init_context_info_map() {
         { "EMBEDDING", caiwei::context::Type::EMBEDDING },
         { "RERANKING", caiwei::context::Type::RERANKING },
     };
+    // clang-format on
     std::unordered_map<std::string, caiwei::context::ContextInfo> map;
     std::string line;
     std::string info = caiwei::env::get("CAIWEI_CONTEXT_INFO");
     std::stringstream stream(info);
     while (std::getline(stream, line)) {
-        line = strip(line);
+        line = caiwei::tool::strip(line);
         if (line.empty()) {
             continue;
         }
         std::string type, vendor, name, path;
         std::stringstream info_stream(line);
+        // clang-format off
         std::getline(info_stream, type,   ',');
         std::getline(info_stream, vendor, ',');
         std::getline(info_stream, name,   ',');
         std::getline(info_stream, path,   ',');
-        type   = strip(type);
-        vendor = strip(vendor);
-        name   = strip(name);
-        path   = strip(path);
+        type   = caiwei::tool::strip(type);
+        vendor = caiwei::tool::strip(vendor);
+        name   = caiwei::tool::strip(name);
+        path   = caiwei::tool::strip(path);
+        // clang-format on
         if (type.empty() || vendor.empty() || name.empty() || path.empty()) {
             CW_LOG_W("模型配置错误: %s", line.c_str());
             continue;
@@ -241,15 +231,12 @@ static void init_context_info_map() {
         std::vector<std::string> path_list;
         std::stringstream path_stream(path);
         while (std::getline(path_stream, path_item, '|')) {
+            path_item = caiwei::tool::strip(path_item);
             path_list.push_back(std::move(path_item));
         }
-        auto ret = map.insert_or_assign(name, caiwei::context::ContextInfo{
-            iter->second,
-            name,
-            path,
-            vendor,
-            std::move(path_list)
-        });
+        auto ret = map.insert_or_assign(
+            name, caiwei::context::ContextInfo{iter->second, name, path, vendor, std::move(path_list)}
+        );
         if (ret.second) {
             CW_LOG_I("模型配置成功: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());
         } else {

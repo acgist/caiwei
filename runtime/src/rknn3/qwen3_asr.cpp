@@ -1,5 +1,5 @@
 #include "caiwei/log.hpp"
-#include "caiwei/audio_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
 static int get_n_per_window_token(int window_size);
@@ -33,7 +33,7 @@ caiwei::context::ASRRKNN3Context::~ASRRKNN3Context() {
 }
 
 bool caiwei::context::ASRRKNN3Context::load_mel_filters() {
-    return caiwei::audio::load_mel_filters(this->n_mels, N_FFT, this->mel_filters);
+    return caiwei::media::load_mel_filters(this->n_mels, N_FFT, this->mel_filters);
 }
 
 bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
@@ -153,7 +153,7 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         return static_cast<float>(v) / 32768.0F;
     });
     std::vector<float> audio_feature(this->n_mels * n_frame, 0.0F);
-    const bool mel_success = caiwei::audio::log_mel_spectrogram(
+    const bool mel_success = caiwei::media::log_mel_spectrogram(
         audio_data_f32.data(),
         audio_data_f32.size(),
         this->mel_filters.data(),

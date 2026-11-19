@@ -1,5 +1,5 @@
 #include "caiwei/log.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
 caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(
@@ -23,7 +23,7 @@ bool caiwei::context::ClsONNXRuntimeContext::load() {
     return this->load_model();
 }
 
-std::vector<caiwei::image::Cls> caiwei::context::ClsONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::media::Cls> caiwei::context::ClsONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
     if (output.empty()) {
         return {};
@@ -39,5 +39,5 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsONNXRuntimeContext::run(cons
         return {};
     }
     const float* output_data = output.front().GetTensorData<float>();
-    return caiwei::image::top_k<float, caiwei::image::Cls>(output_data, data_length, this->top_k, this->confidence_threshold);
+    return caiwei::media::top_k<float, caiwei::media::Cls>(output_data, data_length, this->top_k, this->confidence_threshold);
 }

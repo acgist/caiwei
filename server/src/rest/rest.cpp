@@ -2,6 +2,7 @@
 #include "caiwei/env.hpp"
 #include "caiwei/json.hpp"
 #include "caiwei/rest.hpp"
+#include "caiwei/tool.hpp"
 
 #include <mutex>
 #include <fstream>
@@ -130,7 +131,7 @@ static void register_handler() {
         if (caiwei::env::get_bool("CAIWEI_SECURITY")) {
             const auto authorization = request.get_header_value("Authorization");
             std::string_view authorization_view(authorization);
-            if (authorization_view.starts_with("Basic ")) {
+            if (caiwei::tool::equals_ignore_case(authorization_view, "Basic ", 6)) {
                 const auto username = caiwei::env::get("CAIWEI_USERNAME");
                 const auto password = caiwei::env::get("CAIWEI_PASSWORD");
                 authorization_view.remove_prefix(6);
@@ -143,7 +144,7 @@ static void register_handler() {
                     response.set_content(caiwei::json::buildResponse("1401", "没有授权"), caiwei::rest::content::type::JSON);
                     return httplib::Server::HandlerResponse::Handled;
                 }
-            } else if (authorization_view.starts_with("Bearer ")) {
+            } else if (caiwei::tool::equals_ignore_case(authorization_view, "Bearer ", 7)) {
                 const auto apikey = caiwei::env::get("CAIWEI_APIKEY");
                 authorization_view.remove_prefix(7);
                 if (!constant_time_password_check(authorization_view, apikey)) {

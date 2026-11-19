@@ -4,7 +4,7 @@
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
@@ -70,23 +70,23 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
     }
     float scale;
     int dst_w, dst_h, pad_w, pad_h;
-    if (!caiwei::image::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
+    if (!caiwei::media::resize(width, height, w, h, dst_w, dst_h, pad_w, pad_h, scale)) {
         return false;
     }
     const size_t image_size = static_cast<size_t>(w) * h * channels;
     std::vector<uint8_t> pad(image_size);
-    if (!caiwei::image::resize(media_data.data(), pad.data(), width, height, w, h, dst_w, dst_h, pad_w, pad_h, channels)) {
+    if (!caiwei::media::resize(media_data.data(), pad.data(), width, height, w, h, dst_w, dst_h, pad_w, pad_h, channels)) {
         return false;
     }
     auto& tensor = this->media_input[0];
     if (tensor.attr->layout == RKNN3_TENSOR_NCHW) {
         if (tensor.attr->dtype == RKNN3_TENSOR_INT8) {
             std::vector<int8_t> chw(image_size);
-            caiwei::image::hwc_to_chw_u8_i8(pad.data(), chw.data(), h, w, channels);
+            caiwei::media::hwc_to_chw_u8_i8(pad.data(), chw.data(), h, w, channels);
             std::memcpy((int8_t*) tensor.mem->virt_addr, chw.data(), chw.size());
         } else if (tensor.attr->dtype == RKNN3_TENSOR_UINT8) {
             std::vector<uint8_t> chw(image_size);
-            caiwei::image::hwc_to_chw(pad.data(), chw.data(), h, w, channels);
+            caiwei::media::hwc_to_chw(pad.data(), chw.data(), h, w, channels);
             std::memcpy((uint8_t*) tensor.mem->virt_addr, chw.data(), chw.size());
         } else {
             CW_LOG_W("不支持的输入格式: %s", rknn3_get_type_string(tensor.attr->dtype));

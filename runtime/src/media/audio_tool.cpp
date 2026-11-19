@@ -7,7 +7,7 @@
 
 #include "caiwei/log.hpp"
 #include "caiwei/env.hpp"
-#include "caiwei/audio_tool.hpp"
+#include "caiwei/media_tool.hpp"
 
 #if defined(__aarch64__)
 #include "arm_neon.h"
@@ -17,7 +17,7 @@
 #endif
 #include "pocketfft_hdronly/pocketfft_hdronly.h"
 
-bool caiwei::audio::load_mel_filters(
+bool caiwei::media::load_mel_filters(
     const int n_mels,
     const int n_fft,
     std::vector<float>& mel_filters
@@ -207,7 +207,7 @@ static void log_mel_spectrogram(
     clamp_and_log_max(mel_spec, ROWS_A, COLS_B);
 }
 
-bool caiwei::audio::log_mel_spectrogram(
+bool caiwei::media::log_mel_spectrogram(
     const float* audio,
     const int    audio_length,
     const float* mel_filters,

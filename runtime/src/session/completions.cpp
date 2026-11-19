@@ -373,7 +373,7 @@ inline void sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& 
             choice.index = index++;
             choice.finish_reason   = caiwei::text::FINISH_REASON_STOP;
             choice.message.role    = caiwei::text::ROLE_ASSISTANT;
-            choice.message.content = caiwei::image::to_json(ret);
+            choice.message.content = caiwei::media::to_json(ret);
             response.choices.push_back(std::move(choice));
         }
     }
@@ -473,7 +473,7 @@ inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* ptr, caiwei
             choice.index = index++;
             choice.finish_reason = caiwei::text::FINISH_REASON_STOP;
             choice.delta.role    = caiwei::text::ROLE_ASSISTANT;
-            choice.delta.content = caiwei::image::to_json(ret);
+            choice.delta.content = caiwei::media::to_json(ret);
             chunk.choices.push_back(std::move(choice));
         }
     }

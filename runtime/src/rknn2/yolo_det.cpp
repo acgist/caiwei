@@ -1,6 +1,6 @@
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
 caiwei::context::DetRKNN2Context::DetRKNN2Context(
@@ -23,7 +23,7 @@ bool caiwei::context::DetRKNN2Context::load() {
     return this->load_model();
 }
 
-std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::media::Box> caiwei::context::DetRKNN2Context::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
     if (output.outputs.empty()) {
         return {};
@@ -35,7 +35,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         CW_LOG_W("输出长度错误: %" PRId64 " - %d", result_length, this->class_size);
         return {};
     }
-    std::vector<caiwei::image::Box> ret;
+    std::vector<caiwei::media::Box> ret;
     if (output_attr.type == RKNN_TENSOR_INT8) {
         const size_t total = static_cast<size_t>(result_length) * stride_length;
         if (total != this->out_dst_i8.size()) {
@@ -43,7 +43,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         }
         const auto* out_buf = reinterpret_cast<int8_t*>(output.outputs[0].buf);
         int8_t* data = this->out_dst_i8.data();
-        caiwei::image::transpose(out_buf, data, result_length, stride_length);
+        caiwei::media::transpose(out_buf, data, result_length, stride_length);
         const int32_t zp    = output_attr.zp;
         const float   scale = output_attr.scale;
         const int8_t confidence_threshold_i8 = caiwei::type::qnt_affine_to_i8(this->confidence_threshold, zp, scale);
@@ -59,7 +59,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
                 const float box_w = (caiwei::type::deqnt_affine_to_f32(data[2], zp, scale) * this->w              ) / static_cast<float>(this->dst_w);
                 const float box_h = (caiwei::type::deqnt_affine_to_f32(data[3], zp, scale) * this->h              ) / static_cast<float>(this->dst_h);
                 const float max_score = caiwei::type::deqnt_affine_to_f32(max_score_i8, zp, scale);
-                ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
+                ret.emplace_back(caiwei::media::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;
         }
@@ -75,7 +75,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         float* out_buf = this->out_buf_f32.data();
         float* data    = this->out_dst_f32.data();
         caiwei::type::fp16_to_f32(out_buf, out_buf_f16, total);
-        caiwei::image::transpose(out_buf, data, result_length, stride_length);
+        caiwei::media::transpose(out_buf, data, result_length, stride_length);
         for (int64_t index = 0; index < stride_length; ++index) {
             const float* scores = data + YOLO_BOX_SIZE;
             auto  max_ptr   = std::max_element(scores, scores + this->class_size);
@@ -87,7 +87,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
                 const float box_y = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
                 const float box_w = (data[2]              ) / static_cast<float>(this->dst_w);
                 const float box_h = (data[3]              ) / static_cast<float>(this->dst_h);
-                ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
+                ret.emplace_back(caiwei::media::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;
         }
@@ -95,8 +95,8 @@ std::vector<caiwei::image::Box> caiwei::context::DetRKNN2Context::run(const caiw
         CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
         return {};
     }
-    auto index = caiwei::image::nms_boxes(ret, this->iou_threshold);
-    std::vector<caiwei::image::Box> result;
+    auto index = caiwei::media::nms_boxes(ret, this->iou_threshold);
+    std::vector<caiwei::media::Box> result;
     result.resize(index.size());
     size_t j = 0;
     for (size_t i : index) {

@@ -4,7 +4,7 @@
 
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
 static void print_tensor_info(const char* title, const rknn_tensor_attr& attr);
@@ -167,14 +167,14 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
             CW_LOG_W("不支持的输入格式: %s", get_format_string(input_attr.fmt));
             return {};
         }
-        if (!caiwei::image::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
+        if (!caiwei::media::resize(image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, this->scale)) {
             return {};
         }
         this->src_w = image.width;
         this->src_h = image.height;
         this->src_c = image.channels;
         this->dst.resize    (static_cast<size_t>(this->dst_w) * this->dst_h * image.channels);
-        this->pad.resize    (static_cast<size_t>(          w) *           h * image.channels, caiwei::image::DEFAULT_PADDING);
+        this->pad.resize    (static_cast<size_t>(          w) *           h * image.channels, caiwei::media::DEFAULT_PADDING);
         this->hwc.resize    (static_cast<size_t>(          w) *           h * image.channels);
         this->chw.resize    (static_cast<size_t>(          w) *           h * image.channels);
         this->hwc_i8.resize (static_cast<size_t>(          w) *           h * image.channels);
@@ -182,18 +182,18 @@ caiwei::context::RKNN2Result caiwei::context::RKNN2Context::run(const int h, con
         this->chw_u8.resize (static_cast<size_t>(          w) *           h * image.channels);
         this->dst_f16.resize(static_cast<size_t>(          w) *           h * image.channels);
     }
-    if (!caiwei::image::resize(image.data.data(), this->pad.data(), image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, image.channels)) {
+    if (!caiwei::media::resize(image.data.data(), this->pad.data(), image.width, image.height, w, h, this->dst_w, this->dst_h, this->pad_w, this->pad_h, image.channels)) {
         return {};
     }
     if (input_attr.fmt == RKNN_TENSOR_NCHW) {
         if (input_attr.type == RKNN_TENSOR_INT8) {
-            caiwei::image::hwc_to_chw_u8_i8(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
+            caiwei::media::hwc_to_chw_u8_i8(this->pad.data(), this->chw_i8.data(), h, w, image.channels);
             return this->run<int8_t>(this->chw_i8.data(), this->chw_i8.size());
         } else if (input_attr.type == RKNN_TENSOR_UINT8) {
-            caiwei::image::hwc_to_chw(this->pad.data(), this->chw_u8.data(), h, w, image.channels);
+            caiwei::media::hwc_to_chw(this->pad.data(), this->chw_u8.data(), h, w, image.channels);
             return this->run<uint8_t>(this->chw_u8.data(), this->chw_u8.size());
         } else if (input_attr.type == RKNN_TENSOR_FLOAT16) {
-            caiwei::image::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
+            caiwei::media::hwc_to_chw_u8_f32(this->pad.data(), this->chw.data(), h, w, image.channels, 255.0F);
             caiwei::type::f32_to_fp16(this->dst_f16.data(), this->chw.data(), this->chw.size());
             return this->run<uint16_t>(this->dst_f16.data(), this->dst_f16.size());
         } else {

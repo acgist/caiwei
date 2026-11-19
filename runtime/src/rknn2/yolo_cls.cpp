@@ -1,6 +1,6 @@
 #include "caiwei/log.hpp"
 #include "caiwei/type.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
 caiwei::context::ClsRKNN2Context::ClsRKNN2Context(
@@ -23,7 +23,7 @@ bool caiwei::context::ClsRKNN2Context::load() {
     return this->load_model();
 }
 
-std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::media::Cls> caiwei::context::ClsRKNN2Context::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
     if (output.outputs.empty()) {
         return {};
@@ -43,5 +43,5 @@ std::vector<caiwei::image::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
     }
     const auto* out_buf = reinterpret_cast<uint16_t*>(output.outputs[0].buf);
     caiwei::type::fp16_to_f32(this->out_dst.data(), out_buf, out_dst_length);
-    return caiwei::image::top_k<float, caiwei::image::Cls>(this->out_dst.data(), out_dst_length, this->top_k, this->confidence_threshold);
+    return caiwei::media::top_k<float, caiwei::media::Cls>(this->out_dst.data(), out_dst_length, this->top_k, this->confidence_threshold);
 }

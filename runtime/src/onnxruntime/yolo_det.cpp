@@ -1,5 +1,5 @@
 #include "caiwei/log.hpp"
-#include "caiwei/image_tool.hpp"
+#include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
 #ifndef CAIWEI_END2END_STRIDE_LENGTH
@@ -27,7 +27,7 @@ bool caiwei::context::DetONNXRuntimeContext::load() {
     return this->load_model();
 }
 
-std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
+std::vector<caiwei::media::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
     auto output{ this->run(this->h, this->w, image) };
     if (output.empty()) {
         return {};
@@ -40,7 +40,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     const int64_t result_length = output_dims[1];
     const int64_t stride_length = output_dims[2];
     const float* output_data = output.front().GetTensorData<float>();
-    std::vector<caiwei::image::Box> ret;
+    std::vector<caiwei::media::Box> ret;
     if (stride_length == CAIWEI_END2END_STRIDE_LENGTH) {
         const float* data = output_data;
         for (int64_t index = 0; index < result_length; ++index) {
@@ -51,7 +51,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
                 const float box_y1 = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
                 const float box_x2 = (data[2] - this->pad_w) / static_cast<float>(this->dst_w);
                 const float box_y2 = (data[3] - this->pad_h) / static_cast<float>(this->dst_h);
-                ret.emplace_back(caiwei::image::to_box_end2end(box_x1, box_y1, box_x2, box_y2, max_class, max_score));
+                ret.emplace_back(caiwei::media::to_box_end2end(box_x1, box_y1, box_x2, box_y2, max_class, max_score));
             }
             data += stride_length;
         }
@@ -61,7 +61,7 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
         if (total != this->out_dst.size()) {
             this->out_dst.resize(total);
         }
-        caiwei::image::transpose(output_data, this->out_dst.data(), result_length, stride_length);
+        caiwei::media::transpose(output_data, this->out_dst.data(), result_length, stride_length);
         const float* data = this->out_dst.data();
         for (int64_t index = 0; index < stride_length; ++index) {
             const float* scores = data + YOLO_BOX_SIZE;
@@ -73,12 +73,12 @@ std::vector<caiwei::image::Box> caiwei::context::DetONNXRuntimeContext::run(cons
                 const float box_y = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
                 const float box_w = (data[2]              ) / static_cast<float>(this->dst_w);
                 const float box_h = (data[3]              ) / static_cast<float>(this->dst_h);
-                ret.emplace_back(caiwei::image::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
+                ret.emplace_back(caiwei::media::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;
         }
-        auto index = caiwei::image::nms_boxes(ret, this->iou_threshold);
-        std::vector<caiwei::image::Box> result;
+        auto index = caiwei::media::nms_boxes(ret, this->iou_threshold);
+        std::vector<caiwei::media::Box> result;
         result.resize(index.size());
         size_t j = 0;
         for (size_t i : index) {
