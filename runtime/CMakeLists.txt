@@ -10,7 +10,6 @@ set(
     src/session.cpp
     src/manager.cpp
     src/tokenizer.cpp
-    src/media/media.cpp
     src/media/text_data.cpp
     src/media/text_tool.cpp
     src/media/media_data.cpp
