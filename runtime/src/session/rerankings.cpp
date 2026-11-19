@@ -15,16 +15,12 @@ std::string caiwei::session::RerankingsSession::get() {
         caiwei::text::RerankingsResponseData data;
         data.index = i;
         if (result.result[i].empty()) {
-            CW_LOG_W("结果为空: %zu", i);
             data.score = 0.0F;
         } else {
             data.score = result.result[i][0];
         }
         response.data.push_back(std::move(data));
     }
-    response.usage = {
-        .prompt_tokens = result.prompt_tokens,
-        .total_tokens  = result.total_tokens
-    };
+    response.usage = {.prompt_tokens = result.prompt_tokens, .total_tokens = result.total_tokens};
     return caiwei::text::to_json(response);
 }

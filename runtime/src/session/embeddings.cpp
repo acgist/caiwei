@@ -17,9 +17,6 @@ std::string caiwei::session::EmbeddingsSession::get() {
         data.embedding = std::move(result.result[i]);
         response.data.push_back(std::move(data));
     }
-    response.usage = {
-        .prompt_tokens = result.prompt_tokens,
-        .total_tokens  = result.total_tokens
-    };
+    response.usage = {.prompt_tokens = result.prompt_tokens, .total_tokens = result.total_tokens};
     return caiwei::text::to_json(response);
 }
