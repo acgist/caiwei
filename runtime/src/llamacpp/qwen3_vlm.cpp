@@ -76,6 +76,9 @@ caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inp
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
         return caiwei_batch;
     }
+    [[maybe_unused]] uint64_t image_count = 0;
+    [[maybe_unused]] uint64_t video_count = 0;
+    [[maybe_unused]] uint64_t frame_count = 0;
     mtmd::bitmaps bitmaps;
     for (const auto& message : request.messages) {
         for (const auto& image : message.image_data) {
@@ -84,12 +87,16 @@ caiwei::context::caiwei_llama_batch caiwei::context::VLMLlamaCPPContext::get_inp
                 continue;
             }
             bitmaps.entries.emplace_back(bitmap);
+            ++image_count;
         }
         for (const auto& video : message.video_data) {
             bitmaps.entries.emplace_back(fill_media(video));
             mtmd_bitmap_set_mergeable(bitmaps.entries.back().ptr.get(), true);
+            frame_count += video.size();
+            ++video_count;
         }
     }
+    CW_LOG_D("图片数量: %" PRIu64 " 视频数量: %" PRIu64 " 视频帧数: %" PRIu64, image_count, video_count, frame_count);
     if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, request)) {
         caiwei_batch.success = true;
         return caiwei_batch;

@@ -860,11 +860,7 @@ static bool init_tensor(rknn3_context& context, rknn3_tensor& tensor, int i, rkn
     return true;
 }
 
-#if CAIWEI_DEBUG
-static void release_tensor(rknn3_context& context, rknn3_tensor& tensor, const char* name) {
-#else
-static void release_tensor(rknn3_context& context, rknn3_tensor& tensor, const char* /* name */) {
-#endif
+static void release_tensor(rknn3_context& context, rknn3_tensor& tensor, [[maybe_unused]] const char* name) {
     if (tensor.mem) {
         CW_LOG_D("释放%s内存: %p", name, tensor.mem);
         rknn3_destroy_mem(context, tensor.mem);

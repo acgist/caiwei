@@ -31,7 +31,6 @@ private:
     uint32_t src_c = 0;
     std::vector<uint8_t> dst;
     std::vector<uint8_t> pad;
-    std::vector<float>   hwc;
     std::vector<float>   chw;
 public:
     ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env);

@@ -18,6 +18,12 @@
 #ifndef CAIWEI_RKNN3_CORE_MASK
 #define CAIWEI_RKNN3_CORE_MASK 0xFF
 #endif
+#ifndef CAIWEI_RKNN3_N_OUTPUT_TENSORS
+#define CAIWEI_RKNN3_N_OUTPUT_TENSORS 1
+#endif
+#ifndef CAIWEI_RKNN3_DEEPSTACK_TENSORS
+#define CAIWEI_RKNN3_DEEPSTACK_TENSORS 3
+#endif
 
 namespace caiwei  {
 namespace context {
@@ -64,9 +70,9 @@ struct ContextSession {
     std::vector<rknn3_tensor> output_tensors{};
     std::vector<rknn3_aux_tensor> deepstack_tensors{};
 
-    bool init_output_tensors(int n_output_tensors = 1);
+    bool init_output_tensors(int n_output_tensors = CAIWEI_RKNN3_N_OUTPUT_TENSORS);
     void release_output_tensors();
-    bool init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length, int size = 3);
+    bool init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length, int size = CAIWEI_RKNN3_DEEPSTACK_TENSORS);
     void release_deepstack_tensors();
 
     ~ContextSession();
@@ -193,13 +199,13 @@ public:
 class VLMRKNN3Context : public VLMContext, public RKNN3Context {
 private:
     bool fill_media(
-        int media_i,
-        int deepstack_i,
-        int width,
-        int height,
-        int channels,
-        int image_width,
-        int image_height,
+        const int media_i,
+        const int deepstack_i,
+        const int width,
+        const int height,
+        const int channels,
+        const int w,
+        const int h,
         std::vector<float16>& embeds,
         std::vector<rknn3_aux_tensor>& deepstack_tensors,
         const std::vector<uint8_t>& media_data
