@@ -7,6 +7,7 @@
 #include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
+// clang-format off
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     std::string model_path,
     std::string weight_path,
@@ -28,6 +29,7 @@ caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
         max_token_length,
         std::move(special_token)
     ) {
+    // clang-format on
 }
 
 caiwei::context::VLMRKNN3Context::~VLMRKNN3Context() {

@@ -73,7 +73,9 @@ typename C::O caiwei::manager::ContextWrapper<C>::run(const I& input) {
 }
 
 template <typename R>
-inline std::shared_ptr<R> get_runtime_impl(caiwei::runtime::Type type) {
+inline std::shared_ptr<R> get_runtime_impl() {
+    static_assert(requires { R::TYPE; }, "子类没有指定类型");
+    caiwei::runtime::Type type = R::TYPE;
     {
         std::shared_lock<std::shared_mutex> lock(caiwei::runtime::runtime_mutex);
         auto iter = caiwei::runtime::runtime_map.find(type);
@@ -87,7 +89,7 @@ inline std::shared_ptr<R> get_runtime_impl(caiwei::runtime::Type type) {
         if (iter != caiwei::runtime::runtime_map.end()) {
             return std::static_pointer_cast<R>(iter->second);
         }
-        auto runtime = caiwei::runtime::get_runtime<R>(type);
+        auto runtime = caiwei::runtime::get_runtime<R>();
         if (runtime) {
             caiwei::runtime::runtime_map.emplace(type, runtime);
             return runtime;
@@ -125,7 +127,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
     }
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN2) {
-        auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>(caiwei::runtime::Type::RKNN2);
+        auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>();
         auto context = get_context_impl<caiwei::runtime::RKNN2Runtime>(info, runtime);
         if (context != nullptr) {
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
@@ -134,7 +136,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
     #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN3) {
-        auto runtime = get_runtime_impl<caiwei::runtime::RKNN3Runtime>(caiwei::runtime::Type::RKNN3);
+        auto runtime = get_runtime_impl<caiwei::runtime::RKNN3Runtime>();
         auto context = get_context_impl<caiwei::runtime::RKNN3Runtime>(info, runtime);
         if (context != nullptr) {
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
@@ -143,7 +145,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
     #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::LLAMACPP) {
-        auto runtime = get_runtime_impl<caiwei::runtime::LlamaCPPRuntime>(caiwei::runtime::Type::LLAMACPP);
+        auto runtime = get_runtime_impl<caiwei::runtime::LlamaCPPRuntime>();
         auto context = get_context_impl<caiwei::runtime::LlamaCPPRuntime>(info, runtime);
         if (context != nullptr) {
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
@@ -152,7 +154,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
     #endif
     #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::ONNXRUNTIME) {
-        auto runtime = get_runtime_impl<caiwei::runtime::ONNXRuntimeRuntime>(caiwei::runtime::Type::ONNXRUNTIME);
+        auto runtime = get_runtime_impl<caiwei::runtime::ONNXRuntimeRuntime>();
         auto context = get_context_impl<caiwei::runtime::ONNXRuntimeRuntime>(info, runtime);
         if (context != nullptr) {
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);

@@ -415,7 +415,7 @@ static void sync_generator(
     std::string content;
     std::string thinking;
     std::string toolcall_id;
-    int         toolcall_index = -1;
+    int32_t     toolcall_index = -1;
     std::string toolcall_name;
     std::string toolcall_arguments;
     // clang-format on

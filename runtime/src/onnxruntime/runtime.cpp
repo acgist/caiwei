@@ -25,11 +25,7 @@ static void onnxruntime_log(
 }
 
 template<>
-std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime(caiwei::runtime::Type type) {
-    if (type != caiwei::runtime::Type::ONNXRUNTIME) {
-        CW_LOG_W("类型无效: %s", get_type_name(type));
-        return nullptr;
-    }
+std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime() {
     const int  min_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MIN_POOL");
     const int  max_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MAX_POOL");
     const int  timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
@@ -60,24 +56,32 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime
     if (!caiwei::context::check_model_path(info)) {
         return nullptr;
     }
-    const int c = caiwei::env::get_int("CAIWEI_CLS_C");
-    const int h = caiwei::env::get_int("CAIWEI_CLS_H");
-    const int w = caiwei::env::get_int("CAIWEI_CLS_W");
-    const int class_size = caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE");
-    const int top_k = caiwei::env::get_int("CAIWEI_CLS_TOP_K");
-    const float confidence_threshold = caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD");
-    return std::make_shared<caiwei::context::ClsONNXRuntimeContext>(info->path, c, h, w, class_size, top_k, confidence_threshold, this->env, this);
+    return std::make_shared<caiwei::context::ClsONNXRuntimeContext>(
+        info->path,
+        caiwei::env::get_int("CAIWEI_CLS_C"),
+        caiwei::env::get_int("CAIWEI_CLS_H"),
+        caiwei::env::get_int("CAIWEI_CLS_W"),
+        caiwei::env::get_int("CAIWEI_CLS_CLASS_SIZE"),
+        caiwei::env::get_int("CAIWEI_CLS_TOP_K"),
+        caiwei::env::get_float("CAIWEI_CLS_CONFIDENCE_THRESHOLD"),
+        this->env,
+        this
+    );
 }
 
 std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
         return nullptr;
     }
-    const int c = caiwei::env::get_int("CAIWEI_DET_C");
-    const int h = caiwei::env::get_int("CAIWEI_DET_H");
-    const int w = caiwei::env::get_int("CAIWEI_DET_W");
-    const int class_size = caiwei::env::get_int("CAIWEI_DET_CLASS_SIZE");
-    const float iou_threshold = caiwei::env::get_float("CAIWEI_DET_IOU_THRESHOLD");
-    const float confidence_threshold = caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD");
-    return std::make_shared<caiwei::context::DetONNXRuntimeContext>(info->path, c, h, w, class_size, iou_threshold, confidence_threshold, this->env, this);
+    return std::make_shared<caiwei::context::DetONNXRuntimeContext>(
+        info->path,
+        caiwei::env::get_int("CAIWEI_DET_C"),
+        caiwei::env::get_int("CAIWEI_DET_H"),
+        caiwei::env::get_int("CAIWEI_DET_W"),
+        caiwei::env::get_int("CAIWEI_DET_CLASS_SIZE"),
+        caiwei::env::get_float("CAIWEI_DET_IOU_THRESHOLD"),
+        caiwei::env::get_float("CAIWEI_DET_CONFIDENCE_THRESHOLD"),
+        this->env,
+        this
+    );
 }

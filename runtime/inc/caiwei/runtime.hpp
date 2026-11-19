@@ -10,7 +10,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <memory>
 #include <vector>
 #include <shared_mutex>
 #include <condition_variable>
@@ -84,6 +83,7 @@ public:
     RKNN2Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~RKNN2Runtime();
 public:
+    static constexpr Type TYPE = Type::RKNN2;
     std::shared_ptr<caiwei::context::ClsContext> get_cls_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::DetContext> get_det_context(const caiwei::context::ContextInfo* info) override;
 };
@@ -95,6 +95,7 @@ public:
     RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~RKNN3Runtime();
 public:
+    static constexpr Type TYPE = Type::RKNN3;
     std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::LLMContext> get_llm_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::VLMContext> get_vlm_context(const caiwei::context::ContextInfo* info) override;
@@ -109,6 +110,7 @@ public:
     LlamaCPPRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~LlamaCPPRuntime();
 public:
+    static constexpr Type TYPE = Type::LLAMACPP;
     std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::LLMContext> get_llm_context(const caiwei::context::ContextInfo* info) override;
     std::shared_ptr<caiwei::context::VLMContext> get_vlm_context(const caiwei::context::ContextInfo* info) override;
@@ -122,22 +124,23 @@ class ONNXRuntimeRuntime : public Runtime {
 public:
     Ort::Env* env = nullptr;
 public:
-    std::shared_ptr<caiwei::context::ClsContext> get_cls_context(const caiwei::context::ContextInfo* info) override;
-    std::shared_ptr<caiwei::context::DetContext> get_det_context(const caiwei::context::ContextInfo* info) override;
-public:
     ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share);
     ~ONNXRuntimeRuntime();
+public:
+    static constexpr Type TYPE = Type::ONNXRUNTIME;
+    std::shared_ptr<caiwei::context::ClsContext> get_cls_context(const caiwei::context::ContextInfo* info) override;
+    std::shared_ptr<caiwei::context::DetContext> get_det_context(const caiwei::context::ContextInfo* info) override;
 };
 #endif
 
 void init();
 void stop();
 
+template <typename R>
+std::shared_ptr<R> get_runtime();
+
 extern std::shared_mutex runtime_mutex;
 extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> runtime_map;
-
-template <typename R>
-std::shared_ptr<R> get_runtime(caiwei::runtime::Type type);
 
 } // runtime
 } // caiwei

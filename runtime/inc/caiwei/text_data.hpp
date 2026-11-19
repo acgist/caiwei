@@ -314,7 +314,7 @@ struct ToolcallSession {
     bool name_return      = false;
     bool arguments_return = false;
     std::string toolcall_id;
-    uint32_t    toolcall_index;
+    int32_t     toolcall_index;
     std::string token;
     std::string content;
     std::string name;
@@ -340,7 +340,7 @@ struct CompletionResult {
     std::string toolcall_name;
     std::string toolcall_arguments;
     std::string toolcall_id;
-    uint32_t    toolcall_index;
+    int32_t     toolcall_index;
 
     CompletionResult(bool thinking, bool toolcall, std::string token, ToolcallSession& toolcall_session);
     CompletionResult(bool thinking, bool toolcall, uint32_t prompt_tokens, uint32_t completion_tokens, ToolcallSession& toolcall_session);
