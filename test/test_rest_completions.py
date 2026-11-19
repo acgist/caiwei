@@ -13,11 +13,29 @@ def base64_file(file_path: str) -> str:
         return base64.b64encode(data).decode("utf-8")
 
 
+def tool_fill(tools_params, tool):
+    if tool.index not in tools_params:
+        tools_params[tool.index] = tool
+    if tool.id:
+        tools_params[tool.index].id = tool.id
+    if tool.function:
+        if tools_params[tool.index].function is None:
+            tools_params[tool.index].function = tool.function
+        if tool.function.name:
+            print(tool.function.name, end="", flush=True)
+            tools_params[tool.index].function.name = tool.function.name
+        if tool.function.arguments:
+            print(tool.function.arguments, end="", flush=True)
+            if tools_params[tool.index].function.arguments is None:
+                tools_params[tool.index].function.arguments = ""
+            tools_params[tool.index].function.arguments += tool.function.arguments
+
+
 def print_resp(stream, resp):
     usage = None
-    content = ""
+    content = {}
+    tools_params = {}
     if stream:
-        choices = {}
         for chunk in resp:
             if not chunk.choices:
                 continue
@@ -25,23 +43,25 @@ def print_resp(stream, resp):
                 delta = choice.delta
                 if delta.content:
                     print(delta.content, end="", flush=True)
-                    if choice.index not in choices:
-                        choices[choice.index] = ""
-                    choices[choice.index] += delta.content
+                    if choice.index not in content:
+                        content[choice.index] = ""
+                    content[choice.index] += delta.content
+                if delta.tool_calls:
+                    for tool in delta.tool_calls:
+                        tool_fill(tools_params, tool)
             if chunk.usage:
                 usage = chunk.usage
         print("")
-        for index, text in choices.items():
-            print(f"choice[{index}] = {text}")
-            content += text
     else:
         for choice in resp.choices:
-            print(f"choice[{choice.index}] = {choice.message.content}")
-            content += choice.message.content
+            print(choice.message)
+            content = choice.message.content
+            tools_params = choice.message.tool_calls
         usage = resp.usage
-    assert content
     print(f"usage = {usage}")
     print(f"content = {content}")
+    print(f"tools_params = {tools_params}")
+    assert content or tools_params
 
 
 def test_cls():
@@ -169,6 +189,49 @@ def test_media():
     print_resp(stream, resp)
 
 
+def test_toolcall():
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=120)
+    resp = client.chat.completions.create(
+        model="qwen3-llm",
+        stream=stream,
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_transport",
+                    "description": "查询城市不同天气出行方式",
+                    "parameters": {
+                        "properties": {
+                            "city": {"description": "城市名称", "type": "string"}
+                        },
+                        "required": ["city"],
+                        "type": "object",
+                        "additionalProperties": False,
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "description": "查询城市天气",
+                    "parameters": {
+                        "properties": {
+                            "city": {"description": "城市名称", "type": "string"}
+                        },
+                        "required": ["city"],
+                        "type": "object",
+                        "additionalProperties": False,
+                    },
+                },
+            },
+        ],
+        messages=[{"role": "user", "content": "查询广州天气"}],
+        # messages=[{"role": "user", "content": "请查询广州天气和出行方式选择最适合的出行方式"}],
+    )
+    print_resp(stream, resp)
+
+
 """
 $env:CAIWEI_CONTEXT_INFO=@"
 CLS,YOLO,yolo26n-cls,yolo26n-cls.onnx
@@ -203,17 +266,11 @@ RERANKING,QWEN,qwen3-reranking,/data/model/Qwen3-Reranker-0.6B/Qwen3-Reranker-0.
 
 if __name__ == "__main__":
     print("开始测试")
-    test_cls()
+    # test_cls()
     # test_det()
     # test_asr()
     # test_llm()
     # test_vlm()
     # test_media()
-    # for i in range(100):
-    #     test_cls()
-    #     test_det()
-    #     test_asr()
-    #     test_llm()
-    #     test_vlm()
-    #     test_media()
+    test_toolcall()
     print("测试完成")

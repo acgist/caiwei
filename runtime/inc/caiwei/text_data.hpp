@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <variant>
 #include <optional>
+#include <algorithm>
 
 #include "nlohmann/json.hpp"
 
@@ -13,6 +14,12 @@
 
 #ifndef CW_TRANSIENT
 #define CW_TRANSIENT
+#endif
+#ifndef ASR_QUEUE_SIZE
+#define ASR_QUEUE_SIZE 320000
+#endif
+#ifndef YOLO_QUEUE_SIZE
+#define YOLO_QUEUE_SIZE 8
 #endif
 
 namespace caiwei {
@@ -123,6 +130,18 @@ struct CompletionsRequest {
             return max_tokens;
         }
         return std::min(n_tokens, max_tokens);
+    }
+
+    inline int get_video_fps() {
+        return std::clamp(this->video_fps.value_or(8), 1, 32);
+    }
+
+    inline int get_asr_samples() {
+        return std::clamp(this->asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
+    }
+
+    inline int get_vlm_frames() {
+        return std::clamp(this->vlm_frames.value_or(8), 1, 16);
     }
 };
 

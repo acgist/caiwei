@@ -29,6 +29,8 @@ bool is_available();
 
 template <typename C>
 class ContextWrapper {
+public:
+    std::string name;
 private:
     using I = typename C::I;
     using O = typename C::O;
@@ -38,7 +40,7 @@ public:
     C* ptr();
     O  run(const I& input);
 public:
-    ContextWrapper(std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
+    ContextWrapper(std::string name, std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~ContextWrapper();
     ContextWrapper(const ContextWrapper&) = delete;
     ContextWrapper& operator=(const ContextWrapper&) = delete;
@@ -46,9 +48,10 @@ public:
 
 template <typename C>
 caiwei::manager::ContextWrapper<C>::ContextWrapper(
+    std::string name,
     std::shared_ptr<C> context,
     std::shared_ptr<caiwei::runtime::Runtime> runtime
-) : context(std::move(context)), runtime(std::move(runtime)) {
+) : name(std::move(name)), context(std::move(context)), runtime(std::move(runtime)) {
 }
 
 template <typename C>
@@ -125,7 +128,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>(caiwei::runtime::Type::RKNN2);
         auto context = get_context_impl<caiwei::runtime::RKNN2Runtime>(info, runtime);
         if (context != nullptr) {
-            return std::make_unique<ContextWrapper<C>>(std::static_pointer_cast<C>(context), runtime);
+            return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -134,7 +137,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN3Runtime>(caiwei::runtime::Type::RKNN3);
         auto context = get_context_impl<caiwei::runtime::RKNN3Runtime>(info, runtime);
         if (context != nullptr) {
-            return std::make_unique<ContextWrapper<C>>(std::static_pointer_cast<C>(context), runtime);
+            return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -143,7 +146,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         auto runtime = get_runtime_impl<caiwei::runtime::LlamaCPPRuntime>(caiwei::runtime::Type::LLAMACPP);
         auto context = get_context_impl<caiwei::runtime::LlamaCPPRuntime>(info, runtime);
         if (context != nullptr) {
-            return std::make_unique<ContextWrapper<C>>(std::static_pointer_cast<C>(context), runtime);
+            return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
     #endif
@@ -152,7 +155,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         auto runtime = get_runtime_impl<caiwei::runtime::ONNXRuntimeRuntime>(caiwei::runtime::Type::ONNXRUNTIME);
         auto context = get_context_impl<caiwei::runtime::ONNXRuntimeRuntime>(info, runtime);
         if (context != nullptr) {
-            return std::make_unique<ContextWrapper<C>>(std::static_pointer_cast<C>(context), runtime);
+            return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
     #endif

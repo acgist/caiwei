@@ -1,6 +1,7 @@
 #include <mutex>
 #include <thread>
 #include <algorithm>
+#include <functional>
 #include <condition_variable>
 
 #include "httplib.h"
@@ -15,13 +16,21 @@ extern "C" {
 #include "caiwei/session.hpp"
 #include "caiwei/media_tool.hpp"
 
-#define ASR_QUEUE_SIZE  320000
-#define YOLO_QUEUE_SIZE 8
+#ifndef CAIWEI_CLIENT_TIMEOUT_READ
+#define CAIWEI_CLIENT_TIMEOUT_READ 30
+#endif
+#ifndef CAIWEI_CLIENT_TIMEOUT_CONNECTION
+#define CAIWEI_CLIENT_TIMEOUT_CONNECTION 10
+#endif
+#ifndef CAIWEI_CLIENT_PAYLOAD_MAX_LENGTH
+#define CAIWEI_CLIENT_PAYLOAD_MAX_LENGTH (2 * 1024 * 1024)
+#endif
 
 using TokenCallback = std::function<void(const std::string& token)>;
 
-static void asr_thread_session (std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer);
-static void vlm_thread_session (std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
+// clang-format off
+static void asr_thread_session (std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper,                                           std::vector<uint8_t>&                   audio_frame_buffer                          );
+static void vlm_thread_session (std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper,                                           std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size);
 static void yolo_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size);
 
 static void sync_cls(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
@@ -31,30 +40,35 @@ static void sync_llm(caiwei::text::CompletionsRequest& request, caiwei::text::Co
 static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response);
 static void sync_generator(caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::CompletionResult> generator);
 
-static bool async_cls(caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper* wrapper, caiwei::session::Callback& callback);
-static bool async_det(caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper* wrapper, caiwei::session::Callback& callback);
+static bool async_cls(caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper* wrapper, caiwei::session::Callback& callback                                        );
+static bool async_det(caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper* wrapper, caiwei::session::Callback& callback                                        );
 static bool async_asr(caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper* wrapper, caiwei::session::Callback& callback, TokenCallback token_callback = nullptr);
 static bool async_llm(caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper* wrapper, caiwei::session::Callback& callback, TokenCallback token_callback = nullptr);
 static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager::VLMWrapper* wrapper, caiwei::session::Callback& callback, TokenCallback token_callback = nullptr);
-static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::CompletionResult> generator, caiwei::session::Callback& callback, TokenCallback token_callback = nullptr);
+static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::CompletionResult> generator, const std::string& name, caiwei::session::Callback& callback, TokenCallback token_callback = nullptr);
 
 static void fill_media_request(caiwei::text::CompletionsRequest& request);
-static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message, const std::string& audio_url, int samples);
-static void fill_image_message(caiwei::text::CompletionsRequestMessage& message, const std::string& image_url);
+static void fill_audio_message(caiwei::text::CompletionsRequestMessage& message, const std::string& audio_url, int samples        );
+static void fill_image_message(caiwei::text::CompletionsRequestMessage& message, const std::string& image_url                     );
 static void fill_video_message(caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames);
+// clang-format on
 
+// clang-format off
 caiwei::session::CompletionsSession::CompletionsSession(
     caiwei::text::CompletionsRequest& request, Callback callback
 ) : StatefulSession(callback), request(request) {
 }
+// clang-format on
 
 std::string caiwei::session::CompletionsSession::get_sync() {
     const auto* context_info = caiwei::context::get_context_info(request.model);
     caiwei::env::check_not_nullptr(context_info, "模型无效");
     caiwei::text::CompletionsResponse response;
+    // clang-format off
     response.id      = request.id;
     response.created = request.created;
     response.model   = request.model;
+    // clang-format on
     fill_media_request(request);
     if (context_info->type == caiwei::context::Type::CLS) {
         sync_cls(request, response);
@@ -76,19 +90,18 @@ bool caiwei::session::CompletionsSession::get() {
     if (this->callback == nullptr) {
         return false;
     }
+    caiwei::env::check_not_empty(this->request.model, "模型无效");
     Callback callback_safe = [this](const char* data, int length) {
         std::lock_guard<std::mutex> lock(this->mutex);
         return this->callback(data, length);
     };
-    std::unique_ptr<caiwei::manager::ClsWrapper> cls_ptr{ nullptr };
-    std::unique_ptr<caiwei::manager::DetWrapper> det_ptr{ nullptr };
-    std::unique_ptr<caiwei::manager::ASRWrapper> asr_ptr{ nullptr };
-    std::unique_ptr<caiwei::manager::LLMWrapper> llm_ptr{ nullptr };
-    std::unique_ptr<caiwei::manager::VLMWrapper> vlm_ptr{ nullptr };
+    std::unique_ptr<caiwei::manager::ClsWrapper> cls_ptr{nullptr};
+    std::unique_ptr<caiwei::manager::DetWrapper> det_ptr{nullptr};
+    std::unique_ptr<caiwei::manager::ASRWrapper> asr_ptr{nullptr};
+    std::unique_ptr<caiwei::manager::LLMWrapper> llm_ptr{nullptr};
+    std::unique_ptr<caiwei::manager::VLMWrapper> vlm_ptr{nullptr};
     std::vector<std::string> all_model_list;
-    if (!this->request.model.empty()) {
-        all_model_list.push_back(this->request.model);
-    }
+    all_model_list.push_back(this->request.model);
     if (this->request.model_list.has_value()) {
         auto& model_list = this->request.model_list.value();
         all_model_list.insert(all_model_list.end(), model_list.begin(), model_list.end());
@@ -119,9 +132,11 @@ bool caiwei::session::CompletionsSession::get() {
     const bool media_stream = this->request.media_url.has_value() && this->request.media_type.has_value();
     if (media_stream) {
         if (this->request.messages.empty() || this->request.messages.back().role != caiwei::text::ROLE_USER) {
-            this->request.messages.push_back(caiwei::text::CompletionsRequestMessage{
-                .role = caiwei::text::ROLE_USER,
-            });
+            this->request.messages.push_back(
+                caiwei::text::CompletionsRequestMessage{
+                    .role = caiwei::text::ROLE_USER,
+                }
+            );
         }
         std::mutex asr_mutex;
         std::mutex vlm_mutex;
@@ -132,16 +147,17 @@ bool caiwei::session::CompletionsSession::get() {
         std::condition_variable asr_cv;
         std::condition_variable vlm_cv;
         std::condition_variable yolo_cv;
+        // clang-format off
         const std::string url   = this->request.media_url.value();
         const std::string type  = this->request.media_type.value();
-        const int  video_fps    = std::clamp(this->request.video_fps.value_or(8), 1, 32);
-        const int  asr_samples  = std::clamp(this->request.asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
-        const int  vlm_frames   = std::clamp(this->request.vlm_frames.value_or(8), 1, 16);
+        const int  video_fps    = this->request.get_video_fps();
+        const int  asr_samples  = this->request.get_asr_samples();
+        const int  vlm_frames   = this->request.get_vlm_frames();
         const bool drop_on_full = this->request.drop_on_full.value_or(false);
         const bool enable_asr   = asr_ptr != nullptr;
         const bool enable_vlm   = vlm_ptr != nullptr;
         const bool enable_yolo  = cls_ptr != nullptr || det_ptr != nullptr;
-        const bool video_copy   = enable_vlm && enable_yolo;
+        const bool frame_copy   = enable_vlm && enable_yolo;
         size_t frame_count      = 0;
         size_t image_frame_size = 0;
         size_t video_frame_size = 0;
@@ -151,6 +167,7 @@ bool caiwei::session::CompletionsSession::get() {
         std::vector<uint8_t>                   audio_frame_buffer;
         std::vector<caiwei::media::ImageFrame> image_frame_buffer;
         std::vector<caiwei::media::VideoFrame> video_frame_buffer;
+        // clang-format on
         audio_frame_buffer.reserve(ASR_QUEUE_SIZE);
         image_frame_buffer.resize(YOLO_QUEUE_SIZE);
         video_frame_buffer.resize(vlm_frames);
@@ -205,19 +222,17 @@ bool caiwei::session::CompletionsSession::get() {
                         return callback_safe(nullptr, 0);
                     }
                     std::unique_lock<std::mutex> lock(asr_mutex);
+                    // clang-format off
                     while (
                         !drop_on_full             &&
                         callback_safe(nullptr, 0) &&
                         (audio_frame_buffer.size() + frame.data.size() > ASR_QUEUE_SIZE)
                     ) {
+                        // clang-format on
                         asr_cv.wait_for(lock, std::chrono::milliseconds(100));
                     }
                     if (audio_frame_buffer.size() + frame.data.size() <= ASR_QUEUE_SIZE) {
-                        audio_frame_buffer.insert(
-                            audio_frame_buffer.end(),
-                            frame.data.begin(),
-                            frame.data.end()
-                        );
+                        audio_frame_buffer.insert(audio_frame_buffer.end(), frame.data.begin(), frame.data.end());
                         if (audio_frame_buffer.size() >= static_cast<size_t>(asr_samples)) {
                             asr_cv.notify_one();
                         }
@@ -236,15 +251,18 @@ bool caiwei::session::CompletionsSession::get() {
                 }
                 if (enable_vlm) {
                     std::unique_lock<std::mutex> lock(vlm_mutex);
+                    // clang-format off
                     while (
                         !drop_on_full             &&
                         callback_safe(nullptr, 0) &&
                         video_frame_size + 1 > static_cast<size_t>(vlm_frames)
                     ) {
+                        // clang-format on
                         vlm_cv.wait_for(lock, std::chrono::milliseconds(100));
                     }
                     if (video_frame_size + 1 <= static_cast<size_t>(vlm_frames)) {
                         auto& data = video_frame_buffer[video_frame_size];
+                        // clang-format off
                         if (
                             data.width       != frame.width    ||
                             data.height      != frame.height   ||
@@ -256,7 +274,8 @@ bool caiwei::session::CompletionsSession::get() {
                             data.channels = frame.channels;
                             data.data.resize(frame.data.size());
                         }
-                        if (video_copy) {
+                        // clang-format on
+                        if (frame_copy) {
                             std::copy(frame.data.begin(), frame.data.end(), data.data.begin());
                         } else {
                             frame.data.swap(data.data);
@@ -274,6 +293,7 @@ bool caiwei::session::CompletionsSession::get() {
                 }
                 if (enable_yolo) {
                     std::unique_lock<std::mutex> lock(yolo_mutex);
+                    // clang-format off
                     while (
                         !drop_on_full             &&
                         callback_safe(nullptr, 0) &&
@@ -281,8 +301,10 @@ bool caiwei::session::CompletionsSession::get() {
                     ) {
                         yolo_cv.wait_for(lock, std::chrono::milliseconds(100));
                     }
+                    // clang-format on
                     if (image_frame_size + 1 <= YOLO_QUEUE_SIZE) {
                         auto& data = image_frame_buffer[image_frame_size];
+                        // clang-format off
                         if (
                             data.width       != frame.width    ||
                             data.height      != frame.height   ||
@@ -294,7 +316,8 @@ bool caiwei::session::CompletionsSession::get() {
                             data.channels = frame.channels;
                             data.data.resize(frame.data.size());
                         }
-                        if (video_copy) {
+                        // clang-format on
+                        if (frame_copy) {
                             std::copy(frame.data.begin(), frame.data.end(), data.data.begin());
                         } else {
                             frame.data.swap(data.data);
@@ -364,33 +387,69 @@ bool caiwei::session::CompletionsSession::get() {
 }
 
 template <typename T>
-inline void sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
+inline void sync_yolo(
+    std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response
+) {
     int index = 0;
     for (const auto& message : request.messages) {
         for (const auto& value : message.image_data) {
             auto ret = ptr->run(value);
             caiwei::text::CompletionsResponseChoice choice;
             choice.index = index++;
+            // clang-format off
             choice.finish_reason   = caiwei::text::FINISH_REASON_STOP;
             choice.message.role    = caiwei::text::ROLE_ASSISTANT;
             choice.message.content = caiwei::media::to_json(ret);
+            // clang-format on
             response.choices.push_back(std::move(choice));
         }
     }
 }
 
-static void sync_generator(caiwei::text::CompletionsRequest& /* request */, caiwei::text::CompletionsResponse& response, std::generator<caiwei::text::CompletionResult> generator) {
+static void sync_generator(
+    caiwei::text::CompletionsRequest& /* request */,
+    caiwei::text::CompletionsResponse& response,
+    std::generator<caiwei::text::CompletionResult> generator
+) {
+    // clang-format off
     std::string content;
     std::string thinking;
+    std::string toolcall_id;
+    int         toolcall_index = -1;
     std::string toolcall_name;
     std::string toolcall_arguments;
+    // clang-format on
     caiwei::text::CompletionsResponseChoice choice;
     choice.index = 0;
     choice.message.role = caiwei::text::ROLE_ASSISTANT;
     for (const auto& result : generator) {
         if (result.toolcall) {
+            if (toolcall_id != result.toolcall_id || toolcall_index != result.toolcall_index) {
+                if (!toolcall_id.empty() && toolcall_index != -1) {
+                    // clang-format off
+                    caiwei::text::CompletionsResponseChoiceMessageToolCallFunction function;
+                    function.name      = std::move(toolcall_name);
+                    function.arguments = std::move(toolcall_arguments);
+                    caiwei::text::CompletionsResponseChoiceMessageToolCall tool_call;
+                    tool_call.id    = std::move(toolcall_id);
+                    tool_call.type  = caiwei::text::TYPE_FUNCTION;
+                    tool_call.index = toolcall_index;
+                    // clang-format on
+                    tool_call.function = std::move(function);
+                    if (choice.message.tool_calls.has_value()) {
+                        choice.message.tool_calls->push_back(std::move(tool_call));
+                    } else {
+                        choice.message.tool_calls = {std::move(tool_call)};
+                    }
+                    toolcall_index = -1;
+                }
+            }
+            // clang-format off
+            toolcall_id        = result.toolcall_id;
+            toolcall_index     = result.toolcall_index;
             toolcall_name      += result.toolcall_name;
             toolcall_arguments += result.toolcall_arguments;
+            // clang-format on
         } else if (result.thinking) {
             thinking += result.token;
         } else {
@@ -398,27 +457,32 @@ static void sync_generator(caiwei::text::CompletionsRequest& /* request */, caiw
         }
         if (!result.finish_reason.empty()) {
             choice.finish_reason = result.finish_reason;
+            // clang-format off
             response.usage = {
                 .prompt_tokens     = result.prompt_tokens,
                 .completion_tokens = result.completion_tokens,
                 .total_tokens      = result.total_tokens,
             };
+            // clang-format on
         }
     }
-    if (!toolcall_name.empty() || !toolcall_arguments.empty()) {    
+    if (!toolcall_id.empty() && toolcall_index != -1) {
+        // clang-format off
         caiwei::text::CompletionsResponseChoiceMessageToolCallFunction function;
-        function.name      = toolcall_name;
-        function.arguments = toolcall_arguments;
+        function.name      = std::move(toolcall_name);
+        function.arguments = std::move(toolcall_arguments);
         caiwei::text::CompletionsResponseChoiceMessageToolCall tool_call;
-        tool_call.id    = caiwei::env::id();
+        tool_call.id    = std::move(toolcall_id);
         tool_call.type  = caiwei::text::TYPE_FUNCTION;
-        tool_call.index = 0;
-        tool_call.function = function;
+        tool_call.index = toolcall_index;
+        // clang-format on
+        tool_call.function = std::move(function);
         if (choice.message.tool_calls.has_value()) {
             choice.message.tool_calls->push_back(std::move(tool_call));
         } else {
-            choice.message.tool_calls = { std::move(tool_call) };
+            choice.message.tool_calls = {std::move(tool_call)};
         }
+        toolcall_index = -1;
     }
     if (!thinking.empty()) {
         choice.message.reasoning_content = thinking;
@@ -462,18 +526,22 @@ static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::Co
 template <typename T>
 inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* ptr, caiwei::session::Callback& callback) {
     caiwei::text::CompletionsChunk chunk;
+    // clang-format off
     chunk.id      = request.id;
     chunk.created = request.created;
-    chunk.model   = request.model;
+    chunk.model   = ptr->name;
+    // clang-format on
     int index = 0;
     for (const auto& message : request.messages) {
         for (const auto& value : message.image_data) {
             auto ret = ptr->run(value);
             caiwei::text::CompletionsChunkChoice choice;
             choice.index = index++;
+            // clang-format off
             choice.finish_reason = caiwei::text::FINISH_REASON_STOP;
             choice.delta.role    = caiwei::text::ROLE_ASSISTANT;
             choice.delta.content = caiwei::media::to_json(ret);
+            // clang-format on
             chunk.choices.push_back(std::move(choice));
         }
     }
@@ -481,16 +549,25 @@ inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* ptr, caiwei
     return callback(message.data(), message.size());
 }
 
-static bool async_generator(caiwei::text::CompletionsRequest& request, std::generator<caiwei::text::CompletionResult> generator, caiwei::session::Callback& callback, TokenCallback token_callback) {
+static bool async_generator(
+    caiwei::text::CompletionsRequest& request,
+    std::generator<caiwei::text::CompletionResult> generator,
+    const std::string& name,
+    caiwei::session::Callback& callback,
+    TokenCallback token_callback
+) {
     for (const auto& result : generator) {
         caiwei::text::CompletionsChunk chunk;
+        // clang-format off
         chunk.id      = request.id;
         chunk.created = request.created;
-        chunk.model   = request.model;
+        chunk.model   = name;
+        // clang-format on
         caiwei::text::CompletionsChunkChoice choice;
         choice.index = 0;
         choice.delta.role = caiwei::text::ROLE_ASSISTANT;
         if (result.toolcall) {
+            // clang-format off
             caiwei::text::CompletionsChunkChoiceMessageToolCallFunction function;
             function.name      = result.toolcall_name;
             function.arguments = result.toolcall_arguments;
@@ -498,11 +575,12 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
             tool_call.id    = result.toolcall_id;
             tool_call.type  = caiwei::text::TYPE_FUNCTION;
             tool_call.index = result.toolcall_index;
-            tool_call.function = function;
+            tool_call.function = std::move(function);
+            // clang-format on
             if (choice.delta.tool_calls.has_value()) {
                 choice.delta.tool_calls->push_back(std::move(tool_call));
             } else {
-                choice.delta.tool_calls = { std::move(tool_call) };
+                choice.delta.tool_calls = {std::move(tool_call)};
             }
         } else if (result.thinking) {
             choice.delta.reasoning_content = result.token;
@@ -514,11 +592,13 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
         }
         if (!result.finish_reason.empty()) {
             choice.finish_reason = result.finish_reason;
-            chunk.usage = caiwei::text::CompletionsChunkUsage {
+            // clang-format off
+            chunk.usage = {
                 .prompt_tokens     = result.prompt_tokens,
                 .completion_tokens = result.completion_tokens,
                 .total_tokens      = result.total_tokens,
             };
+            // clang-format on
         }
         chunk.choices.push_back(std::move(choice));
         std::string message = caiwei::text::to_json(chunk);
@@ -531,29 +611,56 @@ static bool async_generator(caiwei::text::CompletionsRequest& request, std::gene
     return true;
 }
 
-static bool async_cls(caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper* wrapper, caiwei::session::Callback& callback) {
+static bool async_cls(
+    caiwei::text::CompletionsRequest& request, caiwei::manager::ClsWrapper* wrapper, caiwei::session::Callback& callback
+) {
     return async_yolo(request, wrapper, callback);
 }
 
-static bool async_det(caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper* wrapper, caiwei::session::Callback& callback) {
+static bool async_det(
+    caiwei::text::CompletionsRequest& request, caiwei::manager::DetWrapper* wrapper, caiwei::session::Callback& callback
+) {
     return async_yolo(request, wrapper, callback);
 }
 
-static bool async_asr(caiwei::text::CompletionsRequest& request, caiwei::manager::ASRWrapper* wrapper, caiwei::session::Callback& callback, TokenCallback token_callback) {
-    return async_generator(request, wrapper->run(request), callback, token_callback);
+static bool async_asr(
+    caiwei::text::CompletionsRequest& request,
+    caiwei::manager::ASRWrapper* wrapper,
+    caiwei::session::Callback& callback,
+    TokenCallback token_callback
+) {
+    return async_generator(request, wrapper->run(request), wrapper->name, callback, token_callback);
 }
 
-static bool async_llm(caiwei::text::CompletionsRequest& request, caiwei::manager::LLMWrapper* wrapper, caiwei::session::Callback& callback, TokenCallback token_callback) {
-    return async_generator(request, wrapper->run(request), callback, token_callback);
+static bool async_llm(
+    caiwei::text::CompletionsRequest& request,
+    caiwei::manager::LLMWrapper* wrapper,
+    caiwei::session::Callback& callback,
+    TokenCallback token_callback
+) {
+    return async_generator(request, wrapper->run(request), wrapper->name, callback, token_callback);
 }
 
-static bool async_vlm(caiwei::text::CompletionsRequest& request, caiwei::manager::VLMWrapper* wrapper, caiwei::session::Callback& callback, TokenCallback token_callback) {
-    return async_generator(request, wrapper->run(request), callback, token_callback);
+static bool async_vlm(
+    caiwei::text::CompletionsRequest& request,
+    caiwei::manager::VLMWrapper* wrapper,
+    caiwei::session::Callback& callback,
+    TokenCallback token_callback
+) {
+    return async_generator(request, wrapper->run(request), wrapper->name, callback, token_callback);
 }
 
-static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ASRWrapper* asr_wrapper, std::vector<uint8_t>& audio_frame_buffer) {
+static void asr_thread_session(
+    std::stop_token token,
+    caiwei::text::CompletionsRequest request,
+    caiwei::session::Callback& callback,
+    std::mutex& mutex,
+    std::condition_variable& cv,
+    caiwei::manager::ASRWrapper* asr_wrapper,
+    std::vector<uint8_t>& audio_frame_buffer
+) {
     caiwei::env::set_thread_name("asr-thread");
-    const int asr_samples = std::clamp(request.asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
+    const int asr_samples = request.get_asr_samples();
     std::string ret;
     std::string old;
     auto& message = request.messages.back();
@@ -564,8 +671,8 @@ static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsR
     while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
-            cv.wait_for(lock, std::chrono::seconds(1));
-            if (audio_frame_buffer.empty() || audio_frame_buffer.size() < static_cast<size_t>(asr_samples)) {
+            cv.wait_for(lock, std::chrono::milliseconds(1000));
+            if (audio_frame_buffer.size() < static_cast<size_t>(asr_samples)) {
                 callable = callback(nullptr, 0);
                 cv.notify_one();
                 continue;
@@ -589,9 +696,18 @@ static void asr_thread_session(std::stop_token token, caiwei::text::CompletionsR
     }
 }
 
-static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::VLMWrapper* vlm_wrapper, std::vector<caiwei::media::VideoFrame>& video_frame_buffer, size_t& video_frame_size) {
+static void vlm_thread_session(
+    std::stop_token token,
+    caiwei::text::CompletionsRequest request,
+    caiwei::session::Callback& callback,
+    std::mutex& mutex,
+    std::condition_variable& cv,
+    caiwei::manager::VLMWrapper* vlm_wrapper,
+    std::vector<caiwei::media::VideoFrame>& video_frame_buffer,
+    size_t& video_frame_size
+) {
     caiwei::env::set_thread_name("vlm-thread");
-    const int vlm_frames = std::clamp(request.vlm_frames.value_or(8), 1, 16);
+    const int vlm_frames = request.get_vlm_frames();
     auto& message = request.messages.back();
     message.video_data.resize(1);
     auto& video_data = message.video_data[0];
@@ -600,7 +716,7 @@ static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsR
     while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
-            cv.wait_for(lock, std::chrono::seconds(1));
+            cv.wait_for(lock, std::chrono::milliseconds(1000));
             if (video_frame_size < static_cast<size_t>(vlm_frames)) {
                 callable = callback(nullptr, 0);
                 cv.notify_one();
@@ -617,7 +733,17 @@ static void vlm_thread_session(std::stop_token token, caiwei::text::CompletionsR
     }
 }
 
-static void yolo_thread_session(std::stop_token token, caiwei::text::CompletionsRequest request, caiwei::session::Callback& callback, std::mutex& mutex, std::condition_variable& cv, caiwei::manager::ClsWrapper* cls_wrapper, caiwei::manager::DetWrapper* det_wrapper, std::vector<caiwei::media::ImageFrame>& image_frame_buffer, size_t& image_frame_size) {
+static void yolo_thread_session(
+    std::stop_token token,
+    caiwei::text::CompletionsRequest request,
+    caiwei::session::Callback& callback,
+    std::mutex& mutex,
+    std::condition_variable& cv,
+    caiwei::manager::ClsWrapper* cls_wrapper,
+    caiwei::manager::DetWrapper* det_wrapper,
+    std::vector<caiwei::media::ImageFrame>& image_frame_buffer,
+    size_t& image_frame_size
+) {
     caiwei::env::set_thread_name("yolo-thread");
     auto& message = request.messages.back();
     message.image_data.resize(1);
@@ -629,7 +755,7 @@ static void yolo_thread_session(std::stop_token token, caiwei::text::Completions
     while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
-            cv.wait_for(lock, std::chrono::seconds(1));
+            cv.wait_for(lock, std::chrono::milliseconds(1000));
             if (image_frame_size <= 0) {
                 callable = callback(nullptr, 0);
                 cv.notify_one();
@@ -642,9 +768,11 @@ static void yolo_thread_session(std::stop_token token, caiwei::text::Completions
         }
         for (size_t i = 0; callable && i < image_copy_size; ++i) {
             auto& frame = image_copy[i];
+            // clang-format off
             image_data.width    = frame.width;
             image_data.height   = frame.height;
             image_data.channels = frame.channels;
+            // clang-format on
             image_data.data.swap(frame.data);
             if (callable && cls_wrapper != nullptr) {
                 callable = async_cls(request, cls_wrapper, callback);
@@ -657,9 +785,11 @@ static void yolo_thread_session(std::stop_token token, caiwei::text::Completions
 }
 
 static void fill_media_request(caiwei::text::CompletionsRequest& request) {
-    const int video_fps   = std::clamp(request.video_fps.value_or(8), 1, 32);
-    const int asr_samples = std::clamp(request.asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
-    const int vlm_frames  = std::clamp(request.vlm_frames.value_or(8), 1, 16);
+    // clang-format off
+    const int video_fps   = request.get_video_fps();
+    const int asr_samples = request.get_asr_samples();
+    const int vlm_frames  = request.get_vlm_frames();
+    // clang-format on
     for (auto& message : request.messages) {
         if (!message.content.has_value()) {
             continue;
@@ -753,30 +883,30 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
             return;
         }
     } else if (type == caiwei::text::CONTENT_TYPE_HTTP) {
-        #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
+#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
         if (image_url.starts_with("https://")) {
             CW_LOG_W("不支持的媒体地址: %s", image_url.c_str());
             return;
         }
-        #endif
+#endif
         auto pos = image_url.find("://");
-        if(pos == std::string::npos) {
+        if (pos == std::string::npos) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         pos = image_url.find('/', pos + 3);
-        if(pos == std::string::npos) {
+        if (pos == std::string::npos) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
         httplib::Client client(image_url.substr(0, pos));
-        client.set_read_timeout(5);
-        client.set_connection_timeout(5);
-        #ifdef CPPHTTPLIB_VERSION_NUM
-        client.set_payload_max_length(2LL * 1024 * 1024);
-        #endif
+        client.set_read_timeout(CAIWEI_CLIENT_TIMEOUT_READ);
+        client.set_connection_timeout(CAIWEI_CLIENT_TIMEOUT_CONNECTION);
+#ifdef CPPHTTPLIB_VERSION_NUM
+        client.set_payload_max_length(CAIWEI_CLIENT_PAYLOAD_MAX_LENGTH);
+#endif
         auto response = client.Get(image_url.substr(pos));
-        if (!response || response->status != 200) {
+        if (!response || response->status != httplib::OK_200) {
             CW_LOG_W("加载图片失败: %s", image_url.c_str());
             return;
         }
@@ -793,9 +923,11 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
                 return true;
             },
             [&](caiwei::media::VideoFrame& frame) {
+                // clang-format off
                 image_frame.width    = frame.width;
                 image_frame.height   = frame.height;
                 image_frame.channels = frame.channels;
+                // clang-format on
                 image_frame.data.swap(frame.data);
                 return false;
             }
@@ -812,7 +944,9 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
     message.image_data.push_back(std::move(image_frame));
 }
 
-static void fill_video_message(caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames) {
+static void fill_video_message(
+    caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames
+) {
     std::string type = caiwei::text::get_content_type(video_url);
     if (type == caiwei::text::CONTENT_TYPE_NONE) {
         CW_LOG_W("不支持的媒体地址: %s", video_url.c_str());

@@ -70,7 +70,7 @@ caiwei::text::CompletionResult::CompletionResult(
     this->total_tokens = this->prompt_tokens + this->completion_tokens;
 }
 
-caiwei::text::ToolcallSession::ToolcallSession() : toolcall_id(caiwei::env::id()), toolcall_index(0) {
+caiwei::text::ToolcallSession::ToolcallSession() : toolcall_id(caiwei::env::id()), toolcall_index(-1) {
     this->content.reserve(1024);
 }
 
