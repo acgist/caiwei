@@ -1,6 +1,9 @@
+#include "caiwei/text_data.hpp"
+
+#include <utility>
+
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/text_data.hpp"
 
 #include "nlohmann/json.hpp"
 
@@ -8,7 +11,8 @@ extern "C" {
 #include "libavformat/avformat.h"
 }
 
-static std::vector<std::string> suffix = {
+// clang-format off
+static const std::vector<std::string> suffix = {
     ".jpg",  ".JPG",
     ".jpeg", ".JPEG",
     ".png",  ".PNG",
@@ -18,40 +22,41 @@ static std::vector<std::string> suffix = {
     ".mp4",  ".MP4",
     ".mkv",  ".MKV",
 };
+// clang-format on
 
 caiwei::text::CompletionResult::CompletionResult(
-    bool thinking,
-    bool toolcall,
-    std::string token,
-    ToolcallSession& toolcall_session
-) : thinking(thinking), toolcall(toolcall) {
+    bool thinking, bool toolcall, std::string token, ToolcallSession& toolcall_session
+) :
+    thinking(thinking),
+    toolcall(toolcall) {
     if (toolcall) {
         toolcall_session.put_token(std::move(token));
+        // clang-format off
         this->toolcall_name      = toolcall_session.get_name();
         this->toolcall_arguments = toolcall_session.get_arguments();
         this->toolcall_id        = toolcall_session.toolcall_id;
         this->toolcall_index     = toolcall_session.toolcall_index;
+        // clang-format on
     } else {
         this->token = std::move(token);
     }
 }
 
 caiwei::text::CompletionResult::CompletionResult(
-    bool thinking,
-    bool toolcall,
-    uint32_t prompt_tokens,
-    uint32_t completion_tokens,
-    ToolcallSession& toolcall_session
-) : thinking(thinking),
+    bool thinking, bool toolcall, uint32_t prompt_tokens, uint32_t completion_tokens, ToolcallSession& toolcall_session
+) :
+    thinking(thinking),
     toolcall(toolcall),
     prompt_tokens(prompt_tokens),
     completion_tokens(completion_tokens) {
     if (toolcall) {
         this->finish_reason = caiwei::text::FINISH_REASON_TOOL_CALLS;
+        // clang-format off
         this->toolcall_name      = toolcall_session.get_name();
         this->toolcall_arguments = toolcall_session.get_arguments();
         this->toolcall_id        = toolcall_session.toolcall_id;
         this->toolcall_index     = toolcall_session.toolcall_index;
+        // clang-format on
     } else {
         this->finish_reason = caiwei::text::FINISH_REASON_STOP;
     }
@@ -59,10 +64,9 @@ caiwei::text::CompletionResult::CompletionResult(
 }
 
 caiwei::text::CompletionResult::CompletionResult(
-    std::string finish_reason,
-    uint32_t prompt_tokens,
-    uint32_t completion_tokens
-) : thinking(false),
+    std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens
+) :
+    thinking(false),
     toolcall(false),
     finish_reason(std::move(finish_reason)),
     prompt_tokens(prompt_tokens),
@@ -75,14 +79,16 @@ caiwei::text::ToolcallSession::ToolcallSession() : toolcall_id(caiwei::env::id()
 }
 
 void caiwei::text::ToolcallSession::reset() {
+    // clang-format off
     this->name_return      = false;
     this->arguments_return = false;
-    this->toolcall_id    =  caiwei::env::id();
+    this->toolcall_id      = caiwei::env::id();
     this->toolcall_index += 1;
     this->token     = "";
     this->content   = "";
     this->name      = "";
     this->arguments = "";
+    // clang-format on
 }
 
 void caiwei::text::ToolcallSession::finish() {
@@ -128,8 +134,10 @@ void caiwei::text::ToolcallSession::finish() {
 }
 
 void caiwei::text::ToolcallSession::put_token(std::string token) {
-    this->token += token;
+    // clang-format off
+    this->token   += token;
     this->content += token;
+    // clang-format on
 }
 
 std::string caiwei::text::ToolcallSession::get_name() {
@@ -138,7 +146,7 @@ std::string caiwei::text::ToolcallSession::get_name() {
     }
     if (!this->name.empty()) {
         this->name_return = true;
-        return std::move(this->name);
+        return std::exchange(this->name, "");
     }
     const auto a = this->content.find(R"("name": ")");
     const auto z = this->content.find(R"(", "arguments": )");
@@ -155,13 +163,14 @@ std::string caiwei::text::ToolcallSession::get_arguments() {
     }
     if (this->arguments_return) {
         this->token.swap(this->arguments);
-        return std::move(this->token);
+        return std::exchange(this->token, "");
     }
     const auto pos = this->content.find(R"("arguments": )");
     if (pos != std::string::npos) {
         this->token.clear();
         this->arguments_return = true;
         this->arguments = this->content.substr(pos + 13);
+        // 不要直接返回避免参数完整返回导致格式错误
         return "";
     }
     return "";
@@ -176,13 +185,14 @@ inline static void set_opt(const nlohmann::json& data, std::optional<T>& opt, co
 }
 
 namespace caiwei {
-namespace text   {
+namespace text {
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessageContentItemUrl& url) {
     set_opt(json, url.url, "url");
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessageContentItem& item) {
+    // clang-format off
     set_opt(json, item.type,      "type");
     set_opt(json, item.text,      "text");
     set_opt(json, item.audio,     "audio");
@@ -191,6 +201,7 @@ void from_json(const nlohmann::json& json, CompletionsRequestMessageContentItem&
     set_opt(json, item.audio_url, "audio_url");
     set_opt(json, item.image_url, "image_url");
     set_opt(json, item.video_url, "video_url");
+    // clang-format on
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessageContent& content) {
@@ -199,54 +210,64 @@ void from_json(const nlohmann::json& json, CompletionsRequestMessageContent& con
     } else if (json.is_string()) {
         content = json.get<std::string>();
     } else if (json.is_array()) {
-        std::vector<CompletionsRequestMessageContentItem> vector = json;
-        content = std::move(vector);
+        std::vector<CompletionsRequestMessageContentItem> v = json;
+        content = std::move(v);
     } else {
         throw caiwei::env::MessageCodeException("1400", "输入格式错误");
     }
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessageToolCallFunction& function) {
+    // clang-format off
     set_opt(json, function.name,      "name");
     set_opt(json, function.arguments, "arguments");
+    // clang-format on
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessageToolCall& tool_call) {
+    // clang-format off
     set_opt(json, tool_call.id,       "id");
     set_opt(json, tool_call.type,     "type");
     set_opt(json, tool_call.function, "function");
+    // clang-format on
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestMessage& message) {
+    // clang-format off
     set_opt(json, message.role,         "role");
     set_opt(json, message.name,         "name");
     set_opt(json, message.tool_call_id, "tool_call_id");
     set_opt(json, message.content,      "content");
     set_opt(json, message.tool_calls,   "tool_calls");
+    // clang-format on
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestToolFunction& function) {
+    // clang-format off
     set_opt(json, function.name,        "name");
     set_opt(json, function.description, "description");
     set_opt(json, function.parameters,  "parameters");
+    // clang-format on
 }
 
 void from_json(const nlohmann::json& json, CompletionsRequestTool& tool) {
+    // clang-format off
     set_opt(json, tool.type,     "type");
     set_opt(json, tool.function, "function");
+    // clang-format on
 }
 
-}
-}
+} // namespace text
+} // namespace caiwei
 
 caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::string& json) {
     caiwei::text::CompletionsRequest request;
     nlohmann::json data = nlohmann::json::parse(json);
+    // clang-format off
     request.stream   = data.value("stream", false);
     request.model    = data.value("model", "");
     request.messages = data.value("messages", std::vector<CompletionsRequestMessage>{});
-    caiwei::env::check_not_empty(request.model,    "模型不能为空");
-    caiwei::env::check_not_empty(request.messages, "消息不能为空");
+    caiwei::env::check_not_empty(request.model, "模型不能为空");
     set_opt(data, request.seed,  "seed");
     set_opt(data, request.top_k, "top_k");
     set_opt(data, request.top_p, "top_p");
@@ -264,11 +285,17 @@ caiwei::text::CompletionsRequest caiwei::text::json_to_completions(const std::st
     set_opt(data, request.media_url,       "media_url");
     set_opt(data, request.media_type,      "media_type");
     set_opt(data, request.model_list,      "model_list");
+    // clang-format on
+    if (!(request.media_url.has_value() && request.media_type.has_value())) {
+        caiwei::env::check_not_empty(request.messages, "消息不能为空");
+    }
     if (request.max_completion_tokens.has_value()) {
         caiwei::env::check_in(request.max_completion_tokens.value(), 1, 65536);
     }
+    // clang-format off
     request.id      = caiwei::env::id();
     request.created = caiwei::env::unix_timestamp();
+    // clang-format on
     return request;
 }
 
@@ -311,7 +338,7 @@ caiwei::text::RerankingsRequest caiwei::text::json_to_rerankings(const std::stri
 }
 
 namespace caiwei {
-namespace text   {
+namespace text {
 
 template<typename T>
 void field_to_json(nlohmann::json& json, const char* key, const T& val) {
@@ -326,101 +353,131 @@ void field_to_json(nlohmann::json& json, const char* key, const std::optional<T>
 }
 
 void to_json(nlohmann::json& json, const CompletionsResponseChoiceMessageToolCallFunction& function) {
+    // clang-format off
     field_to_json(json, "name",      function.name);
     field_to_json(json, "arguments", function.arguments);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsResponseChoiceMessageToolCall& tool_call) {
+    // clang-format off
     field_to_json(json, "id",       tool_call.id);
     field_to_json(json, "type",     tool_call.type);
     field_to_json(json, "index",    tool_call.index);
     field_to_json(json, "function", tool_call.function);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsResponseChoiceMessage& message) {
+    // clang-format off
     field_to_json(json, "role",              message.role);
     field_to_json(json, "content",           message.content);
     field_to_json(json, "refusal",           message.refusal);
     field_to_json(json, "reasoning_content", message.reasoning_content);
     field_to_json(json, "tool_calls",        message.tool_calls);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsResponseChoice& choice) {
+    // clang-format off
     field_to_json(json, "index",         choice.index);
     field_to_json(json, "finish_reason", choice.finish_reason);
     field_to_json(json, "message",       choice.message);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsResponseUsage& usage) {
+    // clang-format off
     field_to_json(json, "prompt_tokens",     usage.prompt_tokens);
     field_to_json(json, "completion_tokens", usage.completion_tokens);
     field_to_json(json, "total_tokens",      usage.total_tokens);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsChunkChoiceMessageToolCallFunction& function) {
+    // clang-format off
     field_to_json(json, "name",      function.name);
     field_to_json(json, "arguments", function.arguments);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsChunkChoiceMessageToolCall& tool_call) {
+    // clang-format off
     field_to_json(json, "id",       tool_call.id);
     field_to_json(json, "type",     tool_call.type);
     field_to_json(json, "index",    tool_call.index);
     field_to_json(json, "function", tool_call.function);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsChunkDelta& delta) {
+    // clang-format off
     field_to_json(json, "role",              delta.role);
     field_to_json(json, "content",           delta.content);
     field_to_json(json, "refusal",           delta.refusal);
     field_to_json(json, "reasoning_content", delta.reasoning_content);
     field_to_json(json, "tool_calls",        delta.tool_calls);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsChunkChoice& choice) {
+    // clang-format off
     field_to_json(json, "index",         choice.index);
     field_to_json(json, "finish_reason", choice.finish_reason);
     field_to_json(json, "delta",         choice.delta);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const CompletionsChunkUsage& usage) {
+    // clang-format off
     field_to_json(json, "prompt_tokens",     usage.prompt_tokens);
     field_to_json(json, "completion_tokens", usage.completion_tokens);
     field_to_json(json, "total_tokens",      usage.total_tokens);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const EmbeddingsResponseData& data) {
+    // clang-format off
     field_to_json(json, "index",     data.index);
     field_to_json(json, "object",    data.object);
     field_to_json(json, "embedding", data.embedding);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const EmbeddingsResponseUsage& usage) {
+    // clang-format off
     field_to_json(json, "prompt_tokens", usage.prompt_tokens);
     field_to_json(json, "total_tokens",  usage.total_tokens);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const RerankingsResponseData& data) {
+    // clang-format off
     field_to_json(json, "index",  data.index);
     field_to_json(json, "object", data.object);
     field_to_json(json, "score",  data.score);
+    // clang-format on
 }
 
 void to_json(nlohmann::json& json, const RerankingsResponseUsage& usage) {
+    // clang-format off
     field_to_json(json, "prompt_tokens", usage.prompt_tokens);
     field_to_json(json, "total_tokens",  usage.total_tokens);
+    // clang-format on
 }
 
-}
-}
+} // namespace text
+} // namespace caiwei
 
 std::string caiwei::text::to_json(const CompletionsResponse& response) {
     nlohmann::json json;
+    // clang-format off
     json["id"]      = response.id;
     json["created"] = response.created;
     json["model"]   = response.model;
     json["object"]  = response.object;
     json["choices"] = response.choices;
+    // clang-format on
     if (response.usage.has_value()) {
         json["usage"] = response.usage.value();
     }
@@ -429,11 +486,13 @@ std::string caiwei::text::to_json(const CompletionsResponse& response) {
 
 std::string caiwei::text::to_json(const CompletionsChunk& chunk) {
     nlohmann::json json;
+    // clang-format off
     json["id"]      = chunk.id;
     json["created"] = chunk.created;
     json["model"]   = chunk.model;
     json["object"]  = chunk.object;
     json["choices"] = chunk.choices;
+    // clang-format on
     if (chunk.usage.has_value()) {
         json["usage"] = chunk.usage.value();
     }
@@ -442,9 +501,11 @@ std::string caiwei::text::to_json(const CompletionsChunk& chunk) {
 
 std::string caiwei::text::to_json(const EmbeddingsResponse& response) {
     nlohmann::json json;
+    // clang-format off
     json["object"] = response.object;
     json["model"]  = response.model;
     json["data"]   = response.data;
+    // clang-format on
     if (response.usage.has_value()) {
         json["usage"] = response.usage.value();
     }
@@ -453,9 +514,11 @@ std::string caiwei::text::to_json(const EmbeddingsResponse& response) {
 
 std::string caiwei::text::to_json(const RerankingsResponse& response) {
     nlohmann::json json;
+    // clang-format off
     json["object"] = response.object;
     json["model"]  = response.model;
     json["data"]   = response.data;
+    // clang-format on
     if (response.usage.has_value()) {
         json["usage"] = response.usage.value();
     }
@@ -517,39 +580,29 @@ void caiwei::text::SpecialToken::load_reranking() {
     this->eos = caiwei::env::get("CAIWEI_RERANKING_TOKEN_EOS");
     this->b_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_BTHINKING");
     this->e_thinking = caiwei::env::get("CAIWEI_RERANKING_TOKEN_ETHINKING");
+    // clang-format off
     this->instruction_key    = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_KEY");
     this->query_key          = caiwei::env::get("CAIWEI_RERANKING_QUERY_KEY");
     this->document_key       = caiwei::env::get("CAIWEI_RERANKING_DOCUMENT_KEY");
     this->system_prompt      = caiwei::env::get("CAIWEI_RERANKING_SYSTEM_PROMPT");
     this->instruction_prompt = caiwei::env::get("CAIWEI_RERANKING_INSTRUCTION_PROMPT");
+    // clang-format on
 }
 
 std::string caiwei::text::get_content_type(const std::string& url) {
     if (url.starts_with("v=0")) {
         return CONTENT_TYPE_RTP;
-    } else if (
-        url.starts_with("data:audio") ||
-        url.starts_with("data:image") ||
-        url.starts_with("data:video")
-    ) {
+    } else if (url.starts_with("data:audio") || url.starts_with("data:image") || url.starts_with("data:video")) {
         return CONTENT_TYPE_DATA;
     } else if (url.starts_with("file:")) {
         return CONTENT_TYPE_FILE;
-    } else if (
-        url.starts_with("http://") ||
-        url.starts_with("https://")
-    ) {
+    } else if (url.starts_with("http://") || url.starts_with("https://")) {
         return CONTENT_TYPE_HTTP;
     } else if (url.starts_with("rtmp://")) {
         return CONTENT_TYPE_RTMP;
     } else if (url.starts_with("rtsp://")) {
         return CONTENT_TYPE_RTSP;
-    } else if (
-        url.starts_with("hw:")    ||
-        url.starts_with("/dev/")  ||
-        url.starts_with("audio=") ||
-        url.starts_with("video=")
-    ) {
+    } else if (url.starts_with("hw:") || url.starts_with("/dev/") || url.starts_with("audio=") || url.starts_with("video=")) {
         return CONTENT_TYPE_DEVICE;
     } else {
         std::error_code error_code;
@@ -618,11 +671,11 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
     }
     const auto& allow_media_type = caiwei::env::get_allow_media_type();
     if (allow_media_type.empty()) {
-        #if CAIWEI_DEBUG
-        #else
+#if CAIWEI_DEBUG
+#else
         CW_LOG_W("未配置白名单媒体类型");
         return false;
-        #endif
+#endif
     } else {
         if (std::find(allow_media_type.begin(), allow_media_type.end(), type) == allow_media_type.end()) {
             return false;
@@ -650,33 +703,33 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
         }
         const auto& allow_path = caiwei::env::get_allow_path();
         if (allow_path.empty()) {
-            #if CAIWEI_DEBUG
-            #else
+#if CAIWEI_DEBUG
+#else
             CW_LOG_W("未配置白名单文件路径");
             return false;
-            #endif
+#endif
         } else {
             std::error_code error_code_canonical;
             std::string real_path = std::filesystem::canonical(path, error_code_canonical).string();
             if (error_code_canonical) {
                 return false;
             }
-            if (
-                std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
-                    return real_path.starts_with(value);
-                }) == allow_path.end()
-            ) {
+            // clang-format off
+            if (std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
+                return real_path.starts_with(value);
+            }) == allow_path.end()) {
                 return false;
             }
+            // clang-format on
         }
     } else if (type == "http" || type == "rtmp" || type == "rtsp") {
         const auto& allow_host = caiwei::env::get_allow_host();
         if (allow_host.empty()) {
-            #if CAIWEI_DEBUG
-            #else
+#if CAIWEI_DEBUG
+#else
             CW_LOG_W("未配置白名单主机地址");
             return false;
-            #endif
+#endif
         } else {
             std::string host;
             host.resize(256);

@@ -68,16 +68,19 @@ void test_chat_template() {
     request.messages.push_back(
         caiwei::text::CompletionsRequestMessage {
             .role = "user",
+            // clang-format off
             .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
-                // clang-format off
                 caiwei::text::CompletionsRequestMessageContentItem {.type = "text",  .text  = "测试"},
                 caiwei::text::CompletionsRequestMessageContentItem {.type = "audio", .audio = "测试"},
                 caiwei::text::CompletionsRequestMessageContentItem {.type = "image", .image = "测试"},
                 caiwei::text::CompletionsRequestMessageContentItem {.type = "image", .image = "测试"},
                 caiwei::text::CompletionsRequestMessageContentItem {.type = "video", .video = "测试"},
                 caiwei::text::CompletionsRequestMessageContentItem {.type = "text",  .text  = "测试"},
-                // clang-format on
-            }
+            },
+            // clang-format on
+            .audio_data = {{}},
+            .image_data = {{}, {}},
+            .video_data = {{}}
         }
     );
     // clang-format off
