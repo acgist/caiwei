@@ -16,7 +16,8 @@ caiwei::context::DetONNXRuntimeContext::DetONNXRuntimeContext(
     float confidence_threshold,
     Ort::Env* env,
     caiwei::runtime::Runtime* runtime
-) : DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime),
+) :
+    DetContext(c, h, w, class_size, iou_threshold, confidence_threshold, runtime),
     ONNXRuntimeContext(std::move(path), c, h, w, env) {
 }
 
@@ -28,11 +29,11 @@ bool caiwei::context::DetONNXRuntimeContext::load() {
 }
 
 std::vector<caiwei::media::Box> caiwei::context::DetONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
-    auto output{ this->run(this->h, this->w, image) };
+    auto output {this->run(this->h, this->w, image)};
     if (output.empty()) {
         return {};
     }
-    const auto&  output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
+    const auto& output_dims = output.front().GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
     if (output_dims.size() != 3) {
         CW_LOG_W("模型输出维度错误: %zu", output_dims.size());
         return {};
@@ -44,13 +45,17 @@ std::vector<caiwei::media::Box> caiwei::context::DetONNXRuntimeContext::run(cons
     if (stride_length == CAIWEI_END2END_STRIDE_LENGTH) {
         const float* data = output_data;
         for (int64_t index = 0; index < result_length; ++index) {
-            int   max_class = static_cast<int>(data[5]);
-            float max_score = data[4];
-            if(max_score > this->confidence_threshold) {
+            // clang-format off
+            const int   max_class = static_cast<int>(data[5]);
+            const float max_score = data[4];
+            // clang-format on
+            if (max_score > this->confidence_threshold) {
+                // clang-format off
                 const float box_x1 = (data[0] - this->pad_w) / static_cast<float>(this->dst_w);
                 const float box_y1 = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
                 const float box_x2 = (data[2] - this->pad_w) / static_cast<float>(this->dst_w);
                 const float box_y2 = (data[3] - this->pad_h) / static_cast<float>(this->dst_h);
+                // clang-format on
                 ret.emplace_back(caiwei::media::to_box_end2end(box_x1, box_y1, box_x2, box_y2, max_class, max_score));
             }
             data += stride_length;
@@ -65,14 +70,18 @@ std::vector<caiwei::media::Box> caiwei::context::DetONNXRuntimeContext::run(cons
         const float* data = this->out_dst.data();
         for (int64_t index = 0; index < stride_length; ++index) {
             const float* scores = data + YOLO_BOX_SIZE;
-            auto  max_ptr   = std::max_element(scores, scores + this->class_size);
-            float max_score = *max_ptr;
-            int   max_class = std::distance(scores, max_ptr);
-            if(max_score > this->confidence_threshold) {
+            // clang-format off
+            const auto  max_ptr   = std::max_element(scores, scores + this->class_size);
+            const float max_score = *max_ptr;
+            const int   max_class = std::distance(scores, max_ptr);
+            // clang-format on
+            if (max_score > this->confidence_threshold) {
+                // clang-format off
                 const float box_x = (data[0] - this->pad_w) / static_cast<float>(this->dst_w);
                 const float box_y = (data[1] - this->pad_h) / static_cast<float>(this->dst_h);
                 const float box_w = (data[2]              ) / static_cast<float>(this->dst_w);
                 const float box_h = (data[3]              ) / static_cast<float>(this->dst_h);
+                // clang-format on
                 ret.emplace_back(caiwei::media::to_box(box_x, box_y, box_w, box_h, max_class, max_score));
             }
             data += result_length;

@@ -12,7 +12,8 @@ caiwei::context::ClsONNXRuntimeContext::ClsONNXRuntimeContext(
     float confidence_threshold,
     Ort::Env* env,
     caiwei::runtime::Runtime* runtime
-) : ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime),
+) :
+    ClsContext(c, h, w, class_size, top_k, confidence_threshold, runtime),
     ONNXRuntimeContext(std::move(path), c, h, w, env) {
 }
 
@@ -24,7 +25,7 @@ bool caiwei::context::ClsONNXRuntimeContext::load() {
 }
 
 std::vector<caiwei::media::Cls> caiwei::context::ClsONNXRuntimeContext::run(const caiwei::media::ImageFrame& image) {
-    auto output{ this->run(this->h, this->w, image) };
+    auto output {this->run(this->h, this->w, image)};
     if (output.empty()) {
         return {};
     }

@@ -34,17 +34,16 @@ std::vector<caiwei::media::Cls> caiwei::context::ClsRKNN2Context::run(const caiw
         CW_LOG_W("不支持的输出类型: %s", get_type_string(output_attr.type));
         return {};
     }
-    const int64_t out_dst_length = output_attr.dims[1];
-    if (out_dst_length != this->class_size) {
-        CW_LOG_W("类型数量错误: %" PRId64 " != %d", out_dst_length, this->class_size);
+    const int64_t data_length = output_attr.dims[1];
+    if (data_length != this->class_size) {
+        CW_LOG_W("类型数量错误: %" PRId64 " != %d", data_length, this->class_size);
         return {};
     }
-    if (static_cast<size_t>(out_dst_length) != this->out_dst.size()) {
-        this->out_dst.resize(out_dst_length);
+    if (static_cast<size_t>(data_length) != this->out_dst.size()) {
+        this->out_dst.resize(data_length);
     }
     const auto* out_buf = reinterpret_cast<uint16_t*>(output.outputs[0].buf);
-    caiwei::type::fp16_to_f32(this->out_dst.data(), out_buf, out_dst_length);
-    return caiwei::media::top_k<float, caiwei::media::Cls>(
-        this->out_dst.data(), out_dst_length, this->top_k, this->confidence_threshold
-    );
+    auto* output_data = this->out_dst.data();
+    caiwei::type::fp16_to_f32(output_data, out_buf, data_length);
+    return caiwei::media::top_k<float, caiwei::media::Cls>(output_data, data_length, this->top_k, this->confidence_threshold);
 }

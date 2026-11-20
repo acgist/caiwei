@@ -1,6 +1,6 @@
+#include "caiwei/runtime.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/runtime.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 
 static void onnxruntime_log(
@@ -35,11 +35,9 @@ std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtim
     );
 }
 
-caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(
-    int min_pool, int max_pool, int timeout, int keepalive, bool share
-) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::ONNXRUNTIME) {
+caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(int min_pool, int max_pool, int timeout, int keepalive, bool share) :
+    Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::ONNXRUNTIME) {
     CW_LOG_I("创建ONNXRuntimeRuntime");
-    // TODO 改为智能指针
     this->env = new Ort::Env(caiwei::context::onnxruntime_log_level, "caiwei", onnxruntime_log, nullptr);
 }
 
@@ -47,13 +45,14 @@ caiwei::runtime::ONNXRuntimeRuntime::~ONNXRuntimeRuntime() {
     CW_LOG_I("释放ONNXRuntimeRuntime");
     this->context_map.clear();
     if (this->env != nullptr) {
-        CW_LOG_I("释放ONNXRuntimeRuntime env");
+        CW_LOG_I("释放ONNXRuntimeRuntime: env");
         delete this->env;
         this->env = nullptr;
     }
 }
 
-std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime::get_cls_context(const caiwei::context::ContextInfo* info) {
+std::shared_ptr<caiwei::context::ClsContext>
+caiwei::runtime::ONNXRuntimeRuntime::get_cls_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
         return nullptr;
     }
@@ -70,7 +69,8 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::ONNXRuntimeRuntime
     );
 }
 
-std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
+std::shared_ptr<caiwei::context::DetContext>
+caiwei::runtime::ONNXRuntimeRuntime::get_det_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
         return nullptr;
     }
