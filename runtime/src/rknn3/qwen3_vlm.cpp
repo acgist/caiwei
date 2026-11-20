@@ -1,14 +1,13 @@
-#include <tuple>
 #include <cstddef>
 #include <cstring>
+#include <tuple>
 
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/type.hpp"
 #include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
+#include "caiwei/type.hpp"
 
-// clang-format off
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     std::string model_path,
     std::string weight_path,
@@ -19,7 +18,8 @@ caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
-) : VLMContext(runtime),
+) :
+    VLMContext(runtime),
     RKNN3Context(
         std::move(model_path),
         std::move(weight_path),
@@ -30,7 +30,6 @@ caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
         max_token_length,
         std::move(special_token)
     ) {
-    // clang-format on
 }
 
 caiwei::context::VLMRKNN3Context::~VLMRKNN3Context() {
@@ -45,9 +44,8 @@ bool caiwei::context::VLMRKNN3Context::load() {
     return true;
 }
 
-std::generator<caiwei::text::CompletionResult> caiwei::context::VLMRKNN3Context::run(
-    const caiwei::text::CompletionsRequest& request
-) {
+std::generator<caiwei::text::CompletionResult>
+caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
@@ -220,7 +218,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
     if (!data_list.empty()) {
         const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
         const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
-        if (w != image_width || h != image_height) {
+        if (static_cast<uint32_t>(w) != image_width || static_cast<uint32_t>(h) != image_height) {
             CW_LOG_W("图片尺寸与模型尺寸不匹配: %dx%d != %ux%u", w, h, image_width, image_height);
             return {};
         }
@@ -289,7 +287,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
             }
         }
     }
-    rknn3_llm_multimodal_tensor tensor{};
+    rknn3_llm_multimodal_tensor tensor {};
     // clang-format off
     tensor.name     = "input_embeds";
     tensor.prompt   = prompt.c_str();

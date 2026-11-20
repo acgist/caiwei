@@ -41,10 +41,10 @@ void test_asr() {
     CAIWEI_ASSERT(success);
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "audio"}
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "audio"}
             }
         }
     );
@@ -67,9 +67,9 @@ void test_asr() {
     asr_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     message.audio_data.pop_back();
-    message.content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "audio"},
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "audio"}
+    message.content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "audio"},
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "audio"}
     };
     CW_LOG_I(
         "测试少一个音频: %zu - %zu",
@@ -102,10 +102,10 @@ void test_asr_for() {
     CAIWEI_ASSERT(success);
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "audio"}
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "audio"}
             }
         }
     );
@@ -141,10 +141,10 @@ void test_asr_thread() {
     CAIWEI_ASSERT(success);
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "audio"}
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "audio"}
             }
         }
     );

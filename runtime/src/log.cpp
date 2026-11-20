@@ -1,18 +1,18 @@
 #include "caiwei/log.hpp"
 
 #include <array>
-#include <ctime>
-#include <cstdio>
-#include <string>
-#include <cstdarg>
-#include <cstring>
 #include <cinttypes>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+#include <string>
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>
 #elif CAIWEI_OS_UNIX
-#include <unistd.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 #else
 #endif
 
@@ -35,15 +35,13 @@ inline static uint64_t thread_id() {
 }
 
 inline static const char* format_level(caiwei::log::Level level) {
-    // clang-format off
     switch (level) {
     case caiwei::log::Level::D: return "D";
     case caiwei::log::Level::I: return "I";
     case caiwei::log::Level::W: return "W";
     case caiwei::log::Level::E: return "E";
-    default                   : return "?";
+    default: return "?";
     }
-    // clang-format on
 }
 
 void caiwei::log::set_log_level(caiwei::log::Level level) {
@@ -62,7 +60,7 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
     time_t time_now = std::time(nullptr);
     if (time_now != time_old) {
         time_old = time_now;
-        struct tm time_tm{};
+        struct tm time_tm {};
 #if CAIWEI_OS_WIN
         localtime_s(&time_tm, &time_now);
 #else
@@ -83,7 +81,7 @@ void caiwei::log::log(caiwei::log::Level level, const std::source_location& loc,
         name++;
     }
     // 日志内容
-    thread_local std::array<char, MESSAGE_SIZE> message{};
+    thread_local std::array<char, MESSAGE_SIZE> message {};
     va_list ap;
     va_start(ap, fmt);
     int ret = vsnprintf(message.data(), message.size(), fmt, ap);

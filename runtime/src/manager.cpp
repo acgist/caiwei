@@ -1,6 +1,6 @@
 #include "caiwei/manager.hpp"
 
-static std::atomic<bool> available{false};
+static std::atomic<bool> available {false};
 
 void caiwei::manager::init() {
     available.store(true, std::memory_order_release);

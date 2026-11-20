@@ -1,8 +1,8 @@
+#include <algorithm>
+#include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <thread>
-#include <algorithm>
-#include <functional>
-#include <condition_variable>
 
 #include "httplib.h"
 
@@ -13,8 +13,8 @@ extern "C" {
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/manager.hpp"
-#include "caiwei/session.hpp"
 #include "caiwei/media_tool.hpp"
+#include "caiwei/session.hpp"
 
 #ifndef CAIWEI_CLIENT_TIMEOUT_READ
 #define CAIWEI_CLIENT_TIMEOUT_READ 30
@@ -53,12 +53,10 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
 static void fill_video_message(caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames);
 // clang-format on
 
-// clang-format off
-caiwei::session::CompletionsSession::CompletionsSession(
-    caiwei::text::CompletionsRequest& request, Callback callback
-) : StatefulSession(callback), request(request) {
+caiwei::session::CompletionsSession::CompletionsSession(caiwei::text::CompletionsRequest& request, Callback callback) :
+    StatefulSession(callback),
+    request(request) {
 }
-// clang-format on
 
 std::string caiwei::session::CompletionsSession::get_sync() {
     const auto* context_info = caiwei::context::get_context_info(request.model);
@@ -95,11 +93,11 @@ bool caiwei::session::CompletionsSession::get() {
         std::lock_guard<std::mutex> lock(this->mutex);
         return this->callback(data, length);
     };
-    std::unique_ptr<caiwei::manager::ClsWrapper> cls_ptr{nullptr};
-    std::unique_ptr<caiwei::manager::DetWrapper> det_ptr{nullptr};
-    std::unique_ptr<caiwei::manager::ASRWrapper> asr_ptr{nullptr};
-    std::unique_ptr<caiwei::manager::LLMWrapper> llm_ptr{nullptr};
-    std::unique_ptr<caiwei::manager::VLMWrapper> vlm_ptr{nullptr};
+    std::unique_ptr<caiwei::manager::ClsWrapper> cls_ptr {nullptr};
+    std::unique_ptr<caiwei::manager::DetWrapper> det_ptr {nullptr};
+    std::unique_ptr<caiwei::manager::ASRWrapper> asr_ptr {nullptr};
+    std::unique_ptr<caiwei::manager::LLMWrapper> llm_ptr {nullptr};
+    std::unique_ptr<caiwei::manager::VLMWrapper> vlm_ptr {nullptr};
     std::vector<std::string> all_model_list;
     all_model_list.push_back(this->request.model);
     if (this->request.model_list.has_value()) {
@@ -133,7 +131,7 @@ bool caiwei::session::CompletionsSession::get() {
     if (media_stream) {
         if (this->request.messages.empty() || this->request.messages.back().role != caiwei::text::ROLE_USER) {
             this->request.messages.push_back(
-                caiwei::text::CompletionsRequestMessage{
+                caiwei::text::CompletionsRequestMessage {
                     .role = caiwei::text::ROLE_USER,
                 }
             );
@@ -228,9 +226,9 @@ bool caiwei::session::CompletionsSession::get() {
                         callback_safe(nullptr, 0) &&
                         (audio_frame_buffer.size() + frame.data.size() > ASR_QUEUE_SIZE)
                     ) {
-                        // clang-format on
                         asr_cv.wait_for(lock, std::chrono::milliseconds(100));
                     }
+                    // clang-format on
                     if (audio_frame_buffer.size() + frame.data.size() <= ASR_QUEUE_SIZE) {
                         audio_frame_buffer.insert(audio_frame_buffer.end(), frame.data.begin(), frame.data.end());
                         if (audio_frame_buffer.size() >= static_cast<size_t>(asr_samples)) {
@@ -257,9 +255,9 @@ bool caiwei::session::CompletionsSession::get() {
                         callback_safe(nullptr, 0) &&
                         video_frame_size + 1 > static_cast<size_t>(vlm_frames)
                     ) {
-                        // clang-format on
                         vlm_cv.wait_for(lock, std::chrono::milliseconds(100));
                     }
+                    // clang-format on
                     if (video_frame_size + 1 <= static_cast<size_t>(vlm_frames)) {
                         auto& data = video_frame_buffer[video_frame_size];
                         // clang-format off
@@ -386,10 +384,9 @@ bool caiwei::session::CompletionsSession::get() {
     }
 }
 
-template <typename T>
-inline void sync_yolo(
-    std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response
-) {
+template<typename T>
+inline void
+sync_yolo(std::unique_ptr<T> ptr, caiwei::text::CompletionsRequest& request, caiwei::text::CompletionsResponse& response) {
     int index = 0;
     for (const auto& message : request.messages) {
         for (const auto& value : message.image_data) {
@@ -523,7 +520,7 @@ static void sync_vlm(caiwei::text::CompletionsRequest& request, caiwei::text::Co
     sync_generator(request, response, ptr->run(request));
 }
 
-template <typename T>
+template<typename T>
 inline bool async_yolo(caiwei::text::CompletionsRequest& request, T* ptr, caiwei::session::Callback& callback) {
     caiwei::text::CompletionsChunk chunk;
     // clang-format off
@@ -944,9 +941,8 @@ static void fill_image_message(caiwei::text::CompletionsRequestMessage& message,
     message.image_data.push_back(std::move(image_frame));
 }
 
-static void fill_video_message(
-    caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames
-) {
+static void
+fill_video_message(caiwei::text::CompletionsRequestMessage& message, const std::string& video_url, int fps, int frames) {
     std::string type = caiwei::text::get_content_type(video_url);
     if (type == caiwei::text::CONTENT_TYPE_NONE) {
         CW_LOG_W("不支持的媒体地址: %s", video_url.c_str());

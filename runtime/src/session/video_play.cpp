@@ -1,14 +1,13 @@
 #include "caiwei/log.hpp"
-#include "caiwei/session.hpp"
 #include "caiwei/media_tool.hpp"
+#include "caiwei/session.hpp"
 
 extern "C" {
 #include "libavutil/base64.h"
 }
 
-inline static bool callback_adapter(
-    std::string& output, uint32_t length, const uint8_t* data, caiwei::session::Callback& callback
-) {
+inline static bool
+callback_adapter(std::string& output, uint32_t length, const uint8_t* data, caiwei::session::Callback& callback) {
     if (callback == nullptr) {
         return false;
     }
@@ -32,12 +31,12 @@ inline static bool callback_adapter(
     }
 }
 
-// clang-format off
-caiwei::session::VideoPlaySession::VideoPlaySession(
-    std::string url, std::string type, bool codec, Callback callback
-) : StatefulSession(std::move(callback)), url(std::move(url)), type(std::move(type)), codec(codec) {
+caiwei::session::VideoPlaySession::VideoPlaySession(std::string url, std::string type, bool codec, Callback callback) :
+    StatefulSession(std::move(callback)),
+    url(std::move(url)),
+    type(std::move(type)),
+    codec(codec) {
 }
-// clang-format on
 
 bool caiwei::session::VideoPlaySession::get() {
     if (this->callback == nullptr) {

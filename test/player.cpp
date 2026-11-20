@@ -2,13 +2,13 @@
 
 #include "SDL2/SDL.h"
 
+#include <condition_variable>
 #include <mutex>
 #include <thread>
-#include <condition_variable>
 
 #include "caiwei/log.hpp"
 
-const static int USER_EVENT_VIDEO_FRAME = 1;
+static const int USER_EVENT_VIDEO_FRAME = 1;
 
 // clang-format off
 static struct PlayerState {
@@ -80,7 +80,7 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
                     player_state.init = true;
                     player_state.player_cv.notify_one();
                 }
-                SDL_Event event{};
+                SDL_Event event {};
                 while (!token.stop_requested()) {
                     int ret_event = SDL_WaitEventTimeout(&event, 1000);
                     if (ret_event == 0) {
@@ -145,7 +145,7 @@ bool caiwei::player::open_player(int nb_channels, int sample_rate, int video_wid
 void caiwei::player::stop_player() {
     Uint32 flags = SDL_INIT_AUDIO | SDL_INIT_VIDEO;
     if (SDL_WasInit(flags) == flags) {
-        SDL_Event event{};
+        SDL_Event event {};
         event.type = SDL_QUIT;
         int ret = SDL_PushEvent(&event);
         CW_LOG_I("关闭播放器: %d", ret);
@@ -199,7 +199,7 @@ bool caiwei::player::play_video(const void* data, int len) {
                 while (SDL_PeepEvents(&event_drop, 1, SDL_GETEVENT, SDL_USEREVENT, SDL_USEREVENT) > 0) {
                     // -
                 }
-                SDL_Event event{};
+                SDL_Event event {};
                 event.type = SDL_USEREVENT;
                 event.user.code = USER_EVENT_VIDEO_FRAME;
                 if (SDL_PushEvent(&event) != 1) {

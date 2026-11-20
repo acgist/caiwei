@@ -74,7 +74,7 @@ void test_json_to_embeddings() {
         })");
         CAIWEI_ASSERT(request.model == "qwen3-embedding");
         CAIWEI_ASSERT(std::holds_alternative<std::vector<std::string>>(request.input));
-        CAIWEI_ASSERT(std::get<std::vector<std::string>>(request.input) == std::vector<std::string>{"你好"});
+        CAIWEI_ASSERT(std::get<std::vector<std::string>>(request.input) == std::vector<std::string> {"你好"});
     }
 }
 
@@ -86,7 +86,7 @@ void test_json_to_rerankings() {
         "documents": ["你好", "你好吗", "你好啊"]
     })");
     CAIWEI_ASSERT(request.model == "qwen3-reranking");
-    CAIWEI_ASSERT((request.documents == std::vector<std::string>{"你好", "你好吗", "你好啊"}));
+    CAIWEI_ASSERT((request.documents == std::vector<std::string> {"你好", "你好吗", "你好啊"}));
 }
 
 [[maybe_unused]]
@@ -95,11 +95,11 @@ void test_completions_response_to_json() {
     response.id = "123456";
     response.created = 1694502400;
     response.model = "qwen3";
-    response.choices = std::vector<caiwei::text::CompletionsResponseChoice>{
-        caiwei::text::CompletionsResponseChoice{
+    response.choices = std::vector<caiwei::text::CompletionsResponseChoice> {
+        caiwei::text::CompletionsResponseChoice {
             .index = 0,
             .finish_reason = "stop",
-            .message = caiwei::text::CompletionsResponseChoiceMessage{.role = "assistant", .content = "你好"}
+            .message = caiwei::text::CompletionsResponseChoiceMessage {.role = "assistant", .content = "你好"}
         },
     };
     const std::string json = caiwei::text::to_json(response);
@@ -116,11 +116,11 @@ void test_completions_chunk_to_json() {
     chunk.id = "123456";
     chunk.created = 1694502400;
     chunk.model = "qwen3";
-    chunk.choices = std::vector<caiwei::text::CompletionsChunkChoice>{
-        caiwei::text::CompletionsChunkChoice{
+    chunk.choices = std::vector<caiwei::text::CompletionsChunkChoice> {
+        caiwei::text::CompletionsChunkChoice {
             .index = 0,
             .finish_reason = "stop",
-            .delta = caiwei::text::CompletionsChunkDelta{.role = "assistant", .content = "你好"}
+            .delta = caiwei::text::CompletionsChunkDelta {.role = "assistant", .content = "你好"}
         },
     };
     const std::string json = caiwei::text::to_json(chunk);

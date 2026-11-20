@@ -25,14 +25,14 @@ void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRe
 void test_vlm() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "text", .text = "描述下面两张图片内容"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "text", .text = "描述视频内容"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "video"},
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "text", .text = "描述下面两张图片内容"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "text", .text = "描述视频内容"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "video"},
             }
         }
     );
@@ -70,9 +70,9 @@ void test_vlm() {
     caiwei::test::caiwei_wait_enter();
     request.max_completion_tokens = 1024;
     message.video_data.clear();
-    message.content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "text", .text = "描述图片内容"},
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
+    message.content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "text", .text = "描述图片内容"},
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
     };
     CW_LOG_I(
         "测试多一个图片: %zu - %zu - %zu",
@@ -83,10 +83,10 @@ void test_vlm() {
     vlm_run(ptr.get(), request);
     caiwei::test::caiwei_wait_enter();
     message.image_data.pop_back();
-    message.content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "text", .text = "描述图片内容"},
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
-        caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
+    message.content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "text", .text = "描述图片内容"},
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
+        caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
     };
     CW_LOG_I(
         "测试少一个图片: %zu - %zu - %zu",
@@ -106,12 +106,12 @@ void test_vlm() {
 void test_vlm_for() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "text", .text = "描述下面两张图片内容"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "text", .text = "描述下面两张图片内容"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
             }
         }
     );
@@ -139,12 +139,12 @@ void test_vlm_for() {
 void test_vlm_thread() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "text", .text = "描述下面两张图片内容"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image"},
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "text", .text = "描述下面两张图片内容"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image"},
             }
         }
     );

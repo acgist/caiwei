@@ -33,7 +33,7 @@ inline std::string buildResponse(std::string code, std::string message) {
     return response.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
-}  // namespace json
-}  // namespace caiwei
+} // namespace json
+} // namespace caiwei
 
-#endif  // CAIWEI_SERVER_JSON_HPP
+#endif // CAIWEI_SERVER_JSON_HPP

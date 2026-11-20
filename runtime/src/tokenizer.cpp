@@ -189,7 +189,7 @@ llama_token caiwei::context::piece_to_token(
     if (piece.empty()) {
         return LLAMA_TOKEN_NULL;
     }
-    llama_token token{};
+    llama_token token {};
     const int n_tokens = llama_tokenize(vocab, piece.c_str(), piece.size(), &token, 1, add_special, parse_special);
     if (n_tokens != 1) {
         CW_LOG_W("编码失败: %s = %d", piece.c_str(), n_tokens);

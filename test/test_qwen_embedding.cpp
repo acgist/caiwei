@@ -36,7 +36,7 @@ void test_embedding() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     // request.input = "北京";
-    request.input = std::vector<std::string>{"小狗", "猫咪", "苹果", "汽车"};
+    request.input = std::vector<std::string> {"小狗", "猫咪", "苹果", "汽车"};
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     CAIWEI_ASSERT(ptr);
     const auto ret = ptr->run(request);
@@ -68,7 +68,7 @@ void test_embedding() {
 void test_embedding_for() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    request.input = std::vector<std::string>{"小狗", "猫咪", "苹果", "汽车"};
+    request.input = std::vector<std::string> {"小狗", "猫咪", "苹果", "汽车"};
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     CAIWEI_ASSERT(ptr);
     caiwei::test::caiwei_wait_enter();
@@ -86,7 +86,7 @@ void test_embedding_for() {
 void test_embedding_thread() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
-    request.input = std::vector<std::string>{"小狗", "猫咪", "苹果", "汽车"};
+    request.input = std::vector<std::string> {"小狗", "猫咪", "苹果", "汽车"};
     auto ptr = caiwei::manager::get_context<caiwei::context::EmbeddingContext>("qwen3-embedding");
     CAIWEI_ASSERT(ptr);
     const auto true_ret = ptr->run(request);

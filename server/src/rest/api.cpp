@@ -1,8 +1,8 @@
-#include "caiwei/env.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/json.hpp"
-#include "caiwei/rest.hpp"
 #include "caiwei/context.hpp"
+#include "caiwei/env.hpp"
+#include "caiwei/json.hpp"
+#include "caiwei/log.hpp"
+#include "caiwei/rest.hpp"
 #include "caiwei/session.hpp"
 #include "caiwei/text_data.hpp"
 
@@ -28,13 +28,7 @@ static bool sse(httplib::DataSink& sink, const char* data, int length, bool succ
                 return false;
             }
         }
-        // clang-format off
-        if (
-            !sink.write("data: ", 6)  ||
-            !sink.write(data, length) ||
-            !sink.write("\n\n", 2)
-        ) {
-            // clang-format on
+        if (!sink.write("data: ", 6) || !sink.write(data, length) || !sink.write("\n\n", 2)) {
             return false;
         }
     }
@@ -83,14 +77,17 @@ static void get_video_play() {
             response.status = httplib::StatusCode::BadRequest_400;
             return;
         }
-        // clang-format off
         // 如果线程紧张可以修改阻塞模式: 使用队列异步回调
-        response.set_chunked_content_provider(caiwei::rest::content::type::EVENT, [
-            url   = std::move(url),
-            type  = std::move(type),
-            codec = std::move(codec)
-        ](size_t /* offset */, httplib::DataSink& sink) mutable -> bool {
-                // clang-format on
+        response.set_chunked_content_provider(
+            caiwei::rest::content::type::EVENT,
+            // clang-format off
+            [
+                url   = std::move(url),
+                type  = std::move(type),
+                codec = std::move(codec)
+            ]
+            // clang-format on
+            (size_t /* offset */, httplib::DataSink& sink) mutable -> bool {
                 try {
                     caiwei::session::Callback callback = std::bind(
                         sse, std::ref(sink), std::placeholders::_1, std::placeholders::_2, true

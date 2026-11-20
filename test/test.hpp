@@ -3,18 +3,18 @@
 
 #include "player.hpp"
 
+#include "caiwei/caiwei.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/caiwei.hpp"
 #include "caiwei/manager.hpp"
-#include "caiwei/text_tool.hpp"
 #include "caiwei/media_tool.hpp"
+#include "caiwei/text_tool.hpp"
 
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <numeric>
 #include <iostream>
+#include <numeric>
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>
@@ -113,7 +113,7 @@ inline void stop_test() {
     CW_LOG_I("测试结束");
 }
 
-}  // namespace test
-}  // namespace caiwei
+} // namespace test
+} // namespace caiwei
 
-#endif  // CAIWEI_TEST_TEST_HPP
+#endif // CAIWEI_TEST_TEST_HPP

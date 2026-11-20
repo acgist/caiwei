@@ -40,9 +40,9 @@ void test_llm() {
     request.stream = true;
     request.enable_thinking = true;
     request.messages.push_back({.role = "user", .content = "解释一下碧螺萧萧"});
-    request.tools = {caiwei::text::CompletionsRequestTool{
+    request.tools = {caiwei::text::CompletionsRequestTool {
         .type = "function",
-        .function = caiwei::text::CompletionsRequestToolFunction{
+        .function = caiwei::text::CompletionsRequestToolFunction {
             .name = "get_weather",
             .description = "查询城市天气",
             .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,

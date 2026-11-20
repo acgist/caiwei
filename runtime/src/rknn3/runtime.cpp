@@ -1,9 +1,9 @@
+#include "caiwei/runtime.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/runtime.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 
-template <>
+template<>
 std::shared_ptr<caiwei::runtime::RKNN3Runtime> caiwei::runtime::get_runtime() {
     // clang-format off
     const int  min_pool  = caiwei::env::get_int("CAIWEI_RKNN3_MIN_POOL");
@@ -15,11 +15,8 @@ std::shared_ptr<caiwei::runtime::RKNN3Runtime> caiwei::runtime::get_runtime() {
     return std::make_shared<caiwei::runtime::RKNN3Runtime>(min_pool, max_pool, timeout, keepalive, share);
 }
 
-// clang-format off
-caiwei::runtime::RKNN3Runtime::RKNN3Runtime(
-    int min_pool, int max_pool, int timeout, int keepalive, bool share
-) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN3) {
-    // clang-format on
+caiwei::runtime::RKNN3Runtime::RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share) :
+    Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN3) {
     CW_LOG_I("创建RKNN3Runtime");
 }
 
@@ -27,9 +24,8 @@ caiwei::runtime::RKNN3Runtime::~RKNN3Runtime() {
     CW_LOG_I("释放RKNN3Runtime");
 }
 
-std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_asr_context(
-    const caiwei::context::ContextInfo* info
-) {
+std::shared_ptr<caiwei::context::ASRContext>
+caiwei::runtime::RKNN3Runtime::get_asr_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 6)) {
         return nullptr;
     }
@@ -49,9 +45,8 @@ std::shared_ptr<caiwei::context::ASRContext> caiwei::runtime::RKNN3Runtime::get_
     );
 }
 
-std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_llm_context(
-    const caiwei::context::ContextInfo* info
-) {
+std::shared_ptr<caiwei::context::LLMContext>
+caiwei::runtime::RKNN3Runtime::get_llm_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 4)) {
         return nullptr;
     }
@@ -69,9 +64,8 @@ std::shared_ptr<caiwei::context::LLMContext> caiwei::runtime::RKNN3Runtime::get_
     );
 }
 
-std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_vlm_context(
-    const caiwei::context::ContextInfo* info
-) {
+std::shared_ptr<caiwei::context::VLMContext>
+caiwei::runtime::RKNN3Runtime::get_vlm_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 6)) {
         return nullptr;
     }
@@ -91,9 +85,8 @@ std::shared_ptr<caiwei::context::VLMContext> caiwei::runtime::RKNN3Runtime::get_
     );
 }
 
-std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime::get_embedding_context(
-    const caiwei::context::ContextInfo* info
-) {
+std::shared_ptr<caiwei::context::EmbeddingContext>
+caiwei::runtime::RKNN3Runtime::get_embedding_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 4)) {
         return nullptr;
     }
@@ -111,9 +104,8 @@ std::shared_ptr<caiwei::context::EmbeddingContext> caiwei::runtime::RKNN3Runtime
     );
 }
 
-std::shared_ptr<caiwei::context::RerankingContext> caiwei::runtime::RKNN3Runtime::get_reranking_context(
-    const caiwei::context::ContextInfo* info
-) {
+std::shared_ptr<caiwei::context::RerankingContext>
+caiwei::runtime::RKNN3Runtime::get_reranking_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info, 4)) {
         return nullptr;
     }

@@ -1,12 +1,12 @@
+#include "caiwei/runtime.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/runtime.hpp"
 
-#include <mutex>
 #include <atomic>
-#include <thread>
-#include <shared_mutex>
 #include <condition_variable>
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 #include "rknn2/rknn_api.h"
@@ -32,22 +32,16 @@ static std::condition_variable runtime_optimize_cv;
 
 static void runtime_optimize_timer();
 
-// clang-format off
 caiwei::runtime::Runtime::Runtime(
-    int min_pool,
-    int max_pool,
-    int timeout,
-    int keepalive,
-    bool share,
-    caiwei::runtime::Type type
-) : id(caiwei::env::id()),
+    int min_pool, int max_pool, int timeout, int keepalive, bool share, caiwei::runtime::Type type
+) :
+    id(caiwei::env::id()),
     min_pool(std::clamp(min_pool, 0, 128)),
     max_pool(std::clamp(max_pool, 1, 128)),
     timeout(std::clamp(timeout, 10, 60)),
     keepalive(std::clamp(keepalive, 60, 3600)),
     share(share),
     type(type) {
-    // clang-format on
     if (this->min_pool > this->max_pool) {
         this->max_pool = this->min_pool;
     }
@@ -93,9 +87,8 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
             return context;
         }
     }
-    std::shared_ptr<caiwei::context::Context> ptr{nullptr};
+    std::shared_ptr<caiwei::context::Context> ptr {nullptr};
     if (content_list.size() < static_cast<size_t>(this->max_pool)) {
-        // clang-format off
         switch (info->type) {
         case caiwei::context::Type::CLS: ptr = this->get_cls_context(info); break;
         case caiwei::context::Type::DET: ptr = this->get_det_context(info); break;
@@ -106,7 +99,6 @@ std::shared_ptr<caiwei::context::Context> caiwei::runtime::Runtime::get_context(
         case caiwei::context::Type::RERANKING: ptr = this->get_reranking_context(info); break;
         default: break;
         }
-        // clang-format on
         if (ptr == nullptr) {
             // 日志记录manager.get_context
             return nullptr;
@@ -348,7 +340,7 @@ static void init_rknn2() {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
 static void init_rknn3() {
-    rknn3_devices devs{};
+    rknn3_devices devs {};
     int ret = rknn3_find_devices(&devs);
     if (ret != RKNN3_SUCCESS) {
         CW_LOG_W("RKNN3设备无效");

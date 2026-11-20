@@ -19,7 +19,7 @@ void test_log_mel_spectrogram() {
     );
     CAIWEI_ASSERT(success);
     const int n_mels = 128;
-    std::vector<float> mel_filters{};
+    std::vector<float> mel_filters {};
     CAIWEI_ASSERT(caiwei::media::load_mel_filters(n_mels, N_FFT, mel_filters));
     const int n_frames = audio_data.size() * sizeof(uint8_t) / sizeof(int16_t);
     CAIWEI_ASSERT(n_frames >= (N_FFT + HOP_LENGTH) * 2);

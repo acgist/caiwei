@@ -1,31 +1,28 @@
+#include "caiwei/caiwei.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/rest.hpp"
-#include "caiwei/caiwei.hpp"
 
 #include <atomic>
-#include <thread>
 #include <csignal>
 #include <cstring>
+#include <thread>
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>
 #endif
 
-volatile static std::sig_atomic_t caiwei_signal{0};
+static volatile std::sig_atomic_t caiwei_signal {0};
 
 #if CAIWEI_OS_WIN
 static BOOL WINAPI on_signal(DWORD type) {
     switch (type) {
-        case CTRL_C_EVENT:
-        case CTRL_BREAK_EVENT:
-        case CTRL_CLOSE_EVENT:
-        case CTRL_LOGOFF_EVENT:
-        case CTRL_SHUTDOWN_EVENT:
-            caiwei_signal = 1;
-            return TRUE;
-        default:
-            return FALSE;
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT: caiwei_signal = 1; return TRUE;
+    default: return FALSE;
     }
 }
 #else
@@ -68,8 +65,8 @@ int main(int argc, char* argv[]) {
         caiwei::stop();
         return 0;
     }
-    std::atomic<bool> running{true};
-    std::atomic<bool> success{true};
+    std::atomic<bool> running {true};
+    std::atomic<bool> success {true};
     std::jthread server_thread([&running, &success]() {
         caiwei::env::set_thread_name("rest-server");
         try {

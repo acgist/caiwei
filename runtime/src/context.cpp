@@ -1,27 +1,23 @@
-#include <sstream>
 #include <filesystem>
+#include <sstream>
 
+#include "caiwei/context.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/tool.hpp"
-#include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
+#include "caiwei/tool.hpp"
 
 static std::once_flag context_info_map_once_flag;
 static std::unordered_map<std::string, caiwei::context::ContextInfo> context_info_map;
 
 static void init_context_info_map();
 
-// clang-format off
-caiwei::context::Context::Context(
-    Type type,
-    caiwei::runtime::Runtime* runtime
-) : type(type),
+caiwei::context::Context::Context(Type type, caiwei::runtime::Runtime* runtime) :
+    type(type),
     id(caiwei::env::id()),
     ref_count(0),
     last_run_time(caiwei::env::steady_timestamp()),
     runtime(runtime) {
-    // clang-format on
     CW_LOG_D("创建context: %s", this->id.c_str());
 }
 
@@ -29,45 +25,31 @@ caiwei::context::Context::~Context() {
     CW_LOG_D("释放context: %s", this->id.c_str());
 }
 
-// clang-format off
 caiwei::context::ClsContext::ClsContext(
-    int c,
-    int h,
-    int w,
-    int class_size,
-    int top_k,
-    float confidence_threshold,
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::CLS, runtime),
+    int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime
+) :
+    Context(Type::CLS, runtime),
     c(c),
     h(h),
     w(w),
     class_size(class_size),
     top_k(top_k),
     confidence_threshold(confidence_threshold) {
-    // clang-format on
 }
 
 caiwei::context::ClsContext::~ClsContext() {
 }
 
-// clang-format off
 caiwei::context::DetContext::DetContext(
-    int c,
-    int h,
-    int w,
-    int class_size,
-    float iou_threshold,
-    float confidence_threshold,
-    caiwei::runtime::Runtime* runtime
-) : Context(Type::DET, runtime),
+    int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime
+) :
+    Context(Type::DET, runtime),
     c(c),
     h(h),
     w(w),
     class_size(class_size),
     iou_threshold(iou_threshold),
     confidence_threshold(confidence_threshold) {
-    // clang-format on
 }
 
 caiwei::context::DetContext::~DetContext() {
@@ -235,7 +217,7 @@ static void init_context_info_map() {
             path_list.push_back(std::move(path_item));
         }
         auto ret = map.insert_or_assign(
-            name, caiwei::context::ContextInfo{iter->second, name, path, vendor, std::move(path_list)}
+            name, caiwei::context::ContextInfo {iter->second, name, path, vendor, std::move(path_list)}
         );
         if (ret.second) {
             CW_LOG_I("模型配置成功: %s %s %s = %s", type.c_str(), vendor.c_str(), name.c_str(), path.c_str());

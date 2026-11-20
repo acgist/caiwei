@@ -66,16 +66,16 @@ void test_chat_template() {
     request.enable_thinking = false;
     request.messages.push_back({.role = "system", .content = "帮助用户查询城市天气"});
     request.messages.push_back(
-        caiwei::text::CompletionsRequestMessage{
+        caiwei::text::CompletionsRequestMessage {
             .role = "user",
-            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem>{
+            .content = std::vector<caiwei::text::CompletionsRequestMessageContentItem> {
                 // clang-format off
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "text",  .text  = "测试"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "audio", .audio = "测试"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image", .image = "测试"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "image", .image = "测试"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "video", .video = "测试"},
-                caiwei::text::CompletionsRequestMessageContentItem{.type = "text",  .text  = "测试"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "text",  .text  = "测试"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "audio", .audio = "测试"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image", .image = "测试"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "image", .image = "测试"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "video", .video = "测试"},
+                caiwei::text::CompletionsRequestMessageContentItem {.type = "text",  .text  = "测试"},
                 // clang-format on
             }
         }
@@ -85,9 +85,9 @@ void test_chat_template() {
     request.messages.push_back({.role = "user",      .content = "北京"});
     request.messages.push_back({.role = "tool",      .content = "北京"});
     // clang-format on
-    request.tools = {caiwei::text::CompletionsRequestTool{
+    request.tools = {caiwei::text::CompletionsRequestTool {
         .type = "function",
-        .function = caiwei::text::CompletionsRequestToolFunction{
+        .function = caiwei::text::CompletionsRequestToolFunction {
             .name = "get_weather",
             .description = "查询城市天气",
             .parameters = R"({"type":"object","properties":{"city":{"type":"string"}},"required":["city"]})"_json,
