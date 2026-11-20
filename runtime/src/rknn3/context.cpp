@@ -582,9 +582,9 @@ void caiwei::context::ContextSession::release_output_tensors() {
     }
 }
 
-bool caiwei::context::ContextSession::init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length, int size) {
+bool caiwei::context::ContextSession::init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length) {
     this->release_deepstack_tensors();
-    this->deepstack_tensors.resize(size);
+    this->deepstack_tensors.resize(CAIWEI_RKNN3_DEEPSTACK_TENSORS);
     for (size_t i = 0; i < this->deepstack_tensors.size(); ++i) {
         auto& tensor = this->deepstack_tensors[i];
         if (!init_tensor(this->context, tensor, i + 2, RKNN3_QUERY_INPUT_ATTR, "deepstack", media_output[i + 1].attr->aligned_size * length)) {

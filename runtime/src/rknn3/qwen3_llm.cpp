@@ -55,9 +55,7 @@ std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(
         .n_tokens = 0,
         .enable_thinking = request.enable_thinking.value_or(false)
     };
-    // clang-format on
     std::vector<rknn3_llm_input> inputs(1);
-    // clang-format off
     inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
     inputs[0].llm_input  = tensor;
     // clang-format on

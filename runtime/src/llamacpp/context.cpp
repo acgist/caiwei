@@ -225,11 +225,11 @@ bool caiwei::context::LlamaCPPContext::init_context_sampler(caiwei_llama_batch& 
         return true;
     }
     if (caiwei_batch.n_prompt_tokens <= 0) {
-        CW_LOG_W("提示词元数量错误: %u", caiwei_batch.n_prompt_tokens);
+        CW_LOG_W("提示词词元数量错误: %u", caiwei_batch.n_prompt_tokens);
         return false;
     }
     if (caiwei_batch.n_prompt_tokens >= static_cast<uint32_t>(this->max_token_length)) {
-        CW_LOG_W("提示词元数量超长: %u > %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
+        CW_LOG_W("提示词词元超量: %u > %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
         return false;
     }

@@ -72,7 +72,7 @@ struct ContextSession {
 
     bool init_output_tensors(int n_output_tensors = CAIWEI_RKNN3_N_OUTPUT_TENSORS);
     void release_output_tensors();
-    bool init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length, int size = CAIWEI_RKNN3_DEEPSTACK_TENSORS);
+    bool init_deepstack_tensors(const std::vector<rknn3_tensor>& media_output, int length);
     void release_deepstack_tensors();
 
     ~ContextSession();

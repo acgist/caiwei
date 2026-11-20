@@ -35,7 +35,7 @@ caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inp
         .append("\n");
     for (const auto& message : request.messages) {
         for (const auto& audio : message.audio_data) {
-            if (audio.data.size() % sizeof(int16_t) != 0) {
+            if (audio.data.size() * sizeof(uint8_t) % sizeof(int16_t) != 0) {
                 CW_LOG_W("音频数据格式错误");
                 continue;
             }

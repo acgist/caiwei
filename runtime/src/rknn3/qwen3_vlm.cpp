@@ -41,6 +41,51 @@ bool caiwei::context::VLMRKNN3Context::load() {
         this->release();
         return false;
     }
+    if (this->media_input.size() != 1 || this->media_output.size() != CAIWEI_RKNN3_DEEPSTACK_TENSORS + 1) {
+        CW_LOG_W(
+            "模型错误: %zu != 1 || %zu != %d",
+            this->media_input.size(),
+            this->media_output.size(),
+            CAIWEI_RKNN3_DEEPSTACK_TENSORS + 1
+        );
+        this->release();
+        return false;
+    }
+    // clang-format off
+    uint32_t image_width  = 0;
+    uint32_t image_height = 0;
+    auto& input_tensor = this->media_input[0];
+    if (input_tensor.attr->n_dims != 4) {
+        CW_LOG_W("模型维度错误: %u != 4", input_tensor.attr->n_dims);
+        this->release();
+        return false;
+    }
+    if (input_tensor.attr->layout == RKNN3_TENSOR_NCHW) {
+        image_width  = input_tensor.attr->shape[3];
+        image_height = input_tensor.attr->shape[2];
+    } else if (input_tensor.attr->layout == RKNN3_TENSOR_NHWC) {
+        image_width  = input_tensor.attr->shape[2];
+        image_height = input_tensor.attr->shape[1];
+    } else {
+        CW_LOG_W("不支持的输入布局: %s", rknn3_get_layout_string(input_tensor.attr->layout));
+        this->release();
+        return false;
+    }
+    // clang-format on
+    for (const auto& output_tensor : this->media_output) {
+        if (output_tensor.attr->n_dims != 2) {
+            CW_LOG_W("模型维度错误: %u != 2", output_tensor.attr->n_dims);
+            this->release();
+            return false;
+        }
+    }
+    const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
+    const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
+    if (static_cast<uint32_t>(w) != image_width || static_cast<uint32_t>(h) != image_height) {
+        CW_LOG_W("图片尺寸与模型尺寸不匹配: %dx%d != %ux%u", w, h, image_width, image_height);
+        this->release();
+        return false;
+    }
     return true;
 }
 
@@ -143,13 +188,13 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
     }
     std::memcpy(
         ((char*) embeds.data()) + media_i * this->media_output[0].attr->aligned_size,
-        (char*) this->media_output[0].mem->virt_addr,
+        this->media_output[0].mem->virt_addr,
         this->media_output[0].attr->aligned_size
     );
     for (size_t index = 0; index < deepstack_tensors.size(); ++index) {
         std::memcpy(
             ((char*) deepstack_tensors[index].mem->virt_addr) + deepstack_i * this->media_output[index + 1].attr->aligned_size,
-            (char*) this->media_output[index + 1].mem->virt_addr,
+            this->media_output[index + 1].mem->virt_addr,
             this->media_output[index + 1].attr->aligned_size
         );
     }
@@ -171,34 +216,10 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
         CW_LOG_W("提示词为空");
         return {};
     }
-    if (this->media_input.size() != 1 || this->media_output.size() != CAIWEI_RKNN3_DEEPSTACK_TENSORS + 1) {
-        CW_LOG_W(
-            "模型错误: %zu != 1 || %zu != %d",
-            this->media_input.size(),
-            this->media_output.size(),
-            CAIWEI_RKNN3_DEEPSTACK_TENSORS + 1
-        );
-        return {};
-    }
-    // clang-format off
     uint64_t image_count = 0;
     uint64_t video_count = 0;
     uint64_t frame_count = 0;
-    uint32_t image_width  = 0;
-    uint32_t image_height = 0;
-    auto& input_tensor  = this->media_input[0];
     auto& output_tensor = this->media_output[0];
-    if (input_tensor.attr->layout == RKNN3_TENSOR_NCHW) {
-        image_width   = input_tensor.attr->shape[3];
-        image_height  = input_tensor.attr->shape[2];
-    } else if (input_tensor.attr->layout == RKNN3_TENSOR_NHWC) {
-        image_width   = input_tensor.attr->shape[2];
-        image_height  = input_tensor.attr->shape[1];
-    } else {
-        CW_LOG_W("不支持的输入布局: %s", rknn3_get_layout_string(input_tensor.attr->layout));
-        return {};
-    }
-    // clang-format on
     std::vector<std::tuple<const caiwei::media::ImageFrame*, const std::vector<caiwei::media::VideoFrame>*>> data_list;
     for (const auto& message : request.messages) {
         for (const auto& image : message.image_data) {
@@ -215,18 +236,10 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
     context_session->image_frames = image_count + frame_count;
     context_session->image_embeds.resize(output_tensor.attr->aligned_size / sizeof(float16) * image_count);
     context_session->video_embeds.resize(output_tensor.attr->aligned_size / sizeof(float16) * frame_count);
+    const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
+    const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
     if (!data_list.empty()) {
-        const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
-        const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
-        if (static_cast<uint32_t>(w) != image_width || static_cast<uint32_t>(h) != image_height) {
-            CW_LOG_W("图片尺寸与模型尺寸不匹配: %dx%d != %ux%u", w, h, image_width, image_height);
-            return {};
-        }
         if (!context_session->init_deepstack_tensors(this->media_output, image_count + frame_count)) {
-            return {};
-        }
-        if (context_session->deepstack_tensors.size() != CAIWEI_RKNN3_DEEPSTACK_TENSORS) {
-            CW_LOG_W("模型错误: %zu != %d", context_session->deepstack_tensors.size(), CAIWEI_RKNN3_DEEPSTACK_TENSORS);
             return {};
         }
         int image_i = 0;
@@ -243,8 +256,8 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
                     image_ptr->width,
                     image_ptr->height,
                     image_ptr->channels,
-                    image_width,
-                    image_height,
+                    w,
+                    h,
                     context_session->image_embeds,
                     context_session->deepstack_tensors,
                     image_ptr->data
@@ -264,8 +277,8 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
                         image_data.width,
                         image_data.height,
                         image_data.channels,
-                        image_width,
-                        image_height,
+                        w,
+                        h,
                         context_session->video_embeds,
                         context_session->deepstack_tensors,
                         image_data.data
@@ -303,8 +316,8 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
         tensor.image.image_start    = this->special_token.b_image.c_str();
         tensor.image.image_end      = this->special_token.e_image.c_str();
         tensor.image.image_content  = this->special_token.c_image.c_str();
-        tensor.image.image_width    = image_width;
-        tensor.image.image_height   = image_height;
+        tensor.image.image_width    = w;
+        tensor.image.image_height   = h;
         // clang-format on
     }
     if (frame_count > 0) {
@@ -316,8 +329,8 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
         tensor.video.video_start       = this->special_token.b_video.c_str();
         tensor.video.video_end         = this->special_token.e_video.c_str();
         tensor.video.video_content     = this->special_token.c_video.c_str();
-        tensor.video.frame_width       = image_width;
-        tensor.video.frame_height      = image_height;
+        tensor.video.frame_width       = w;
+        tensor.video.frame_height      = h;
         // clang-format on
     }
     // clang-format off

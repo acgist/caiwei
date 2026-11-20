@@ -16,7 +16,8 @@ caiwei::context::ASRRKNN3Context::ASRRKNN3Context(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
-) : ASRContext(runtime),
+) :
+    ASRContext(runtime),
     RKNN3Context(
         std::move(model_path),
         std::move(weight_path),
@@ -39,6 +40,7 @@ bool caiwei::context::ASRRKNN3Context::load_mel_filters() {
 bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
     std::string prefix;
     std::string suffix;
+    // clang-format off
     prefix
         .append(this->special_token.bos)
         .append(caiwei::text::ROLE_USER)
@@ -51,17 +53,26 @@ bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
         .append(this->special_token.bos)
         .append(caiwei::text::ROLE_ASSISTANT)
         .append("\n");
+    // clang-format on
     CW_LOG_I("音频开始提示词: %s", prefix.c_str());
     CW_LOG_I("音频结束提示词: %s", suffix.c_str());
-    int n_prefix_token = this->tokenizer->tokenize(prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size(), false, true);
+    int n_prefix_token = this->tokenizer->tokenize(
+        prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size(), false, true
+    );
     if (n_prefix_token < 0) {
         this->prefix_token.resize(-n_prefix_token);
-        n_prefix_token = this->tokenizer->tokenize(prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size(), false, true);
+        n_prefix_token = this->tokenizer->tokenize(
+            prefix.c_str(), prefix.size(), this->prefix_token.data(), this->prefix_token.size(), false, true
+        );
     }
-    int n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, true);
+    int n_suffix_token = this->tokenizer->tokenize(
+        suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, true
+    );
     if (n_suffix_token < 0) {
         this->suffix_token.resize(-n_suffix_token);
-        n_suffix_token = this->tokenizer->tokenize(suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, true);
+        n_suffix_token = this->tokenizer->tokenize(
+            suffix.c_str(), suffix.size(), this->suffix_token.data(), this->suffix_token.size(), false, true
+        );
     }
     if (n_prefix_token <= 0) {
         CW_LOG_W("音频开始提示词编码失败: %d", n_prefix_token);
@@ -82,31 +93,35 @@ bool caiwei::context::ASRRKNN3Context::load() {
         this->release();
         return false;
     }
-    if (this->media_input.empty() || this->media_output.empty()) {
-        CW_LOG_W("模型没有加载成功");
+    if (this->media_input.size() != 1 || this->media_output.size() != 1) {
+        CW_LOG_W("模型错误: %zu != 1 || %zu != 1", this->media_input.size(), this->media_output.size());
         this->release();
         return false;
     }
+    // clang-format off
     auto& input_tensor  = this->media_input[0];
     auto& output_tensor = this->media_output[0];
+    // clang-format on
     if (input_tensor.attr->n_dims != 4 || output_tensor.attr->n_dims != 2) {
-        CW_LOG_W("模型维度错误: %d != 4 || %d != 2", input_tensor.attr->n_dims, output_tensor.attr->n_dims);
+        CW_LOG_W("模型维度错误: %u != 4 || %u != 2", input_tensor.attr->n_dims, output_tensor.attr->n_dims);
         this->release();
         return false;
     }
+    // clang-format off
     this->batch_size    = input_tensor.attr->shape[0];
     this->n_mels        = input_tensor.attr->shape[2];
     this->window_size   = input_tensor.attr->shape[3];
     this->n_chunk_token = output_tensor.attr->shape[0];
     this->chunk_length  = output_tensor.attr->shape[1];
+    // clang-format on
     if (this->chunk_length != this->embedding_dim) {
         CW_LOG_W("模型维度错误: %d != %d", this->chunk_length, this->embedding_dim);
         this->release();
         return false;
     }
     const int batch_n_chunk_token = this->batch_size * get_n_per_window_token(this->window_size);
-    if (batch_n_chunk_token != this->n_chunk_token) {
-        CW_LOG_W("模型维度错误: %d != %d", batch_n_chunk_token, this->n_chunk_token);
+    if (this->n_chunk_token != batch_n_chunk_token) {
+        CW_LOG_W("模型维度错误: %d != %d", this->n_chunk_token, batch_n_chunk_token);
         this->release();
         return false;
     }
@@ -117,17 +132,15 @@ bool caiwei::context::ASRRKNN3Context::load() {
     return true;
 }
 
-std::generator<caiwei::text::CompletionResult> caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::CompletionResult>
+caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
 bool caiwei::context::ASRRKNN3Context::fill_media(
-    int& n_frames,
-    int& n_tokens,
-    std::vector<float16>& audio_embeds,
-    const std::vector<uint8_t>& audio_data
+    int& n_frames, int& n_tokens, std::vector<float16>& audio_embeds, const std::vector<uint8_t>& audio_data
 ) {
-    if (audio_data.size() % sizeof(int16_t) != 0) {
+    if (audio_data.size() * sizeof(uint8_t) % sizeof(int16_t) != 0) {
         CW_LOG_W("音频数据格式错误");
         return false;
     }
@@ -137,14 +150,14 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         return false;
     }
     int ret = 0;
-    const int n_frame = std::floor((n_frames - N_FFT) / HOP_LENGTH) + 1;
+    const int n_frame = (n_frames - N_FFT) / HOP_LENGTH + 1;
     const int n_audio = get_n_audio(this->window_size, n_frame);
     const int n_prefix_token = this->prefix_token.size();
     const int n_suffix_token = this->suffix_token.size();
     n_tokens = n_audio + n_prefix_token + n_suffix_token;
     CW_LOG_D("音频数据长度: %d => %d : %d = %d", n_frames, n_frame, n_audio, n_tokens);
     if (n_tokens > this->max_token_length) {
-        CW_LOG_W("音频数据词元数量超过限制: %d > %d", n_tokens, this->max_token_length);
+        CW_LOG_W("音频词元超量: %d > %d", n_tokens, this->max_token_length);
         return false;
     }
     std::vector<float> audio_data_f32(n_frames);
@@ -169,13 +182,13 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
     }
     audio_embeds.resize(this->chunk_length * n_tokens);
     const int batch_chunk_size = this->batch_size * this->window_size;
-    for(int chunk = 0; chunk * batch_chunk_size < n_frame; ++chunk) {
+    for (int chunk = 0; chunk * batch_chunk_size < n_frame; ++chunk) {
         int n_chunk_token = this->n_chunk_token;
         int chunk_size = std::min(batch_chunk_size, n_frame - chunk * batch_chunk_size);
-        float* dst_data = (float*) this->media_input[0].mem->virt_addr;    
+        float* dst_data = (float*) this->media_input[0].mem->virt_addr;
         if (chunk_size < batch_chunk_size) {
             std::memset(dst_data, 0, this->n_mels * batch_chunk_size * sizeof(float));
-            n_chunk_token = chunk_size / this->window_size * get_n_per_window_token(this->window_size) + get_n_left_token(this->window_size, chunk_size);
+            n_chunk_token = get_n_audio(this->window_size, chunk_size);
         }
         for (int batch = 0; batch < this->batch_size; ++batch) {
             int dst_pos = this->n_mels * batch * this->window_size;
@@ -196,7 +209,13 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
                 return false;
             }
         }
-        ret = rknn3_run(this->media_context, this->media_input.data(), this->media_input.size(), this->media_output.data(), this->media_output.size());
+        ret = rknn3_run(
+            this->media_context,
+            this->media_input.data(),
+            this->media_input.size(),
+            this->media_output.data(),
+            this->media_output.size()
+        );
         if (ret != RKNN3_SUCCESS) {
             CW_LOG_W("计算失败: %d", ret);
             return false;
@@ -231,7 +250,9 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
     return true;
 }
 
-std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::string& /* prompt */, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(
+    std::string& /* prompt */, ContextSession* context_session, const caiwei::text::CompletionsRequest& request
+) {
     std::vector<uint8_t> audio_data;
     for (const auto& message : request.messages) {
         for (const auto& audio : message.audio_data) {
@@ -242,8 +263,8 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
         CW_LOG_W("音频数据为空");
         return {};
     }
-    int n_frames;
-    int n_tokens;
+    int n_frames = 0;
+    int n_tokens = 0;
     {
         std::lock_guard<std::mutex> lock(this->media_mutex);
         if (!this->fill_media(n_frames, n_tokens, context_session->audio_embeds, audio_data)) {
@@ -251,6 +272,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
         }
         context_session->audio_frames = n_frames;
     }
+    // clang-format off
     rknn3_llm_tensor tensor = {
         .name     = "input_embeds",
         .prompt   = nullptr,
@@ -262,6 +284,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(std::s
     std::vector<rknn3_llm_input> inputs(1);
     inputs[0].input_type = RKNN3_LLM_INPUT_EMBED;
     inputs[0].llm_input  = tensor;
+    // clang-format on
     return inputs;
 }
 
@@ -276,5 +299,5 @@ static int get_n_left_token(int window_size, int n_frame) {
 static int get_n_audio(int window_size, int n_frame) {
     const int n_left_token = get_n_left_token(window_size, n_frame);
     const int n_per_window_token = get_n_per_window_token(window_size);
-    return std::floor(n_frame / window_size) * n_per_window_token + n_left_token;
+    return n_frame / window_size * n_per_window_token + n_left_token;
 }
