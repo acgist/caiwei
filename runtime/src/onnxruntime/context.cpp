@@ -1,11 +1,11 @@
-#include <thread>
-#include <unordered_map>
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/onnxruntime.hpp"
 #include "caiwei/type.hpp"
+
+#include <thread>
+#include <unordered_map>
 
 #if CAIWEI_DEBUG
 OrtLoggingLevel caiwei::context::onnxruntime_log_level = OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE;

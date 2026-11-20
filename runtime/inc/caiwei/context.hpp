@@ -9,6 +9,9 @@
 #ifndef CAIWEI_RUNTIME_CONTEXT_HPP
 #define CAIWEI_RUNTIME_CONTEXT_HPP
 
+#include "caiwei/text_data.hpp"
+#include "caiwei/media_data.hpp"
+
 #include <mutex>
 #include <atomic>
 #include <chrono>
@@ -16,9 +19,6 @@
 #include <generator>
 #include <type_traits>
 #include <unordered_map>
-
-#include "caiwei/text_data.hpp"
-#include "caiwei/media_data.hpp"
 
 namespace caiwei  {
 namespace runtime {

@@ -1,19 +1,18 @@
 #ifndef CAIWEI_RUNTIME_RKNN3_HPP
 #define CAIWEI_RUNTIME_RKNN3_HPP
 
+#include "caiwei/context.hpp"
+#include "caiwei/text_tool.hpp"
+#include "caiwei/tokenizer.hpp"
+
 #include <mutex>
 #include <generator>
 #include <condition_variable>
 
-#include "llama.h"
-
 #include <sys/stat.h>
 
+#include "llama.h"
 #include "rknn3/rknn3_api.h"
-
-#include "caiwei/context.hpp"
-#include "caiwei/text_tool.hpp"
-#include "caiwei/tokenizer.hpp"
 
 #ifndef CAIWEI_RKNN3_CORE_MASK
 #define CAIWEI_RKNN3_CORE_MASK 0xFF

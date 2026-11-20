@@ -1,9 +1,9 @@
 #ifndef CAIWEI_RUNTIME_RKNN2_HPP
 #define CAIWEI_RUNTIME_RKNN2_HPP
 
-#include "rknn2/rknn_api.h"
-
 #include "caiwei/context.hpp"
+
+#include "rknn2/rknn_api.h"
 
 namespace caiwei  {
 namespace context {

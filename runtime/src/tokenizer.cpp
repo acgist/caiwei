@@ -1,10 +1,10 @@
+#include "caiwei/tokenizer.hpp"
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
+
 #include <algorithm>
 
 #include "llama.h"
-
-#include "caiwei/env.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/tokenizer.hpp"
 
 inline static int buffer_size(uint8_t v) {
     if (v < 0x80) {
@@ -176,15 +176,13 @@ std::vector<llama_token> caiwei::context::Tokenizer::tokenize(const std::string&
     return caiwei::context::tokenize(this->vocab, text, add_special, parse_special);
 }
 
-std::string caiwei::context::Tokenizer::detokenize(
-    llama_token* tokens, int32_t n_tokens, bool remove_special, bool unparse_special
-) {
+std::string
+caiwei::context::Tokenizer::detokenize(llama_token* tokens, int32_t n_tokens, bool remove_special, bool unparse_special) {
     return caiwei::context::detokenize(this->vocab, tokens, n_tokens, remove_special, unparse_special);
 }
 
-llama_token caiwei::context::piece_to_token(
-    const llama_vocab* vocab, const std::string& piece, bool add_special, bool parse_special
-) {
+llama_token
+caiwei::context::piece_to_token(const llama_vocab* vocab, const std::string& piece, bool add_special, bool parse_special) {
     caiwei::env::check_not_nullptr(vocab);
     if (piece.empty()) {
         return LLAMA_TOKEN_NULL;
@@ -243,9 +241,8 @@ int caiwei::context::tokenize(
     return llama_tokenize(vocab, text, length, tokens, n_tokens, add_special, parse_special);
 }
 
-std::vector<llama_token> caiwei::context::tokenize(
-    const llama_vocab* vocab, const std::string& text, bool add_special, bool parse_special
-) {
+std::vector<llama_token>
+caiwei::context::tokenize(const llama_vocab* vocab, const std::string& text, bool add_special, bool parse_special) {
     caiwei::env::check_not_nullptr(vocab);
     if (text.empty()) {
         return {};

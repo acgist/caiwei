@@ -1,6 +1,9 @@
 #ifndef CAIWEI_RUNTIME_MEDIA_TOOL_HPP
 #define CAIWEI_RUNTIME_MEDIA_TOOL_HPP
 
+#include "caiwei/log.hpp"
+#include "caiwei/media_data.hpp"
+
 #include <cmath>
 #include <atomic>
 #include <string>
@@ -8,9 +11,6 @@
 #include <cstdint>
 #include <algorithm>
 #include <functional>
-
-#include "caiwei/log.hpp"
-#include "caiwei/media_data.hpp"
 
 struct AVCodec;
 struct AVFrame;

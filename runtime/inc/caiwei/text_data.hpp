@@ -1,6 +1,8 @@
 #ifndef CAIWEI_RUNTIME_TEXT_DATA_HPP
 #define CAIWEI_RUNTIME_TEXT_DATA_HPP
 
+#include "caiwei/media_data.hpp"
+
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -9,8 +11,6 @@
 #include <algorithm>
 
 #include "nlohmann/json.hpp"
-
-#include "caiwei/media_data.hpp"
 
 #ifndef CW_TRANSIENT
 #define CW_TRANSIENT

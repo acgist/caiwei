@@ -7,14 +7,14 @@
 #ifndef CAIWEI_RUNTIME_RUNTIME_HPP
 #define CAIWEI_RUNTIME_RUNTIME_HPP
 
+#include "caiwei/context.hpp"
+
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include <shared_mutex>
 #include <condition_variable>
-
-#include "caiwei/context.hpp"
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 namespace Ort {

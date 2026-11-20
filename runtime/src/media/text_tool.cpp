@@ -1,9 +1,8 @@
 #include "caiwei/text_tool.hpp"
-
-#include <cstring>
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
+
+#include <cstring>
 
 #include "nlohmann/json.hpp"
 

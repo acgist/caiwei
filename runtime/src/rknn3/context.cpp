@@ -1,3 +1,7 @@
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
+#include "caiwei/runtime/rknn3.hpp"
+
 #include <chrono>
 
 #include "llama.h"
@@ -6,10 +10,6 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
-#include "caiwei/env.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/runtime/rknn3.hpp"
 
 // clang-format off
 static int embed_callback    (void* userdata, int32_t* tokens, uint64_t num_tokens, void* embed, uint64_t len);

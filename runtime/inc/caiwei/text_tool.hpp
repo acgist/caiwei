@@ -1,9 +1,9 @@
 #ifndef CAIWEI_RUNTIME_TEXT_TOOL_HPP
 #define CAIWEI_RUNTIME_TEXT_TOOL_HPP
 
-#include <memory>
-
 #include "caiwei/text_data.hpp"
+
+#include <memory>
 
 namespace minja {
 

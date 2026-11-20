@@ -1,3 +1,7 @@
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
+#include "caiwei/tool.hpp"
+
 #include <atomic>
 #include <cstring>
 #include <map>
@@ -6,10 +10,6 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "caiwei/env.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/tool.hpp"
 
 #if CAIWEI_OS_WIN
 #include <Windows.h>

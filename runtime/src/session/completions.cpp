@@ -1,3 +1,9 @@
+#include "caiwei/env.hpp"
+#include "caiwei/log.hpp"
+#include "caiwei/manager.hpp"
+#include "caiwei/media_tool.hpp"
+#include "caiwei/session.hpp"
+
 #include <algorithm>
 #include <condition_variable>
 #include <functional>
@@ -9,12 +15,6 @@
 extern "C" {
 #include "libavutil/base64.h"
 }
-
-#include "caiwei/env.hpp"
-#include "caiwei/log.hpp"
-#include "caiwei/manager.hpp"
-#include "caiwei/media_tool.hpp"
-#include "caiwei/session.hpp"
 
 #ifndef CAIWEI_CLIENT_TIMEOUT_READ
 #define CAIWEI_CLIENT_TIMEOUT_READ 30

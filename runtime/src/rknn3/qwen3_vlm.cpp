@@ -1,12 +1,12 @@
-#include <cstddef>
-#include <cstring>
-#include <tuple>
-
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
 #include "caiwei/media_tool.hpp"
 #include "caiwei/runtime/rknn3.hpp"
 #include "caiwei/type.hpp"
+
+#include <cstddef>
+#include <cstring>
+#include <tuple>
 
 caiwei::context::VLMRKNN3Context::VLMRKNN3Context(
     std::string model_path,

@@ -7,12 +7,12 @@
 #ifndef CAIWEI_RUNTIME_SESSION_HPP
 #define CAIWEI_RUNTIME_SESSION_HPP
 
+#include "caiwei/text_data.hpp"
+
 #include <mutex>
 #include <string>
 #include <vector>
 #include <functional>
-
-#include "caiwei/text_data.hpp"
 
 namespace caiwei  {
 namespace session {
