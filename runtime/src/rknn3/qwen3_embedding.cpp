@@ -9,7 +9,8 @@ caiwei::context::EmbeddingRKNN3Context::EmbeddingRKNN3Context(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
-) : EmbeddingContext(runtime),
+) :
+    EmbeddingContext(runtime),
     RKNN3Context(
         std::move(model_path),
         std::move(weight_path),
@@ -35,8 +36,7 @@ bool caiwei::context::EmbeddingRKNN3Context::load() {
 caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const caiwei::text::EmbeddingsRequest& request) {
     std::vector<const std::string*> prompt_list;
     if (std::holds_alternative<std::string>(request.input)) {
-        const auto& item = std::get<std::string>(request.input);
-        prompt_list.push_back(&item);
+        prompt_list.push_back(&std::get<std::string>(request.input));
     } else {
         const auto& items = std::get<std::vector<std::string>>(request.input);
         for (const auto& item : items) {
@@ -46,7 +46,9 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
     uint32_t prompt_tokens = 0;
     caiwei::text::EmbeddingResult result;
     result.result = this->pooling(prompt_tokens, prompt_list, true, true);
+    // clang-format off
     result.prompt_tokens = prompt_tokens;
     result.total_tokens  = prompt_tokens;
+    // clang-format on
     return result;
 }

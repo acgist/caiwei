@@ -9,7 +9,8 @@ caiwei::context::RerankingRKNN3Context::RerankingRKNN3Context(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
-) : RerankingContext(runtime),
+) :
+    RerankingContext(runtime),
     RKNN3Context(
         std::move(model_path),
         std::move(weight_path),
@@ -35,17 +36,18 @@ bool caiwei::context::RerankingRKNN3Context::load() {
 caiwei::text::RerankingResult caiwei::context::RerankingRKNN3Context::run(const caiwei::text::RerankingsRequest& request) {
     std::vector<std::string> document_list;
     for (const auto& document : request.documents) {
-        std::string prompt = caiwei::text::get_reranking_prompt(document, request, this->special_token);
-        document_list.emplace_back(std::move(prompt));
+        document_list.emplace_back(caiwei::text::get_reranking_prompt(document, request, this->special_token));
     }
     std::vector<const std::string*> prompt_list;
-    for (const auto& document: document_list) {
+    for (const auto& document : document_list) {
         prompt_list.emplace_back(&document);
     }
     uint32_t prompt_tokens = 0;
     caiwei::text::RerankingResult result;
     result.result = this->pooling(prompt_tokens, prompt_list, false, true);
+    // clang-format off
     result.prompt_tokens = prompt_tokens;
     result.total_tokens  = prompt_tokens;
+    // clang-format on
     return result;
 }

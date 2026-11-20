@@ -9,7 +9,8 @@ caiwei::context::LLMRKNN3Context::LLMRKNN3Context(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
-) : LLMContext(runtime),
+) :
+    LLMContext(runtime),
     RKNN3Context(
         std::move(model_path),
         std::move(weight_path),
@@ -19,7 +20,7 @@ caiwei::context::LLMRKNN3Context::LLMRKNN3Context(
         std::move(special_token)
     ) {
 }
-    
+
 caiwei::context::LLMRKNN3Context::~LLMRKNN3Context() {
 }
 
@@ -32,16 +33,20 @@ bool caiwei::context::LLMRKNN3Context::load() {
     return true;
 }
 
-std::generator<caiwei::text::CompletionResult> caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::CompletionResult>
+caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
-std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(std::string& prompt, ContextSession* /* context_session */, const caiwei::text::CompletionsRequest& request) {
+std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(
+    std::string& prompt, ContextSession* /* context_session */, const caiwei::text::CompletionsRequest& request
+) {
     prompt = this->chat_template.apply(this->special_token, request);
     if (prompt.empty()) {
         CW_LOG_W("提示词为空");
         return {};
     }
+    // clang-format off
     rknn3_llm_tensor tensor{
         .name     = "input_embeds",
         .prompt   = prompt.c_str(),
@@ -50,8 +55,11 @@ std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(std::s
         .n_tokens = 0,
         .enable_thinking = request.enable_thinking.value_or(false)
     };
+    // clang-format on
     std::vector<rknn3_llm_input> inputs(1);
+    // clang-format off
     inputs[0].input_type = RKNN3_LLM_INPUT_PROMPT;
     inputs[0].llm_input  = tensor;
+    // clang-format on
     return inputs;
 }
