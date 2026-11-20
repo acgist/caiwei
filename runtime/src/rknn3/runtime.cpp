@@ -5,14 +5,13 @@
 
 template<>
 std::shared_ptr<caiwei::runtime::RKNN3Runtime> caiwei::runtime::get_runtime() {
-    // clang-format off
-    const int  min_pool  = caiwei::env::get_int("CAIWEI_RKNN3_MIN_POOL");
-    const int  max_pool  = caiwei::env::get_int("CAIWEI_RKNN3_MAX_POOL");
-    const int  timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
-    const int  keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
-    const bool share     = caiwei::env::get_bool("CAIWEI_RKNN3_SHARE");
-    // clang-format on
-    return std::make_shared<caiwei::runtime::RKNN3Runtime>(min_pool, max_pool, timeout, keepalive, share);
+    return std::make_shared<caiwei::runtime::RKNN3Runtime>(
+        caiwei::env::get_int("CAIWEI_RKNN3_MIN_POOL"),
+        caiwei::env::get_int("CAIWEI_RKNN3_MAX_POOL"),
+        caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT"),
+        caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE"),
+        caiwei::env::get_bool("CAIWEI_RKNN3_SHARE")
+    );
 }
 
 caiwei::runtime::RKNN3Runtime::RKNN3Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share) :

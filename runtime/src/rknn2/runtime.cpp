@@ -1,21 +1,21 @@
+#include "caiwei/runtime.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/runtime.hpp"
 #include "caiwei/runtime/rknn2.hpp"
 
 template<>
 std::shared_ptr<caiwei::runtime::RKNN2Runtime> caiwei::runtime::get_runtime() {
-    const int  min_pool  = caiwei::env::get_int("CAIWEI_RKNN2_MIN_POOL");
-    const int  max_pool  = caiwei::env::get_int("CAIWEI_RKNN2_MAX_POOL");
-    const int  timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
-    const int  keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
-    const bool share     = caiwei::env::get_bool("CAIWEI_RKNN2_SHARE");
-    return std::make_shared<caiwei::runtime::RKNN2Runtime>(min_pool, max_pool, timeout, keepalive, share);
+    return std::make_shared<caiwei::runtime::RKNN2Runtime>(
+        caiwei::env::get_int("CAIWEI_RKNN2_MIN_POOL"),
+        caiwei::env::get_int("CAIWEI_RKNN2_MAX_POOL"),
+        caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT"),
+        caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE"),
+        caiwei::env::get_bool("CAIWEI_RKNN2_SHARE")
+    );
 }
 
-caiwei::runtime::RKNN2Runtime::RKNN2Runtime(
-    int min_pool, int max_pool, int timeout, int keepalive, bool share
-) : Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN2) {
+caiwei::runtime::RKNN2Runtime::RKNN2Runtime(int min_pool, int max_pool, int timeout, int keepalive, bool share) :
+    Runtime(min_pool, max_pool, timeout, keepalive, share, caiwei::runtime::Type::RKNN2) {
     CW_LOG_I("创建RKNN2Runtime");
 }
 
@@ -23,7 +23,8 @@ caiwei::runtime::RKNN2Runtime::~RKNN2Runtime() {
     CW_LOG_I("释放RKNN2Runtime");
 }
 
-std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::RKNN2Runtime::get_cls_context(const caiwei::context::ContextInfo* info) {
+std::shared_ptr<caiwei::context::ClsContext>
+caiwei::runtime::RKNN2Runtime::get_cls_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
         return nullptr;
     }
@@ -39,7 +40,8 @@ std::shared_ptr<caiwei::context::ClsContext> caiwei::runtime::RKNN2Runtime::get_
     );
 }
 
-std::shared_ptr<caiwei::context::DetContext> caiwei::runtime::RKNN2Runtime::get_det_context(const caiwei::context::ContextInfo* info) {
+std::shared_ptr<caiwei::context::DetContext>
+caiwei::runtime::RKNN2Runtime::get_det_context(const caiwei::context::ContextInfo* info) {
     if (!caiwei::context::check_model_path(info)) {
         return nullptr;
     }

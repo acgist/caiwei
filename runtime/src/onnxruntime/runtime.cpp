@@ -26,12 +26,13 @@ static void onnxruntime_log(
 
 template<>
 std::shared_ptr<caiwei::runtime::ONNXRuntimeRuntime> caiwei::runtime::get_runtime() {
-    const int  min_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MIN_POOL");
-    const int  max_pool  = caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MAX_POOL");
-    const int  timeout   = caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT");
-    const int  keepalive = caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE");
-    const bool share     = caiwei::env::get_bool("CAIWEI_ONNXRUNTIME_SHARE");
-    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>(min_pool, max_pool, timeout, keepalive, share);
+    return std::make_shared<caiwei::runtime::ONNXRuntimeRuntime>(
+        caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MIN_POOL"),
+        caiwei::env::get_int("CAIWEI_ONNXRUNTIME_MAX_POOL"),
+        caiwei::env::get_int("CAIWEI_RUNTIME_TIMEOUT"),
+        caiwei::env::get_int("CAIWEI_RUNTIME_KEEPALIVE"),
+        caiwei::env::get_bool("CAIWEI_ONNXRUNTIME_SHARE")
+    );
 }
 
 caiwei::runtime::ONNXRuntimeRuntime::ONNXRuntimeRuntime(
