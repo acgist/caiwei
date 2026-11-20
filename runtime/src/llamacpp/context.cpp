@@ -363,7 +363,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
         sum_n_ctx += prompt.size();
     }
     if (sum_n_ctx <= 0) {
-        CW_LOG_W("提示词元数量错误: %d", sum_n_ctx);
+        CW_LOG_W("输入为空: %d", sum_n_ctx);
         return {};
     }
     const int seq_max = llama_max_parallel_sequences();
@@ -452,7 +452,7 @@ std::vector<std::vector<float>> caiwei::context::LlamaCPPContext::pooling(const 
 
 std::generator<caiwei::text::CompletionResult> caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsRequest& request) const {
     if (request.messages.empty()) {
-        CW_LOG_W("输入为空为空");
+        CW_LOG_W("输入为空");
         co_yield caiwei::text::CompletionResult{ caiwei::text::FINISH_REASON_STOP, 0, 0 };
         co_return;
     }
