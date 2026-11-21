@@ -13,7 +13,6 @@ set(
     src/media/text_data.cpp
     src/media/text_tool.cpp
     src/media/media_data.cpp
-    src/media/audio_tool.cpp
     src/media/media_tool.cpp
     src/media/media_muxer.cpp
     src/media/media_format.cpp

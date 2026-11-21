@@ -19,6 +19,10 @@
 #define YOLO_BOX_SIZE 4
 #endif
 
+#ifndef RGB_CHANNELS
+#define RGB_CHANNELS 3
+#endif
+
 namespace caiwei {
 namespace media  {
 
@@ -35,7 +39,7 @@ inline constexpr const int VIDEO_MIN_FPS = 1;
 inline constexpr const int VIDEO_MAX_FPS = 120;
 inline constexpr const int VIDEO_MIN_WIDTH = 128;
 inline constexpr const int VIDEO_MAX_WIDTH = 2560;
-inline constexpr const int VIDEO_MIN_HEIGHT = 0;
+inline constexpr const int VIDEO_MIN_HEIGHT = 0; // 高度可以为零自动计算
 inline constexpr const int VIDEO_MAX_HEIGHT = 2560;
 
 inline constexpr uint8_t DEFAULT_PADDING = 114;
