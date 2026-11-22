@@ -36,6 +36,8 @@ void test_format() {
         }
     );
     CAIWEI_ASSERT(success);
+    media_muxer.stop();
+    media_format.stop();
     output.close();
     CAIWEI_ASSERT(output.good());
 }
@@ -91,6 +93,7 @@ void test_format_fwd_callback() {
         }
     );
     CAIWEI_ASSERT(success);
+    media_format.stop();
     output.close();
     CAIWEI_ASSERT(output.good());
 }

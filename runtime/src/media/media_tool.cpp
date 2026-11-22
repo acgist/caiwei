@@ -12,8 +12,6 @@
 #include <limits>
 #include <vector>
 
-#include "nlohmann/json.hpp"
-
 #if ENABLE_CAIWEI_BACKEND_RKNN
 #include "rga/im2d.h"
 #define RKNN_WIDTH_ALIGN 16
@@ -36,6 +34,8 @@
 #if CAIWEI_OS_WIN
 #include <corecrt_math_defines.h>
 #endif
+
+#include "nlohmann/json.hpp"
 #include "pocketfft_hdronly/pocketfft_hdronly.h"
 
 extern "C" {
@@ -415,7 +415,7 @@ static void stfts(
         const int n_audio_length = std::clamp(audio_length - pos, 0, window_length);
         int j = 0;
 #if defined(__aarch64__)
-        for (; j + 3 < n_audio_length; j += 4) {
+        for (; j + 4 <= n_audio_length; j += 4) {
             // clang-format off
             const float32x4_t audio_input  = vld1q_f32(audio_data + pos + j);
             const float32x4_t window_input = vld1q_f32(window + j);
@@ -469,7 +469,7 @@ static void matmul(
             const float* b = b_data + k * cols_b;
 #if defined(__aarch64__)
             const float32x4_t va = vdupq_n_f32(a);
-            for (; j <= cols_b - 4; j += 4) {
+            for (; j + 4 <= cols_b; j += 4) {
                 const float32x4_t vb = vld1q_f32(b + j);
                 const float32x4_t vc = vld1q_f32(c + j);
                 vst1q_f32(c + j, vmlaq_f32(vc, va, vb));

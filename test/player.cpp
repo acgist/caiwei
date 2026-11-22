@@ -23,13 +23,13 @@ static struct PlayerState {
     std::mutex   player_mutex;
     std::jthread player_thread;
     std::condition_variable player_cv;
-    SDL_mutex   *     mutex     { nullptr };
-    SDL_Window  *     window    { nullptr };
-    SDL_Renderer*     renderer  { nullptr };
-    SDL_Texture *     texture   { nullptr };
-    SDL_GLContext     context   { nullptr };
-    SDL_AudioDeviceID audio_id  { 0       };
-    SDL_AudioSpec     audio_spec{         };
+    SDL_mutex   *     mutex      {nullptr};
+    SDL_Window  *     window     {nullptr};
+    SDL_Renderer*     renderer   {nullptr};
+    SDL_Texture *     texture    {nullptr};
+    SDL_GLContext     context    {nullptr};
+    SDL_AudioDeviceID audio_id   {0      };
+    SDL_AudioSpec     audio_spec {       };
 
     void render();
 } player_state;

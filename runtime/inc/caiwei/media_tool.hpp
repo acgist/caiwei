@@ -93,7 +93,7 @@ public:
         const AVRational    * audio_time_base = nullptr,
         const AVRational    * video_time_base = nullptr
     );
-    bool stop();
+    void stop();
     bool send(MediaType, AVPacket* packet);
 private:
     bool send_header ();
@@ -139,16 +139,18 @@ public:
     MediaMuxer& operator=(MediaMuxer&&) = delete;
 public:
     bool open(AudioInfo in_audio_info, VideoInfo in_video_info);
-    bool stop();
+    void stop();
     bool on_audio(const AudioFrame& frame);
     bool on_video(const VideoFrame& frame);
     bool on_audio(const int nb_samples,                                  const size_t frames, const uint32_t data_length, const uint8_t* data);
     bool on_video(const int width, const int height, const int channels, const size_t frames, const uint32_t data_length, const uint8_t* data);
 private:
+    void flush_audio();
+    void flush_video();
     bool open_audio();
     bool open_video();
-    bool stop_audio();
-    bool stop_video();
+    void stop_audio();
+    void stop_video();
     bool build_audio_buffer(const int nb_samples);
     void close_audio_buffer();
 };
@@ -175,7 +177,7 @@ public:
         VideoCallback video_callback,
         PacketCallback packet_callback = nullptr
     );
-    bool stop();
+    void stop();
 };
 
 bool load_mel_filters(

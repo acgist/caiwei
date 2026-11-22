@@ -1,5 +1,5 @@
-#include "caiwei/log.hpp"
 #include "caiwei/media_data.hpp"
+#include "caiwei/log.hpp"
 
 #include <climits>
 
@@ -18,9 +18,11 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
     channels = IMAGE_CHANNELS;
     this->data.assign(data, data + static_cast<size_t>(width) * height * channels);
     stbi_image_free(data);
+    // clang-format off
     this->width    = width;
     this->height   = height;
     this->channels = channels;
+    // clang-format on
     return true;
 }
 
@@ -38,8 +40,10 @@ bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const si
     channels = IMAGE_CHANNELS;
     this->data.assign(data, data + static_cast<size_t>(width) * height * channels);
     stbi_image_free(data);
+    // clang-format off
     this->width    = width;
     this->height   = height;
     this->channels = channels;
+    // clang-format on
     return true;
 }

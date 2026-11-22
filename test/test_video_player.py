@@ -1,10 +1,17 @@
 import requests
 
+from urllib import parse
 
-def video_play():
+
+def video_play(
+    url: str,
+    type: str,
+    codec: str,
+) -> int:
     size = 0
     with requests.get(
-        "http://localhost:8888/v1/video/play?url=./caiwei.mp4&type=file&codec=true",
+        f"http://localhost:8888/v1/video/play?url={url}&type={type}&codec={codec}",
+        auth=("admin", "admin"),
         stream=True,
         timeout=(5, 60),
     ) as resp:
@@ -13,14 +20,26 @@ def video_play():
             if not line:
                 continue
             size += len(line)
+            if type == "device":
+                # 摄像头要直接退出
+                break
     return size
 
 
+# fmt: off
+urls = [
+    ("./caiwei.mp4", "file", "true"),
+    ("./caiwei.mp4", "file", "true"),
+    ("./caiwei.mp4", "file", "false"),
+    ("./caiwei.mp4", "file", "false"),
+    (parse.quote('audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera'), "device", "true"),
+]
+# fmt: on
 index = 0
 while True:
-    index += 1
-    if index > 100:
+    if index >= 1000:
         break
-    size = video_play()
+    size = video_play(*urls[index % len(urls)])
     assert size > 0
     print(f"{index} => {size}")
+    index += 1

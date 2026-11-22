@@ -170,13 +170,13 @@ void caiwei::context::normalize_l2(const float* embd, float* out, int size, bool
 static void init_context_info_map() {
     // clang-format off
     static const std::unordered_map<std::string, caiwei::context::Type> type_map = {
-        { "CLS",       caiwei::context::Type::CLS       },
-        { "DET",       caiwei::context::Type::DET       },
-        { "ASR",       caiwei::context::Type::ASR       },
-        { "LLM",       caiwei::context::Type::LLM       },
-        { "VLM",       caiwei::context::Type::VLM       },
-        { "EMBEDDING", caiwei::context::Type::EMBEDDING },
-        { "RERANKING", caiwei::context::Type::RERANKING },
+        {"CLS",       caiwei::context::Type::CLS      },
+        {"DET",       caiwei::context::Type::DET      },
+        {"ASR",       caiwei::context::Type::ASR      },
+        {"LLM",       caiwei::context::Type::LLM      },
+        {"VLM",       caiwei::context::Type::VLM      },
+        {"EMBEDDING", caiwei::context::Type::EMBEDDING},
+        {"RERANKING", caiwei::context::Type::RERANKING},
     };
     // clang-format on
     std::unordered_map<std::string, caiwei::context::ContextInfo> map;

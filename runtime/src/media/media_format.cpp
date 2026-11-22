@@ -3,12 +3,12 @@
 #include "caiwei/media_tool.hpp"
 
 extern "C" {
-#include "libavutil/opt.h"
 #include "libavcodec/avcodec.h"
-#include "libswscale/swscale.h"
-#include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
+#include "libavformat/avformat.h"
+#include "libavutil/opt.h"
 #include "libswresample/swresample.h"
+#include "libswscale/swscale.h"
 }
 
 #define AVIO_FILE_FORMAT "mp4"
@@ -31,10 +31,12 @@ caiwei::media::MediaFormat::~MediaFormat() {
 }
 
 bool caiwei::media::MediaFormat::open(
+    // clang-format off
     const AVCodecContext* audio_codec_ctx,
     const AVCodecContext* video_codec_ctx,
     const AVRational    * audio_time_base,
     const AVRational    * video_time_base
+    // clang-format on
 ) {
     this->stop();
     if (audio_codec_ctx == nullptr && video_codec_ctx == nullptr) {
@@ -43,16 +45,16 @@ bool caiwei::media::MediaFormat::open(
     }
     int ret = AVERROR_UNKNOWN;
     if (audio_time_base != nullptr && audio_codec_ctx != nullptr) {
-        this->audio_time_base = new AVRational{ audio_time_base->num, audio_time_base->den };
+        this->audio_time_base = new AVRational {audio_time_base->num, audio_time_base->den};
     } else if (audio_codec_ctx != nullptr) {
-        this->audio_time_base = new AVRational{ audio_codec_ctx->time_base.num, audio_codec_ctx->time_base.den };
+        this->audio_time_base = new AVRational {audio_codec_ctx->time_base.num, audio_codec_ctx->time_base.den};
     } else {
         // -
     }
     if (video_time_base != nullptr && video_codec_ctx != nullptr) {
-        this->video_time_base = new AVRational{ video_time_base->num, video_time_base->den };
+        this->video_time_base = new AVRational {video_time_base->num, video_time_base->den};
     } else if (video_codec_ctx != nullptr) {
-        this->video_time_base = new AVRational{ video_codec_ctx->time_base.num, video_codec_ctx->time_base.den };
+        this->video_time_base = new AVRational {video_codec_ctx->time_base.num, video_codec_ctx->time_base.den};
     } else {
         // -
     }
@@ -88,8 +90,10 @@ bool caiwei::media::MediaFormat::open(
             this->stop();
             return false;
         }
+        // clang-format off
         this->format_ctx->pb    = avio_alloc_context(this->buffer, AVIO_BUFFER_SIZE, 1, this, nullptr, &write_fragmented, nullptr);
         this->format_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
+        // clang-format on
         if (this->format_ctx->pb == nullptr) {
             CW_LOG_W("输出句柄创建失败");
             this->stop();
@@ -141,7 +145,7 @@ bool caiwei::media::MediaFormat::open(
     return true;
 }
 
-bool caiwei::media::MediaFormat::stop() {
+void caiwei::media::MediaFormat::stop() {
     this->send_trailer();
     if (this->format_ctx) {
         if (this->format_ctx->pb != nullptr) {
@@ -155,7 +159,8 @@ bool caiwei::media::MediaFormat::stop() {
             }
         }
         CW_LOG_I("释放格式化上下文");
-        avformat_close_input(&this->format_ctx);
+        avformat_free_context(this->format_ctx);
+        this->format_ctx = nullptr;
         this->audio_stream = nullptr;
         this->video_stream = nullptr;
     }
@@ -170,7 +175,6 @@ bool caiwei::media::MediaFormat::stop() {
         delete this->video_time_base;
         this->video_time_base = nullptr;
     }
-    return true;
 }
 
 bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
@@ -261,8 +265,11 @@ static int write_fragmented(void* opaque, const uint8_t* buf, int buf_size) {
     caiwei::media::MediaFormat* format = static_cast<caiwei::media::MediaFormat*>(opaque);
     if (format->format_callback) {
         format->callable = format->format_callback(buf_size, buf);
+        if (format->callable) {
+            return buf_size;
+        }
     } else {
         format->callable = false;
     }
-    return 0;
+    return AVERROR(EIO);
 }

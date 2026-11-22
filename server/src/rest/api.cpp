@@ -74,7 +74,7 @@ static void get_video_play() {
         auto codec = request.get_param_value("codec");
         // clang-format on
         if (!caiwei::text::check_security(url, type)) {
-            response.status = httplib::StatusCode::BadRequest_400;
+            response.status = httplib::StatusCode::Forbidden_403;
             return;
         }
         // 如果线程紧张可以修改阻塞模式: 使用队列异步回调
@@ -130,7 +130,7 @@ static void post_chat_completions() {
     caiwei::rest::server->Post("/v1/chat/completions", [](const httplib::Request& request, httplib::Response& response) {
         auto completions = caiwei::text::json_to_completions(request.body);
         if (!caiwei::text::check_security(completions)) {
-            response.status = httplib::StatusCode::BadRequest_400;
+            response.status = httplib::StatusCode::Forbidden_403;
             return;
         }
         if (completions.stream) {
