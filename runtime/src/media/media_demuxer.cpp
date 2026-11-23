@@ -122,6 +122,8 @@ bool caiwei::media::MediaDemuxer::open(
     int ret = AVERROR_UNKNOWN;
     bool success = true;
     bool open_device = false;
+    bool flush_audio = false;
+    bool flush_video = false;
     std::string sdp_file;
     // clang-format off
     size_t audio_frames  = 0;
@@ -319,7 +321,11 @@ bool caiwei::media::MediaDemuxer::open(
         }
     }
     while (this->running) {
-        ret = av_read_frame(fmt_ctx, decoder_packet);
+        if (flush_audio || flush_video) {
+            ret = AVERROR_EOF;
+        } else {
+            ret = av_read_frame(fmt_ctx, decoder_packet);
+        }
         if (ret == 0) {
             last_recv_time = std::chrono::steady_clock::now();
             if (decoder_packet->stream_index == audio_stream_idx) {
@@ -337,8 +343,13 @@ bool caiwei::media::MediaDemuxer::open(
                         av_packet_free(&forward_packet);
                     }
                 }
-                if (audio_callback) {
-                    ret = avcodec_send_packet(audio_decoder_ctx, decoder_packet);
+label_flush_audio:
+                if (audio_callback && audio_decoder_ctx != nullptr) {
+                    if (flush_audio) {
+                        ret = avcodec_send_packet(audio_decoder_ctx, nullptr);
+                    } else {
+                        ret = avcodec_send_packet(audio_decoder_ctx, decoder_packet);
+                    }
                     while (ret == 0 && this->running) {
                         ret = avcodec_receive_frame(audio_decoder_ctx, decoder_frame);
                         if (ret == 0) {
@@ -352,13 +363,13 @@ bool caiwei::media::MediaDemuxer::open(
                                 if (swr_ctx == nullptr) {
                                     CW_LOG_W("音频重采样上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
                                     success = false;
-                                    goto close_all;
+                                    this->running = false;
                                 }
                             } else if (
                                 // clang-format off
-                                audio_frame_format                  != decoder_frame->format                ||
-                                audio_frame_ch_layout.nb_channels   != decoder_frame->ch_layout.nb_channels ||
-                                audio_frame_sample_rate             != decoder_frame->sample_rate
+                                audio_frame_format                != decoder_frame->format                ||
+                                audio_frame_ch_layout.nb_channels != decoder_frame->ch_layout.nb_channels ||
+                                audio_frame_sample_rate           != decoder_frame->sample_rate
                                 // clang-format on
                             ) {
                                 CW_LOG_I("音频格式发生变化: %s - %s", this->type.c_str(), this->url.c_str());
@@ -372,10 +383,13 @@ bool caiwei::media::MediaDemuxer::open(
                                 if (swr_ctx == nullptr) {
                                     CW_LOG_W("音频重采样上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
                                     success = false;
-                                    goto close_all;
+                                    this->running = false;
                                 }
                             }
-                            if (recv_audio_frame(audio_frames, swr_ctx, decoder_frame, audio_info, audio_frame)) {
+                            // clang-format off
+                            if (
+                                this->running && recv_audio_frame(audio_frames, swr_ctx, decoder_frame, audio_info, audio_frame)
+                            ) {
                                 if (audio_callback) {
                                     if (audio_callback(audio_frame)) {
                                         last_send_time = std::chrono::steady_clock::now();
@@ -385,6 +399,7 @@ bool caiwei::media::MediaDemuxer::open(
                                     }
                                 }
                             }
+                            // clang-format on
                             ++audio_frames;
                         }
                         av_frame_unref(decoder_frame);
@@ -405,8 +420,13 @@ bool caiwei::media::MediaDemuxer::open(
                         av_packet_free(&forward_packet);
                     }
                 }
-                if (video_callback) {
-                    ret = avcodec_send_packet(video_decoder_ctx, decoder_packet);
+label_flush_video:
+                if (video_callback && video_decoder_ctx != nullptr) {
+                    if (flush_video) {
+                        ret = avcodec_send_packet(video_decoder_ctx, nullptr);
+                    } else {
+                        ret = avcodec_send_packet(video_decoder_ctx, decoder_packet);
+                    }
                     while (ret == 0 && this->running) {
                         ret = avcodec_receive_frame(video_decoder_ctx, decoder_frame);
                         if (ret == 0) {
@@ -420,7 +440,7 @@ bool caiwei::media::MediaDemuxer::open(
                                 if (sws_ctx == nullptr) {
                                     CW_LOG_W("视频重采样上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
                                     success = false;
-                                    goto close_all;
+                                    this->running = false;
                                 }
                             } else if (
                                 // clang-format off
@@ -440,10 +460,13 @@ bool caiwei::media::MediaDemuxer::open(
                                 if (sws_ctx == nullptr) {
                                     CW_LOG_W("视频重采样上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
                                     success = false;
-                                    goto close_all;
+                                    this->running = false;
                                 }
                             }
-                            if (recv_video_frame(video_frames, sws_ctx, decoder_frame, video_info, video_frame)) {
+                            // clang-format off
+                            if (
+                                this->running && recv_video_frame(video_frames, sws_ctx, decoder_frame, video_info, video_frame)
+                            ) {
                                 if (video_callback) {
                                     if (video_callback(video_frame)) {
                                         last_send_time = std::chrono::steady_clock::now();
@@ -453,6 +476,7 @@ bool caiwei::media::MediaDemuxer::open(
                                     }
                                 }
                             }
+                            // clang-format on
                             ++video_frames;
                         }
                         av_frame_unref(decoder_frame);
@@ -467,13 +491,23 @@ bool caiwei::media::MediaDemuxer::open(
                 std::chrono::steady_clock::now() - last_send_time
             ).count();
             // clang-format on
-            if (send_timeout >= timeout) {
+            if (send_timeout > timeout) {
                 CW_LOG_W("媒体发送超时自动关闭: %s - %s = %" PRId64, this->type.c_str(), this->url.c_str(), send_timeout);
                 success = false;
                 goto close_all;
             }
-        } else if (ret == AVERROR_EOF || ret == AVERROR_EXIT) {
-            // 忽略刷出缓冲数据
+        } else if (ret == AVERROR_EOF) {
+            if (!flush_audio && audio_callback && audio_decoder_ctx != nullptr) {
+                flush_audio = true;
+                goto label_flush_audio;
+            }
+            if (!flush_video && video_callback && video_decoder_ctx != nullptr) {
+                flush_video = true;
+                goto label_flush_video;
+            }
+            CW_LOG_I("媒体已经结束: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
+            goto close_all;
+        } else if (ret == AVERROR_EXIT) {
             CW_LOG_I("媒体已经关闭: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
             goto close_all;
         } else {
@@ -483,7 +517,7 @@ bool caiwei::media::MediaDemuxer::open(
                 std::chrono::steady_clock::now() - last_recv_time
             ).count();
             // clang-format on
-            if (recv_timeout >= timeout) {
+            if (recv_timeout > timeout) {
                 CW_LOG_W("媒体接收超时自动关闭: %s - %s = %" PRId64, this->type.c_str(), this->url.c_str(), recv_timeout);
                 success = false;
                 goto close_all;

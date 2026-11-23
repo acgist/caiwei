@@ -44,19 +44,17 @@ bool caiwei::media::MediaFormat::open(
         return false;
     }
     int ret = AVERROR_UNKNOWN;
-    if (audio_time_base != nullptr && audio_codec_ctx != nullptr) {
-        this->audio_time_base = new AVRational {audio_time_base->num, audio_time_base->den};
-    } else if (audio_codec_ctx != nullptr) {
-        this->audio_time_base = new AVRational {audio_codec_ctx->time_base.num, audio_codec_ctx->time_base.den};
-    } else {
-        // -
+    if (audio_time_base == nullptr && audio_codec_ctx != nullptr) {
+        audio_time_base = &audio_codec_ctx->time_base;
     }
-    if (video_time_base != nullptr && video_codec_ctx != nullptr) {
+    if (video_time_base == nullptr && video_codec_ctx != nullptr) {
+        video_time_base = &video_codec_ctx->time_base;
+    }
+    if (audio_time_base != nullptr) {
+        this->audio_time_base = new AVRational {audio_time_base->num, audio_time_base->den};
+    }
+    if (video_time_base != nullptr) {
         this->video_time_base = new AVRational {video_time_base->num, video_time_base->den};
-    } else if (video_codec_ctx != nullptr) {
-        this->video_time_base = new AVRational {video_codec_ctx->time_base.num, video_codec_ctx->time_base.den};
-    } else {
-        // -
     }
     if (this->mode_file()) {
         ret = avformat_alloc_output_context2(&this->format_ctx, nullptr, nullptr, this->filename.c_str());

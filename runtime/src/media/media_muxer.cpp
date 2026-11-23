@@ -14,6 +14,7 @@ extern "C" {
 
 #define CAIWEI_AUDIO_BITRATE 128'000
 #define CAIWEI_VIDEO_BITRATE 512'000
+#define CAIWEI_VIDEO_TIME_BASE 90000
 
 static SwrContext* init_audio_swr(caiwei::media::AudioInfo& in, caiwei::media::AudioInfo& out);
 static SwsContext* init_video_sws(caiwei::media::VideoInfo& in, caiwei::media::VideoInfo& out);
@@ -56,7 +57,7 @@ bool caiwei::media::MediaMuxer::open(AudioInfo in_audio_info, VideoInfo in_video
 }
 
 void caiwei::media::MediaMuxer::flush_audio() {
-    if (this->audio_frame == nullptr || this->audio_packet == nullptr || this->audio_codec_ctx == nullptr) {
+    if (this->audio_packet == nullptr || this->audio_codec_ctx == nullptr) {
         return;
     }
     int ret = avcodec_send_frame(this->audio_codec_ctx, nullptr);
@@ -72,7 +73,7 @@ void caiwei::media::MediaMuxer::flush_audio() {
 }
 
 void caiwei::media::MediaMuxer::flush_video() {
-    if (this->video_frame == nullptr || this->video_packet == nullptr || this->video_codec_ctx == nullptr) {
+    if (this->video_packet == nullptr || this->video_codec_ctx == nullptr) {
         return;
     }
     int ret = avcodec_send_frame(this->video_codec_ctx, nullptr);
@@ -181,10 +182,9 @@ bool caiwei::media::MediaMuxer::open_video() {
     this->video_codec_ctx->height       = this->out_video_info.height;
     this->video_codec_ctx->pix_fmt      = (AVPixelFormat) this->out_video_info.format;
     this->video_codec_ctx->bit_rate     = CAIWEI_VIDEO_BITRATE;
-    this->video_codec_ctx->gop_size     = this->out_video_info.fps; // 网络流定期I帧最多间隔
-//  this->video_codec_ctx->keyint_min   = this->out_video_info.fps; // 网络流定期I帧最少间隔
-    this->video_codec_ctx->time_base    = AVRational{ 1, this->out_video_info.fps };
-    this->video_codec_ctx->framerate    = AVRational{ this->out_video_info.fps, 1 };
+    this->video_codec_ctx->gop_size     = this->out_video_info.fps;
+    this->video_codec_ctx->time_base    = AVRational {1, CAIWEI_VIDEO_TIME_BASE};
+    this->video_codec_ctx->framerate    = AVRational {this->out_video_info.fps, 1};
     this->video_codec_ctx->max_b_frames = 0;
     // clang-format on
     if (this->video_codec->id == AV_CODEC_ID_H264) {
@@ -194,6 +194,8 @@ bool caiwei::media::MediaMuxer::open_video() {
         av_opt_set(this->video_codec_ctx->priv_data, "preset",  "fast",        0);
         av_opt_set(this->video_codec_ctx->priv_data, "profile", "baseline",    0);
         // clang-format on
+    } else {
+        // -
     }
     ret = avcodec_open2(this->video_codec_ctx, this->video_codec, nullptr);
     if (ret != 0) {
@@ -474,7 +476,7 @@ bool caiwei::media::MediaMuxer::on_video(
         return false;
     }
     this->video_frame->pts = this->video_pts;
-    this->video_pts++;
+    this->video_pts += CAIWEI_VIDEO_TIME_BASE / this->out_video_info.fps;
     ret = avcodec_send_frame(this->video_codec_ctx, this->video_frame);
     if (ret != 0) {
         CW_LOG_W("视频帧编码失败: %d", ret);
@@ -493,12 +495,12 @@ static SwrContext* init_audio_swr(caiwei::media::AudioInfo& in_audio_info, caiwe
     AVChannelLayout in_ch_layout;
     AVChannelLayout out_ch_layout;
     // clang-format off
-    av_channel_layout_default(&in_ch_layout,  in_audio_info.channels);
+    av_channel_layout_default(&in_ch_layout,  in_audio_info .channels);
     av_channel_layout_default(&out_ch_layout, out_audio_info.channels);
     int ret = swr_alloc_set_opts2(
         &swr,
         &out_ch_layout, (AVSampleFormat) out_audio_info.format, out_audio_info.sample_rate,
-        &in_ch_layout,  (AVSampleFormat) in_audio_info.format,  in_audio_info.sample_rate,
+        &in_ch_layout,  (AVSampleFormat) in_audio_info .format, in_audio_info .sample_rate,
         0, nullptr
     );
     // clang-format on
@@ -519,7 +521,7 @@ static SwrContext* init_audio_swr(caiwei::media::AudioInfo& in_audio_info, caiwe
 static SwsContext* init_video_sws(caiwei::media::VideoInfo& in_video_info, caiwei::media::VideoInfo& out_video_info) {
     // clang-format off
     SwsContext* sws = sws_getContext(
-        in_video_info.width,  in_video_info.height,  (AVPixelFormat) in_video_info.format,
+        in_video_info .width, in_video_info .height, (AVPixelFormat) in_video_info .format,
         out_video_info.width, out_video_info.height, (AVPixelFormat) out_video_info.format,
 //      SWS_BILINEAR,
         SWS_FAST_BILINEAR,
