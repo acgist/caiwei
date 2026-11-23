@@ -52,19 +52,34 @@ pip install ms_swift accelerate modelscope transformers --index-url https://down
 
 > `ms_swift`版本: `4.4.2`
 
+## 安全配置
+
+|配置|默认|描述|
+|--|--|--|
+|CAIWEI_SECURITY|ON|是否开启安全模式|
+|CAIWEI_APIKEY|caiwei|密钥|
+|CAIWEI_USERNAME|admin|账号|
+|CAIWEI_PASSWORD|admin|密码|
+|CAIWEI_ALLOW_PATH|/data/|文件路径白名单|
+|CAIWEI_ALLOW_HOST||主机域名白名单|
+|CAIWEI_ALLOW_MEDIA_TYPE|data,file|支持媒体类型|
+
+## 全部配置
+
+```
+caiwei-server ?
+```
+
 ## Linux环境
 
 ```
 # 版本管理
 sudo apt install cmake build-essential
 
-sudo apt install gcc-11 g++-11
-sudo apt install gcc-12 g++-12
+sudo apt install gcc-14 g++-14
 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
 
 sudo update-alternatives --list       gcc
 sudo update-alternatives --config     gcc
