@@ -141,7 +141,7 @@ void caiwei::text::ToolcallSession::put_token(std::string token) {
 
 std::string caiwei::text::ToolcallSession::get_name() {
     if (this->name_return) {
-        return "";
+        return {};
     }
     if (!this->name.empty()) {
         this->name_return = true;
@@ -153,12 +153,12 @@ std::string caiwei::text::ToolcallSession::get_name() {
         this->name_return = true;
         return this->content.substr(a + 9, z - a - 9);
     }
-    return "";
+    return {};
 }
 
 std::string caiwei::text::ToolcallSession::get_arguments() {
     if (!this->name_return) {
-        return "";
+        return {};
     }
     if (this->arguments_return) {
         this->token.swap(this->arguments);
@@ -170,9 +170,9 @@ std::string caiwei::text::ToolcallSession::get_arguments() {
         this->arguments_return = true;
         this->arguments = this->content.substr(pos + 13);
         // 不要直接返回避免参数完整返回导致格式错误
-        return "";
+        return {};
     }
-    return "";
+    return {};
 }
 
 template<typename T>

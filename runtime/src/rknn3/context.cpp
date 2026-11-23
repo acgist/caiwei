@@ -743,7 +743,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                 );
                 if (buffer_length < 0) {
                     CW_LOG_I("解码长度不足: %d", buffer_length);
-                    token_buffer.add_len(-buffer_length);
+                    token_buffer.resize(-buffer_length);
                     buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
                     if (buffer_length < 0) {
                         CW_LOG_W("解码失败: %d", buffer_length);

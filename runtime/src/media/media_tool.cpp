@@ -30,7 +30,19 @@
 
 #if defined(__aarch64__)
 #include "arm_neon.h"
+#else
+#if CAIWEI_OS_WIN
+#if !defined(HAS_AVX2) || !defined(HAS_F16C)
+#error "Require AVX2 + F16C"
 #endif
+#else
+#if !defined(__AVX2__) || !defined(__F16C__)
+#error "Require AVX2 + F16C"
+#endif
+#endif
+#include <immintrin.h>
+#endif
+
 #if CAIWEI_OS_WIN
 #include <corecrt_math_defines.h>
 #endif
@@ -423,6 +435,15 @@ static void stfts(
             // clang-format on
             vst1q_f32(input.data() + j, audio_output);
         }
+#else
+        for (; j + 8 <= n_audio_length; j += 8) {
+            // clang-format off
+            const __m256 audio_input  = _mm256_loadu_ps(audio_data + pos + j);
+            const __m256 window_input = _mm256_loadu_ps(window + j);
+            const __m256 audio_output = _mm256_mul_ps(audio_input, window_input);
+            // clang-format on
+            _mm256_storeu_ps(input.data() + j, audio_output);
+        }
 #endif
         for (; j < n_audio_length; ++j) {
             input[j] = audio_data[pos + j] * window[j];
@@ -473,6 +494,15 @@ static void matmul(
                 const float32x4_t vb = vld1q_f32(b + j);
                 const float32x4_t vc = vld1q_f32(c + j);
                 vst1q_f32(c + j, vmlaq_f32(vc, va, vb));
+            }
+#else
+            const __m256 va = _mm256_set1_ps(a);
+            for (; j + 8 <= cols_b; j += 8) {
+                // clang-format off
+                const __m256 vb = _mm256_loadu_ps(b + j);
+                const __m256 vc = _mm256_loadu_ps(c + j);
+                // clang-format on
+                _mm256_storeu_ps(c + j, _mm256_add_ps(vc, _mm256_mul_ps(va, vb)));
             }
 #endif
             for (; j < cols_b; ++j) {

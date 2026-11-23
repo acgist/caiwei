@@ -9,15 +9,13 @@ namespace minja {
 
 class chat_template;
 
-} // minja
+} // namespace minja
 
 namespace caiwei {
-namespace text   {
+namespace text {
 
 std::string get_reranking_prompt(
-    const std::string& document,
-    const caiwei::text::RerankingsRequest& request,
-    const caiwei::text::SpecialToken& special_token
+    const std::string& document, const caiwei::text::RerankingsRequest& request, const caiwei::text::SpecialToken& special_token
 );
 
 class ChatTemplate {
@@ -29,7 +27,7 @@ public:
     ChatTemplate(ChatTemplate&&) = delete;
     ChatTemplate& operator=(ChatTemplate&&) = delete;
 private:
-    std::unique_ptr<minja::chat_template> chat_template{ nullptr };
+    std::unique_ptr<minja::chat_template> chat_template {nullptr};
 public:
     void reset();
     bool set_template(const char* template_text, const std::string& bos, const std::string& eos);
@@ -43,7 +41,7 @@ public:
     ) const;
 };
 
-} // text
-} // caiwei
+} // namespace text
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_TEXT_TOOL_HPP

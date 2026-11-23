@@ -586,7 +586,7 @@ caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsReques
             );
             if (buffer_length < 0) {
                 CW_LOG_I("解码长度不足: %d", buffer_length);
-                token_buffer.add_len(-buffer_length);
+                token_buffer.resize(-buffer_length);
                 buffer_length = caiwei::context::token_to_piece(
                     this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length()
                 );

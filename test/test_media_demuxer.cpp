@@ -69,7 +69,7 @@ a=recvonly)";
         // url: audio=deviceName:video=deviceName
         return "audio=麦克风阵列 (适用于数字麦克风的英特尔® 智音技术):video=Integrated Camera";
     } else {
-        return "";
+        return {};
     }
 }
 

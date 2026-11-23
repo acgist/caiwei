@@ -277,5 +277,5 @@ std::string caiwei::text::ChatTemplate::apply(
     } catch (...) {
         CW_LOG_E("模板渲染异常");
     }
-    return "";
+    return {};
 }
