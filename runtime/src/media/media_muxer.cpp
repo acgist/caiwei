@@ -296,6 +296,10 @@ bool caiwei::media::MediaMuxer::build_audio_buffer(const int nb_samples) {
         CW_LOG_W("音频采样数量无效: %d", nb_samples);
         return false;
     }
+    if (this->audio_codec_ctx->ch_layout.nb_channels > AUDIO_MAX_CHANNELS) {
+        CW_LOG_W("音频通道数量无效: %d", this->audio_codec_ctx->ch_layout.nb_channels);
+        return false;
+    }
     this->audio_buffer_capacity = nb_samples;
     int ret = av_samples_alloc(
         this->audio_buffer,

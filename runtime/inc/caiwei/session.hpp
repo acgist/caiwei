@@ -1,22 +1,28 @@
 /**
  * 会话请求
  * 负责处理用户任务: 每个会话请求会申请一个运行上下文
- * 
+ *
  * session -> context -> runtime
  */
 #ifndef CAIWEI_RUNTIME_SESSION_HPP
 #define CAIWEI_RUNTIME_SESSION_HPP
 
-#include "caiwei/text_data.hpp"
-
+#include <functional>
 #include <mutex>
 #include <string>
-#include <vector>
-#include <functional>
 
-namespace caiwei  {
+namespace caiwei {
+
+namespace text {
+
+struct EmbeddingsRequest;
+struct RerankingsRequest;
+struct CompletionsRequest;
+
+} // namespace text
+
 namespace session {
-    
+
 class Session {
 public:
     const std::string id;
@@ -88,7 +94,7 @@ public:
     bool get() override;
 };
 
-} // session
-} // caiwei
+} // namespace session
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_SESSION_HPP

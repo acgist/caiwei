@@ -3,12 +3,12 @@
 
 #include "caiwei/media_data.hpp"
 
-#include <string>
-#include <vector>
-#include <cstdint>
-#include <variant>
-#include <optional>
 #include <algorithm>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <variant>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
@@ -23,8 +23,9 @@
 #endif
 
 namespace caiwei {
-namespace text   {
-    
+namespace text {
+
+// clang-format off
 inline constexpr const char* ROLE_TOOL      = "tool";
 inline constexpr const char* ROLE_USER      = "user";
 inline constexpr const char* ROLE_SYSTEM    = "system";
@@ -48,12 +49,14 @@ inline constexpr const char* CONTENT_TYPE_RTMP   = "rtmp";
 inline constexpr const char* CONTENT_TYPE_RTSP   = "rtsp";
 inline constexpr const char* CONTENT_TYPE_DEVICE = "device";
 inline constexpr const char* CONTENT_TYPE_NONE   = "";
+// clang-format on
 
 struct CompletionsRequestMessageContentItemUrl {
     std::optional<std::string> url = std::nullopt;
 };
 
 struct CompletionsRequestMessageContentItem {
+    // clang-format off
     std::optional<std::string> type  = std::nullopt;
     std::optional<std::string> text  = std::nullopt;
     std::optional<std::string> audio = std::nullopt;
@@ -62,36 +65,45 @@ struct CompletionsRequestMessageContentItem {
     std::optional<CompletionsRequestMessageContentItemUrl> audio_url = std::nullopt;
     std::optional<CompletionsRequestMessageContentItemUrl> image_url = std::nullopt;
     std::optional<CompletionsRequestMessageContentItemUrl> video_url = std::nullopt;
+    // clang-format on
 };
 
 using CompletionsRequestMessageContent = std::variant<std::string, std::vector<CompletionsRequestMessageContentItem>>;
 
 struct CompletionsRequestMessageToolCallFunction {
+    // clang-format off
     std::optional<std::string> name      = std::nullopt;
     std::optional<std::string> arguments = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsRequestMessageToolCall {
+    // clang-format off
     std::optional<std::string> id   = std::nullopt;
     std::optional<std::string> type = std::nullopt;
     std::optional<CompletionsRequestMessageToolCallFunction> function = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsRequestMessage {
+    // clang-format off
     std::optional<std::string> role         = std::nullopt;
     std::optional<std::string> name         = std::nullopt;
     std::optional<std::string> tool_call_id = std::nullopt;
     std::optional<CompletionsRequestMessageContent>               content    = std::nullopt;
     std::optional<std::vector<CompletionsRequestMessageToolCall>> tool_calls = std::nullopt;
-    CW_TRANSIENT std::vector<caiwei::media::AudioFrame>              audio_data = {};
-    CW_TRANSIENT std::vector<caiwei::media::ImageFrame>              image_data = {};
-    CW_TRANSIENT std::vector<std::vector<caiwei::media::VideoFrame>> video_data = {};
+    CW_TRANSIENT std::vector<caiwei::media::AudioFrame>              audio_data {};
+    CW_TRANSIENT std::vector<caiwei::media::ImageFrame>              image_data {};
+    CW_TRANSIENT std::vector<std::vector<caiwei::media::VideoFrame>> video_data {};
+    // clang-format on
 };
 
 struct CompletionsRequestToolFunction {
+    // clang-format off
     std::optional<std::string>    name        = std::nullopt;
     std::optional<std::string>    description = std::nullopt;
     std::optional<nlohmann::json> parameters  = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsRequestTool {
@@ -100,9 +112,10 @@ struct CompletionsRequestTool {
 };
 
 struct CompletionsRequest {
+    // clang-format off
     bool        stream{};
     std::string model {};
-    std::vector<CompletionsRequestMessage> messages{};
+    std::vector<CompletionsRequestMessage> messages {};
     std::optional<int>   seed              = std::nullopt;
     std::optional<int>   top_k             = 10;
     std::optional<float> top_p             = 0.95F;
@@ -112,17 +125,20 @@ struct CompletionsRequest {
     std::optional<float> frequency_penalty = 0.0F;
     std::optional<int> max_completion_tokens = std::nullopt;
     std::optional<std::vector<CompletionsRequestTool>> tools = std::nullopt;
+    // clang-format on
     // 扩展字段
+    // clang-format off
     std::optional<int> video_fps   = 8;      // 视频识别间隔帧数: VLM/YOLO
     std::optional<int> asr_samples = 32000;  // ASR采样队列数量: 16000 * 1 * 16 *  1 / 8 = 32000
     std::optional<int> vlm_frames  = 8;      // VLM帧数队列数量
     std::optional<bool> drop_on_full    = false; // 队列满时是否丢弃数据
     std::optional<bool> enable_thinking = false; // 是否开启思考模式
-    std::optional<std::string> media_url  = std::nullopt; // 持续识别视频文件地址
-    std::optional<std::string> media_type = std::nullopt; // 持续识别视频文件类型
+    std::optional<std::string>              media_url  = std::nullopt; // 持续识别视频文件地址
+    std::optional<std::string>              media_type = std::nullopt; // 持续识别视频文件类型
     std::optional<std::vector<std::string>> model_list = std::nullopt; // 模型列表
-    CW_TRANSIENT std::string id     {};
-    CW_TRANSIENT uint32_t    created{};
+    CW_TRANSIENT std::string id      {};
+    CW_TRANSIENT uint32_t    created {};
+    // clang-format on
 
     inline int get_max_completion_tokens(int max_tokens) const {
         const int n_tokens = this->max_completion_tokens.value_or(max_tokens);
@@ -132,99 +148,123 @@ struct CompletionsRequest {
         return std::min(n_tokens, max_tokens);
     }
 
-    inline int get_video_fps() {
+    inline int get_video_fps() const {
         return std::clamp(this->video_fps.value_or(8), 1, 32);
     }
 
-    inline int get_asr_samples() {
+    inline int get_asr_samples() const {
         return std::clamp(this->asr_samples.value_or(32000), 3200, ASR_QUEUE_SIZE);
     }
 
-    inline int get_vlm_frames() {
+    inline int get_vlm_frames() const {
         return std::clamp(this->vlm_frames.value_or(8), 1, 16);
     }
 };
 
 struct CompletionsResponseChoiceMessageToolCallFunction {
+    // clang-format off
     std::optional<std::string> name      = std::nullopt;
     std::optional<std::string> arguments = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsResponseChoiceMessageToolCall {
+    // clang-format off
     std::optional<std::string> id    = std::nullopt;
     std::optional<std::string> type  = std::nullopt;
     std::optional<uint32_t>    index = std::nullopt;
     std::optional<CompletionsResponseChoiceMessageToolCallFunction> function = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsResponseChoiceMessage {
+    // clang-format off
     std::optional<std::string> role              = std::nullopt;
     std::optional<std::string> content           = std::nullopt;
     std::optional<std::string> refusal           = std::nullopt;
     std::optional<std::string> reasoning_content = std::nullopt;
     std::optional<std::vector<CompletionsResponseChoiceMessageToolCall>> tool_calls = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsResponseChoice {
-    uint32_t    index;
+    // clang-format off
+    uint32_t    index = 0;
     std::string finish_reason;
     CompletionsResponseChoiceMessage message;
+    // clang-format on
 };
 
 struct CompletionsResponseUsage {
-    uint32_t prompt_tokens;
-    uint32_t completion_tokens;
-    uint32_t total_tokens;
+    // clang-format off
+    uint32_t prompt_tokens     = 0;
+    uint32_t completion_tokens = 0;
+    uint32_t total_tokens      = 0;
+    // clang-format on
 };
 
 struct CompletionsResponse {
+    // clang-format off
     std::string id;
     uint32_t    created;
     std::string model;
     std::string object = "chat.completion";
     std::vector<CompletionsResponseChoice> choices;
     std::optional<CompletionsResponseUsage> usage;
+    // clang-format on
 };
 
 struct CompletionsChunkChoiceMessageToolCallFunction {
+    // clang-format off
     std::optional<std::string> name      = std::nullopt;
     std::optional<std::string> arguments = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsChunkChoiceMessageToolCall {
+    // clang-format off
     std::optional<std::string> id    = std::nullopt;
     std::optional<std::string> type  = std::nullopt;
     std::optional<uint32_t>    index = std::nullopt;
     std::optional<CompletionsChunkChoiceMessageToolCallFunction> function = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsChunkDelta {
+    // clang-format off
     std::optional<std::string> role              = std::nullopt;
     std::optional<std::string> content           = std::nullopt;
     std::optional<std::string> refusal           = std::nullopt;
     std::optional<std::string> reasoning_content = std::nullopt;
     std::optional<std::vector<CompletionsChunkChoiceMessageToolCall>> tool_calls = std::nullopt;
+    // clang-format on
 };
 
 struct CompletionsChunkChoice {
-    uint32_t    index;
+    // clang-format off
+    uint32_t    index = 0;
     std::string finish_reason;
     CompletionsChunkDelta delta;
+    // clang-format on
 };
 
 struct CompletionsChunkUsage {
-    uint32_t prompt_tokens;
-    uint32_t completion_tokens;
-    uint32_t total_tokens;
+    // clang-format off
+    uint32_t prompt_tokens     = 0;
+    uint32_t completion_tokens = 0;
+    uint32_t total_tokens      = 0;
+    // clang-format on
 };
 
 struct CompletionsChunk {
+    // clang-format off
     std::string id;
     uint32_t    created;
     std::string model;
     std::string object = "chat.completion.chunk";
     std::vector<CompletionsChunkChoice> choices;
     std::optional<CompletionsChunkUsage> usage;
+    // clang-format on
 };
 
 struct EmbeddingsRequest {
@@ -233,14 +273,18 @@ struct EmbeddingsRequest {
 };
 
 struct EmbeddingsResponseData {
-    uint32_t    index;
+    // clang-format off
+    uint32_t    index  = 0;
     std::string object = "embedding";
     std::vector<float> embedding;
+    // clang-format on
 };
 
 struct EmbeddingsResponseUsage {
-    std::optional<uint32_t> prompt_tokens;
-    std::optional<uint32_t> total_tokens;
+    // clang-format off
+    uint32_t prompt_tokens = 0;
+    uint32_t total_tokens  = 0;
+    // clang-format on
 };
 
 struct EmbeddingsResponse {
@@ -258,14 +302,18 @@ struct RerankingsRequest {
 };
 
 struct RerankingsResponseData {
-    uint32_t    index;
+    // clang-format off
+    uint32_t    index  = 0;
     std::string object = "reranking";
-    float       score;
+    float       score  = 0.0F;
+    // clang-format on
 };
 
 struct RerankingsResponseUsage {
-    std::optional<uint32_t> prompt_tokens;
-    std::optional<uint32_t> total_tokens;
+    // clang-format off
+    uint32_t prompt_tokens = 0;
+    uint32_t total_tokens  = 0;
+    // clang-format on
 };
 
 struct RerankingsResponse {
@@ -311,15 +359,17 @@ struct SpecialToken {
 };
 
 struct ToolcallSession {
+    // clang-format off
     bool name_return      = false;
     bool arguments_return = false;
     std::string toolcall_id;
-    int32_t     toolcall_index;
+    int32_t     toolcall_index = 0;
     std::string token;
     std::string content;
     std::string name;
     std::string arguments;
-    
+    // clang-format on
+
     ToolcallSession();
 
     void reset();
@@ -330,20 +380,24 @@ struct ToolcallSession {
 };
 
 struct CompletionResult {
+    // clang-format off
     bool thinking;
     bool toolcall;
     std::string token;
     std::string finish_reason;
-    uint32_t prompt_tokens;
-    uint32_t completion_tokens;
-    uint32_t total_tokens;
+    uint32_t prompt_tokens     = 0;
+    uint32_t completion_tokens = 0;
+    uint32_t total_tokens      = 0;
     std::string toolcall_name;
     std::string toolcall_arguments;
     std::string toolcall_id;
-    int32_t     toolcall_index;
+    int32_t     toolcall_index = 0;
+    // clang-format on
 
     CompletionResult(bool thinking, bool toolcall, std::string token, ToolcallSession& toolcall_session);
-    CompletionResult(bool thinking, bool toolcall, uint32_t prompt_tokens, uint32_t completion_tokens, ToolcallSession& toolcall_session);
+    CompletionResult(
+        bool thinking, bool toolcall, uint32_t prompt_tokens, uint32_t completion_tokens, ToolcallSession& toolcall_session
+    );
     CompletionResult(std::string finish_reason, uint32_t prompt_tokens, uint32_t completion_tokens);
 };
 
@@ -355,6 +409,7 @@ struct EmbeddingResult {
 
 using RerankingResult = EmbeddingResult;
 
+// clang-format off
 CompletionsRequest json_to_completions(const std::string& json);
 EmbeddingsRequest  json_to_embeddings (const std::string& json);
 RerankingsRequest  json_to_rerankings (const std::string& json);
@@ -362,12 +417,13 @@ std::string to_json(const CompletionsResponse& response);
 std::string to_json(const CompletionsChunk   & chunk);
 std::string to_json(const EmbeddingsResponse & response);
 std::string to_json(const RerankingsResponse & response);
+// clang-format on
 
 std::string get_content_type(const std::string& url);
 bool check_security(const CompletionsRequest& request);
 bool check_security(const std::string& url, const std::string& type);
 
-} // text
-} // caiwei
+} // namespace text
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_TEXT_DATA_HPP

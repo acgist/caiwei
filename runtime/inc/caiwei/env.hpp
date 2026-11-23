@@ -1,6 +1,6 @@
 /**
  * 环境配置
- * 
+ *
  * Win  : $env:name="value"
  * Linux: export name="value"
  */
@@ -9,29 +9,31 @@
 
 #include <atomic>
 #include <chrono>
-#include <string>
-#include <vector>
+#include <concepts>
 #include <cstdint>
 #include <cstdlib>
-#include <concepts>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace caiwei {
-namespace env    {
+namespace env {
 
 class MessageCodeException : public std::runtime_error {
 public:
     int status;
     std::string code;
-    const std::string message;
 public:
-    MessageCodeException(std::string message) : std::runtime_error(message), code("9999"), message(std::move(message)) {
-        this->status = 500;
+    MessageCodeException(std::string message) : std::runtime_error(std::move(message)), status(500), code("9999") {
     }
-    MessageCodeException(std::string code, std::string message) : std::runtime_error(message), code(std::move(code)), message(std::move(message)) {
+    MessageCodeException(std::string code, std::string message) :
+        std::runtime_error(std::move(message)),
+        code(std::move(code)) {
         if (this->code.size() != 4) {
-            this->code = "9999";
+            // clang-format off
+            this->code   = "9999";
             this->status = 500;
+            // clang-format on
         } else {
             this->status = std::atoi(this->code.c_str()) % 1000;
             if (this->status < 100 || this->status > 599) {
@@ -41,6 +43,7 @@ public:
     }
 };
 
+// clang-format off
 template<typename T>
 concept Comparable = requires(T a, T z) {
     { a <  z } -> std::convertible_to<bool>;
@@ -48,6 +51,7 @@ concept Comparable = requires(T a, T z) {
     { a == z } -> std::convertible_to<bool>;
     { a != z } -> std::convertible_to<bool>;
 };
+// clang-format on
 
 template<Comparable T>
 inline void check_eq(const T& src, const T& dst, const std::string& message = "数据错误", const std::string& code = "1400") {
@@ -57,7 +61,8 @@ inline void check_eq(const T& src, const T& dst, const std::string& message = "�
 }
 
 template<Comparable T>
-inline void check_in(const T& val, const T& min, const T& max, const std::string& message = "数据错误", const std::string& code = "1400") {
+inline void
+check_in(const T& val, const T& min, const T& max, const std::string& message = "数据错误", const std::string& code = "1400") {
     if (val < min || val > max) {
         throw MessageCodeException(code, message);
     }
@@ -78,13 +83,15 @@ inline void check_not_nullptr(const void* ptr, const std::string& message = "数
 
 inline constexpr uint32_t max_id_index = 10000;
 
-extern std::atomic_uint32_t id_index;
+extern std::atomic<uint32_t> id_index;
 
+// clang-format off
 std::string get      (const std::string& name);
 bool        get_bool (const std::string& name);
 int         get_int  (const std::string& name);
 float       get_float(const std::string& name);
 std::vector<std::string> get_vector(const std::string& name, const char delim = ',', const bool skip_empty = true);
+// clang-format on
 
 void set(const std::string& name, const std::string& value, bool force = false);
 
@@ -116,7 +123,7 @@ inline std::string id() {
     return std::to_string(caiwei::env::timestamp() * max_id_index + val);
 }
 
-} // env
-} // caiwei
+} // namespace env
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_ENV_HPP

@@ -28,7 +28,7 @@ static std::vector<std::string> allow_path;
 static std::vector<std::string> allow_host;
 static std::vector<std::string> allow_media_type;
 
-std::atomic_uint32_t caiwei::env::id_index = 0;
+std::atomic<uint32_t> caiwei::env::id_index = 0;
 
 static std::unordered_set<std::string> security_config = {"CAIWEI_APIKEY", "CAIWEI_PASSWORD"};
 

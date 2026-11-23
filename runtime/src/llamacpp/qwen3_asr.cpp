@@ -45,7 +45,7 @@ caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, const caiwe
                 continue;
             }
             const int n_frames = audio.data.size() / sizeof(int16_t);
-            if (n_frames < (N_FFT + HOP_LENGTH) * 2) {
+            if (n_frames < (QWEN_ASR_N_FFT + QWEN_ASR_HOP_LENGTH) * 2) {
                 CW_LOG_W("音频数据长度不足: %d", n_frames);
                 continue;
             }

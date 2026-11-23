@@ -1,7 +1,7 @@
 /**
  * 运行环境
  * 负责管理模型上下文
- * 
+ *
  * session -> context -> runtime
  */
 #ifndef CAIWEI_RUNTIME_RUNTIME_HPP
@@ -9,12 +9,13 @@
 
 #include "caiwei/context.hpp"
 
+#include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <vector>
-#include <shared_mutex>
-#include <condition_variable>
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 namespace Ort {
@@ -24,7 +25,7 @@ struct Env;
 };
 #endif
 
-namespace caiwei  {
+namespace caiwei {
 namespace runtime {
 
 enum class Type {
@@ -36,25 +37,29 @@ enum class Type {
 };
 
 inline const char* get_type_name(Type type) {
+    // clang-format off
     switch (type) {
     case caiwei::runtime::Type::RKNN2:       return "RKNN2";
     case caiwei::runtime::Type::RKNN3:       return "RKNN3";
     case caiwei::runtime::Type::LLAMACPP:    return "LLAMACPP";
     case caiwei::runtime::Type::ONNXRUNTIME: return "ONNXRuntime";
     case caiwei::runtime::Type::NONE:        return "NONE";
-    default: return "UNKNOWN";
     }
+    return "UNKNOWN";
+    // clang-format on
 }
 
 class Runtime {
 public:
     const std::string id;
 private:
+    // clang-format off
     int min_pool  = 4;
     int max_pool  = 8;
     int timeout   = 30;
     int keepalive = 600;
     bool share    = false;
+    // clang-format on
     caiwei::runtime::Type type;
     std::mutex mutex;
     std::condition_variable condition;
@@ -67,7 +72,6 @@ public:
     std::shared_ptr<caiwei::context::Context> get_context(const caiwei::context::ContextInfo* info);
     void put_context(std::shared_ptr<caiwei::context::Context> context);
     size_t optimize();
-protected:
     virtual std::shared_ptr<caiwei::context::ClsContext> get_cls_context(const caiwei::context::ContextInfo* info);
     virtual std::shared_ptr<caiwei::context::DetContext> get_det_context(const caiwei::context::ContextInfo* info);
     virtual std::shared_ptr<caiwei::context::ASRContext> get_asr_context(const caiwei::context::ContextInfo* info);
@@ -136,13 +140,13 @@ public:
 void init();
 void stop();
 
-template <typename R>
+template<typename R>
 std::shared_ptr<R> get_runtime();
 
 extern std::shared_mutex runtime_mutex;
 extern std::map<caiwei::runtime::Type, std::shared_ptr<caiwei::runtime::Runtime>> runtime_map;
 
-} // runtime
-} // caiwei
+} // namespace runtime
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_RUNTIME_HPP

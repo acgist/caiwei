@@ -1,34 +1,32 @@
 /**
  * 模型上下文
  * 负责调用模型: 每个模型上下文代表一个模型实例
- * 
+ *
  * 非线程安全
- * 
+ *
  * session -> context -> runtime
  */
 #ifndef CAIWEI_RUNTIME_CONTEXT_HPP
 #define CAIWEI_RUNTIME_CONTEXT_HPP
 
-#include "caiwei/text_data.hpp"
 #include "caiwei/media_data.hpp"
+#include "caiwei/text_data.hpp"
 
-#include <mutex>
 #include <atomic>
-#include <chrono>
-#include <vector>
+#include <cstdint>
 #include <generator>
 #include <type_traits>
-#include <unordered_map>
+#include <vector>
 
-namespace caiwei  {
+namespace caiwei {
 namespace runtime {
 
 class Runtime;
 
-} // runtime
-} // caiwei
+} // namespace runtime
+} // namespace caiwei
 
-namespace caiwei  {
+namespace caiwei {
 namespace context {
 
 enum class Type {
@@ -43,6 +41,7 @@ enum class Type {
 };
 
 inline const char* get_type_name(Type type) {
+    // clang-format off
     switch (type) {
     case Type::CLS:       return "CLS";
     case Type::DET:       return "DET";
@@ -52,8 +51,9 @@ inline const char* get_type_name(Type type) {
     case Type::EMBEDDING: return "EMBEDDING";
     case Type::RERANKING: return "RERANKING";
     case Type::NONE:      return "NONE";
-    default: return "UNKNOWN";
     }
+    // clang-format on
+    return "UNKNOWN";
 }
 
 struct ContextInfo {
@@ -68,7 +68,7 @@ class Context {
 public:
     const Type type;
     const std::string id;
-    std::atomic_int32_t ref_count;
+    std::atomic<int32_t> ref_count;
     std::atomic<int64_t> last_run_time;
 protected:
     caiwei::runtime::Runtime* runtime = nullptr;
@@ -81,12 +81,12 @@ public:
 
 class ClsContext : public Context {
 protected:
-    int c;
-    int h;
-    int w;
-    int class_size;
-    int top_k;
-    float confidence_threshold;
+    int c = 0;
+    int h = 0;
+    int w = 0;
+    int class_size = 0;
+    int top_k = 0;
+    float confidence_threshold = 0.0F;
 public:
     ClsContext(int c, int h, int w, int class_size, int top_k, float confidence_threshold, caiwei::runtime::Runtime* runtime);
     ~ClsContext();
@@ -99,14 +99,16 @@ public:
 
 class DetContext : public Context {
 protected:
-    int c;
-    int h;
-    int w;
-    int class_size;
-    float iou_threshold;
-    float confidence_threshold;
+    int c = 0;
+    int h = 0;
+    int w = 0;
+    int class_size = 0;
+    float iou_threshold = 0.0F;
+    float confidence_threshold = 0.0F;
 public:
-    DetContext(int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime);
+    DetContext(
+        int c, int h, int w, int class_size, float iou_threshold, float confidence_threshold, caiwei::runtime::Runtime* runtime
+    );
     ~DetContext();
 public:
     static constexpr Type TYPE = Type::DET;
@@ -183,7 +185,7 @@ struct RaiiGuard {
     std::decay_t<F> fun;
     explicit RaiiGuard(F&& fun) : fun(std::forward<F>(fun)) {
     }
-    ~RaiiGuard() noexcept {
+    ~RaiiGuard() {
         this->fun();
     }
     RaiiGuard(const RaiiGuard&) = delete;
@@ -192,7 +194,7 @@ struct RaiiGuard {
     RaiiGuard& operator=(RaiiGuard&&) = delete;
 };
 
-} // context
-} // caiwei
+} // namespace context
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_CONTEXT_HPP

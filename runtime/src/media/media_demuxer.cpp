@@ -199,7 +199,7 @@ bool caiwei::media::MediaDemuxer::open(
         av_dict_set(&opts, "max_delay",                   "1000000",                0);
         av_dict_set(&opts, "reorder_queue_size",          "2048",                   0);
         av_dict_set(&opts, "use_wallclock_as_timestamps", "1",                      0);
-        sdp_file = sdp_file_path + caiwei::env::id() + ".sdp";
+        sdp_file = sdp_file_path + caiwei::env::id() + caiwei::media::sdp_file_suffix;
         if (write_sdp_file(this->url.c_str(), this->url.size(), sdp_file)) {
             ret = avformat_open_input(&fmt_ctx, sdp_file.c_str(), nullptr, &opts);
         }

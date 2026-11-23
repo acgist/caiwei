@@ -99,7 +99,7 @@ static void get_video_play() {
                         sse(sink, caiwei::json::buildResponse("2400", "媒体播放失败").c_str(), -1, false);
                     }
                 } catch (const caiwei::env::MessageCodeException& e) {
-                    sse(sink, caiwei::json::buildResponse(e.code, e.message).c_str(), -1, false);
+                    sse(sink, caiwei::json::buildResponse(e.code, e.what()).c_str(), -1, false);
                 } catch (...) {
                     sse(sink, caiwei::json::buildResponse("9999", "系统异常").c_str(), -1, false);
                 }
@@ -149,7 +149,7 @@ static void post_chat_completions() {
                             sse(sink, caiwei::json::buildResponse("3400", "会话生成失败").c_str(), -1, false);
                         }
                     } catch (const caiwei::env::MessageCodeException& e) {
-                        sse(sink, caiwei::json::buildResponse(e.code, e.message).c_str(), -1, false);
+                        sse(sink, caiwei::json::buildResponse(e.code, e.what()).c_str(), -1, false);
                     } catch (...) {
                         sse(sink, caiwei::json::buildResponse("9999", "系统异常").c_str(), -1, false);
                     }

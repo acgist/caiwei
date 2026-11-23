@@ -67,6 +67,11 @@ static void delete_old_sdp_file();
 
 static std::atomic<bool> ffmpeg_init(false);
 
+inline static bool check_height(int height) {
+    // 等于零会自动计算
+    return height == 0 || (height >= caiwei::media::VIDEO_MIN_HEIGHT && height <= caiwei::media::VIDEO_MAX_HEIGHT);
+}
+
 static void log_mel_spectrogram(
     // clang-format off
     const float* audio_data,
@@ -97,7 +102,7 @@ caiwei::media::AudioInfo::AudioInfo(int channels, int sample_rate, int format) :
 }
 
 caiwei::media::VideoInfo::VideoInfo(int width, int height, int format) : fps(0), width(width), height(height), format(format) {
-    if (width < VIDEO_MIN_WIDTH || width > VIDEO_MAX_WIDTH || height < VIDEO_MIN_HEIGHT || height > VIDEO_MAX_HEIGHT) {
+    if (width < VIDEO_MIN_WIDTH || width > VIDEO_MAX_WIDTH || !check_height(height)) {
         CW_LOG_W("视频尺寸错误: %d x %d", width, height);
     }
     if (format < AV_PIX_FMT_YUV420P || format >= AV_PIX_FMT_NB) {
@@ -113,7 +118,7 @@ caiwei::media::VideoInfo::VideoInfo(int fps, int width, int height, int format) 
     if (fps < VIDEO_MIN_FPS || fps > VIDEO_MAX_FPS) {
         CW_LOG_W("视频帧率错误: %d", fps);
     }
-    if (width < VIDEO_MIN_WIDTH || width > VIDEO_MAX_WIDTH || height < VIDEO_MIN_HEIGHT || height > VIDEO_MAX_HEIGHT) {
+    if (width < VIDEO_MIN_WIDTH || width > VIDEO_MAX_WIDTH || !check_height(height)) {
         CW_LOG_W("视频尺寸错误: %d x %d", width, height);
     }
     if (format < AV_PIX_FMT_YUV420P || format >= AV_PIX_FMT_NB) {
@@ -374,7 +379,7 @@ static void delete_old_sdp_file() {
         if (!entry.is_regular_file(error_code_file)) {
             continue;
         }
-        if (entry.path().extension() == ".sdp") {
+        if (entry.path().extension() == caiwei::media::sdp_file_suffix) {
             std::error_code error_code_remove;
             if (std::filesystem::remove(entry.path(), error_code_remove)) {
                 CW_LOG_I("删除旧的SDP文件成功: %s", entry.path().string().c_str());

@@ -33,6 +33,10 @@ inline void u8_to_i8(const uint8_t* __restrict src, const size_t size, int8_t* _
 }
 
 inline void u8_to_f32(const uint8_t* __restrict src, const size_t size, float* __restrict dst, const float scale) {
+    if (scale == 0.0F) {
+        CW_LOG_W("缩放系数无效: %f", scale);
+        return;
+    }
     // 不用SIMD指令Release优化效果一样几乎没有性能提升
     const float scale_inv = 1.0F / scale;
     for (size_t i = 0; i < size; ++i) {

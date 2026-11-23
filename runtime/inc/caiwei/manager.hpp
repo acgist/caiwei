@@ -1,10 +1,11 @@
 #ifndef CAIWEI_RUNTIME_MANAGER_HPP
 #define CAIWEI_RUNTIME_MANAGER_HPP
 
+#include "caiwei/context.hpp"
 #include "caiwei/env.hpp"
 #include "caiwei/log.hpp"
-#include "caiwei/context.hpp"
 #include "caiwei/runtime.hpp"
+
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 #include "caiwei/runtime/rknn2.hpp"
 #endif
@@ -20,25 +21,27 @@
 
 #include <atomic>
 
-namespace caiwei  {
+namespace caiwei {
 namespace manager {
 
 void init();
 void stop();
 bool is_available();
 
-template <typename C>
+template<typename C>
 class ContextWrapper {
 public:
-    std::string name;
+    const std::string name;
 private:
     using I = typename C::I;
     using O = typename C::O;
-    std::shared_ptr<C> context{ nullptr };
-    std::shared_ptr<caiwei::runtime::Runtime> runtime{ nullptr };
+    std::shared_ptr<C> context {nullptr};
+    std::shared_ptr<caiwei::runtime::Runtime> runtime {nullptr};
 public:
+    // clang-format off
     C* ptr();
     O  run(const I& input);
+    // clang-format on
 public:
     ContextWrapper(std::string name, std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime);
     ~ContextWrapper();
@@ -46,33 +49,34 @@ public:
     ContextWrapper& operator=(const ContextWrapper&) = delete;
 };
 
-template <typename C>
+template<typename C>
 caiwei::manager::ContextWrapper<C>::ContextWrapper(
-    std::string name,
-    std::shared_ptr<C> context,
-    std::shared_ptr<caiwei::runtime::Runtime> runtime
-) : name(std::move(name)), context(std::move(context)), runtime(std::move(runtime)) {
+    std::string name, std::shared_ptr<C> context, std::shared_ptr<caiwei::runtime::Runtime> runtime
+) :
+    name(std::move(name)),
+    context(std::move(context)),
+    runtime(std::move(runtime)) {
 }
 
-template <typename C>
+template<typename C>
 caiwei::manager::ContextWrapper<C>::~ContextWrapper() {
     if (this->runtime) {
         this->runtime->put_context(this->context);
     }
 }
 
-template <typename C>
+template<typename C>
 C* caiwei::manager::ContextWrapper<C>::ptr() {
     return this->context.get();
 }
 
-template <typename C>
+template<typename C>
 typename C::O caiwei::manager::ContextWrapper<C>::run(const I& input) {
     this->context->last_run_time.store(caiwei::env::steady_timestamp(), std::memory_order_relaxed);
     return this->context->run(input);
 }
 
-template <typename R>
+template<typename R>
 inline std::shared_ptr<R> get_runtime_impl() {
     static_assert(requires { R::TYPE; }, "子类没有指定类型");
     caiwei::runtime::Type type = R::TYPE;
@@ -98,8 +102,9 @@ inline std::shared_ptr<R> get_runtime_impl() {
     }
 }
 
-template <typename R>
-inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::context::ContextInfo* info, std::shared_ptr<R> runtime) {
+template<typename R>
+inline std::shared_ptr<caiwei::context::Context>
+get_context_impl(const caiwei::context::ContextInfo* info, std::shared_ptr<R> runtime) {
     if (info == nullptr) {
         return nullptr;
     }
@@ -107,10 +112,11 @@ inline std::shared_ptr<caiwei::context::Context> get_context_impl(const caiwei::
         return nullptr;
     }
     return runtime->get_context(info);
-};
+}
 
-template <typename C>
-std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
+template<typename C>
+std::unique_ptr<ContextWrapper<C>>
+get_context(const std::string& name, caiwei::runtime::Type runtime_type = caiwei::runtime::Type::NONE) {
     static_assert(requires { C::TYPE; }, "子类没有指定类型");
     if (!is_available()) {
         CW_LOG_I("系统还未准备就绪");
@@ -122,10 +128,15 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
         return nullptr;
     }
     if (info->type != C::TYPE) {
-        CW_LOG_W("模型类型错误: %s = %s != %s", name.c_str(), caiwei::context::get_type_name(info->type), caiwei::context::get_type_name(C::TYPE));
+        CW_LOG_W(
+            "模型类型错误: %s = %s != %s",
+            name.c_str(),
+            caiwei::context::get_type_name(info->type),
+            caiwei::context::get_type_name(C::TYPE)
+        );
         return nullptr;
     }
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN2) {
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN2Runtime>();
         auto context = get_context_impl<caiwei::runtime::RKNN2Runtime>(info, runtime);
@@ -133,8 +144,8 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_RKNN3
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::RKNN3) {
         auto runtime = get_runtime_impl<caiwei::runtime::RKNN3Runtime>();
         auto context = get_context_impl<caiwei::runtime::RKNN3Runtime>(info, runtime);
@@ -142,8 +153,8 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_LLAMACPP
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::LLAMACPP) {
         auto runtime = get_runtime_impl<caiwei::runtime::LlamaCPPRuntime>();
         auto context = get_context_impl<caiwei::runtime::LlamaCPPRuntime>(info, runtime);
@@ -151,8 +162,8 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
-    #endif
-    #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
+#endif
+#ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
     if (runtime_type == caiwei::runtime::Type::NONE || runtime_type == caiwei::runtime::Type::ONNXRUNTIME) {
         auto runtime = get_runtime_impl<caiwei::runtime::ONNXRuntimeRuntime>();
         auto context = get_context_impl<caiwei::runtime::ONNXRuntimeRuntime>(info, runtime);
@@ -160,7 +171,7 @@ std::unique_ptr<ContextWrapper<C>> get_context(const std::string& name, caiwei::
             return std::make_unique<ContextWrapper<C>>(name, std::static_pointer_cast<C>(context), runtime);
         }
     }
-    #endif
+#endif
     CW_LOG_W("模型加载失败: %s", info->name.c_str());
     return nullptr;
 }
@@ -173,7 +184,7 @@ using VLMWrapper = caiwei::manager::ContextWrapper<caiwei::context::VLMContext>;
 using EmbeddingWrapper = caiwei::manager::ContextWrapper<caiwei::context::EmbeddingContext>;
 using RerankingWrapper = caiwei::manager::ContextWrapper<caiwei::context::RerankingContext>;
 
-} // manager
-} // caiwei
+} // namespace manager
+} // namespace caiwei
 
-#endif //CAIWEI_RUNTIME_MANAGER_HPP
+#endif // CAIWEI_RUNTIME_MANAGER_HPP

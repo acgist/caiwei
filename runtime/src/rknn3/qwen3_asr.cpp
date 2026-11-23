@@ -34,7 +34,7 @@ caiwei::context::ASRRKNN3Context::~ASRRKNN3Context() {
 }
 
 bool caiwei::context::ASRRKNN3Context::load_mel_filters() {
-    return caiwei::media::load_mel_filters(this->n_mels, N_FFT, this->mel_filters);
+    return caiwei::media::load_mel_filters(this->n_mels, QWEN_ASR_N_FFT, this->mel_filters);
 }
 
 bool caiwei::context::ASRRKNN3Context::init_prompt_token() {
@@ -145,12 +145,12 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         return false;
     }
     n_frames = audio_data.size() / sizeof(int16_t);
-    if (n_frames < (N_FFT + HOP_LENGTH) * 2) {
+    if (n_frames < (QWEN_ASR_N_FFT + QWEN_ASR_HOP_LENGTH) * 2) {
         CW_LOG_W("音频数据长度不足: %d", n_frames);
         return false;
     }
     int ret = 0;
-    const int n_frame = (n_frames - N_FFT) / HOP_LENGTH + 1;
+    const int n_frame = (n_frames - QWEN_ASR_N_FFT) / QWEN_ASR_HOP_LENGTH + 1;
     const int n_audio = get_n_audio(this->window_size, n_frame);
     const int n_prefix_token = this->prefix_token.size();
     const int n_suffix_token = this->suffix_token.size();
@@ -170,10 +170,10 @@ bool caiwei::context::ASRRKNN3Context::fill_media(
         audio_data_f32.data(),
         audio_data_f32.size(),
         this->mel_filters.data(),
-        N_FFT,
-        HOP_LENGTH,
+        QWEN_ASR_N_FFT,
+        QWEN_ASR_HOP_LENGTH,
         this->n_mels,
-        n_frame * HOP_LENGTH,
+        n_frame * QWEN_ASR_HOP_LENGTH,
         audio_feature
     );
     if (!mel_success) {
@@ -289,7 +289,7 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(
 }
 
 static int get_n_per_window_token(int window_size) {
-    return std::ceil(1.0 * window_size / DOWN_SAMPLE_RATE);
+    return std::ceil(1.0 * window_size / QWEN_ASR_DOWN_SAMPLE_RATE);
 }
 
 static int get_n_left_token(int window_size, int n_frame) {

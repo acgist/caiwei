@@ -49,9 +49,9 @@ elseif(CMAKE_HOST_WIN32)
         add_compile_options(
             $<$<COMPILE_LANGUAGE:C>:/utf-8>
             $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
-            $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>
+            $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus,preprocessor>
             $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>
-            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:__cplusplus>
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:__cplusplus,preprocessor>
         )
         add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     else()
