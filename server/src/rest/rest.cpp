@@ -10,6 +10,8 @@
 
 #include "httplib.h"
 
+#define CAIWEI_FILE_MAX_SIZE (1024 * 1024)
+
 static void get_index();
 static void get_favicon();
 static void get_shutdown();
@@ -135,9 +137,11 @@ static void register_handler() {
                 const auto username = caiwei::env::get("CAIWEI_USERNAME");
                 const auto password = caiwei::env::get("CAIWEI_PASSWORD");
                 authorization_view.remove_prefix(6);
-                const bool success = constant_time_password_check(
+                // clang-format off
+                const bool success = !username.empty() && !password.empty() && constant_time_password_check(
                     authorization_view, httplib::detail::base64_encode(username + ":" + password)
                 );
+                // clang-format on
                 if (!success) {
                     response.status = httplib::StatusCode::Unauthorized_401;
                     response.set_header("WWW-Authenticate", "Basic realm=\"CAIWEI\"");
@@ -147,7 +151,8 @@ static void register_handler() {
             } else if (caiwei::tool::equals_ignore_case(authorization_view, "Bearer ", 7)) {
                 const auto apikey = caiwei::env::get("CAIWEI_APIKEY");
                 authorization_view.remove_prefix(7);
-                if (!constant_time_password_check(authorization_view, apikey)) {
+                const bool success = !apikey.empty() && constant_time_password_check(authorization_view, apikey);
+                if (!success) {
                     response.status = httplib::StatusCode::Unauthorized_401;
                     response.set_header("WWW-Authenticate", "Bearer realm=\"CAIWEI\"");
                     response.set_content(caiwei::json::buildResponse("1401", "没有授权"), caiwei::rest::content::type::JSON);
@@ -231,6 +236,11 @@ static void file_handler(const std::string& file_path, const std::string& conten
             CW_LOG_W("文件读取失败: %s", file_path.c_str());
         }
         response.status = httplib::StatusCode::NotFound_404;
+        return;
+    }
+    if (file_size > CAIWEI_FILE_MAX_SIZE) {
+        CW_LOG_W("文件大小超过最大限制: %s => %zu", file_path.c_str(), file_size);
+        response.status = httplib::StatusCode::BadRequest_400;
         return;
     }
     std::ifstream stream;

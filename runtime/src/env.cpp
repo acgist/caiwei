@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <filesystem>
 #include <map>
 #include <mutex>
 #include <shared_mutex>
@@ -291,7 +292,32 @@ void caiwei::env::init() {
         allow_path = caiwei::env::get_vector("CAIWEI_ALLOW_PATH");
         allow_host = caiwei::env::get_vector("CAIWEI_ALLOW_HOST");
         allow_media_type = caiwei::env::get_vector("CAIWEI_ALLOW_MEDIA_TYPE");
+        for (auto& path : allow_path) {
+            std::error_code error_code;
+            auto canon = std::filesystem::weakly_canonical(path, error_code);
+            if (error_code) {
+                path = std::filesystem::path(path).lexically_normal().string();
+            } else {
+                path = canon.string();
+            }
+            while (path.size() > 1 && (path.back() == '/' || path.back() == '\\')) {
+                path.pop_back();
+            }
+        }
     });
+    if (get_bool("CAIWEI_SECURITY")) {
+        if (get("CAIWEI_APIKEY").empty() || get("CAIWEI_APIKEY") == "caiwei") {
+            CW_LOG_I("当前使用默认密钥");
+        }
+        if (get("CAIWEI_USERNAME").empty() || get("CAIWEI_USERNAME") == "admin") {
+            CW_LOG_I("当前使用默认账号");
+        }
+        if (get("CAIWEI_PASSWORD").empty() || get("CAIWEI_PASSWORD") == "admin") {
+            CW_LOG_I("当前使用默认密码");
+        }
+    } else {
+        CW_LOG_I("没有开启安全模式");
+    }
 }
 
 void caiwei::env::stop() {

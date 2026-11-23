@@ -136,15 +136,6 @@ bool caiwei::session::CompletionsSession::get() {
                 }
             );
         }
-        std::mutex asr_mutex;
-        std::mutex vlm_mutex;
-        std::mutex yolo_mutex;
-        std::jthread asr_thread;
-        std::jthread vlm_thread;
-        std::jthread yolo_thread;
-        std::condition_variable asr_cv;
-        std::condition_variable vlm_cv;
-        std::condition_variable yolo_cv;
         // clang-format off
         const std::string url   = this->request.media_url.value();
         const std::string type  = this->request.media_type.value();
@@ -172,6 +163,15 @@ bool caiwei::session::CompletionsSession::get() {
         if (!enable_asr && !enable_vlm && !enable_yolo) {
             throw caiwei::env::MessageCodeException("3404", "没有可用媒体模型");
         }
+        std::mutex asr_mutex;
+        std::mutex vlm_mutex;
+        std::mutex yolo_mutex;
+        std::jthread asr_thread;
+        std::jthread vlm_thread;
+        std::jthread yolo_thread;
+        std::condition_variable asr_cv;
+        std::condition_variable vlm_cv;
+        std::condition_variable yolo_cv;
         if (enable_asr) {
             asr_thread = std::jthread(
                 asr_thread_session,

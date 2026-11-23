@@ -50,6 +50,7 @@ struct ContextSession {
     int32_t e_thinking = LLAMA_TOKEN_NULL;
     int32_t b_toolcall = LLAMA_TOKEN_NULL;
     int32_t e_toolcall = LLAMA_TOKEN_NULL;
+    int vocab_size             = 0;
     int audio_frames           = 0;
     int image_frames           = 0;
     uint32_t n_prefill_tokens  = 0;

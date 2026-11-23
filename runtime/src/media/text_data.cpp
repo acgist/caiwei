@@ -715,7 +715,19 @@ bool caiwei::text::check_security(const std::string& url, const std::string& typ
             }
             // clang-format off
             if (std::find_if(allow_path.begin(), allow_path.end(), [&](const std::string& value) {
-                return real_path.starts_with(value);
+                if (value.empty() || !real_path.starts_with(value)) {
+                    return false;
+                }
+                if (real_path == value) {
+                    return true;
+                }
+                if (value.back() == std::filesystem::path::preferred_separator) {
+                    return true;
+                }
+                if (real_path.size() > value.size() && real_path[value.size()] == std::filesystem::path::preferred_separator) {
+                    return true;
+                }
+                return false;
             }) == allow_path.end()) {
                 return false;
             }

@@ -229,6 +229,10 @@ bool caiwei::context::RKNN3Context::load_tokenizer() {
         return false;
     }
     this->vocab_size = this->tokenizer->get_size();
+    if (this->vocab_size <= 0) {
+        CW_LOG_W("分词模型加载失败: %d", this->vocab_size);
+        return false;
+    }
     CW_LOG_I("分词模型加载成功: %d", this->vocab_size);
     return true;
 }
@@ -443,6 +447,7 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(
     ContextSession context_session;
     // clang-format off
     context_session.context        = this->context;
+    context_session.vocab_size     = this->vocab_size;
     context_session.media_context  = this->media_context;
     context_session.tokenizer      = this->tokenizer.get();
     context_session.embedding_dim  = this->embedding_dim;
@@ -521,6 +526,7 @@ caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& 
     ContextSession context_session;
     // clang-format off
     context_session.context        = this->context;
+    context_session.vocab_size     = this->vocab_size;
     context_session.media_context  = this->media_context;
     context_session.tokenizer      = this->tokenizer.get();
     context_session.embedding_dim  = this->embedding_dim;
@@ -657,8 +663,13 @@ static int embed_callback(void* userdata, int32_t* tokens, uint64_t n_tokens, vo
     }
     unsigned char* embed_ptr = (unsigned char*) embed;
     for (uint64_t n = 0; n < n_tokens; ++n) {
+        const auto token_index = tokens[n];
+        if (token_index < 0 || token_index >= session->vocab_size) {
+            CW_LOG_W("嵌入数据错误: %d", token_index);
+            return -1;
+        }
         std::memcpy(
-            embed_ptr + n * embedding_size, session->embedding_data + tokens[n] * session->embedding_dim, embedding_size
+            embed_ptr + n * embedding_size, session->embedding_data + token_index * session->embedding_dim, embedding_size
         );
     }
     return 0;
