@@ -19,10 +19,6 @@
 #define YOLO_BOX_SIZE 4
 #endif
 
-#ifndef RGB_CHANNELS
-#define RGB_CHANNELS 3
-#endif
-
 namespace caiwei {
 namespace media  {
 
@@ -78,6 +74,7 @@ public:
 public:
     bool load_from_file(const char* path);
     bool load_from_memory(const uint8_t* buffer, const size_t size);
+    bool check() const;
 };
 
 class VideoFrame : public ImageFrame {

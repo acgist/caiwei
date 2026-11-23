@@ -47,3 +47,13 @@ bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const si
     // clang-format on
     return true;
 }
+
+bool caiwei::media::ImageFrame::check() const {
+    // clang-format off
+    return
+    this->width  > 0 &&
+    this->height > 0 &&
+    this->channels == IMAGE_CHANNELS &&
+    this->data.size() == static_cast<size_t>(this->width) * this->height * this->channels;
+    // clang-format on
+}

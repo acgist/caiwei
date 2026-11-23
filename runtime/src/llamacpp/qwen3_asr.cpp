@@ -7,7 +7,8 @@ caiwei::context::ASRLlamaCPPContext::ASRLlamaCPPContext(
     int32_t max_token_length,
     caiwei::text::SpecialToken special_token,
     caiwei::runtime::Runtime* runtime
-) : ASRContext(runtime),
+) :
+    ASRContext(runtime),
     LlamaCPPContext(std::move(path), std::move(mtmd_path), max_token_length, std::move(special_token)) {
 }
 
@@ -23,53 +24,63 @@ bool caiwei::context::ASRLlamaCPPContext::load() {
     return true;
 }
 
-std::generator<caiwei::text::CompletionResult> caiwei::context::ASRLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
+std::generator<caiwei::text::CompletionResult>
+caiwei::context::ASRLlamaCPPContext::run(const caiwei::text::CompletionsRequest& request) {
     return this->generate(request);
 }
 
-caiwei::context::caiwei_llama_batch caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const {
+caiwei::context::caiwei_llama_batch
+caiwei::context::ASRLlamaCPPContext::get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const {
     mtmd::bitmaps bitmaps;
+    // clang-format off
     prompt
         .append(this->special_token.bos)
         .append(caiwei::text::ROLE_USER)
         .append("\n");
+    // clang-format on
     for (const auto& message : request.messages) {
         for (const auto& audio : message.audio_data) {
-            if (audio.data.size() * sizeof(uint8_t) % sizeof(int16_t) != 0) {
+            if (audio.data.size() % sizeof(int16_t) != 0) {
                 CW_LOG_W("音频数据格式错误");
                 continue;
             }
-            const int num_frames = audio.data.size() * sizeof(uint8_t) / sizeof(int16_t);
-            std::vector<float> audio_data(num_frames);
+            const int n_frames = audio.data.size() / sizeof(int16_t);
+            if (n_frames < (N_FFT + HOP_LENGTH) * 2) {
+                CW_LOG_W("音频数据长度不足: %d", n_frames);
+                continue;
+            }
+            std::vector<float> audio_data(n_frames);
             const int16_t* audio_data_ptr = reinterpret_cast<const int16_t*>(audio.data.data());
-            std::transform(audio_data_ptr, audio_data_ptr + num_frames, audio_data.data(), [](int16_t v) {
+            std::transform(audio_data_ptr, audio_data_ptr + n_frames, audio_data.data(), [](int16_t v) {
                 return static_cast<float>(v) / 32768.0F;
             });
             prompt.append(this->special_token.media_marker);
             bitmaps.entries.emplace_back(mtmd_bitmap_init_from_audio(audio_data.size(), audio_data.data()));
         }
     }
+    // clang-format off
     prompt
         .append(this->special_token.eos)
         .append("\n")
         .append(this->special_token.bos)
         .append(caiwei::text::ROLE_ASSISTANT)
         .append("\n");
-    caiwei_llama_batch caiwei_batch{};
+    // clang-format on
+    caiwei_llama_batch caiwei_batch {};
     if (bitmaps.entries.empty()) {
         CW_LOG_W("音频数据为空");
-        caiwei_batch.success = false;
-        caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
+        caiwei_batch.fail(caiwei::text::FINISH_REASON_STOP);
         return caiwei_batch;
     }
-    if (this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, request)) {
-        caiwei_batch.success = true;
-        return caiwei_batch;
-    } else {
-        caiwei_batch.success = false;
-        if (caiwei_batch.finish_reason.empty()) {
-            caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_STOP;
-        }
+    bool success = false;
+    try {
+        success = this->get_mtmd_inputs(caiwei_batch, bitmaps, prompt, request);
+    } catch (const std::exception& e) {
+        CW_LOG_E("媒体处理异常: %s", e.what());
+    }
+    if (success) {
         return caiwei_batch;
     }
+    caiwei_batch.fail(caiwei::text::FINISH_REASON_STOP);
+    return caiwei_batch;
 }

@@ -7,6 +7,7 @@
 #include "mtmd.h"
 #include "llama-cpp.h"
 
+#include <mutex>
 #include <generator>
 
 namespace caiwei  {
@@ -21,6 +22,8 @@ struct caiwei_llama_batch {
     uint32_t    n_prompt_tokens = 0;
     llama_context_ptr context{ nullptr };
     llama_sampler_ptr sampler{ nullptr };
+
+    void fail(std::string reason);
 
     caiwei_llama_batch() noexcept = default;
     ~caiwei_llama_batch();
@@ -40,6 +43,7 @@ protected:
           llama_model* model{ nullptr };
     const llama_vocab* vocab{ nullptr };
           mtmd_context* mtmd_model{ nullptr };
+    mutable std::mutex media_mutex;
 protected:
     void release();
     llama_context* get_context(int n_ctx, bool embeddings = false) const;
@@ -76,7 +80,7 @@ public:
     );
     ~ASRLlamaCPPContext();
 protected:
-    caiwei_llama_batch get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const;
+    caiwei_llama_batch get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const override;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
@@ -92,7 +96,7 @@ public:
     );
     ~LLMLlamaCPPContext();
 protected:
-    caiwei_llama_batch get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const;
+    caiwei_llama_batch get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const override;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
@@ -109,7 +113,7 @@ public:
     );
     ~VLMLlamaCPPContext();
 protected:
-    caiwei_llama_batch get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const;
+    caiwei_llama_batch get_inputs(std::string& prompt, const caiwei::text::CompletionsRequest& request) const override;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;

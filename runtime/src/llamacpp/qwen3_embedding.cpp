@@ -1,13 +1,11 @@
 #include "caiwei/log.hpp"
-#include "caiwei/tokenizer.hpp"
 #include "caiwei/runtime/llamacpp.hpp"
+#include "caiwei/tokenizer.hpp"
 
 caiwei::context::EmbeddingLlamaCPPContext::EmbeddingLlamaCPPContext(
-    std::string path,
-    int32_t max_token_length,
-    caiwei::text::SpecialToken special_token,
-    caiwei::runtime::Runtime* runtime
-) : EmbeddingContext(runtime),
+    std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
+) :
+    EmbeddingContext(runtime),
     LlamaCPPContext(std::move(path), max_token_length, std::move(special_token)) {
 }
 
@@ -16,11 +14,27 @@ caiwei::context::EmbeddingLlamaCPPContext::~EmbeddingLlamaCPPContext() {
 
 bool caiwei::context::EmbeddingLlamaCPPContext::load() {
     this->release();
-    if (!this->load_model()){
+    if (!this->load_model()) {
         this->release();
         return false;
     }
     return true;
+}
+
+inline static size_t tokenize(
+    const int32_t max_token_length,
+    const llama_vocab* vocab,
+    const std::string& item,
+    std::vector<std::vector<llama_token>>& inputs
+) {
+    auto tokens = caiwei::context::tokenize(vocab, item, true, true);
+    if (tokens.size() > static_cast<size_t>(max_token_length)) {
+        CW_LOG_W("词元超量截断: %zu => %d", tokens.size(), max_token_length);
+        tokens.resize(max_token_length);
+    }
+    const size_t prompt_tokens = tokens.size();
+    inputs.push_back(std::move(tokens));
+    return prompt_tokens;
 }
 
 caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(const caiwei::text::EmbeddingsRequest& request) {
@@ -28,18 +42,18 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingLlamaCPPContext::run(con
     std::vector<std::vector<llama_token>> inputs;
     if (std::holds_alternative<std::string>(request.input)) {
         const auto& item = std::get<std::string>(request.input);
-        inputs.push_back(caiwei::context::tokenize(this->vocab, item, true, true));
-        prompt_tokens += inputs.back().size();
+        prompt_tokens += tokenize(this->max_token_length, this->vocab, item, inputs);
     } else {
         const auto& items = std::get<std::vector<std::string>>(request.input);
         for (const auto& item : items) {
-            inputs.push_back(caiwei::context::tokenize(this->vocab, item, true, true));
-            prompt_tokens += inputs.back().size();
+            prompt_tokens += tokenize(this->max_token_length, this->vocab, item, inputs);
         }
     }
-    caiwei::text::EmbeddingResult result;
+    caiwei::text::EmbeddingResult result {};
     result.result = this->pooling(inputs);
+    // clang-format off
     result.prompt_tokens = prompt_tokens;
     result.total_tokens  = prompt_tokens;
+    // clang-format on
     return result;
 }

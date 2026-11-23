@@ -67,7 +67,7 @@ inline void draw_rect(
     const int y,
     const int w,
     const int h,
-    const int channels = 3,
+    const int channels = caiwei::media::IMAGE_CHANNELS,
     const uint8_t color = 255
 ) {
     if (dst == nullptr || src_w <= 0 || src_h <= 0 || channels <= 0) {

@@ -140,11 +140,11 @@ caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& re
 bool caiwei::context::ASRRKNN3Context::fill_media(
     int& n_frames, int& n_tokens, std::vector<float16>& audio_embeds, const std::vector<uint8_t>& audio_data
 ) {
-    if (audio_data.size() * sizeof(uint8_t) % sizeof(int16_t) != 0) {
+    if (audio_data.size() % sizeof(int16_t) != 0) {
         CW_LOG_W("音频数据格式错误");
         return false;
     }
-    n_frames = audio_data.size() * sizeof(uint8_t) / sizeof(int16_t);
+    n_frames = audio_data.size() / sizeof(int16_t);
     if (n_frames < (N_FFT + HOP_LENGTH) * 2) {
         CW_LOG_W("音频数据长度不足: %d", n_frames);
         return false;

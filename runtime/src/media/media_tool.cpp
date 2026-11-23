@@ -153,7 +153,7 @@ bool caiwei::media::resize(
         std::copy_n(src, static_cast<size_t>(src_w) * src_h * channels, dst);
         return true;
     }
-    if (channels == RGB_CHANNELS) {
+    if (channels == IMAGE_CHANNELS) {
         if (stbir_resize_uint8_linear(src, src_w, src_h, 0, dst, dst_w, dst_h, 0, STBIR_RGB) == nullptr) {
             return false;
         }
@@ -181,7 +181,7 @@ bool caiwei::media::resize(
     // clang-format on
 ) {
     RgaSURF_FORMAT image_type;
-    if (channels == RGB_CHANNELS) {
+    if (channels == IMAGE_CHANNELS) {
         image_type = RK_FORMAT_RGB_888;
     } else {
         CW_LOG_W("不支持的图片通道: %d", channels);

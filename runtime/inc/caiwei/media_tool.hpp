@@ -259,7 +259,7 @@ bool resize(
     const int src_h,
     const int dst_w,
     const int dst_h,
-    const int channels = 3
+    const int channels = IMAGE_CHANNELS
 );
 
 #if ENABLE_CAIWEI_BACKEND_RKNN
@@ -274,7 +274,7 @@ bool resize(
     const int dst_h,
     const int pad_w,
     const int pad_h,
-    const int channels = 3
+    const int channels = IMAGE_CHANNELS
 );
 #endif
 
@@ -287,7 +287,7 @@ inline bool padding(
     const int pad_h,
     const int w,
     const int h,
-    const int channels = 3
+    const int channels = IMAGE_CHANNELS
 ) {
     if (
         pad_w <  0 || pad_h <  0 ||
