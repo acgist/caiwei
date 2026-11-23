@@ -1,17 +1,21 @@
 #ifndef CAIWEI_RUNTIME_RKNN3_HPP
 #define CAIWEI_RUNTIME_RKNN3_HPP
 
+#ifndef CAIWEI_OS_UNIX
+#error "Require Unix"
+#endif
+
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
 #include "caiwei/tokenizer.hpp"
 
-#include <mutex>
-#include <generator>
 #include <condition_variable>
+#include <generator>
+#include <memory>
+#include <mutex>
 
 #include <sys/stat.h>
 
-#include "llama.h"
 #include "rknn3/rknn3_api.h"
 
 #ifndef CAIWEI_RKNN3_CORE_MASK
@@ -24,7 +28,7 @@
 #define CAIWEI_RKNN3_DEEPSTACK_TENSORS 3
 #endif
 
-namespace caiwei  {
+namespace caiwei {
 namespace context {
 
 inline auto rknn3_session_deleter = [](rknn3_session* session) {
@@ -36,6 +40,7 @@ inline auto rknn3_session_deleter = [](rknn3_session* session) {
 using rknn3_session_ptr = std::unique_ptr<rknn3_session, decltype(rknn3_session_deleter)>;
 
 struct ContextSession {
+    // clang-format off
     bool stop     = false;
     bool thinking = false;
     bool toolcall = false;
@@ -56,18 +61,19 @@ struct ContextSession {
     rknn3_context media_context = 0;
     std::mutex mutex;
     std::condition_variable condition;
-    int        embedding_dim { 0       };
-    float16  * embedding_data{ nullptr };
-    Tokenizer* tokenizer     { nullptr };
-    TokenBuffer token_buffer {         };
-    caiwei::text::ToolcallSession toolcall_session{};
-    std::vector<std::vector<float>> pool_result{};
-    std::vector<caiwei::text::CompletionResult> token_result{};
-    std::vector<float16> audio_embeds{};
-    std::vector<float16> image_embeds{};
-    std::vector<float16> video_embeds{};
-    std::vector<rknn3_tensor> output_tensors{};
-    std::vector<rknn3_aux_tensor> deepstack_tensors{};
+    int        embedding_dim  {0      };
+    float16  * embedding_data {nullptr};
+    Tokenizer* tokenizer      {nullptr};
+    TokenBuffer token_buffer  {       };
+    caiwei::text::ToolcallSession toolcall_session {};
+    std::vector<std::vector<float>>             pool_result  {};
+    std::vector<caiwei::text::CompletionResult> token_result {};
+    std::vector<float16> audio_embeds {};
+    std::vector<float16> image_embeds {};
+    std::vector<float16> video_embeds {};
+    std::vector<rknn3_tensor>     output_tensors    {};
+    std::vector<rknn3_aux_tensor> deepstack_tensors {};
+    // clang-format on
 
     bool init_output_tensors();
     void release_output_tensors();
@@ -80,6 +86,7 @@ struct ContextSession {
 
 class RKNN3Context {
 protected:
+    // clang-format off
     const std::string model_path;
     const std::string weight_path;
     const std::string embedding_path;
@@ -90,31 +97,46 @@ protected:
     std::mutex media_mutex;
     rknn3_context context       = 0;
     rknn3_context media_context = 0;
-           int      vocab_size  = 0;
+           int      vocab_size    = 0;
            int      embedding_fd  = -1;
            int      embedding_dim = 0;
-           float16* embedding_data{ nullptr };
-    struct stat     embedding_stat{         };
-    Tokenizer* tokenizer{ nullptr };
-    caiwei::text::ChatTemplate chat_template{};
-    caiwei::text::SpecialToken special_token{};
-    std::vector<rknn3_tensor> media_input   {};
-    std::vector<rknn3_tensor> media_output  {};
+           float16* embedding_data {nullptr};
+    struct stat     embedding_stat {       };
+    std::unique_ptr<Tokenizer> tokenizer {nullptr};
+    caiwei::text::ChatTemplate chat_template {};
+    caiwei::text::SpecialToken special_token {};
+    std::vector<rknn3_tensor> media_input    {};
+    std::vector<rknn3_tensor> media_output   {};
     std::vector<rknn3_tensor_mem*> internal_tensor_mems{};
+    // clang-format on
 private:
-    bool load_model(rknn3_context& context, const std::string& model_path, const std::string& weight_path, bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
+    bool load_model(
+        rknn3_context& context,
+        const std::string& model_path,
+        const std::string& weight_path,
+        bool user_mem_internal = false,
+        uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK
+    );
     bool load_tokenizer();
     bool load_embedding();
     bool init_media_tensors();
     bool init_internal_tensor_mems();
 protected:
+    // clang-format off
     bool load_model      (bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
     bool load_media_model(bool user_mem_internal = false, uint32_t core_mask = CAIWEI_RKNN3_CORE_MASK);
+    // clang-format on
     bool load_template();
     void release();
     rknn3_session* get_session(ContextSession* context_session, const caiwei::text::CompletionsRequest* request);
-    virtual std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
-    std::vector<std::vector<float>> pooling(uint32_t& prompt_tokens, const std::vector<const std::string*>& prompt_list, bool add_special = false, bool parse_special = true);
+    virtual std::vector<rknn3_llm_input>
+    get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
+    std::vector<std::vector<float>> pooling(
+        uint32_t& prompt_tokens,
+        const std::vector<const std::string*>& prompt_list,
+        bool add_special = false,
+        bool parse_special = true
+    );
     std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(
@@ -136,29 +158,31 @@ public:
         caiwei::text::SpecialToken special_token
     );
     virtual ~RKNN3Context();
+    RKNN3Context(const RKNN3Context&) = delete;
+    RKNN3Context& operator=(const RKNN3Context&) = delete;
+    RKNN3Context(RKNN3Context&&) = delete;
+    RKNN3Context& operator=(RKNN3Context&&) = delete;
 };
 
 class ASRRKNN3Context : public ASRContext, public RKNN3Context {
 private:
+    // clang-format off
     int batch_size    = 0;
     int n_mels        = 0;
     int window_size   = 0;
     int n_chunk_token = 0;
     int chunk_length  = 0;
-    std::vector<float>   mel_filters {};
-    std::vector<int32_t> prefix_token{};
-    std::vector<int32_t> suffix_token{};
+    std::vector<float>   mel_filters  {};
+    std::vector<int32_t> prefix_token {};
+    std::vector<int32_t> suffix_token {};
+    // clang-format on
 private:
-    bool fill_media(
-        int& n_frames,
-        int& n_tokens,
-        std::vector<float16>& audio_embeds,
-        const std::vector<uint8_t>& audio_data
-    );
+    bool fill_media(int& n_frames, int& n_tokens, std::vector<float16>& audio_embeds, const std::vector<uint8_t>& audio_data);
     bool load_mel_filters();
     bool init_prompt_token();
 protected:
-    std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
+    std::vector<rknn3_llm_input>
+    get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
@@ -179,7 +203,8 @@ public:
 
 class LLMRKNN3Context : public LLMContext, public RKNN3Context {
 protected:
-    std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
+    std::vector<rknn3_llm_input>
+    get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
@@ -211,7 +236,8 @@ private:
         const std::vector<uint8_t>& media_data
     );
 protected:
-    std::vector<rknn3_llm_input> get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
+    std::vector<rknn3_llm_input>
+    get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request) override;
 public:
     bool load() override;
     std::generator<caiwei::text::CompletionResult> run(const caiwei::text::CompletionsRequest& request) override;
@@ -267,7 +293,7 @@ public:
 void rknn3_dump_tensor_attr(const char* name, rknn3_tensor_attr* attr);
 void rknn3_perf_session_print(rknn3_session* session, caiwei::context::ContextSession* context_session);
 
-} // context
-} // caiwei
+} // namespace context
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_RKNN3_HPP

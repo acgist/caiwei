@@ -4,8 +4,6 @@
 
 #include <chrono>
 
-#include "llama.h"
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/mman.h>
@@ -102,7 +100,6 @@ void caiwei::context::RKNN3Context::release() {
     }
     if (this->tokenizer) {
         CW_LOG_I("释放RKNN3Context tokenizer");
-        delete this->tokenizer;
         this->tokenizer = nullptr;
     }
     if (this->embedding_data != MAP_FAILED && this->embedding_data != nullptr) {
@@ -227,7 +224,7 @@ bool caiwei::context::RKNN3Context::load_template() {
 }
 
 bool caiwei::context::RKNN3Context::load_tokenizer() {
-    this->tokenizer = new Tokenizer();
+    this->tokenizer = std::make_unique<Tokenizer>();
     if (!this->tokenizer->load(this->tokenizer_path)) {
         return false;
     }
@@ -447,7 +444,7 @@ std::vector<std::vector<float>> caiwei::context::RKNN3Context::pooling(
     // clang-format off
     context_session.context        = this->context;
     context_session.media_context  = this->media_context;
-    context_session.tokenizer      = this->tokenizer;
+    context_session.tokenizer      = this->tokenizer.get();
     context_session.embedding_dim  = this->embedding_dim;
     context_session.embedding_data = this->embedding_data;
     context_session.add_special    = add_special;
@@ -525,7 +522,7 @@ caiwei::context::RKNN3Context::generate(const caiwei::text::CompletionsRequest& 
     // clang-format off
     context_session.context        = this->context;
     context_session.media_context  = this->media_context;
-    context_session.tokenizer      = this->tokenizer;
+    context_session.tokenizer      = this->tokenizer.get();
     context_session.embedding_dim  = this->embedding_dim;
     context_session.embedding_data = this->embedding_data;
     context_session.b_thinking = this->tokenizer->piece_to_token(this->special_token.b_thinking);

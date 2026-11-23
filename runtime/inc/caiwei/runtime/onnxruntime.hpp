@@ -5,7 +5,7 @@
 
 #include "onnxruntime_cxx_api.h"
 
-namespace caiwei  {
+namespace caiwei {
 namespace context {
 
 extern OrtLoggingLevel onnxruntime_log_level;
@@ -13,10 +13,11 @@ extern OrtLoggingLevel onnxruntime_log_level;
 class ONNXRuntimeContext {
 protected:
     const std::string path;
-    const Ort::Env * env        { nullptr };
-    Ort::Session   * session    { nullptr };
-    Ort::RunOptions* run_options{ nullptr };
-    Ort::MemoryInfo  memory_info{ nullptr };
+    // clang-format off
+    const Ort::Env * env         {nullptr};
+    Ort::Session   * session     {nullptr};
+    Ort::RunOptions* run_options {nullptr};
+    Ort::MemoryInfo  memory_info {nullptr};
     std::vector<std::vector<int64_t>>    input_node_dims;
     std::vector<Ort::AllocatedStringPtr> input_node_names;
     std::vector<Ort::AllocatedStringPtr> output_node_names;
@@ -25,16 +26,23 @@ protected:
     int   pad_w = 0;
     int   pad_h = 0;
     float scale = 0.0F;
+    // clang-format on
 private:
     uint32_t src_w = 0;
     uint32_t src_h = 0;
     uint32_t src_c = 0;
+    // clang-format off
     std::vector<uint8_t> dst;
     std::vector<uint8_t> pad;
     std::vector<float>   chw;
+    // clang-format on
 public:
     ONNXRuntimeContext(std::string path, int c, int h, int w, const Ort::Env* env);
     virtual ~ONNXRuntimeContext();
+    ONNXRuntimeContext(const ONNXRuntimeContext&) = delete;
+    ONNXRuntimeContext& operator=(const ONNXRuntimeContext&) = delete;
+    ONNXRuntimeContext(ONNXRuntimeContext&&) = delete;
+    ONNXRuntimeContext& operator=(ONNXRuntimeContext&&) = delete;
 private:
     void release();
 public:
@@ -44,7 +52,6 @@ public:
 };
 
 class ClsONNXRuntimeContext : public ClsContext, public ONNXRuntimeContext {
-using ONNXRuntimeContext::run;
 public:
     ClsONNXRuntimeContext(
         std::string path,
@@ -60,11 +67,11 @@ public:
     ~ClsONNXRuntimeContext();
 public:
     bool load() override;
+    using ONNXRuntimeContext::run;
     std::vector<caiwei::media::Cls> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class DetONNXRuntimeContext : public DetContext, public ONNXRuntimeContext {
-using ONNXRuntimeContext::run;
 private:
     std::vector<float> out_dst;
 public:
@@ -82,10 +89,11 @@ public:
     ~DetONNXRuntimeContext();
 public:
     bool load() override;
+    using ONNXRuntimeContext::run;
     std::vector<caiwei::media::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
-} // context
-} // caiwei
+} // namespace context
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_ONNXRUNTIME_HPP

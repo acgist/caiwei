@@ -4,29 +4,31 @@
 #include "caiwei/context.hpp"
 #include "caiwei/text_tool.hpp"
 
-#include "mtmd.h"
 #include "llama-cpp.h"
+#include "mtmd.h"
 
-#include <mutex>
 #include <generator>
+#include <mutex>
 
-namespace caiwei  {
+namespace caiwei {
 namespace context {
 
 struct caiwei_llama_batch {
+    // clang-format off
     bool success = true;
     bool mtmd    = false;
-    llama_pos   n_pos = 0;
-    llama_batch batch{};
+    llama_pos   n_pos {0};
+    llama_batch batch { };
     std::string finish_reason;
-    uint32_t    n_prompt_tokens = 0;
-    llama_context_ptr context{ nullptr };
-    llama_sampler_ptr sampler{ nullptr };
+    uint32_t    n_prompt_tokens {0};
+    llama_context_ptr context {nullptr};
+    llama_sampler_ptr sampler {nullptr};
+    // clang-format on
 
     void fail(std::string reason);
 
-    caiwei_llama_batch() noexcept = default;
     ~caiwei_llama_batch();
+    caiwei_llama_batch() noexcept = default;
     caiwei_llama_batch(const caiwei_llama_batch& batch) noexcept = delete;
     caiwei_llama_batch& operator=(const caiwei_llama_batch& batch) noexcept = delete;
     caiwei_llama_batch(caiwei_llama_batch&& other) noexcept;
@@ -35,6 +37,7 @@ struct caiwei_llama_batch {
 
 class LlamaCPPContext {
 protected:
+    // clang-format off
     const std::string path;
     const std::string mtmd_path;
           int32_t     max_token_length = 0;
@@ -44,6 +47,7 @@ protected:
     const llama_vocab* vocab{ nullptr };
           mtmd_context* mtmd_model{ nullptr };
     mutable std::mutex media_mutex;
+    // clang-format on
 protected:
     void release();
     llama_context* get_context(int n_ctx, bool embeddings = false) const;
@@ -64,9 +68,15 @@ protected:
     bool load_mtmd_model(int image_min_tokens = -1, int image_max_tokens = -1);
     bool load_template();
 public:
+    // clang-format off
     LlamaCPPContext(std::string path,                        int32_t max_token_length, caiwei::text::SpecialToken special_token);
     LlamaCPPContext(std::string path, std::string mtmd_path, int32_t max_token_length, caiwei::text::SpecialToken special_token);
+    // clang-format on
     virtual ~LlamaCPPContext();
+    LlamaCPPContext(const LlamaCPPContext&) = delete;
+    LlamaCPPContext& operator=(const LlamaCPPContext&) = delete;
+    LlamaCPPContext(LlamaCPPContext&&) = delete;
+    LlamaCPPContext& operator=(LlamaCPPContext&&) = delete;
 };
 
 class ASRLlamaCPPContext : public ASRContext, public LlamaCPPContext {
@@ -89,10 +99,7 @@ public:
 class LLMLlamaCPPContext : public LLMContext, public LlamaCPPContext {
 public:
     LLMLlamaCPPContext(
-        std::string path,
-        int32_t max_token_length,
-        caiwei::text::SpecialToken special_token,
-        caiwei::runtime::Runtime* runtime
+        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
     );
     ~LLMLlamaCPPContext();
 protected:
@@ -122,10 +129,7 @@ public:
 class EmbeddingLlamaCPPContext : public EmbeddingContext, public LlamaCPPContext {
 public:
     EmbeddingLlamaCPPContext(
-        std::string path,
-        int32_t max_token_length,
-        caiwei::text::SpecialToken special_token,
-        caiwei::runtime::Runtime* runtime
+        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
     );
     ~EmbeddingLlamaCPPContext();
 public:
@@ -136,10 +140,7 @@ public:
 class RerankingLlamaCPPContext : public RerankingContext, public LlamaCPPContext {
 public:
     RerankingLlamaCPPContext(
-        std::string path,
-        int32_t max_token_length,
-        caiwei::text::SpecialToken special_token,
-        caiwei::runtime::Runtime* runtime
+        std::string path, int32_t max_token_length, caiwei::text::SpecialToken special_token, caiwei::runtime::Runtime* runtime
     );
     ~RerankingLlamaCPPContext();
 public:
@@ -147,7 +148,7 @@ public:
     caiwei::text::RerankingResult run(const caiwei::text::RerankingsRequest& request) override;
 };
 
-} // context
-} // caiwei
+} // namespace context
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_LLAMACPP_HPP

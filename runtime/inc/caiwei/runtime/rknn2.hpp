@@ -1,17 +1,21 @@
 #ifndef CAIWEI_RUNTIME_RKNN2_HPP
 #define CAIWEI_RUNTIME_RKNN2_HPP
 
+#ifndef CAIWEI_OS_UNIX
+#error "Require Unix"
+#endif
+
 #include "caiwei/context.hpp"
 
 #include "rknn2/rknn_api.h"
 
-namespace caiwei  {
+namespace caiwei {
 namespace context {
 
 struct RKNN2Result {
     rknn_context context = 0;
     std::vector<rknn_output> outputs;
-    
+
     RKNN2Result(rknn_context context, std::vector<rknn_output> outputs);
     ~RKNN2Result();
     RKNN2Result() noexcept = default;
@@ -27,15 +31,18 @@ protected:
     rknn_context context = 0;
     std::vector<rknn_tensor_attr> input_attrs;
     std::vector<rknn_tensor_attr> output_attrs;
+    // clang-format off
     int   dst_w = 0;
     int   dst_h = 0;
     int   pad_w = 0;
     int   pad_h = 0;
     float scale = 0.0F;
+    // clang-format on
 private:
     uint32_t src_w = 0;
     uint32_t src_h = 0;
     uint32_t src_c = 0;
+    // clang-format off
     std::vector<uint8_t>  pad;
     std::vector<float>    hwc;
     std::vector<float>    chw;
@@ -44,9 +51,14 @@ private:
     std::vector<uint8_t>  chw_u8;
     std::vector<uint16_t> hwc_f16;
     std::vector<uint16_t> chw_f16;
+    // clang-format on
 public:
     RKNN2Context(std::string path, int c, int h, int w);
     virtual ~RKNN2Context();
+    RKNN2Context(const RKNN2Context&) = delete;
+    RKNN2Context& operator=(const RKNN2Context&) = delete;
+    RKNN2Context(RKNN2Context&&) = delete;
+    RKNN2Context& operator=(RKNN2Context&&) = delete;
 private:
     void release();
 public:
@@ -57,7 +69,6 @@ public:
 };
 
 class ClsRKNN2Context : public ClsContext, public RKNN2Context {
-using RKNN2Context::run;
 private:
     std::vector<float> out_dst;
 public:
@@ -74,15 +85,17 @@ public:
     ~ClsRKNN2Context();
 public:
     bool load() override;
+    using RKNN2Context::run;
     std::vector<caiwei::media::Cls> run(const caiwei::media::ImageFrame& image) override;
 };
 
 class DetRKNN2Context : public DetContext, public RKNN2Context {
-using RKNN2Context::run;
 private:
+    // clang-format off
     std::vector<int8_t> out_dst_i8;
     std::vector<float>  out_buf_f32;
     std::vector<float>  out_dst_f32;
+    // clang-format on
 public:
     DetRKNN2Context(
         std::string path,
@@ -97,10 +110,11 @@ public:
     ~DetRKNN2Context();
 public:
     bool load() override;
+    using RKNN2Context::run;
     std::vector<caiwei::media::Box> run(const caiwei::media::ImageFrame& image) override;
 };
 
-} // context
-} // caiwei
+} // namespace context
+} // namespace caiwei
 
 #endif // CAIWEI_RUNTIME_RKNN2_HPP
