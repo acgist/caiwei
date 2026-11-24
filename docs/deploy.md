@@ -4,6 +4,8 @@
 * [模型部署](model)
 * [推理引擎](runtime)
 
+## 快速开始
+
 ```
 git clone https://github.com/acgist/caiwei.git
 cd caiwei
@@ -18,10 +20,33 @@ sudo make install
 
 # RKNN平台
 -DENABLE_CAIWEI_RUNTIME_ONNXRUNTIME=OFF -DENABLE_CAIWEI_RUNTIME_RKNN2=ON -DENABLE_CAIWEI_RUNTIME_RKNN3=ON
+
+# 指定CUDA
+-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
+
+# 指定GCC/G++
+-DCMAKE_C_COMPILER=/usr/bin/gcc-14 -DCMAKE_CXX_COMPILER=/usr/bin/g++-14
 ```
 
-* `-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc`
-* `-DCMAKE_C_COMPILER=/usr/bin/gcc-14 -DCMAKE_CXX_COMPILER=/usr/bin/g++-14`
+## 安全配置
+
+|配置|默认|描述|
+|--|--|--|
+|CAIWEI_SERVER_HOST|0.0.0.0|监听主机|
+|CAIWEI_SERVER_PORT|8888|监听端口|
+|CAIWEI_SECURITY|ON|是否开启安全模式|
+|CAIWEI_APIKEY|caiwei|密钥|
+|CAIWEI_USERNAME|admin|账号|
+|CAIWEI_PASSWORD|admin|密码|
+|CAIWEI_ALLOW_PATH|/data/|文件路径白名单(多个配置逗号)|
+|CAIWEI_ALLOW_HOST||主机域名白名单(多个配置逗号)|
+|CAIWEI_ALLOW_MEDIA_TYPE|data,file|支持媒体类型(多个配置逗号)|
+
+## 全部配置
+
+```
+caiwei-server ?
+```
 
 ## Conda
 
@@ -51,24 +76,6 @@ pip install ms_swift accelerate modelscope transformers --index-url https://down
 ```
 
 > `ms_swift`版本: `4.4.2`
-
-## 安全配置
-
-|配置|默认|描述|
-|--|--|--|
-|CAIWEI_SECURITY|ON|是否开启安全模式|
-|CAIWEI_APIKEY|caiwei|密钥|
-|CAIWEI_USERNAME|admin|账号|
-|CAIWEI_PASSWORD|admin|密码|
-|CAIWEI_ALLOW_PATH|/data/|文件路径白名单|
-|CAIWEI_ALLOW_HOST||主机域名白名单|
-|CAIWEI_ALLOW_MEDIA_TYPE|data,file|支持媒体类型|
-
-## 全部配置
-
-```
-caiwei-server ?
-```
 
 ## Linux环境
 
@@ -102,12 +109,20 @@ sudo make install
 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-15.3.0/bin/gcc 15
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/local/gcc-15.3.0/bin/g++ 15
+
+# 环境变量
+export LD_LIBRARY_PATH="/usr/local/gcc-15.3.0/lib64/:$LD_LIBRARY_PATH"
+
+# 指定GCC/G++
+-DCMAKE_C_COMPILER=/usr/local/gcc-15.3.0/bin/gcc -DCMAKE_CXX_COMPILER=/usr/local/gcc-15.3.0/bin/g++
 ```
 
-* `export LD_LIBRARY_PATH="/usr/local/gcc-15.3.0/lib64/:$LD_LIBRARY_PATH"`
-* `-DCMAKE_C_COMPILER=/usr/local/gcc-15.3.0/bin/gcc -DCMAKE_CXX_COMPILER=/usr/local/gcc-15.3.0/bin/g++`
-
 ## Windows环境
+
+```
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Release -j4
+```
 
 * https://cmake.org/download/
 * https://vcpkg.io/en/index.html

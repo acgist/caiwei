@@ -277,7 +277,7 @@ std::string caiwei::context::detokenize(
             vocab, tokens, n_tokens, text.data(), text.size(), remove_special, unparse_special
         );
         if (-length != out_length) {
-            CW_LOG_W("解码失败: %d => %d != %d", length, -length, out_length);
+            CW_LOG_W("解码失败: %d != %d", -length, out_length);
             return {};
         }
     } else {

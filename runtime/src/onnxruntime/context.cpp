@@ -23,7 +23,7 @@ caiwei::context::ONNXRuntimeContext::ONNXRuntimeContext(std::string path, int c,
 }
 
 caiwei::context::ONNXRuntimeContext::~ONNXRuntimeContext() {
-    CW_LOG_D("释放ONNXRuntimeContext: %s", this->path.c_str());
+    CW_LOG_I("释放ONNXRuntimeContext: %s", this->path.c_str());
     this->release();
 }
 
@@ -147,7 +147,15 @@ caiwei::context::ONNXRuntimeContext::run(const int h, const int w, const caiwei:
     if (this->src_w != image.width || this->src_h != image.height || this->src_c != image.channels) {
         auto& node_dims = this->input_node_dims[0];
         if (node_dims[1] != image.channels || node_dims[2] != h || node_dims[3] != w) {
-            CW_LOG_W("图片大小和模型输入大小不匹配");
+            CW_LOG_W(
+                "目标图片大小和模型输入大小不匹配: %ux%dx%d != %" PRId64 "x%" PRId64 "x%" PRId64,
+                image.channels,
+                h,
+                w,
+                node_dims[1],
+                node_dims[2],
+                node_dims[3]
+            );
             return {};
         }
         // clang-format off

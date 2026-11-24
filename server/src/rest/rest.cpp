@@ -186,29 +186,35 @@ static void register_handler() {
     });
     caiwei::rest::server->set_exception_handler(
         [](const httplib::Request& request, httplib::Response& response, std::exception_ptr e) {
-            CW_LOG_W(
-                "系统异常: %s - [%4zu] - %3d - [%4zu]",
-                request.path.c_str(),
-                request.body.size(),
-                response.status,
-                response.body.size()
-            );
+            std::string error;
             std::string message;
             try {
                 std::rethrow_exception(std::move(e));
             } catch (const nlohmann::json::exception& e) {
+                error = e.what();
                 response.status = httplib::StatusCode::BadRequest_400;
                 message = caiwei::json::buildResponse("1400", "数据格式错误");
             } catch (const caiwei::env::MessageCodeException& e) {
+                error = e.what();
                 response.status = e.status;
                 message = caiwei::json::buildResponse(e.code, e.what());
             } catch (const std::exception& e) {
+                error = e.what();
                 response.status = httplib::StatusCode::InternalServerError_500;
                 message = caiwei::json::buildResponse("9999", e.what());
             } catch (...) {
+                error = "未知异常";
                 response.status = httplib::StatusCode::InternalServerError_500;
                 message = caiwei::json::buildResponse("9999", "未知错误");
             }
+            CW_LOG_E(
+                "系统异常: %s - [%4zu] - %3d - [%4zu] => %s",
+                request.path.c_str(),
+                request.body.size(),
+                response.status,
+                response.body.size(),
+                error.c_str()
+            );
             response.set_content(message, caiwei::rest::content::type::JSON);
         }
     );

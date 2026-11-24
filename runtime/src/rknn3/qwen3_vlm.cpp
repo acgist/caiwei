@@ -43,7 +43,7 @@ bool caiwei::context::VLMRKNN3Context::load() {
     }
     if (this->media_input.size() != 1 || this->media_output.size() != CAIWEI_RKNN3_DEEPSTACK_TENSORS + 1) {
         CW_LOG_W(
-            "模型错误: %zu != 1 || %zu != %d",
+            "模型格式错误: %zu != 1 || %zu != %d",
             this->media_input.size(),
             this->media_output.size(),
             CAIWEI_RKNN3_DEEPSTACK_TENSORS + 1
@@ -140,7 +140,7 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
             caiwei::media::hwc_to_chw(pad.data(), chw_u8.data(), h, w, channels);
             std::memcpy((uint8_t*) tensor.mem->virt_addr, chw_u8.data(), chw_u8.size());
         } else {
-            CW_LOG_W("不支持的输入格式: %s", rknn3_get_type_string(tensor.attr->dtype));
+            CW_LOG_W("不支持的输入类型: %s", rknn3_get_type_string(tensor.attr->dtype));
             return false;
         }
     } else if (tensor.attr->layout == RKNN3_TENSOR_NHWC) {
@@ -153,7 +153,7 @@ bool caiwei::context::VLMRKNN3Context::fill_media(
         } else if (tensor.attr->dtype == RKNN3_TENSOR_UINT8) {
             std::memcpy((uint8_t*) tensor.mem->virt_addr, pad.data(), pad.size());
         } else {
-            CW_LOG_W("不支持的输入格式: %s", rknn3_get_type_string(tensor.attr->dtype));
+            CW_LOG_W("不支持的输入类型: %s", rknn3_get_type_string(tensor.attr->dtype));
             return false;
         }
     } else {
@@ -291,7 +291,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
                     if (per_video_frame == 0) {
                         per_video_frame = video_ptr->size();
                     } else if (per_video_frame != video_ptr->size()) {
-                        CW_LOG_W("多个视频帧数没有固定: %" PRIu64 " != %zu", per_video_frame, video_ptr->size());
+                        CW_LOG_W("多个视频的帧数不一致: %" PRIu64 " != %zu", per_video_frame, video_ptr->size());
                         return {};
                     } else {
                         // -

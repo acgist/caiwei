@@ -33,7 +33,7 @@ std::vector<caiwei::media::Box> caiwei::context::DetRKNN2Context::run(const caiw
     const int64_t result_length = output_attr.dims[1];
     const int64_t stride_length = output_attr.dims[2];
     if (result_length != this->class_size + YOLO_BOX_SIZE) {
-        CW_LOG_W("输出长度错误: %" PRId64 " - %d", result_length, this->class_size);
+        CW_LOG_W("输出长度错误: %" PRId64 " != %d + %d", result_length, this->class_size, YOLO_BOX_SIZE);
         return {};
     }
     std::vector<caiwei::media::Box> ret;

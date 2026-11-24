@@ -141,7 +141,7 @@ bool caiwei::context::LlamaCPPContext::load_model() {
 bool caiwei::context::LlamaCPPContext::load_mtmd_model(int image_min_tokens, int image_max_tokens) {
     if (this->special_token.media_marker.empty()) {
         this->special_token.media_marker = mtmd_default_marker();
-        CW_LOG_W("设置默认媒体标记: %s", this->special_token.media_marker.c_str());
+        CW_LOG_I("设置默认媒体标记: %s", this->special_token.media_marker.c_str());
     }
     mtmd_context_params params = mtmd_context_params_default();
     params.media_marker = this->special_token.media_marker.c_str();
@@ -261,7 +261,7 @@ bool caiwei::context::LlamaCPPContext::init_context_sampler(
         return false;
     }
     if (caiwei_batch.n_prompt_tokens >= static_cast<uint32_t>(this->max_token_length)) {
-        CW_LOG_W("提示词词元超量: %u > %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
+        CW_LOG_W("提示词词元超量: %u >= %d", caiwei_batch.n_prompt_tokens, this->max_token_length);
         caiwei_batch.finish_reason = caiwei::text::FINISH_REASON_LENGTH;
         return false;
     }
@@ -585,7 +585,7 @@ caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsReques
                 this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length()
             );
             if (buffer_length < 0) {
-                CW_LOG_I("解码长度不足: %d", buffer_length);
+                CW_LOG_D("解码长度不足: %d", buffer_length);
                 token_buffer.resize(-buffer_length);
                 buffer_length = caiwei::context::token_to_piece(
                     this->vocab, token_id, token_buffer.get_buffer(), token_buffer.get_length()

@@ -230,7 +230,7 @@ bool caiwei::context::RKNN3Context::load_tokenizer() {
     }
     this->vocab_size = this->tokenizer->get_size();
     if (this->vocab_size <= 0) {
-        CW_LOG_W("分词模型加载失败: %d", this->vocab_size);
+        CW_LOG_W("分词模型词表大小无效: %d", this->vocab_size);
         return false;
     }
     CW_LOG_I("分词模型加载成功: %d", this->vocab_size);
@@ -343,7 +343,7 @@ bool caiwei::context::RKNN3Context::init_internal_tensor_mems() {
             CW_LOG_W("共享内存创建失败: %u", i);
             return false;
         }
-        CW_LOG_I("共享内存创建成功: %u = %p -> %" PRIu64 " == %" PRIu64, i, mem, mem->size, internal_size);
+        CW_LOG_I("共享内存创建成功: %u = %p -> %" PRIu64 " = %" PRIu64, i, mem, mem->size, internal_size);
         this->internal_tensor_mems.push_back(mem);
     }
     ret = rknn3_set_internal_mem(this->context, this->internal_tensor_mems.data(), core_num_llm);
@@ -658,7 +658,7 @@ static int embed_callback(void* userdata, int32_t* tokens, uint64_t n_tokens, vo
     caiwei::context::ContextSession* session = (caiwei::context::ContextSession*) userdata;
     const int embedding_size = session->embedding_dim * sizeof(float16);
     if (len != n_tokens * embedding_size) {
-        CW_LOG_W("嵌入数据长度错误");
+        CW_LOG_W("嵌入数据长度错误: %" PRIu64 " != %" PRIu64 " * %d", len, n_tokens, embedding_size);
         return -1;
     }
     unsigned char* embed_ptr = (unsigned char*) embed;
@@ -750,7 +750,7 @@ static int result_callback(void* userdata, RKLLMResult* result, LLMCallState sta
                     token_id, token_buffer.get_buffer(), token_buffer.get_length()
                 );
                 if (buffer_length < 0) {
-                    CW_LOG_I("解码长度不足: %d", buffer_length);
+                    CW_LOG_D("解码长度不足: %d", buffer_length);
                     token_buffer.resize(-buffer_length);
                     buffer_length = tokenizer->token_to_piece(token_id, token_buffer.get_buffer(), token_buffer.get_length());
                     if (buffer_length < 0) {

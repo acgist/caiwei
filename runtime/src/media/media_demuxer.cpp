@@ -42,7 +42,7 @@ caiwei::media::MediaDemuxer::MediaDemuxer(
 }
 
 caiwei::media::MediaDemuxer::~MediaDemuxer() {
-    CW_LOG_I("媒体解析处理完成: %s - %s", this->type.c_str(), this->url.c_str());
+    CW_LOG_I("释放媒体: %s - %s", this->type.c_str(), this->url.c_str());
 }
 
 inline static bool recv_audio_frame(
@@ -172,7 +172,7 @@ bool caiwei::media::MediaDemuxer::open(
     // 如果需要编码提前打开
     if (this->media_muxer != nullptr) {
         if (!this->media_muxer->open(audio_info, video_info)) {
-            CW_LOG_W("视频编码器上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
+            CW_LOG_W("编码器上下文创建失败: %s - %s", this->type.c_str(), this->url.c_str());
             success = false;
             goto close_all;
         }
@@ -223,7 +223,7 @@ bool caiwei::media::MediaDemuxer::open(
     } else if (this->type == "device") {
         std::lock_guard<std::mutex> lock(device_mutex);
         if (device_open) {
-            CW_LOG_W("设备已经打开: %s - %s", this->type.c_str(), this->url.c_str());
+            CW_LOG_I("设备已经打开: %s - %s", this->type.c_str(), this->url.c_str());
             ret = AVERROR(EBUSY);
         } else {
             open_device = true;
@@ -309,7 +309,7 @@ bool caiwei::media::MediaDemuxer::open(
         }
     }
     if (audio_stream_idx == -1 && video_stream_idx == -1) {
-        CW_LOG_W("媒体接收失败: %s - %s", this->type.c_str(), this->url.c_str());
+        CW_LOG_W("媒体没有音视频流: %s - %s", this->type.c_str(), this->url.c_str());
         success = false;
         goto close_all;
     }
@@ -511,7 +511,7 @@ label_flush_video:
             CW_LOG_I("媒体已经关闭: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
             goto close_all;
         } else {
-            CW_LOG_D("媒体接收失败: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
+            CW_LOG_W("媒体接收失败: %s - %s = %d", this->type.c_str(), this->url.c_str(), ret);
             // clang-format off
             auto recv_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - last_recv_time

@@ -94,7 +94,7 @@ bool caiwei::context::ASRRKNN3Context::load() {
         return false;
     }
     if (this->media_input.size() != 1 || this->media_output.size() != 1) {
-        CW_LOG_W("模型错误: %zu != 1 || %zu != 1", this->media_input.size(), this->media_output.size());
+        CW_LOG_W("模型格式错误: %zu != 1 || %zu != 1", this->media_input.size(), this->media_output.size());
         this->release();
         return false;
     }

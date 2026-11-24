@@ -27,7 +27,11 @@ bool caiwei::media::ImageFrame::load_from_file(const char* path) {
 }
 
 bool caiwei::media::ImageFrame::load_from_memory(const uint8_t* buffer, const size_t size) {
-    if (buffer == nullptr || size == 0 || size > INT_MAX) {
+    if (size > INT_MAX) {
+        CW_LOG_W("图片加载失败: %zu", size);
+        return false;
+    }
+    if (buffer == nullptr || size == 0) {
         CW_LOG_W("图片加载失败: 数据为空");
         return false;
     }

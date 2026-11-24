@@ -181,7 +181,7 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
         return false;
     }
     if (!this->write_header) {
-        CW_LOG_W("视频写出头部失败");
+        CW_LOG_W("媒体写出头部失败");
         return false;
     }
     if (type == MediaType::AUDIO && this->audio_time_base != nullptr && this->audio_stream != nullptr) {
@@ -191,7 +191,7 @@ bool caiwei::media::MediaFormat::send(MediaType type, AVPacket* packet) {
         av_packet_rescale_ts(packet, *this->video_time_base, this->video_stream->time_base);
         packet->stream_index = this->video_stream->index;
     } else {
-        CW_LOG_W("媒体没有输出媒体");
+        CW_LOG_W("媒体类型没有对应的输出流: %d", static_cast<int>(type));
         return false;
     }
     int ret = av_interleaved_write_frame(this->format_ctx, packet);
@@ -218,9 +218,9 @@ bool caiwei::media::MediaFormat::send_header() {
     int ret = avformat_write_header(this->format_ctx, &options);
     this->write_header = ret == 0;
     if (this->write_header) {
-        CW_LOG_D("视频写出头部成功");
+        CW_LOG_D("媒体写出头部成功");
     } else {
-        CW_LOG_W("视频写出头部失败");
+        CW_LOG_W("媒体写出头部失败");
     }
     av_dict_free(&options);
     return this->write_header;
@@ -235,15 +235,15 @@ bool caiwei::media::MediaFormat::send_trailer() {
     }
     int ret = av_interleaved_write_frame(this->format_ctx, nullptr);
     if (ret != 0) {
-        CW_LOG_W("发送媒体数据失败: %d", ret);
+        CW_LOG_W("写出尾部数据失败: %d", ret);
     }
     ret = av_write_trailer(this->format_ctx);
-    if (ret != 0) {
-        CW_LOG_I("视频写出尾部失败: %d", ret);
-        return false;
-    } else {
-        CW_LOG_D("视频写出尾部成功");
+    if (ret == 0) {
+        CW_LOG_D("媒体写出尾部成功");
         return true;
+    } else {
+        CW_LOG_W("媒体写出尾部失败: %d", ret);
+        return false;
     }
 }
 

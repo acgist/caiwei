@@ -343,7 +343,7 @@ static void init_rknn3() {
     rknn3_devices devs {};
     int ret = rknn3_find_devices(&devs);
     if (ret != RKNN3_SUCCESS) {
-        CW_LOG_W("RKNN3设备无效");
+        CW_LOG_W("RKNN3设备无效: %d", ret);
         return;
     }
     for (uint32_t i = 0; i < devs.n_devices; ++i) {
@@ -430,7 +430,7 @@ static void runtime_optimize_timer() {
                     for (auto iter = caiwei::runtime::runtime_map.begin(); iter != caiwei::runtime::runtime_map.end();) {
                         auto& runtime = iter->second;
                         if (runtime->optimize() == 0) {
-                            CW_LOG_I("优化runtime实例: %s", runtime->id.c_str());
+                            CW_LOG_I("优化runtime淘汰: %s", runtime->id.c_str());
                             iter = caiwei::runtime::runtime_map.erase(iter);
                         } else {
                             ++iter;

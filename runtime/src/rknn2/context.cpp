@@ -167,7 +167,7 @@ caiwei::context::RKNN2Context::run(const int h, const int w, const caiwei::media
                 // clang-format on
             ) {
                 CW_LOG_W(
-                    "输入图片大小和模型输入大小不匹配: %ux%dx%d != %ux%ux%u",
+                    "目标图片大小和模型输入大小不匹配: %ux%dx%d != %ux%ux%u",
                     image.channels,
                     h,
                     w,
@@ -186,7 +186,7 @@ caiwei::context::RKNN2Context::run(const int h, const int w, const caiwei::media
                 // clang-format on
             ) {
                 CW_LOG_W(
-                    "输入图片大小和模型输入大小不匹配: %ux%dx%d != %ux%ux%u",
+                    "目标图片大小和模型输入大小不匹配: %ux%dx%d != %ux%ux%u",
                     image.channels,
                     h,
                     w,
