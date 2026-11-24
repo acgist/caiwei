@@ -6,7 +6,7 @@
 * 协议: Apache-2.0
 * https://github.com/airockchip/librga
 
-## std
+## stb
 
 * 版本: master
 * 协议: MIT License

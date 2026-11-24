@@ -22,11 +22,11 @@ messages = [
         "content": [
             # {
             #     "type": "image",
-            #     "image": "/data/caiwei/test/acgist.jpg",
+            #     "image": "../../../test/acgist.jpg",
             # },
             {
                 "type": "video",
-                "video": "/data/caiwei/test/caiwei.mp4",
+                "video": "../../../test/caiwei.mp4",
             },
             # {"type": "text", "text": "描述视频内容"},
         ],

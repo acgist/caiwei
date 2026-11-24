@@ -12,7 +12,7 @@ tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-1.7B")
 messages = [
     {
         "role": "user",
-        "content": "小明的爸爸叫大明，大明的爸爸叫老明，请问小明的爷爷叫什么？",
+        "content": "解释一下碧螺萧萧",
     }
 ]
 prompt = tokenizer.apply_chat_template(

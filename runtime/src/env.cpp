@@ -307,16 +307,16 @@ void caiwei::env::init() {
     });
     if (get_bool("CAIWEI_SECURITY")) {
         if (get("CAIWEI_APIKEY").empty() || get("CAIWEI_APIKEY") == "caiwei") {
-            CW_LOG_I("当前使用默认密钥");
+            CW_LOG_W("当前使用默认密钥");
         }
         if (get("CAIWEI_USERNAME").empty() || get("CAIWEI_USERNAME") == "admin") {
-            CW_LOG_I("当前使用默认账号");
+            CW_LOG_W("当前使用默认账号");
         }
         if (get("CAIWEI_PASSWORD").empty() || get("CAIWEI_PASSWORD") == "admin") {
-            CW_LOG_I("当前使用默认密码");
+            CW_LOG_W("当前使用默认密码");
         }
     } else {
-        CW_LOG_I("没有开启安全模式");
+        CW_LOG_W("没有开启安全模式");
     }
 }
 

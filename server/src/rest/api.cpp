@@ -46,7 +46,7 @@ void caiwei::rest::register_api() {
 
 static void get_health() {
     caiwei::rest::server->Get("/v1/health", [](const httplib::Request& /* request */, httplib::Response& response) {
-        response.set_content(caiwei::json::buildResponse("running"), caiwei::rest::content::type::JSON);
+        response.set_content(caiwei::json::buildResponse({{"status", "running"}}), caiwei::rest::content::type::JSON);
     });
 }
 

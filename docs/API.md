@@ -8,12 +8,55 @@
 * 3xxx: 推理错误（RUNTIME）
 * 9999: 未知错误
 
-## GET /v1/health
-## GET /v1/models
-## GET /v1/video/play
+## 鉴权
 
-* `url` : 视频地址
-* `type`: 媒体类型(`rtp|data|file|http|rtmp|rtsp|device`)
+```
+Basic base64("username:password")
+Bearer apikey
+```
+
+## 通用响应
+
+```
+{
+    "header": {
+        "code"   :"状态编码",
+        "message":"状态描述"
+    },
+    "body": {...}
+}
+```
+
+## GET /v1/health
+
+```
+{
+    "header": {
+        "code"   :"状态编码",
+        "message":"状态描述"
+    },
+    "body": {"status":"running"}
+}
+```
+
+## GET /v1/models
+
+```
+{
+    "header": {
+        "code"   :"状态编码",
+        "message":"状态描述"
+    },
+    "body": [
+        {"type":"模型类型","name":"模型名称"},
+        ...
+    ]
+}
+```
+
+## GET /v1/video/play?url=视频地址&type=媒体类型(rtp|data|file|http|rtmp|rtsp|device)&codec=是否编解码视频流
+
+`SSE`响应`Base64`编码媒体数据
 
 ## POST /v1/embeddings
 
@@ -28,14 +71,14 @@
     "model" : "模型名称",
     "data"  : [
         {
-            "index"    : "文档内容索引",
+            "index"    : 文档内容索引,
             "object"   : "embedding",
             "embedding": [嵌入向量...]
         },
         ...
     ],
     "usage": {
-        "prompt_tokens": 提示词消耗的token数量
+        "prompt_tokens": 提示词消耗的token数量,
         "total_tokens" : 请求消耗总的token数量
     }
 }
@@ -56,14 +99,14 @@
     "model" : "模型名称",
     "data"  : [
         {
-            "index" : "文档内容索引",
+            "index" : 文档内容索引,
             "object": "reranking",
             "score" : 文档评分
         },
         ...
     ],
     "usage": {
-        "prompt_tokens": 提示词消耗的token数量
+        "prompt_tokens": 提示词消耗的token数量,
         "total_tokens" : 请求消耗总的token数量
     }
 }
@@ -78,14 +121,14 @@
 
 ```
 {
-    "stream"  : 是否流式返回内容
+    "stream"  : 是否流式返回内容,
     "model"   : "模型名称",
     "messages": [
         {
             "role"        : "角色",
             "name"        : "名称",
             "tool_call_id": "方法ID",
-            "content"     : 消息内容 | [
+            "content"     : "消息内容" | [
                 {
                     "type"     : "消息类型",
                     "text"     : "文本消息",
@@ -104,8 +147,8 @@
                     "type"    : "方法类型",
                     "function": {
                         "name"     : "方法名称",
-                        "arguments": "方法参数",
-                    },
+                        "arguments": "方法参数"
+                    }
                 },
                 ...
             ]
@@ -127,7 +170,7 @@
                 "name"       : "方法名称",
                 "description": "方法描述",
                 "parameters" : {
-                    参数描述
+                    参数描述...
                 }
             }
         },
@@ -138,12 +181,13 @@
     "vlm_frames"     : VLM帧数队列数量,
     "media_url"      : "持续识别媒体地址",
     "media_type"     : "持续识别媒体类型",
+    "drop_on_full"   : 队列是否丢弃数据,
     "enable_thinking": 是否开启思考模式,
-    "model_list"     : ["模型列表", ...],
+    "model_list"     : ["模型列表", ...]
 }
 
 {
-    "created": 创建时间
+    "created": 创建时间,
     "id"     : "消息ID",
     "model"  : "模型名称",
     "object" : "chat.completion",
@@ -163,24 +207,24 @@
                         "index": 方法索引,
                         "function": {
                             "name"     : "方法名称",
-                            "arguments": "方法参数",
+                            "arguments": "方法参数"
                         }
                     },
                     ...
-                ],
+                ]
             }
         },
         ...
     ],
     "usage": {
-        "prompt_tokens"    : 提示词消耗的token数量
-        "completion_tokens": 生成时消耗的token数量
+        "prompt_tokens"    : 提示词消耗的token数量,
+        "completion_tokens": 生成时消耗的token数量,
         "total_tokens"     : 请求消耗总的token数量
     }
 }
 
 {
-    "created": 创建时间
+    "created": 创建时间,
     "id"     : "消息ID",
     "model"  : "模型名称",
     "object" : "chat.completion.chunk",
@@ -200,18 +244,18 @@
                         "index": 方法索引,
                         "function": {
                             "name"     : "方法名称",
-                            "arguments": "方法参数",
+                            "arguments": "方法参数"
                         }
                     },
                     ...
-                ],
+                ]
             }
         },
         ...
     ],
     "usage": {
-        "prompt_tokens"    : 提示词消耗的token数量
-        "completion_tokens": 生成时消耗的token数量
+        "prompt_tokens"    : 提示词消耗的token数量,
+        "completion_tokens": 生成时消耗的token数量,
         "total_tokens"     : 请求消耗总的token数量
     }
 }

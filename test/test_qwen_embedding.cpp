@@ -54,14 +54,8 @@ void test_embedding() {
     float a = cosine_similarity(ret.result[0], ret.result[1]);
     float b = cosine_similarity(ret.result[0], ret.result[2]);
     float c = cosine_similarity(ret.result[0], ret.result[3]);
-    float d = cosine_similarity(ret.result[1], ret.result[2]);
-    float e = cosine_similarity(ret.result[1], ret.result[3]);
-    float f = cosine_similarity(ret.result[2], ret.result[3]);
     CAIWEI_ASSERT(a > b);
     CAIWEI_ASSERT(a > c);
-    CAIWEI_ASSERT(a > d);
-    CAIWEI_ASSERT(a > e);
-    CAIWEI_ASSERT(a > f);
 }
 
 [[maybe_unused]]

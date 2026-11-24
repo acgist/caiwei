@@ -198,7 +198,7 @@ python export_llm.py                           \
     --export_llm_path onnx/Qwen3-Reranker-0.6B.onnx
 
 python export_rknn.py                               \
-    --platform  rk1820                              \
+    --platform  rk1828                              \
     --config    onnx/Qwen3-Reranker-0.6B.config.pkl \
     --onnx_path onnx/Qwen3-Reranker-0.6B.onnx       \
     --rknn_path rknn/Qwen3-Reranker-0.6B.rknn
