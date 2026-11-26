@@ -278,9 +278,12 @@ add_compile_definitions(
     CAIWEI_VERSION_COMMA=${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0
 )
 
+set(CPACK_GENERATOR "ZIP")
+include(CPack)
 add_subdirectory(runtime)
 add_subdirectory(server)
 if(ENABLE_CAIWEI_TEST)
-    enable_testing()
+    include(CTest)
+    # enable_testing()
     add_subdirectory(test)
 endif()

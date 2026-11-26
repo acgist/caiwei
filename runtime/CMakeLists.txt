@@ -101,13 +101,6 @@ if(CMAKE_HOST_UNIX)
             message(FATAL_ERROR "AVX2/F16C not supported")
         endif()
     endif()
-    install(
-        TARGETS ${PROJECT_NAME}
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-        PUBLIC_HEADER DESTINATION include
-    )
 elseif(CMAKE_HOST_WIN32)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")
         include(CheckCXXCompilerFlag)

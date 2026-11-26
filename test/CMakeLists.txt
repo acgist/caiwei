@@ -81,11 +81,7 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/*.jpg"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp3"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mp4"
-    "${CMAKE_SOURCE_DIR}/server/res/*.ico"
-    "${CMAKE_SOURCE_DIR}/server/res/*.txt"
-    "${CMAKE_SOURCE_DIR}/server/res/*.html"
 )
-
 add_custom_target(
     "test-copy-resources" ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_TEST_RESOURCES} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"

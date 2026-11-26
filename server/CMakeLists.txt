@@ -33,28 +33,29 @@ else()
     # -
 endif()
 
+install(
+    TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+install(FILES "${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_SOURCE_DIR}/README.md" DESTINATION ".")
+
 file(
     GLOB CAIWEI_RESOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/res/*.ico"
     "${CMAKE_CURRENT_SOURCE_DIR}/res/*.txt"
     "${CMAKE_CURRENT_SOURCE_DIR}/res/*.html"
 )
-
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_RESOURCES} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
     COMMENT "server-copy-resources"
 )
+install(DIRECTORY res/ DESTINATION bin FILES_MATCHING PATTERN "*.ico" PATTERN "*.txt" PATTERN "*.html")
 
 if(CMAKE_HOST_UNIX)
-    install(DIRECTORY res/ DESTINATION bin FILES_MATCHING PATTERN "*.ico" PATTERN "*.txt" PATTERN "*.html")
-    install(
-        TARGETS ${PROJECT_NAME}
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-        PUBLIC_HEADER DESTINATION include
-    )
+    # -
 elseif(CMAKE_HOST_WIN32)
     # C = C | CP = C++
     # /MD  MSVCRT.lib  MSVCPRT.lib  多线程动态CRT Release
@@ -83,6 +84,7 @@ elseif(CMAKE_HOST_WIN32)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CAIWEI_SERVER_DLLS} "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/bin/"
             COMMENT "server-copy-dlls-common"
         )
+        install(FILES ${CAIWEI_SERVER_DLLS} DESTINATION bin)
     endif()
     if(CAIWEI_SERVER_DLLS_DEBUG AND CAIWEI_SERVER_DLLS_RELEASE)
         add_custom_command(
@@ -92,6 +94,7 @@ elseif(CMAKE_HOST_WIN32)
             COMMAND_EXPAND_LISTS
             VERBATIM
         )
+        install(FILES "$<IF:$<CONFIG:Debug>,${CAIWEI_SERVER_DLLS_DEBUG},${CAIWEI_SERVER_DLLS_RELEASE}>" DESTINATION bin)
     endif()
 else()
     # -
