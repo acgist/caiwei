@@ -3,7 +3,7 @@
 #include <thread>
 
 [[maybe_unused]]
-void test_manager() {
+static void test_manager() {
     std::vector<std::jthread> threads;
     for (int i = 0; i < 10; ++i) {
         threads.push_back(std::jthread([i]() {
@@ -18,7 +18,7 @@ void test_manager() {
 }
 
 [[maybe_unused]]
-void test_manager_log() {
+static void test_manager_log() {
     std::vector<std::jthread> threads;
     for (int i = 0; i < 10; ++i) {
         threads.push_back(std::jthread([i]() {
@@ -33,7 +33,7 @@ void test_manager_log() {
 }
 
 [[maybe_unused]]
-void test_manager_init() {
+static void test_manager_init() {
     caiwei::runtime::init();
     caiwei::runtime::init();
     caiwei::runtime::stop();
@@ -41,7 +41,7 @@ void test_manager_init() {
 }
 
 [[maybe_unused]]
-void test_manager_optimize() {
+static void test_manager_optimize() {
     auto ptr1 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     CAIWEI_ASSERT(ptr1 != nullptr);
     auto ptr2 = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");

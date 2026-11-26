@@ -4,7 +4,7 @@
 #include <vector>
 
 [[maybe_unused]]
-void asr_run(caiwei::manager::ASRWrapper* ptr, const caiwei::text::CompletionsRequest& request, bool not_empty = true) {
+static void asr_run(caiwei::manager::ASRWrapper* ptr, const caiwei::text::CompletionsRequest& request, bool not_empty = true) {
     CAIWEI_ASSERT(ptr != nullptr);
     std::string content;
     for (const auto& value : ptr->run(request)) {
@@ -22,7 +22,7 @@ void asr_run(caiwei::manager::ASRWrapper* ptr, const caiwei::text::CompletionsRe
 }
 
 [[maybe_unused]]
-void test_asr() {
+static void test_asr() {
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     // caiwei::media::MediaDemuxer media_demuxer("file", "caiwei_noise.mp3");
@@ -85,7 +85,7 @@ void test_asr() {
 }
 
 [[maybe_unused]]
-void test_asr_for() {
+static void test_asr_for() {
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     bool success = media_demuxer.open(
@@ -124,7 +124,7 @@ void test_asr_for() {
 }
 
 [[maybe_unused]]
-void test_asr_thread() {
+static void test_asr_thread() {
     caiwei::media::AudioFrame audio_frame;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     bool success = media_demuxer.open(

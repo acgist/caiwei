@@ -3,7 +3,7 @@
 #include "caiwei/tokenizer.hpp"
 
 [[maybe_unused]]
-void test_tokenizer() {
+static void test_tokenizer() {
     caiwei::context::Tokenizer tokenizer;
 #if ENABLE_CAIWEI_RUNTIME_RKNN3
     CAIWEI_ASSERT(tokenizer.load("/data/model/Qwen3-1.7B/Qwen3-1.7B.tokenizer.gguf"));
@@ -47,7 +47,7 @@ void test_tokenizer() {
 }
 
 [[maybe_unused]]
-void test_chat_template() {
+static void test_chat_template() {
     llama_model_params params = llama_model_default_params();
     params.vocab_only = true;
 #if ENABLE_CAIWEI_RUNTIME_RKNN3
@@ -105,7 +105,7 @@ void test_chat_template() {
 }
 
 [[maybe_unused]]
-void print_name_arguments(caiwei::text::ToolcallSession& session) {
+static void print_name_arguments(caiwei::text::ToolcallSession& session) {
     std::string name = session.get_name();
     if (!name.empty()) {
         CW_LOG_I("name: %s", name.c_str());
@@ -117,7 +117,7 @@ void print_name_arguments(caiwei::text::ToolcallSession& session) {
 }
 
 [[maybe_unused]]
-void test_tool_call() {
+static void test_tool_call() {
     caiwei::text::ToolcallSession session;
     // -
     session.put_token(R"({"name": "get_weather", "arguments": {"city":"北京"}})");

@@ -4,7 +4,7 @@
 #include <vector>
 
 [[maybe_unused]]
-void cls_image() {
+static void cls_image() {
     caiwei::media::ImageFrame frame;
     CAIWEI_ASSERT(frame.load_from_file("./samoyed.jpg"));
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
@@ -19,7 +19,7 @@ void cls_image() {
 }
 
 [[maybe_unused]]
-void cls_image_for(const char* image_path) {
+static void cls_image_for(const char* image_path) {
     caiwei::media::ImageFrame frame;
     CAIWEI_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
@@ -42,7 +42,7 @@ void cls_image_for(const char* image_path) {
 }
 
 [[maybe_unused]]
-void cls_image_thread(const char* image_path) {
+static void cls_image_thread(const char* image_path) {
     caiwei::media::ImageFrame frame;
     CAIWEI_ASSERT(frame.load_from_file(image_path));
     std::vector<std::jthread> threads;
@@ -62,7 +62,7 @@ void cls_image_thread(const char* image_path) {
 }
 
 [[maybe_unused]]
-void cls_video() {
+static void cls_video() {
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     CAIWEI_ASSERT(ptr);
     CAIWEI_ASSERT(caiwei::player::open_player());
@@ -86,7 +86,7 @@ void cls_video() {
 }
 
 [[maybe_unused]]
-void cls_video_frame() {
+static void cls_video_frame() {
     auto ptr = caiwei::manager::get_context<caiwei::context::ClsContext>("yolo26n-cls");
     CAIWEI_ASSERT(ptr);
     size_t cls_count = 0;

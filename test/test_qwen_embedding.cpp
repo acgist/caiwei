@@ -32,7 +32,7 @@ static float cosine_similarity(const std::vector<float>& a, const std::vector<fl
 }
 
 [[maybe_unused]]
-void test_embedding() {
+static void test_embedding() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     // request.input = "北京";
@@ -59,7 +59,7 @@ void test_embedding() {
 }
 
 [[maybe_unused]]
-void test_embedding_for() {
+static void test_embedding_for() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     request.input = std::vector<std::string> {"小狗", "猫咪", "苹果", "汽车"};
@@ -77,7 +77,7 @@ void test_embedding_for() {
 }
 
 [[maybe_unused]]
-void test_embedding_thread() {
+static void test_embedding_thread() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     request.input = std::vector<std::string> {"小狗", "猫咪", "苹果", "汽车"};

@@ -28,7 +28,7 @@ static int resize_w = 640;
 static int resize_h = 640;
 
 [[maybe_unused]]
-void test_resize(const char* image_path) {
+static void test_resize(const char* image_path) {
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -49,7 +49,7 @@ void test_resize(const char* image_path) {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 [[maybe_unused]]
-void test_resize_rga(const char* image_path) {
+static void test_resize_rga(const char* image_path) {
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -74,7 +74,7 @@ void test_resize_rga(const char* image_path) {
 #endif
 
 [[maybe_unused]]
-void test_resize_ffmpeg(const char* image_path) {
+static void test_resize_ffmpeg(const char* image_path) {
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -108,7 +108,7 @@ void test_resize_ffmpeg(const char* image_path) {
 }
 
 [[maybe_unused]]
-void test_resize_pad(const char* image_path) {
+static void test_resize_pad(const char* image_path) {
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -134,7 +134,7 @@ void test_resize_pad(const char* image_path) {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 [[maybe_unused]]
-void test_resize_pad_rga(const char* image_path) {
+static void test_resize_pad_rga(const char* image_path) {
     const int w = resize_w;
     const int h = resize_h;
     float scale;
@@ -163,7 +163,7 @@ void test_resize_pad_rga(const char* image_path) {
 #endif
 
 [[maybe_unused]]
-void test_nms_boxes() {
+static void test_nms_boxes() {
     // clang-format off
     std::vector<Box> boxes = {
         { 2,           2,            8,            8,          0, 0.80F},
@@ -190,7 +190,7 @@ void test_nms_boxes() {
 }
 
 [[maybe_unused]]
-void test_transpose() {
+static void test_transpose() {
     std::vector<uint8_t> src_vector(84 * 8400);
     std::vector<uint8_t> dst_vector(84 * 8400);
     std::vector<uint8_t> ret_vector(84 * 8400);
@@ -209,7 +209,7 @@ void test_transpose() {
 }
 
 [[maybe_unused]]
-void test_hwc_to_chw(const char* image_path) {
+static void test_hwc_to_chw(const char* image_path) {
     // clang-format off
     std::vector<float> hwc_vec = {
         10, 20, 30,
@@ -260,7 +260,7 @@ void test_hwc_to_chw(const char* image_path) {
 }
 
 [[maybe_unused]]
-void test_image(const char* image_path) {
+static void test_image(const char* image_path) {
     const int w = resize_w;
     const int h = resize_h;
     float scale;

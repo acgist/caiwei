@@ -4,7 +4,7 @@
 #include <vector>
 
 [[maybe_unused]]
-void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request, bool not_empty = true) {
+static void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRequest& request, bool not_empty = true) {
     CAIWEI_ASSERT(ptr);
     std::string content;
     for (const auto& value : ptr->run(request)) {
@@ -22,7 +22,7 @@ void vlm_run(caiwei::manager::VLMWrapper* ptr, const caiwei::text::CompletionsRe
 }
 
 [[maybe_unused]]
-void test_vlm() {
+static void test_vlm() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
         caiwei::text::CompletionsRequestMessage {
@@ -103,7 +103,7 @@ void test_vlm() {
 }
 
 [[maybe_unused]]
-void test_vlm_for() {
+static void test_vlm_for() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
         caiwei::text::CompletionsRequestMessage {
@@ -136,7 +136,7 @@ void test_vlm_for() {
 }
 
 [[maybe_unused]]
-void test_vlm_thread() {
+static void test_vlm_thread() {
     caiwei::text::CompletionsRequest request;
     request.messages.push_back(
         caiwei::text::CompletionsRequestMessage {

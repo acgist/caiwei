@@ -1,7 +1,7 @@
 #include "test.hpp"
 
 [[maybe_unused]]
-void test_json_to_completions() {
+static void test_json_to_completions() {
     auto request = caiwei::text::json_to_completions(R"({
         "model": "qwen3",
         "messages": [{
@@ -57,7 +57,7 @@ void test_json_to_completions() {
 }
 
 [[maybe_unused]]
-void test_json_to_embeddings() {
+static void test_json_to_embeddings() {
     {
         auto request = caiwei::text::json_to_embeddings(R"({
             "model": "qwen3-embedding",
@@ -79,7 +79,7 @@ void test_json_to_embeddings() {
 }
 
 [[maybe_unused]]
-void test_json_to_rerankings() {
+static void test_json_to_rerankings() {
     auto request = caiwei::text::json_to_rerankings(R"({
         "model": "qwen3-reranking",
         "query": "你好",
@@ -90,7 +90,7 @@ void test_json_to_rerankings() {
 }
 
 [[maybe_unused]]
-void test_completions_response_to_json() {
+static void test_completions_response_to_json() {
     caiwei::text::CompletionsResponse response;
     response.id = "123456";
     response.created = 1694502400;
@@ -111,7 +111,7 @@ void test_completions_response_to_json() {
 }
 
 [[maybe_unused]]
-void test_completions_chunk_to_json() {
+static void test_completions_chunk_to_json() {
     caiwei::text::CompletionsChunk chunk;
     chunk.id = "123456";
     chunk.created = 1694502400;
@@ -132,7 +132,7 @@ void test_completions_chunk_to_json() {
 }
 
 [[maybe_unused]]
-void test_embedding_response_to_json() {
+static void test_embedding_response_to_json() {
     caiwei::text::EmbeddingsResponse response;
     response.model = "qwen3-embedding";
     response.data.push_back({.index = 0, .embedding = {0.5F, 1.0F}});
@@ -147,7 +147,7 @@ void test_embedding_response_to_json() {
 }
 
 [[maybe_unused]]
-void test_reranking_response_to_json() {
+static void test_reranking_response_to_json() {
     caiwei::text::RerankingsResponse response;
     response.model = "qwen3-reranking";
     response.data.push_back({.index = 0, .score = 0.5F});
@@ -162,7 +162,7 @@ void test_reranking_response_to_json() {
 }
 
 [[maybe_unused]]
-void test_image_data_json() {
+static void test_image_data_json() {
     // clang-format off
     std::vector<caiwei::media::Cls> cls = {
         {1, 0.8F},

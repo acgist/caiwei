@@ -3,7 +3,7 @@
 #include "caiwei/session.hpp"
 
 [[maybe_unused]]
-void test_completions_sync() {
+static void test_completions_sync() {
     caiwei::text::CompletionsRequest request;
     request.model = "qwen3-llm";
     request.stream = false;
@@ -14,7 +14,7 @@ void test_completions_sync() {
 }
 
 [[maybe_unused]]
-void test_completions_async() {
+static void test_completions_async() {
     caiwei::text::CompletionsRequest request;
     request.model = "qwen3-llm";
     request.stream = false;
@@ -28,7 +28,7 @@ void test_completions_async() {
 }
 
 [[maybe_unused]]
-void test_embeddings() {
+static void test_embeddings() {
     caiwei::text::EmbeddingsRequest request;
     request.model = "qwen3-embedding";
     {
@@ -53,7 +53,7 @@ void test_embeddings() {
 }
 
 [[maybe_unused]]
-void test_rerankings() {
+static void test_rerankings() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
     {
@@ -75,7 +75,7 @@ void test_rerankings() {
 }
 
 [[maybe_unused]]
-void test_video_play() {
+static void test_video_play() {
     caiwei::session::VideoPlaySession session("./caiwei.mp4", "file", false, [](const char* /* data */, int length) {
         CW_LOG_I("video play: %d kb", length / 1024);
         return true;

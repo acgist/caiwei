@@ -6,7 +6,7 @@
 #include "nlohmann/json.hpp"
 
 [[maybe_unused]]
-void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
+static void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRequest& request) {
     CAIWEI_ASSERT(ptr != nullptr);
     std::string content;
     std::string thinking;
@@ -35,7 +35,7 @@ void llm_run(caiwei::manager::LLMWrapper* ptr, const caiwei::text::CompletionsRe
 }
 
 [[maybe_unused]]
-void test_llm() {
+static void test_llm() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
     request.enable_thinking = true;
@@ -72,7 +72,7 @@ void test_llm() {
 }
 
 [[maybe_unused]]
-void test_llm_for() {
+static void test_llm_for() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
     request.enable_thinking = false;
@@ -91,7 +91,7 @@ void test_llm_for() {
 }
 
 [[maybe_unused]]
-void test_llm_thread() {
+static void test_llm_thread() {
     caiwei::text::CompletionsRequest request;
     request.stream = true;
     request.enable_thinking = false;

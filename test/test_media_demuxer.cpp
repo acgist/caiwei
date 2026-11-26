@@ -74,7 +74,7 @@ a=recvonly)";
 }
 
 [[maybe_unused]]
-void test_demuxer() {
+static void test_demuxer() {
     // rtp|data|file|http|rtmp|rtsp|device
     auto type = "file";
     auto url = get_url(type);

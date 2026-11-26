@@ -9,7 +9,7 @@
 
 #ifdef ENABLE_CAIWEI_RUNTIME_RKNN2
 [[maybe_unused]]
-void test_rknn2(int size, const std::string& path, const std::string& type) {
+static void test_rknn2(int size, const std::string& path, const std::string& type) {
     const int channels = caiwei::media::IMAGE_CHANNELS;
     const int data_size = channels * size * size;
     caiwei::context::RKNN2Context context(path, channels, size, size);
@@ -35,7 +35,7 @@ void test_rknn2(int size, const std::string& path, const std::string& type) {
 
 #ifdef ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME
 [[maybe_unused]]
-void test_onnxruntime(int size, const std::string& path) {
+static void test_onnxruntime(int size, const std::string& path) {
     const int channels = caiwei::media::IMAGE_CHANNELS;
     const int data_size = channels * size * size;
     auto env = std::make_unique<Ort::Env>(caiwei::context::onnxruntime_log_level, "caiwei");

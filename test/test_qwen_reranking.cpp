@@ -6,7 +6,7 @@
 #include <vector>
 
 [[maybe_unused]]
-void test_reranking() {
+static void test_reranking() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
     request.query = "广州今天的天气怎么样";
@@ -29,7 +29,7 @@ void test_reranking() {
 }
 
 [[maybe_unused]]
-void test_reranking_for() {
+static void test_reranking_for() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
     request.query = "广州今天的天气怎么样";
@@ -48,7 +48,7 @@ void test_reranking_for() {
 }
 
 [[maybe_unused]]
-void test_reranking_thread() {
+static void test_reranking_thread() {
     caiwei::text::RerankingsRequest request;
     request.model = "qwen3-reranking";
     request.query = "广州今天的天气怎么样";

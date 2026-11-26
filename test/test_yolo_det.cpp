@@ -6,7 +6,7 @@
 #include "stb/stb_image_write.h"
 
 [[maybe_unused]]
-void det_image(const char* image_path) {
+static void det_image(const char* image_path) {
     caiwei::media::ImageFrame frame;
     CAIWEI_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
@@ -29,7 +29,7 @@ void det_image(const char* image_path) {
 }
 
 [[maybe_unused]]
-void det_image_for(const char* image_path) {
+static void det_image_for(const char* image_path) {
     caiwei::media::ImageFrame frame;
     CAIWEI_ASSERT(frame.load_from_file(image_path));
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
@@ -52,7 +52,7 @@ void det_image_for(const char* image_path) {
 }
 
 [[maybe_unused]]
-void det_image_thread(const char* image_path) {
+static void det_image_thread(const char* image_path) {
     caiwei::media::ImageFrame frame;
     CAIWEI_ASSERT(frame.load_from_file(image_path));
     std::vector<std::jthread> threads;
@@ -72,7 +72,7 @@ void det_image_thread(const char* image_path) {
 }
 
 [[maybe_unused]]
-void det_video() {
+static void det_video() {
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
     CAIWEI_ASSERT(ptr);
     size_t frame_count = 0;
@@ -109,7 +109,7 @@ void det_video() {
 }
 
 [[maybe_unused]]
-void det_video_frame() {
+static void det_video_frame() {
     auto ptr = caiwei::manager::get_context<caiwei::context::DetContext>("yolo26n-det");
     CAIWEI_ASSERT(ptr);
     size_t box_count = 0;

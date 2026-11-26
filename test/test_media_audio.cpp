@@ -3,7 +3,7 @@
 #include "stb/stb_image_write.h"
 
 [[maybe_unused]]
-void test_log_mel_spectrogram() {
+static void test_log_mel_spectrogram() {
     std::vector<uint8_t> audio_data;
     caiwei::media::MediaDemuxer media_demuxer("file", "caiwei.mp3");
     bool success = media_demuxer.open(

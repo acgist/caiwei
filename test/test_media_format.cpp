@@ -7,7 +7,7 @@ static const auto audio_url = "./caiwei.mp3";
 static const auto video_url = "./caiwei.mp4";
 
 [[maybe_unused]]
-void test_format() {
+static void test_format() {
     std::ofstream output("./output.mp4", std::ios_base::binary);
     CAIWEI_ASSERT(output.is_open());
     caiwei::media::MediaFormat media_format([&output](uint32_t length, const uint8_t* data) {
@@ -43,7 +43,7 @@ void test_format() {
 }
 
 [[maybe_unused]]
-void test_format_audio() {
+static void test_format_audio() {
     caiwei::media::MediaFormat media_format("./output_fwd_file.mp3");
     caiwei::media::MediaDemuxer media_demuxer(type, audio_url, nullptr, &media_format);
     bool success = media_demuxer.open(
@@ -59,7 +59,7 @@ void test_format_audio() {
 }
 
 [[maybe_unused]]
-void test_format_fwd_file() {
+static void test_format_fwd_file() {
     caiwei::media::MediaFormat media_format("./output_fwd_file.mp4");
     caiwei::media::MediaDemuxer media_demuxer(type, video_url, nullptr, &media_format);
     bool success = media_demuxer.open(
@@ -75,7 +75,7 @@ void test_format_fwd_file() {
 }
 
 [[maybe_unused]]
-void test_format_fwd_callback() {
+static void test_format_fwd_callback() {
     std::ofstream output("./output_fwd_callback.mp4", std::ios_base::binary);
     CAIWEI_ASSERT(output.is_open());
     caiwei::media::MediaFormat media_format([&output](uint32_t length, const uint8_t* data) {
