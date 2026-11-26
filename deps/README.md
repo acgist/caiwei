@@ -22,6 +22,7 @@ vcpkg export  sdl2:x64-windows --zip
 * 版本: 6.1.1
 * 官网: https://ffmpeg.org
 * 官网: https://github.com/FFmpeg/FFmpeg
+* 下载: https://github.com/BtbN/FFmpeg-Builds/releases
 
 ```
 # APT安装

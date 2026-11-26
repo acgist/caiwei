@@ -90,16 +90,8 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     this->input_node_dims.resize(input_node_count);
     for (size_t index = 0; index < input_node_count; ++index) {
         Ort::AllocatedStringPtr name = this->session->GetInputNameAllocated(index, allocator);
-        auto info = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
-#if ENABLE_CAIWEI_BACKEND_CUDA
-#else
-        if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
-            CW_LOG_W("输入节点数据类型错误: %d", info.GetElementType());
-            this->release();
-            return false;
-        }
-#endif
         auto& node_dims = this->input_node_dims[index];
+        auto info = this->session->GetInputTypeInfo(index).GetTensorTypeAndShapeInfo();
         auto shape = info.GetShape();
         if (shape.empty()) {
             shape.assign(node_dims.begin(), node_dims.end());
@@ -122,14 +114,6 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     for (size_t index = 0; index < output_node_count; ++index) {
         Ort::AllocatedStringPtr name = this->session->GetOutputNameAllocated(index, allocator);
         auto info = this->session->GetOutputTypeInfo(index).GetTensorTypeAndShapeInfo();
-#if ENABLE_CAIWEI_BACKEND_CUDA
-#else
-        if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
-            CW_LOG_W("输出节点数据类型错误: %d", info.GetElementType());
-            this->release();
-            return false;
-        }
-#endif
         auto shape = info.GetShape();
         print_tensor_info("输出节点", index, name.get(), shape);
         this->output_node_names.push_back(std::move(name));

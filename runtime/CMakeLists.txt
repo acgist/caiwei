@@ -9,7 +9,6 @@ set(
     src/runtime.cpp
     src/session.cpp
     src/manager.cpp
-    src/tokenizer.cpp
     src/media/text_data.cpp
     src/media/text_tool.cpp
     src/media/media_data.cpp
@@ -72,6 +71,13 @@ if(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME)
         src/onnxruntime/runtime.cpp
         src/onnxruntime/yolo_cls.cpp
         src/onnxruntime/yolo_det.cpp
+    )
+endif()
+
+if(ENABLE_CAIWEI_RUNTIME_RKNN3 OR ENABLE_CAIWEI_RUNTIME_LLAMACPP)
+    list(
+        APPEND CAIWEI_RUNTIME_SRCS
+        src/tokenizer.cpp
     )
 endif()
 

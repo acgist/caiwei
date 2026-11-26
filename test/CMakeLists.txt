@@ -49,11 +49,17 @@ set(
     test_yolo_cls
     test_yolo_det
     test_runtime_json
-    test_runtime_token
     test_runtime_manager
     test_runtime_runtime
     test_runtime_session
 )
+
+if(ENABLE_CAIWEI_RUNTIME_RKNN3 OR ENABLE_CAIWEI_RUNTIME_LLAMACPP)
+    list(
+        APPEND CAIWEI_TEST_LIST
+        test_runtime_token
+    )
+endif()
 
 foreach(TEST_NAME IN LISTS CAIWEI_TEST_LIST)
     add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
