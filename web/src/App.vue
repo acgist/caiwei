@@ -2,12 +2,6 @@
   <div>
     <el-row>
       <div class="tool-bar" style="margin:auto;">
-        <el-select v-model="type" style="width:8rem;margin-right:1rem;">
-          <el-option value="VideoPlay"   label="媒体播放"></el-option>
-          <el-option value="Rerankings"  label="重新排序"></el-option>
-          <el-option value="Embeddings"  label="嵌入向量"></el-option>
-          <el-option value="Completions" label="文本生成"></el-option>
-        </el-select>
         <el-input style="width:16rem;" v-model="host">
           <template #suffix>
             <el-icon :color="status"><MostlyCloudy /></el-icon>
@@ -15,30 +9,20 @@
         </el-input>
       </div>
     </el-row>
-    <video-play  v-if="type === 'VideoPlay'  " :host="host" ref="videoPlay"  ></video-play>
-    <rerankings  v-if="type === 'Rerankings' " :host="host" ref="rerankings" ></rerankings>
-    <embeddings  v-if="type === 'Embeddings' " :host="host" ref="embeddings" ></embeddings>
-    <completions v-if="type === 'Completions'" :host="host" ref="completions"></completions>
+    <video-play :host="host" ref="videoPlay"></video-play>
   </div>
 </template>
 
 <script>
-import Completions from "./Completions.vue";
-import Embeddings from "./Embeddings.vue";
-import Rerankings from "./Rerankings.vue";
 import VideoPlay from "./VideoPlay.vue";
 export default {
   name: "App",
   components: {
     VideoPlay,
-    Rerankings,
-    Embeddings,
-    Completions,
   },
   data() {
     return {
       host  : `http://${location.hostname}:8888`,
-      type  : "VideoPlay",
       status: "#00cc66",
       healthTimerId: 0,
     }
