@@ -12,7 +12,6 @@
 #include <string>
 
 namespace caiwei {
-
 namespace text {
 
 struct EmbeddingsRequest;

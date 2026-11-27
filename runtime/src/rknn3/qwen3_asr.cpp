@@ -134,7 +134,7 @@ bool caiwei::context::ASRRKNN3Context::load() {
 
 std::generator<caiwei::text::CompletionResult>
 caiwei::context::ASRRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
-    return this->generate(request);
+    return this->generate(caiwei::context::Type::ASR, request);
 }
 
 bool caiwei::context::ASRRKNN3Context::fill_media(
@@ -266,11 +266,12 @@ std::vector<rknn3_llm_input> caiwei::context::ASRRKNN3Context::get_inputs(
     int n_frames = 0;
     int n_tokens = 0;
     {
+        context_session->perf->reset();
         std::lock_guard<std::mutex> lock(this->media_mutex);
         if (!this->fill_media(n_frames, n_tokens, context_session->audio_embeds, audio_data)) {
             return {};
         }
-        context_session->audio_frames = n_frames;
+        context_session->perf->set_audio_n_frames(n_frames);
     }
     // clang-format off
     rknn3_llm_tensor tensor = {

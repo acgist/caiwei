@@ -91,7 +91,7 @@ bool caiwei::context::VLMRKNN3Context::load() {
 
 std::generator<caiwei::text::CompletionResult>
 caiwei::context::VLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
-    return this->generate(request);
+    return this->generate(caiwei::context::Type::VLM, request);
 }
 
 bool caiwei::context::VLMRKNN3Context::fill_media(
@@ -233,12 +233,12 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
         }
     }
     CW_LOG_D("图片数量: %" PRIu64 " 视频数量: %" PRIu64 " 视频帧数: %" PRIu64, image_count, video_count, frame_count);
-    context_session->image_frames = image_count + frame_count;
     context_session->image_embeds.resize(output_tensor.attr->aligned_size / sizeof(float16) * image_count);
     context_session->video_embeds.resize(output_tensor.attr->aligned_size / sizeof(float16) * frame_count);
     const int w = caiwei::env::get_int("CAIWEI_VLM_IMAGE_WIDTH");
     const int h = caiwei::env::get_int("CAIWEI_VLM_IMAGE_HEIGHT");
     if (!data_list.empty()) {
+        context_session->perf->reset();
         if (!context_session->init_deepstack_tensors(this->media_output, image_count + frame_count)) {
             return {};
         }
@@ -299,6 +299,7 @@ std::vector<rknn3_llm_input> caiwei::context::VLMRKNN3Context::get_inputs(
                 }
             }
         }
+        context_session->perf->set_image_n_frames(image_count + frame_count);
     }
     rknn3_llm_multimodal_tensor tensor {};
     // clang-format off

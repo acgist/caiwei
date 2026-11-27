@@ -4,6 +4,7 @@ set(
     CAIWEI_RUNTIME_SRCS
     src/env.cpp
     src/log.cpp
+    src/perf.cpp
     src/caiwei.cpp
     src/context.cpp
     src/runtime.cpp

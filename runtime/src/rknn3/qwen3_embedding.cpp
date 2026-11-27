@@ -45,7 +45,7 @@ caiwei::text::EmbeddingResult caiwei::context::EmbeddingRKNN3Context::run(const 
     }
     uint32_t prompt_tokens = 0;
     caiwei::text::EmbeddingResult result;
-    result.result = this->pooling(prompt_tokens, prompt_list, true, true);
+    result.result = this->pooling(caiwei::context::Type::EMBEDDING, prompt_tokens, prompt_list, true, true);
     // clang-format off
     result.prompt_tokens = prompt_tokens;
     result.total_tokens  = prompt_tokens;

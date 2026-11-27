@@ -35,7 +35,7 @@ bool caiwei::context::LLMRKNN3Context::load() {
 
 std::generator<caiwei::text::CompletionResult>
 caiwei::context::LLMRKNN3Context::run(const caiwei::text::CompletionsRequest& request) {
-    return this->generate(request);
+    return this->generate(caiwei::context::Type::LLM, request);
 }
 
 std::vector<rknn3_llm_input> caiwei::context::LLMRKNN3Context::get_inputs(

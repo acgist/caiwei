@@ -53,8 +53,16 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 #if ENABLE_CAIWEI_BACKEND_CUDA
     options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
+    #ifdef CAIWEI_ONNX_INTRA_OP_NUM_THREADS
+    options.SetIntraOpNumThreads(CAIWEI_ONNX_INTRA_OP_NUM_THREADS);
+    #else
     options.SetIntraOpNumThreads(1);
+    #endif
+    #ifdef CAIWEI_ONNX_INTER_OP_NUM_THREADS
+    options.SetInterOpNumThreads(CAIWEI_ONNX_INTER_OP_NUM_THREADS);
+    #else
     options.SetInterOpNumThreads(1);
+    #endif
     Ort::CUDAProviderOptions cudaOptions;
     // clang-format off
     const std::string cuda_id  = caiwei::env::get("CAIWEI_CUDA_ID");
@@ -68,8 +76,17 @@ bool caiwei::context::ONNXRuntimeContext::load_model() {
     options.AppendExecutionProvider_CUDA_V2(*cudaOptions);
 #else
     options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
+    #ifdef CAIWEI_ONNX_INTRA_OP_NUM_THREADS
+    options.SetIntraOpNumThreads(CAIWEI_ONNX_INTRA_OP_NUM_THREADS);
+    #else
+    // 不要使用逻辑核心使用物理核心
     options.SetIntraOpNumThreads(std::thread::hardware_concurrency() / 2);
+    #endif
+    #ifdef CAIWEI_ONNX_INTER_OP_NUM_THREADS
+    options.SetInterOpNumThreads(CAIWEI_ONNX_INTER_OP_NUM_THREADS);
+    #else
     options.SetInterOpNumThreads(1);
+    #endif
 #endif
 #if CAIWEI_OS_WIN
     std::wstring path(this->path.begin(), this->path.end());

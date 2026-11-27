@@ -6,6 +6,7 @@
 #endif
 
 #include "caiwei/context.hpp"
+#include "caiwei/perf.hpp"
 #include "caiwei/text_tool.hpp"
 #include "caiwei/tokenizer.hpp"
 
@@ -50,22 +51,16 @@ struct ContextSession {
     int32_t e_thinking = LLAMA_TOKEN_NULL;
     int32_t b_toolcall = LLAMA_TOKEN_NULL;
     int32_t e_toolcall = LLAMA_TOKEN_NULL;
-    int vocab_size             = 0;
-    int audio_frames           = 0;
-    int image_frames           = 0;
-    uint32_t n_prefill_tokens  = 0;
-    uint32_t n_generate_tokens = 0;
-    float feature_ms           = 0;
-    float prefill_ms           = 0;
-    float generate_ms          = 0;
-    rknn3_context context       = 0;
-    rknn3_context media_context = 0;
     std::mutex mutex;
     std::condition_variable condition;
-    int        embedding_dim  {0      };
-    float16  * embedding_data {nullptr};
-    Tokenizer* tokenizer      {nullptr};
-    TokenBuffer token_buffer  {       };
+    int           vocab_size    {0      };
+    rknn3_context context       {0      };
+    rknn3_context media_context {0      };
+    int         embedding_dim   {0      };
+    float16  *  embedding_data  {nullptr};
+    Tokenizer*  tokenizer       {nullptr};
+    TokenBuffer token_buffer    {       };
+    caiwei::perf::ContextPerf* perf {nullptr};
     caiwei::text::ToolcallSession toolcall_session {};
     std::vector<std::vector<float>>             pool_result  {};
     std::vector<caiwei::text::CompletionResult> token_result {};
@@ -133,12 +128,14 @@ protected:
     virtual std::vector<rknn3_llm_input>
     get_inputs(std::string& prompt, ContextSession* context_session, const caiwei::text::CompletionsRequest& request);
     std::vector<std::vector<float>> pooling(
+        caiwei::context::Type type,
         uint32_t& prompt_tokens,
         const std::vector<const std::string*>& prompt_list,
         bool add_special = false,
         bool parse_special = true
     );
-    std::generator<caiwei::text::CompletionResult> generate(const caiwei::text::CompletionsRequest& request);
+    std::generator<caiwei::text::CompletionResult>
+    generate(caiwei::context::Type type, const caiwei::text::CompletionsRequest& request);
 public:
     RKNN3Context(
         std::string model_path,
@@ -290,9 +287,6 @@ public:
     );
     ~RerankingRKNN3Context();
 };
-
-void rknn3_dump_tensor_attr(const char* name, rknn3_tensor_attr* attr);
-void rknn3_perf_session_print(rknn3_session* session, caiwei::context::ContextSession* context_session);
 
 } // namespace context
 } // namespace caiwei

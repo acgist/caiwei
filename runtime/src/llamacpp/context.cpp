@@ -189,21 +189,13 @@ llama_context* caiwei::context::LlamaCPPContext::get_context(int n_ctx, bool emb
         params.pooling_type = LLAMA_POOLING_TYPE_UNSPECIFIED;
         // clang-format on
     }
-#if ENABLE_CAIWEI_PERF
     params.no_perf = false;
-#else
-    params.no_perf = true;
-#endif
     return llama_init_from_model(this->model, params);
 }
 
 llama_sampler* caiwei::context::LlamaCPPContext::get_sampler(int n_ctx, const caiwei::text::CompletionsRequest& request) const {
     llama_sampler_chain_params params = llama_sampler_chain_default_params();
-#if ENABLE_CAIWEI_PERF
     params.no_perf = false;
-#else
-    params.no_perf = true;
-#endif
     llama_sampler* sampler = llama_sampler_chain_init(params);
     if (sampler == nullptr) {
         return nullptr;
@@ -468,9 +460,7 @@ caiwei::context::LlamaCPPContext::pooling(const std::vector<std::vector<llama_to
     llama_batch batch = llama_batch_init(n_batch, 0, 1);
     auto raii_guard = caiwei::context::RaiiGuard([&]() {
         llama_batch_free(batch);
-#if ENABLE_CAIWEI_PERF
         llama_perf_context_print(context.get());
-#endif
     });
     for (int k = 0; k < n_prompts; ++k) {
         auto& input = inputs[k];
@@ -542,10 +532,8 @@ caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsReques
     caiwei::text::ToolcallSession toolcall_session;
     const int max_completion_tokens = request.get_max_completion_tokens(this->max_token_length);
     auto raii_guard = caiwei::context::RaiiGuard([&]() {
-#if ENABLE_CAIWEI_PERF
         llama_perf_sampler_print(sampler);
         llama_perf_context_print(context);
-#endif
     });
     uint32_t generated_tokens = 0;
     while (true) {
@@ -562,7 +550,7 @@ caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsReques
         }
         ++generated_tokens;
         if (llama_vocab_is_eog(this->vocab, token_id)) {
-#if ENABLE_CAIWEI_PERF
+#if ENABLE_CAIWEI_RT_PRINT
             std::printf("\n");
             std::fflush(stdout);
 #endif
@@ -599,7 +587,7 @@ caiwei::context::LlamaCPPContext::generate(const caiwei::text::CompletionsReques
                 }
             }
             std::string token = token_buffer.get_token(buffer_length);
-#if ENABLE_CAIWEI_PERF
+#if ENABLE_CAIWEI_RT_PRINT
             std::printf("%s", token.c_str());
             std::fflush(stdout);
 #endif

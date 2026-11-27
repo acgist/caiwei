@@ -2,6 +2,7 @@
 #include "caiwei/log.hpp"
 #include "caiwei/manager.hpp"
 #include "caiwei/media_tool.hpp"
+#include "caiwei/perf.hpp"
 #include "caiwei/session.hpp"
 
 #include <algorithm>
@@ -749,6 +750,8 @@ static void yolo_thread_session(
     image_copy.resize(YOLO_QUEUE_SIZE);
     size_t image_copy_size = 0;
     bool callable = true;
+    caiwei::perf::ContextPerf perf_cls(static_cast<int>(caiwei::context::Type::CLS));
+    caiwei::perf::ContextPerf perf_det(static_cast<int>(caiwei::context::Type::DET));
     while (callable && !token.stop_requested()) {
         {
             std::unique_lock<std::mutex> lock(mutex);
@@ -772,10 +775,14 @@ static void yolo_thread_session(
             // clang-format on
             image_data.data.swap(frame.data);
             if (callable && cls_wrapper != nullptr) {
+                perf_cls.reset();
                 callable = async_cls(request, cls_wrapper, callback);
+                perf_cls.set_image_n_frames(1);
             }
             if (callable && det_wrapper != nullptr) {
+                perf_det.reset();
                 callable = async_det(request, det_wrapper, callback);
+                perf_det.set_image_n_frames(1);
             }
         }
     }

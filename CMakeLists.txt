@@ -14,13 +14,13 @@ message(STATUS "CAIWEI_VERSION: ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_CAIWEI_TEST                "Build Test"     OFF) # 编译测试
-option(ENABLE_CAIWEI_PERF                "Performance"    ON)  # 性能统计
-option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"     OFF) # llama.cpp ONNXRuntime
-option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2" OFF) # RKNN2
-option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3" OFF) # RKNN3
-option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"      ON)  # llama.cpp
-option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"    ON)  # ONNXRuntime
+option(ENABLE_CAIWEI_TEST                "Build Test"      OFF) # 编译测试
+option(ENABLE_CAIWEI_RT_PRINT            "real-time print" ON)  # 实时打印
+option(ENABLE_CAIWEI_BACKEND_CUDA        "Nvidia GPU"      OFF) # llama.cpp ONNXRuntime
+option(ENABLE_CAIWEI_RUNTIME_RKNN2       "Rockchip RKNN2"  OFF) # RKNN2
+option(ENABLE_CAIWEI_RUNTIME_RKNN3       "Rockchip RKNN3"  OFF) # RKNN3
+option(ENABLE_CAIWEI_RUNTIME_LLAMACPP    "llama.cpp"       ON)  # llama.cpp
+option(ENABLE_CAIWEI_RUNTIME_ONNXRUNTIME "ONNXRuntime"     ON)  # ONNXRuntime
 
 # TODO 升级 23
 set(CMAKE_C_STANDARD 17)
@@ -123,9 +123,9 @@ if(ENABLE_CAIWEI_TEST)
     add_definitions(-DENABLE_CAIWEI_TEST=1)
 endif()
 
-if(ENABLE_CAIWEI_PERF)
-    message(STATUS "Enable perf")
-    add_definitions(-DENABLE_CAIWEI_PERF=1)
+if(ENABLE_CAIWEI_RT_PRINT)
+    message(STATUS "Enable real-time print")
+    add_definitions(-DENABLE_CAIWEI_RT_PRINT=1)
 endif()
 
 if(ENABLE_CAIWEI_BACKEND_CUDA)
